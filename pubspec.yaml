@@ -1,0 +1,18 @@
+name: feather_io
+description: A lightweight S3 compatible storage
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  winter:
+    git:
+      url: https://github.com/Root-101/winter.git
+      ref: feature/retake_project
+
+dev_dependencies:
+  http: 1.6.0
+  lints: 6.1.0
+  test: 1.31.1
