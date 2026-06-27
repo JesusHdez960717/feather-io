@@ -153,6 +153,37 @@ void main() async {
             }
           },
         ),
+        Route.delete(
+          path: '/{file-name}',
+          handler: (request) async {
+            String fileName = request.pathParams['file-name']!;
+            final safeFileName = p.basename(fileName);
+
+            final folder = 'bucket/test/';
+            final folderPath = p.join(env.storagePath, folder);
+            final filePath = p.join(folderPath, safeFileName);
+            final file = File(filePath);
+
+            if (!await file.exists()) {
+              return ResponseEntity.notFound(
+                body: 'El archivo "$safeFileName" no existe.',
+              );
+            }
+
+            try {
+              await file.delete();
+              print('Archivo eliminado: $safeFileName');
+              return ResponseEntity.ok(
+                body: 'Archivo "$safeFileName" eliminado correctamente.',
+              );
+            } catch (e) {
+              print('Error al eliminar el archivo: $e');
+              return ResponseEntity.internalServerError(
+                body: 'Error al eliminar el archivo.',
+              );
+            }
+          },
+        ),
       ],
     ),
   );
