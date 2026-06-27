@@ -15,6 +15,8 @@ dependencies:
 
   path: 1.9.1
 
+  mime: 2.0.0
+
 dev_dependencies:
   http: 1.6.0
   lints: 6.1.0

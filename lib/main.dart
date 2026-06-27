@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:mime/mime.dart';
 import 'package:path/path.dart' as p;
 import 'package:winter/winter.dart';
 
@@ -110,6 +111,46 @@ void main() async {
                 'X-Object-Count': filesList.length.toString(),
               },
             );
+          },
+        ),
+        Route.get(
+          path: '/{file-name}',
+          handler: (request) async {
+            String fileName = request.pathParams['file-name']!;
+
+            final folder = 'bucket/test/';
+            final folderPath = p.join(env.storagePath, folder);
+            final filePath = p.join(folderPath, fileName);
+            final file = File(filePath);
+
+            // 1. Verificar si el archivo realmente existe en /data
+            if (!await file.exists()) {
+              return ResponseEntity.notFound(
+                body: 'El archivo "$fileName" no existe en el servidor.',
+              );
+            }
+            try {
+              // 2. Detectar el Content-Type correcto (ej: image/jpeg, image/png, application/pdf)
+              // Si no lo reconoce, por defecto usamos 'application/octet-stream' (binario genérico)
+              final contentType =
+                  lookupMimeType(filePath) ?? 'application/octet-stream';
+
+              print('Sirviendo archivo: $fileName como $contentType');
+
+              // 3. Responder enviando el archivo como un Stream de bytes
+              // request.read() del post era un stream de entrada, file.openRead() es un stream de salida.
+              return ResponseEntity.ok(
+                body: file.openRead(),
+                headers: {
+                  'Content-Type': contentType,
+                  'Content-Length': (await file.length()).toString(),
+                },
+              );
+            } catch (e) {
+              return ResponseEntity.internalServerError(
+                body: 'Error al abrir el archivo.',
+              );
+            }
           },
         ),
       ],
