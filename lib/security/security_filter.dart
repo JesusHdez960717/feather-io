@@ -1,14 +1,13 @@
 import 'package:feather_io/feather.dart';
-import 'package:winter/winter.dart';
 
-class SecurityFilter implements Filter {
+class SecurityFilter extends Filter {
   final String secretHeader = 'FEATHER_SECRET';
   final String accessHeader = 'FEATHER_ACCESS';
 
   late final String _envSecret;
   late final String _envAccess;
 
-  SecurityFilter(Env env) {
+  SecurityFilter() {
     _envSecret = env.secret;
     _envAccess = env.access;
   }
@@ -33,5 +32,13 @@ class SecurityFilter implements Filter {
     }
 
     return await chain.doFilter(request);
+  }
+
+  @override
+  bool shouldFilter(RequestEntity request) {
+    if (request.routingContext?.key == 'get-file') {
+      return false;
+    }
+    return super.shouldFilter(request);
   }
 }
