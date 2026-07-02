@@ -136,10 +136,10 @@ class FileManagementService {
   }
 
   String _getBucketPath(String bucketName) {
-    return p
-        .join(env.storagePath, bucketName)
-        .replaceAll('/', '_')
-        .replaceAll('\\', '_');
+    return p.join(
+      env.storagePath,
+      bucketName.replaceAll('/', '_').replaceAll('\\', '_'),
+    );
   }
 
   File _getFile(String bucketName, String key) {
