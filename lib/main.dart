@@ -9,7 +9,18 @@ void main() async {
 
   await Winter.start(
     config: ServerConfig(port: 8080),
-    globalFilterConfig: FilterConfig([SecurityFilter()]),
+    globalFilterConfig: FilterConfig([
+      SecurityAccessFilter(),
+      AuthFilter(
+        authenticated: true,
+        shouldFilter: (request) {
+          String? routeKey = request.routingContext?.key;
+          List<String> whiteList = ['s3.get-file'];
+
+          return !whiteList.contains(routeKey);
+        },
+      ),
+    ]),
     router: WinterRouter(
       config: RouterConfig(onLoadedRoutes: DefaultOnLoadedRoutes.log()),
       routes: [s3controller.routing],

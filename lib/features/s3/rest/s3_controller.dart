@@ -8,9 +8,13 @@ class S3Controller {
   Route get routing => Route.parent(
     path: '/s3',
     routes: [
-      Route.put(path: '/{key|.*}', handler: uploadFile),
+      Route.put(
+        path: '/{key|.*}',
+        handler: uploadFile,
+        filterConfig: FilterConfig([AuthFilter(rules: hasRole('admin'))]),
+      ),
       Route.get(path: '/list', handler: listFiles),
-      Route.get(path: '/{key|.*}', key: 'get-file', handler: getFile),
+      Route.get(path: '/{key|.*}', key: 's3.get-file', handler: getFile),
       Route.delete(path: '/{key|.*}', handler: deleteFile),
     ],
   );
