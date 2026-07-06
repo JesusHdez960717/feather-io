@@ -1,4 +1,4 @@
-import 'package:feather_io/feather.dart';
+import 'package:service/feather.dart';
 
 class SecurityAccessFilter extends Filter {
   final String secretHeader = 'FEATHER_SECRET';

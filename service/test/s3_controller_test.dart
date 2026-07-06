@@ -3,7 +3,7 @@ library;
 
 import 'dart:io';
 
-import 'package:feather_io/feather.dart';
+import 'package:service/feather.dart';
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 

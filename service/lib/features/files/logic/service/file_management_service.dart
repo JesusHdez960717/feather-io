@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:feather_io/feather.dart';
+import 'package:service/feather.dart';
 import 'package:path/path.dart' as p;
 
 class FileManagementService {

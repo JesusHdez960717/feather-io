@@ -1,4 +1,4 @@
-import 'package:feather_io/feather.dart';
+import 'package:service/feather.dart';
 
 class FileModel implements Serializable {
   final String key;
