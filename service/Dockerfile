@@ -7,7 +7,7 @@ COPY pubspec.* ./
 RUN dart pub get
 
 # Copy app source code (except anything in .dockerignore) and AOT compile app.
-COPY . .
+COPY .. .
 RUN dart compile exe lib/main.dart -o lib/server
 
 # Build minimal serving image from AOT-compiled `/server`

@@ -1,17 +1,19 @@
+#------- SERVICE related -------#
 # Files and directories created by pub
-.dart_tool/
-.packages
-build/
-# If you're building an application, you may want to check-in your pubspec.lock
-pubspec.lock
+service/.dart_tool/
+service/.packages
+service/build/
+service/pubspec.lock
 
 # AS/intellij
 .idea/
 
 # Directory created by dartdoc
 # If you don't generate documentation locally you can remove this line.
-doc/api/
-uploads_local/
+service/doc/api/
+service/uploads_local/
 
 #folder used for tests
-uploads_test/
+service/uploads_test/
+
+#------- CONSOLE related -------#

@@ -8,7 +8,7 @@ environment:
 
 dependencies:
   winter:
-    path: ../winter
+    path: ../../winter
 #    git:
 #      url: https://github.com/Root-101/winter.git
 #      ref: feature/retake_project
