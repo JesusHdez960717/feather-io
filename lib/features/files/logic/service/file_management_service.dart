@@ -5,13 +5,20 @@ import 'package:path/path.dart' as p;
 
 class FileManagementService {
   final bool createBucketIfNotExist;
+  final int maxFileSize;
 
-  FileManagementService({this.createBucketIfNotExist = true});
+  FileManagementService({
+    this.createBucketIfNotExist = true,
+    this.maxFileSize = 5 * 1024 * 1024 * 1024, // 5GB por defecto (límite S3)
+  });
 
   Future<bool> createBucket({required String bucketName}) async {
-    //valido que el key sea valido
-    if (!isSafeKey(bucketName)) {
-      throw BadRequestException(body: 'El bucket $bucketName no es valido');
+    // Valido el nombre del bucket con reglas S3
+    if (!isValidBucketName(bucketName)) {
+      throw BadRequestException(
+        body:
+            'El nombre del bucket "$bucketName" no es válido. Debe tener entre 3 y 63 caracteres, usar solo minúsculas, números, puntos o guiones, y empezar/terminar con letra o número.',
+      );
     }
 
     //creo el bucket si no existe
@@ -27,54 +34,74 @@ class FileManagementService {
     required String bucketName,
     required String key,
     required Stream<List<int>> binary,
+    int? contentLength,
   }) async {
-    //valido que el key sea valido
-    if (!isSafeKey(bucketName)) {
-      throw BadRequestException(body: 'El bucket $key no es valido');
+    // Valido el nombre del bucket
+    if (!isValidBucketName(bucketName)) {
+      throw BadRequestException(body: 'El bucket $bucketName no es valido');
     }
-    //valido que el key sea valido
-    if (!isSafeKey(key)) {
-      throw BadRequestException(body: 'El key $key no es valido');
+    // Valido el key con reglas S3
+    if (!isValidKey(key)) {
+      throw BadRequestException(
+        body: 'El key $key no es valido o contiene caracteres prohibidos.',
+      );
     }
 
-    //creo el bucket si no existe
-    if (createBucketIfNotExist) {
-      final bucketDir = Directory(_getBucketPath(bucketName));
-      await bucketDir.create(recursive: true);
+    // Validar tamaño máximo si se proporciona el content-length
+    if (contentLength != null && contentLength > maxFileSize) {
+      throw BadRequestException(
+        body:
+            'El archivo excede el tamaño máximo permitido de ${maxFileSize / (1024 * 1024)} MB',
+      );
     }
 
     final file = _getFile(bucketName, key);
 
+    //creo el bucket y las subcarpetas si no existen
+    if (createBucketIfNotExist) {
+      await file.parent.create(recursive: true);
+    }
+
+    int bytesRead = 0;
     try {
-      // 1. Abrimos el archivo en modo escritura como un IOSink (Stream)
       final sink = file.openWrite();
 
-      // 2. Conectamos el stream del request directamente al archivo
-      // request.read() nos da los bytes a medida que llegan por la red
-      // El method .pipe() cierra el sink automáticamente al terminar
-      await binary.cast<List<int>>().pipe(sink);
+      // Transformamos el stream para contar bytes y validar el límite en tiempo real
+      final monitoredStream = binary.map((chunk) {
+        bytesRead += chunk.length;
+        if (bytesRead > maxFileSize) {
+          throw BadRequestException(
+            body: 'El archivo excede el tamaño máximo permitido.',
+          );
+        }
+        return chunk;
+      });
+
+      await monitoredStream.pipe(sink);
 
       return true;
     } catch (e) {
       if (await file.exists()) {
         await file.delete();
       }
-
-      return false;
+      rethrow;
     }
   }
 
   Future<List<FileModel>> listFiles({required String bucketName}) async {
-    final dir = Directory(_getBucketPath(bucketName));
+    if (!isValidBucketName(bucketName)) {
+      throw BadRequestException(body: 'El bucket $bucketName no es valido');
+    }
+    final bucketPath = _getBucketPath(bucketName);
+    final dir = Directory(bucketPath);
 
     if (!await dir.exists()) {
-      return [];
+      throw NotFoundException(body: 'El bucket "$bucketName" no existe.');
     }
 
-    // Listamos los archivos del directorio.
-    // recursive: false (estilo S3 básico, solo lo que está en la raíz)
+    // Listamos los archivos del directorio recursivamente para soportar subcarpetas
     final List<FileSystemEntity> entities = await dir
-        .list(recursive: false)
+        .list(recursive: true)
         .toList();
 
     // Filtramos para obtener solo ARCHIVOS (ignorando subcarpetas si las hubiera)
@@ -84,9 +111,14 @@ class FileManagementService {
       if (entity is File) {
         final stat = await entity.stat();
 
+        // Obtenemos la ruta relativa al bucket para usarla como key (ej: files/test/123.jpg)
+        final relativePath = p
+            .relative(entity.path, from: bucketPath)
+            .replaceAll('\\', '/');
+
         filesList.add(
           FileModel(
-            name: p.basename(entity.path),
+            key: relativePath,
             size: stat.size,
             lastModified: stat.modified,
           ),
@@ -101,10 +133,10 @@ class FileManagementService {
     required String bucketName,
     required String key,
   }) async {
-    if (!isSafeKey(bucketName)) {
+    if (!isValidBucketName(bucketName)) {
       throw BadRequestException(body: 'El bucket $bucketName no es valido');
     }
-    if (!isSafeKey(key)) {
+    if (!isValidKey(key)) {
       throw BadRequestException(body: 'El key $key no es valido');
     }
 
@@ -121,8 +153,11 @@ class FileManagementService {
     required String bucketName,
     required String key,
   }) async {
-    if (!isSafeKey(key)) {
-      throw BadRequestException(body: 'El key $bucketName no es valido');
+    if (!isValidBucketName(bucketName)) {
+      throw BadRequestException(body: 'El bucket $bucketName no es valido');
+    }
+    if (!isValidKey(key)) {
+      throw BadRequestException(body: 'El key $key no es valido');
     }
 
     final file = _getFile(bucketName, key);
@@ -132,72 +167,96 @@ class FileManagementService {
     }
 
     await file.delete();
+
+    // Limpieza recursiva de carpetas vacías
+    await _deleteEmptyParents(file.parent, _getBucketPath(bucketName));
+
     return true;
   }
 
+  Future<void> _deleteEmptyParents(Directory dir, String bucketPath) async {
+    final currentPath = p.canonicalize(dir.path);
+    final rootPath = p.canonicalize(bucketPath);
+
+    // Si el directorio actual es el bucket o está fuera de él, nos detenemos
+    if (!currentPath.startsWith(rootPath) || currentPath == rootPath) {
+      return;
+    }
+
+    if (await dir.exists()) {
+      final entities = await dir.list().toList();
+      if (entities.isEmpty) {
+        await dir.delete();
+        // Intentamos borrar el padre recursivamente
+        await _deleteEmptyParents(dir.parent, bucketPath);
+      }
+    }
+  }
+
   String _getBucketPath(String bucketName) {
-    return p.join(
-      env.storagePath,
-      bucketName.replaceAll('/', '_').replaceAll('\\', '_'),
-    );
+    return p.join(env.storagePath, bucketName);
   }
 
   File _getFile(String bucketName, String key) {
     final folderPath = _getBucketPath(bucketName);
-    //si pasan un key con /, algo como: {test/file/123.jgp}, se convierten los / en _ para que no se creen subcarpetas
-    final safeKey = key.replaceAll('/', '_').replaceAll('\\', '_');
-    return File(p.join(folderPath, safeKey));
+    return File(p.join(folderPath, key));
   }
 
-  /// Valida si una Key de tipo S3 es segura para procesarse en el sistema.
-  /// Devuelve [true] si la ruta es limpia y segura, [false] si detecta riesgos de Path Traversal.
-  bool isSafeKey(String rawKey) {
-    // 1. Descartar strings vacíos o que solo contienen espacios
-    if (rawKey.trim().isEmpty) return false;
+  /// Valida el nombre del bucket según reglas de AWS S3.
+  bool isValidBucketName(String name) {
+    if (name.length < 3 || name.length > 63) return false;
 
-    // 2. Control de caracteres sospechosos en la URL o nombres de archivo
-    // Bloqueamos secuencias explícitas de subida de nivel (../ o ..\)
-    // También bloqueamos caracteres nulos (%00 o \x00) que se usan para truncar rutas en algunos sistemas
-    if (rawKey.contains('..') ||
-        rawKey.contains(r'..\') ||
-        rawKey.contains('\x00') ||
-        rawKey.contains('%00')) {
+    // Solo minúsculas, números, puntos y guiones.
+    // Debe empezar y terminar con letra o número.
+    final regExp = RegExp(r'^[a-z0-9]([a-z0-9.-]{1,61}[a-z0-9])?$');
+    if (!regExp.hasMatch(name)) return false;
+
+    // No puede contener puntos consecutivos (..)
+    if (name.contains('..')) return false;
+
+    // No puede parecer una dirección IP
+    final ipRegExp = RegExp(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$');
+    if (ipRegExp.hasMatch(name)) return false;
+
+    return true;
+  }
+
+  /// Valida el Key (objeto) según reglas de AWS S3 y seguridad local.
+  bool isValidKey(String key) {
+    if (key.isEmpty || key.length > 1024) return false;
+
+    // Caracteres seguros recomendados por S3: 0-9a-zA-Z!-_.*'()/
+    // También bloqueamos secuencias de Path Traversal por seguridad.
+    if (key.contains('..') ||
+        key.contains(r'..\') ||
+        key.contains('\x00') ||
+        key.contains('%00')) {
       return false;
     }
 
-    try {
-      // 3. Normalización con la clase Uri de Dart
-      // Esto resuelve barras duplicadas (ej: fotos//secreto.pdf) y limpia la estructura
-      final uri = Uri.parse(rawKey);
+    // Caracteres prohibidos comunes (que S3 recomienda evitar o que causan problemas en FS)
+    // Bloqueamos caracteres de control, >, <, :, ", |, ?, *
+    final invalidChars = RegExp(r'[\x00-\x1F\x7F<>:"|?*]');
+    if (invalidChars.hasMatch(key)) return false;
 
-      // Si la Uri detecta que tiene un esquema (como http://) o un host, la rechazamos
-      // porque una Key de S3 solo debe ser un path relativo (ej: usuarios/123/foto.jpg)
+    try {
+      final uri = Uri.parse(key);
       if (uri.hasScheme || uri.hasAuthority) return false;
 
-      // 4. Verificación de segmentos
-      // Si después de limpiar la ruta, algún segmento se convirtió en '.' o '..', es inválido
       for (var segment in uri.pathSegments) {
         if (segment == '.' || segment == '..') return false;
       }
 
-      // 5. Simulación de ruta física (La prueba definitiva)
-      // Simulamos una raíz falsa y verificamos que el path final siga dentro de ella
+      // Verificación de Path Traversal física
       const fakeRoot = '/safe_root';
-      final fullPath = p.join(fakeRoot, rawKey);
-
-      // canonicalize resuelve cualquier truco raro que haya pasado los filtros anteriores
+      final fullPath = p.join(fakeRoot, key);
       final canonicalRoot = p.canonicalize(fakeRoot);
       final canonicalPath = p.canonicalize(fullPath);
 
-      // Si la ruta final no empieza con la raíz, significa que logró escapar
-      if (!canonicalPath.startsWith(canonicalRoot)) {
-        return false;
-      }
+      if (!canonicalPath.startsWith(canonicalRoot)) return false;
 
-      // Si pasó todos los filtros, la Key es segura
       return true;
     } catch (e) {
-      // Si Uri.parse falla porque la cadena está malformada, la consideramos insegura
       return false;
     }
   }

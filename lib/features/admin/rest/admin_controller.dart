@@ -17,7 +17,7 @@ class AdminController {
   Future<ResponseEntity> uploadFile(RequestEntity request) async {
 
 
-    return ResponseEntity.ok(body: 'Archivo subido correctamente.');
+    return ResponseEntity.ok(body: 'File uploaded successfully.');
   }
 
 }

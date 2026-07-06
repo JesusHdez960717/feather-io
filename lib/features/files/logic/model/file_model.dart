@@ -1,12 +1,12 @@
 import 'package:feather_io/feather.dart';
 
 class FileModel implements Serializable {
-  final String name;
+  final String key;
   final int size;
   final DateTime lastModified;
 
   FileModel({
-    required this.name,
+    required this.key,
     required this.size,
     required this.lastModified,
   });
@@ -14,7 +14,7 @@ class FileModel implements Serializable {
   @override
   Object? toJson() {
     return {
-      'name': name,
+      'key': key,
       'size_bytes': size,
       'last_modified': lastModified.toIso8601String(),
     };

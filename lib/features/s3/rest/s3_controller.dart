@@ -6,16 +6,24 @@ class S3Controller {
   final FileManagementService fileManagement;
 
   Route get routing => Route.parent(
-    path: '/s3',
+    path: '/{bucket}',
     routes: [
       Route.put(
         path: '/{key|.*}',
         handler: uploadFile,
-        filterConfig: FilterConfig([AuthFilter(rules: hasRole('admin'))]),
+        filterConfig: AuthFilter(rules: hasRole('admin')).toFilterConfig(),
       ),
-      Route.get(path: '/list', handler: listFiles),
+      Route.get(
+        path: '/list',
+        handler: listFiles,
+        filterConfig: hasRole('admin').toFilterConfig(),
+      ),
       Route.get(path: '/{key|.*}', key: 's3.get-file', handler: getFile),
-      Route.delete(path: '/{key|.*}', handler: deleteFile),
+      Route.delete(
+        path: '/{key|.*}',
+        handler: deleteFile,
+        filterConfig: hasRole('admin').toFilterConfig(),
+      ),
     ],
   );
 
@@ -23,25 +31,28 @@ class S3Controller {
 
   Future<ResponseEntity> uploadFile(RequestEntity request) async {
     await fileManagement.uploadFile(
-      bucketName: 'bucket',
+      bucketName: request.pathParams['bucket']!,
       key: request.pathParams['key']!,
       binary: request.read(),
     );
 
-    return ResponseEntity.ok(body: 'Archivo subido correctamente.');
+    return ResponseEntity.ok(body: 'File uploaded successfully.');
   }
 
   Future<ResponseEntity> listFiles(RequestEntity request) async {
-    final filesList = await fileManagement.listFiles(bucketName: 'bucket');
+    final filesList = await fileManagement.listFiles(
+      bucketName: request.pathParams['bucket']!,
+    );
 
     // Devolvemos la respuesta como JSON
     return ResponseEntity.ok(body: filesList);
   }
 
   Future<ResponseEntity> getFile(RequestEntity request) async {
-    final key = request.pathParams['key']!;
-
-    final file = await fileManagement.getFile(bucketName: 'bucket', key: key);
+    final file = await fileManagement.getFile(
+      bucketName: request.pathParams['bucket']!,
+      key: request.pathParams['key']!,
+    );
 
     final contentType =
         lookupMimeType(file.path) ?? MediaType.applicationOctetStream;
@@ -56,10 +67,11 @@ class S3Controller {
   }
 
   Future<ResponseEntity> deleteFile(RequestEntity request) async {
-    final key = request.pathParams['key']!;
+    await fileManagement.deleteFile(
+      bucketName: request.pathParams['bucket']!,
+      key: request.pathParams['key']!,
+    );
 
-    await fileManagement.deleteFile(bucketName: 'bucket', key: key);
-
-    return ResponseEntity.ok(body: 'Archivo "$key" eliminado correctamente.');
+    return ResponseEntity.ok(body: 'File deleted successfully.');
   }
 }
