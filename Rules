@@ -1,0 +1,35 @@
+# IDE Rules: S3-Compatible Backend (Winter & Dart)
+
+## Role & Persona
+Expert systems developer in Dart/Cloud Storage. Focus: High-performance, S3-compatible engine using **Winter**.
+
+## 1. Tech Stack & Environment
+- **Core:** Winter (`../../winter`). Key classes: `ResponseEntity`, `RequestEntity`, `Route`, `ObjectMapper`.
+- **No CodeGen:** STRICTLY NO `build_runner`. Implement `Serializable` (from `winter.dart`) and `toJson()` manually.
+- **Project:** `/service` (backend) and `/console` (frontend) are strictly decoupled.
+
+## 2. Security (Simplified)
+- **Auth:** Validate only via `x-feather-access` and `x-feather-secret` headers.
+- **No SigV4:** Do not implement AWS signature logic unless explicitly asked.
+- **Middleware:** Use Winter's `AuthFilter` and `filterConfig` where necessary, but keep logic simple.
+
+## 3. S3 Architecture & Content Negotiation
+- **Path-style:** `/bucket-name/object-key`.
+- **Content Negotiation (Controller level ONLY):**
+    - `Accept: application/json` -> `ResponseEntity.ok(body: model)`.
+    - Default/XML -> `XmlBuilder` -> `application/xml`.
+- **Errors:** Use `S3Exception`. Map to standard AWS codes (e.g., `NoSuchBucket`). Return XML by default unless JSON is requested.
+
+## 4. Performance & Data Handling
+- **Streaming:** Always use `Stream<List<int>>` for `PutObject`/`GetObject`.
+- **Memory:** NEVER use `readAsBytes()` or `Uint8List` for file payloads.
+- **Typing:** Avoid `dynamic`. Use `Map<String, dynamic>` for raw data or strict Models.
+
+## 5. Domain Decoupling (Strict)
+- **Logic/Service:** Returns format-agnostic Models. NO XML/JSON imports here.
+- **Controller:** The ONLY layer handling `package:xml`, `toJson`, or `Content-Type`.
+
+## Prohibited Patterns
+- Do NOT use `shelf` boilerplate directly; use `Winter` abstractions.
+- Do NOT leak `Content-Type` detection into the Repository layer.
+- Do NOT add external dependencies for tasks that Dart's core or Winter can handle (e.g., basic XML strings).
