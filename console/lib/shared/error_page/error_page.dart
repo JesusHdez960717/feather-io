@@ -2,15 +2,15 @@ import 'package:console/app_exporter.dart';
 import 'package:flutter/material.dart';
 
 class ErrorPage extends StatelessWidget {
-  final String? errorMessage;
-  final VoidCallback? onPressed;
+  final String? message;
+  final VoidCallback? onRetry;
   final String? buttonText;
 
   final Color? backgroundColor;
 
   const ErrorPage({
-    this.errorMessage,
-    this.onPressed,
+    this.message,
+    this.onRetry,
     this.buttonText,
     this.backgroundColor,
     super.key,
@@ -33,13 +33,13 @@ class ErrorPage extends StatelessWidget {
                 ),
                 child: SelectionArea(
                   child: Text(
-                    errorMessage ?? 'Error',
+                    message ?? 'Error',
                     style: app.textTheme.titleLarge,
                     textAlign: TextAlign.center,
                   ),
                 ),
               ),
-              if (onPressed != null) ...[
+              if (onRetry != null) ...[
                 (2 * app.dimensions.padding.xxl).gap(),
                 Padding(
                   padding: EdgeInsets.symmetric(
@@ -47,7 +47,7 @@ class ErrorPage extends StatelessWidget {
                   ),
                   child: PrimaryButton.primary(
                     title: buttonText ?? 'Try again',
-                    onPressed: onPressed ?? () {},
+                    onPressed: onRetry ?? () {},
                     w: 260,
                   ),
                 ),

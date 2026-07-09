@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:console/app_exporter.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -35,9 +35,7 @@ class FeaturesInit {
     await AuthInit.init();
     await LanguageInit.init();
 
-    await Future.wait([
-      UsersInit.init(),
-    ]);
+    await Future.wait([BrowserInit.init()]);
 
     //once the auth is initialized, I subscribe to listen to logout changes to reset cubits
     /*app.di.find<AuthCubit>().stream.listen((event) async {
@@ -50,14 +48,20 @@ class FeaturesInit {
   }
 
   static Future<void> _resetCubits() async {
+    app.di.find<AuthCubit>().reset();
+    app.di.find<BrowserCubit>().reset();
   }
 
   static List<BlocProvider> blocProviders = [
     //AUTH
-    //BlocProvider<AuthCubit>(create: (context) => app.di.find<AuthCubit>()),
+    BlocProvider<AuthCubit>(create: (context) => app.di.find<AuthCubit>()),
     //LANGUAGE
     BlocProvider<LanguageCubit>(
       create: (context) => app.di.find<LanguageCubit>(),
+    ),
+    //BROWSER
+    BlocProvider<BrowserCubit>(
+      create: (context) => app.di.find<BrowserCubit>(),
     ),
   ];
 }

@@ -1,4 +1,5 @@
 export 'auth/auth.dart';
+export 'base_client.dart';
 export 'base_screen.dart';
 export 'browser/browser.dart';
 export 'features_init.dart';

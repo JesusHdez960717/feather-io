@@ -2,7 +2,9 @@ import 'package:console/app_exporter.dart';
 import 'package:flutter/material.dart';
 
 class NoDataPage extends StatelessWidget {
-  const NoDataPage({super.key});
+  final String? title;
+
+  const NoDataPage({this.title, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +21,7 @@ class NoDataPage extends StatelessWidget {
                 horizontal: app.dimensions.padding.xxl,
               ),
               child: Text(
-                'No data',
+                title ?? 'No data',
                 style: app.textTheme.titleLarge,
                 textAlign: TextAlign.center,
               ),

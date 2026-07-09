@@ -13,7 +13,7 @@ extension EnvConfigExtension on EnvConfig {
 
 ///use it like this
 class Environment {
-  static String get gatewayUrl => env.SERVICE_URL.startsWith('http')
+  static String get serviceUrl => env.SERVICE_URL.startsWith('http')
       ? env.SERVICE_URL
       : 'https://${env.SERVICE_URL}';
 
