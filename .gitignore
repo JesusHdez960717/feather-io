@@ -17,3 +17,18 @@ service/uploads_local/
 service/uploads_test/
 
 #------- CONSOLE related -------#
+console/.dart_tool/
+console/build/
+console/pubspec.lock
+console/.flutter-plugins-dependencies
+
+#fvm
+console/.fvm/flutter_sdk
+console/.fvm/versions/
+
+console/.idea/
+console/*.iml
+
+#env
+console/web/env.js
+console/.metadata
