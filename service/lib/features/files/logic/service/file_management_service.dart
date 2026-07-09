@@ -88,6 +88,48 @@ class FileManagementService {
     }
   }
 
+  Future<List<BucketModel>> listBuckets() async {
+    final storageDir = Directory(env.storagePath);
+    if (!await storageDir.exists()) {
+      return [];
+    }
+
+    final List<BucketModel> buckets = [];
+    final List<FileSystemEntity> entities = await storageDir.list().toList();
+
+    for (var entity in entities) {
+      if (entity is Directory) {
+        final bucketName = p.basename(entity.path);
+        if (!isValidBucketName(bucketName)) continue;
+
+        final stat = await entity.stat();
+
+        // Calculamos stats del bucket
+        int totalSize = 0;
+        int objectCount = 0;
+
+        final bucketEntities = await entity.list(recursive: true).toList();
+        for (var bucketEntity in bucketEntities) {
+          if (bucketEntity is File) {
+            objectCount++;
+            totalSize += await bucketEntity.length();
+          }
+        }
+
+        buckets.add(
+          BucketModel(
+            name: bucketName,
+            objectCount: objectCount,
+            size: totalSize,
+            creationDate: stat.changed, // Usamos la fecha de cambio/creación del directorio
+          ),
+        );
+      }
+    }
+
+    return buckets;
+  }
+
   Future<List<FileModel>> listFiles({required String bucketName}) async {
     if (!isValidBucketName(bucketName)) {
       throw BadRequestException(body: 'El bucket $bucketName no es valido');
