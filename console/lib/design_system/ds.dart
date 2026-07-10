@@ -8,6 +8,7 @@ export 'customs/custom_appbar.dart';
 export 'customs/grid_dot_painter.dart';
 export 'dialogs/confirm_dialog.dart';
 export 'dimensions.dart';
+export 'table/table_paged_footer.dart';
 export 'templates/dialog_template.dart';
 export 'templates/form_component_template.dart';
 export 'text_input/em_dropdown.dart';
