@@ -109,6 +109,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'English'**
   String get en;
+
+  /// No description provided for @section_table.
+  ///
+  /// In en, this message translates to:
+  /// **'--------- TABLE ---------'**
+  String get section_table;
+
+  /// No description provided for @rowsPerPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Rows per page:'**
+  String get rowsPerPage;
+
+  /// No description provided for @pageXofY.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {x} de {y}'**
+  String pageXofY(int x, int y);
 }
 
 class _AppLocalizationsDelegate

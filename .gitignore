@@ -1,3 +1,6 @@
+#------- GENERAL -------#
+uploads_local/
+
 #------- SERVICE related -------#
 # Files and directories created by pub
 service/.dart_tool/

@@ -7,8 +7,10 @@ class AppIcons {
   final ActionsIcons actions = const ActionsIcons();
   final LanguageIcons language = const LanguageIcons();
 
-  SvgAsset get admin =>
-      const SvgAsset('assets/icons/admin.svg', defaultColor: Colors.white);
+  SvgAsset get admin => const SvgAsset(
+    'assets/icons/actions/delete.svg',
+    defaultColor: Colors.white,
+  );
 }
 
 class ActionsIcons {

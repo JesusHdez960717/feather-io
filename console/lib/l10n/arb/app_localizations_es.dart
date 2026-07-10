@@ -13,4 +13,15 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get en => 'Inglés';
+
+  @override
+  String get section_table => '--------- TABLE ---------';
+
+  @override
+  String get rowsPerPage => 'Filas por página:';
+
+  @override
+  String pageXofY(int x, int y) {
+    return 'Página $x de $y';
+  }
 }

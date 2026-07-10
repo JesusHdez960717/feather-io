@@ -1,5 +1,18 @@
 {
   "@@locale": "en",
   "es": "Spanish",
-  "en": "English"
+  "en": "English",
+  "section_table": "--------- TABLE ---------",
+  "rowsPerPage": "Rows per page:",
+  "pageXofY": "Page {x} de {y}",
+  "@pageXofY": {
+    "placeholders": {
+      "x": {
+        "type": "int"
+      },
+      "y": {
+        "type": "int"
+      }
+    }
+  }
 }
