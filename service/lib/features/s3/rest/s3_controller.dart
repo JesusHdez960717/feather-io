@@ -1,56 +1,51 @@
-import 'package:service/features/features.dart';
 import 'package:mime/mime.dart';
+import 'package:service/features/features.dart';
 import 'package:winter/winter.dart';
 
 class S3Controller {
   final FileManagementService fileManagement;
 
   Route get routing => Route.parent(
+    path: '/',
+    routes: [
+      Route.get(
         path: '/',
+        handler: listBuckets,
+        filterConfig: hasRole('admin').toFilterConfig(),
+      ),
+      Route.get(
+        path: '/{bucket}',
+        handler: listFiles,
+        filterConfig: hasRole('admin').toFilterConfig(),
         routes: [
-          Route.get(
-            path: '/',
-            handler: listBuckets,
+          Route.put(
+            path: '/{key|.*}',
+            handler: uploadFile,
+            filterConfig: AuthFilter(rules: hasRole('admin')).toFilterConfig(),
+          ),
+          Route.get(path: '/{key|.*}', key: 's3.get-file', handler: getFile),
+          Route.delete(
+            path: '/{key|.*}',
+            handler: deleteFile,
             filterConfig: hasRole('admin').toFilterConfig(),
           ),
-          Route.parent(
-            path: '/{bucket}',
-            routes: [
-              Route.put(
-                path: '/{key|.*}',
-                handler: uploadFile,
-                filterConfig:
-                    AuthFilter(rules: hasRole('admin')).toFilterConfig(),
-              ),
-              Route.get(
-                path: '/list',
-                handler: listFiles,
-                filterConfig: hasRole('admin').toFilterConfig(),
-              ),
-              Route.get(path: '/{key|.*}', key: 's3.get-file', handler: getFile),
-              Route.delete(
-                path: '/{key|.*}',
-                handler: deleteFile,
-                filterConfig: hasRole('admin').toFilterConfig(),
-              ),
-            ],
-          ),
         ],
-      );
+      ),
+    ],
+  );
 
   S3Controller({required this.fileManagement});
 
   Future<ResponseEntity> listBuckets(RequestEntity request) async {
     final buckets = await fileManagement.listBuckets();
 
-    if (request.headers[HttpHeaders.accept]?.contains('application/json') ==
-        true) {
+    if (request.headers['accept']?.contains('application/json') == true) {
       return ResponseEntity.ok(body: buckets);
     } else {
       final xmlBody = _mapBucketsToXml(buckets);
       return ResponseEntity.ok(
         body: xmlBody,
-        headers: {HttpHeaders.contentType: 'application/xml'},
+        headers: {'content-type': 'application/xml'},
       );
     }
   }
@@ -66,18 +61,23 @@ class S3Controller {
   }
 
   Future<ResponseEntity> listFiles(RequestEntity request) async {
-    final filesList = await fileManagement.listFiles(
-      bucketName: request.pathParams['bucket']!,
+    final bucketName = request.pathParams['bucket']!;
+    final prefix = request.queryParams['prefix'];
+    final delimiter = request.queryParams['delimiter'];
+
+    final result = await fileManagement.listFiles(
+      bucketName: bucketName,
+      prefix: prefix,
+      delimiter: delimiter,
     );
 
-    if (request.headers[HttpHeaders.accept]?.contains('application/json') ==
-        true) {
-      return ResponseEntity.ok(body: filesList);
+    if (request.headers['accept']?.contains('application/json') == true) {
+      return ResponseEntity.ok(body: result);
     } else {
-      final xmlBody = _mapFilesToXml(filesList);
+      final xmlBody = _mapListObjectsToXml(result);
       return ResponseEntity.ok(
         body: xmlBody,
-        headers: {HttpHeaders.contentType: 'application/xml'},
+        headers: {'content-type': 'application/xml'},
       );
     }
   }
@@ -94,8 +94,8 @@ class S3Controller {
     return ResponseEntity.ok(
       body: file.openRead(),
       headers: {
-        HttpHeaders.contentType: contentType,
-        HttpHeaders.contentLength: (await file.length()).toString(),
+        'content-type': contentType,
+        'content-length': (await file.length()).toString(),
       },
     );
   }
@@ -113,13 +113,15 @@ class S3Controller {
     final buffer = StringBuffer();
     buffer.writeln('<?xml version="1.0" encoding="UTF-8"?>');
     buffer.writeln(
-        '<ListAllMyBucketsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">');
+      '<ListAllMyBucketsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">',
+    );
     buffer.writeln('  <Buckets>');
     for (final bucket in buckets) {
       buffer.writeln('    <Bucket>');
       buffer.writeln('      <Name>${bucket.name}</Name>');
       buffer.writeln(
-          '      <CreationDate>${bucket.creationDate.toIso8601String()}</CreationDate>');
+        '      <CreationDate>${bucket.creationDate.toIso8601String()}</CreationDate>',
+      );
       buffer.writeln('      <ObjectCount>${bucket.objectCount}</ObjectCount>');
       buffer.writeln('      <Size>${bucket.size}</Size>');
       buffer.writeln('    </Bucket>');
@@ -129,19 +131,41 @@ class S3Controller {
     return buffer.toString();
   }
 
-  String _mapFilesToXml(List<FileModel> files) {
+  String _mapListObjectsToXml(ListObjectsResponse response) {
     final buffer = StringBuffer();
     buffer.writeln('<?xml version="1.0" encoding="UTF-8"?>');
     buffer.writeln(
-        '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">');
-    for (final file in files) {
+      '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">',
+    );
+    buffer.writeln('  <Name>${response.bucketName}</Name>');
+    if (response.prefix != null) {
+      buffer.writeln('  <Prefix>${response.prefix}</Prefix>');
+    }
+    if (response.delimiter != null) {
+      buffer.writeln('  <Delimiter>${response.delimiter}</Delimiter>');
+    }
+    buffer.writeln('  <IsTruncated>false</IsTruncated>');
+
+    for (final file in response.contents) {
       buffer.writeln('  <Contents>');
       buffer.writeln('    <Key>${file.key}</Key>');
       buffer.writeln(
-          '    <LastModified>${file.lastModified.toIso8601String()}</LastModified>');
+        '    <LastModified>${file.lastModified.toIso8601String()}</LastModified>',
+      );
+      buffer.writeln(
+        '    <ETag>&quot;d41d8cd98f00b204e9800998ecf8427e&quot;</ETag>',
+      );
       buffer.writeln('    <Size>${file.size}</Size>');
+      buffer.writeln('    <StorageClass>STANDARD</StorageClass>');
       buffer.writeln('  </Contents>');
     }
+
+    for (final prefix in response.commonPrefixes) {
+      buffer.writeln('  <CommonPrefixes>');
+      buffer.writeln('    <Prefix>$prefix</Prefix>');
+      buffer.writeln('  </CommonPrefixes>');
+    }
+
     buffer.writeln('</ListBucketResult>');
     return buffer.toString();
   }

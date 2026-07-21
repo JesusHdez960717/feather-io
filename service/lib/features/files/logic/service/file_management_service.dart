@@ -130,7 +130,11 @@ class FileManagementService {
     return buckets;
   }
 
-  Future<List<FileModel>> listFiles({required String bucketName}) async {
+  Future<ListObjectsResponse> listFiles({
+    required String bucketName,
+    String? prefix,
+    String? delimiter,
+  }) async {
     if (!isValidBucketName(bucketName)) {
       throw BadRequestException(body: 'El bucket $bucketName no es valido');
     }
@@ -142,25 +146,39 @@ class FileManagementService {
     }
 
     // Listamos los archivos del directorio recursivamente para soportar subcarpetas
-    final List<FileSystemEntity> entities = await dir
-        .list(recursive: true)
-        .toList();
+    final List<FileSystemEntity> entities =
+        await dir.list(recursive: true).toList();
 
-    // Filtramos para obtener solo ARCHIVOS (ignorando subcarpetas si las hubiera)
     final List<FileModel> filesList = [];
+    final Set<String> commonPrefixes = {};
+
+    final normalizedPrefix = prefix ?? '';
 
     for (var entity in entities) {
       if (entity is File) {
-        final stat = await entity.stat();
-
         // Obtenemos la ruta relativa al bucket para usarla como key (ej: files/test/123.jpg)
-        final relativePath = p
-            .relative(entity.path, from: bucketPath)
-            .replaceAll('\\', '/');
+        final key = p.relative(entity.path, from: bucketPath).replaceAll('\\', '/');
 
+        // Filtrar por prefijo
+        if (!key.startsWith(normalizedPrefix)) continue;
+
+        if (delimiter != null && delimiter.isNotEmpty) {
+          // Si hay delimitador, buscamos si hay uno después del prefijo
+          final remainingKey = key.substring(normalizedPrefix.length);
+          final delimiterIndex = remainingKey.indexOf(delimiter);
+
+          if (delimiterIndex != -1) {
+            // Es una "carpeta" (Common Prefix)
+            final commonPrefix = normalizedPrefix + remainingKey.substring(0, delimiterIndex + 1);
+            commonPrefixes.add(commonPrefix);
+            continue;
+          }
+        }
+
+        final stat = await entity.stat();
         filesList.add(
           FileModel(
-            key: relativePath,
+            key: key,
             size: stat.size,
             lastModified: stat.modified,
           ),
@@ -168,7 +186,13 @@ class FileManagementService {
       }
     }
 
-    return filesList;
+    return ListObjectsResponse(
+      bucketName: bucketName,
+      prefix: prefix,
+      delimiter: delimiter,
+      contents: filesList,
+      commonPrefixes: commonPrefixes.toList()..sort(),
+    );
   }
 
   Future<File> getFile({
