@@ -1,6 +1,7 @@
 export 'assets/app_assets.dart';
 export 'assets/app_icons.dart';
 export 'buttons/primary_button.dart';
+export 'buttons/view_type_selector.dart';
 export 'colors/app_colors.dart';
 export 'colors/darken_extension.dart';
 export 'colors/theme_adapter.dart';
