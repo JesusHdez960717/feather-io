@@ -8,10 +8,11 @@ class FormComponentTemplate extends StatelessWidget {
   final Widget child;
   final double? height;
   final double? width;
-  final BorderRadiusGeometry? borderRadius;
   final Widget? prefix;
   final Widget? suffix;
+  final BorderRadiusGeometry? borderRadius;
   final Color? borderColor;
+  final double? borderWidth;
 
   const FormComponentTemplate({
     required this.child,
@@ -19,10 +20,11 @@ class FormComponentTemplate extends StatelessWidget {
     this.errorText,
     this.height,
     this.width,
-    this.borderRadius,
     this.prefix,
     this.suffix,
+    this.borderRadius,
     this.borderColor,
+    this.borderWidth,
     super.key,
   });
 
@@ -31,7 +33,7 @@ class FormComponentTemplate extends StatelessWidget {
     Color safeBackgroundColor = app.colors.primary.backgroundForm;
 
     Color safeBorderColor = borderColor ?? app.colors.neutral.grey2;
-    double safeBorderWidth = app.dimensions.border.width.def;
+    double safeBorderWidth = borderWidth ?? app.dimensions.border.width.s;
 
     TextStyle labelTextStyle = app.textTheme.labelMedium!.copyWith(
       color: safeBorderColor,

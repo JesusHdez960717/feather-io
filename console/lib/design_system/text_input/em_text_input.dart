@@ -85,12 +85,13 @@ class AppTextInput extends StatefulWidget {
   final Widget? prefix;
   final double? height;
   final EdgeInsetsGeometry? contentPadding;
-  final Color? borderColor;
 
   //ui related input
   final Color? hintColor;
 
+  final Color? borderColor;
   final BorderRadiusGeometry? borderRadius;
+  final double? borderWidth;
 
   //password related
   final bool? obscureText;
@@ -113,9 +114,10 @@ class AppTextInput extends StatefulWidget {
     this.height,
     //ui
     this.hintColor,
-    this.borderRadius,
     this.contentPadding,
+    this.borderRadius,
     this.borderColor,
+    this.borderWidth,
     //password related
     this.obscureText,
     super.key,
@@ -172,6 +174,7 @@ class _AppTextInputState extends State<AppTextInput> {
       label: widget.label,
       errorText: finalErrorText,
       borderRadius: widget.borderRadius,
+      borderWidth: widget.borderWidth,
       child: TextFormField(
         onChanged: widget.onChange,
         textCapitalization: safeTextCapitalization,
