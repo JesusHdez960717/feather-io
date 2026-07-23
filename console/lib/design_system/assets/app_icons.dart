@@ -6,11 +6,33 @@ class AppIcons {
 
   final ActionsIcons actions = const ActionsIcons();
   final LanguageIcons language = const LanguageIcons();
+  final ViewTypeIcons viewType = const ViewTypeIcons();
+  final StorageIcons storage = const StorageIcons();
 
   SvgAsset get admin => const SvgAsset(
     'assets/icons/actions/delete.svg',
     defaultColor: Colors.white,
   );
+}
+
+class StorageIcons {
+  const StorageIcons();
+
+  static const String _storage = 'assets/icons/storage';
+
+  SvgAsset get bucket => const SvgAsset('$_storage/bucket.svg');
+  SvgAsset get object => const SvgAsset('$_storage/object.svg');
+  SvgAsset get storage => const SvgAsset('$_storage/storage.svg');
+}
+
+class ViewTypeIcons {
+  const ViewTypeIcons();
+
+  static const String _viewType = 'assets/icons/view_type';
+
+  SvgAsset get list => const SvgAsset('$_viewType/list.svg');
+
+  SvgAsset get grid => const SvgAsset('$_viewType/grid.svg');
 }
 
 class ActionsIcons {

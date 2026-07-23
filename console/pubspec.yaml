@@ -72,6 +72,8 @@ flutter:
     - assets/icons/
     - assets/icons/languages/
     - assets/icons/actions/
+    - assets/icons/view_type/
+    - assets/icons/storage/
   fonts:
     - family: DMSans
       fonts:
