@@ -128,6 +128,8 @@ class AppGlobal {
 
   DateFormatter dateFormatter = DateFormatter();
 
+  StorageFormatter storageFormatter = StorageFormatter();
+
   SnackBarAdapter snack = SnackBarAdapter();
 
   DialogHelper dialog = DialogHelper();
