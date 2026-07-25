@@ -6,5 +6,4 @@ export 'logic/model/browser_object_model.dart';
 export 'logic/model/bucket_model.dart';
 export 'view/browser_screen.dart';
 export 'view/bucket/buckets_subscreen.dart';
-export 'view/bucket/buckets_table_datasource.dart';
-export 'view/bucket/buckets_grid_datasource.dart';
+export 'view/object/objects_subscreen.dart';

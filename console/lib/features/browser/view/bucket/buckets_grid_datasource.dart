@@ -156,7 +156,7 @@ class _BucketGridItem extends StatelessWidget {
                 ),
                 _buildInfoItem(
                   label: 'Size',
-                  value: '${(bucket.sizeBytes / 1024).toStringAsFixed(2)} KB',
+                  value: app.storageFormatter.formatSize(bucket.sizeBytes),
                 ),
               ],
             ),

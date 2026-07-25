@@ -1,5 +1,4 @@
 import 'package:console/app_exporter.dart';
-import 'package:console/features/browser/view/objects_data_source.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -83,7 +82,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
                 top: app.dimensions.padding.l,
               ),
               child: isBucketSelected
-                  ? ObjectsDataGrid(
+                  ? ObjectsSubscreen(
                       state: state,
                       onNavigate: (prefix) => cubit.listObjects(prefix: prefix),
                       onRefresh: () => cubit.listObjects(prefix: state.prefix),
@@ -102,9 +101,8 @@ class _BrowserScreenState extends State<BrowserScreen> {
                           cubit.listObjects(prefix: newPrefix);
                         }
                       },
-                      onSelected: (obj) {
-                        // TODO: Implement file selection
-                      },
+                      onSelected: (obj) {},
+                      onExit: () => cubit.reset(),
                       onViewTypeChanged: (type) {
                         cubit.changeViewType(type);
                         BrowserScreen.navigator.updateViewType(type);

@@ -3,6 +3,9 @@ import 'dart:ui';
 import 'package:console/app_exporter.dart';
 import 'package:flutter/material.dart';
 
+import 'buckets_grid_datasource.dart';
+import 'buckets_table_datasource.dart';
+
 class BucketsSubScreen extends StatefulWidget {
   final BrowserSearchState state;
   final VoidCallback onRefresh;
@@ -176,15 +179,6 @@ class _BucketsSubScreenState extends State<BucketsSubScreen> {
   }
 
   Widget _buildSummaryCards() {
-    String formatSize(int bytes) {
-      if (bytes < 1024) return '$bytes B';
-      if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(2)} KB';
-      if (bytes < 1024 * 1024 * 1024) {
-        return '${(bytes / (1024 * 1024)).toStringAsFixed(2)} MB';
-      }
-      return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
-    }
-
     Widget buildSummaryCard({
       required String title,
       required String value,
@@ -263,7 +257,7 @@ class _BucketsSubScreenState extends State<BucketsSubScreen> {
         app.dimensions.padding.l.gap(),
         buildSummaryCard(
           title: 'Total Storage',
-          value: formatSize(totalSizeBytes),
+          value: app.storageFormatter.formatSize(totalSizeBytes),
           icon: app.assets.icons.storage.storage,
         ),
       ],

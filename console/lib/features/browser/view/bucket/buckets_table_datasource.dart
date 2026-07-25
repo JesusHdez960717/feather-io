@@ -171,7 +171,7 @@ class _BucketsDataSource extends DataGridSource {
         DataGridCell<int>(columnName: 'objects', value: bucket.objectCount),
         DataGridCell<String>(
           columnName: 'size',
-          value: '${(bucket.sizeBytes / 1024).toStringAsFixed(2)} KB',
+          value: app.storageFormatter.formatSize(bucket.sizeBytes),
         ),
         DataGridCell<String>(
           columnName: 'created_at',
