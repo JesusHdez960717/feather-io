@@ -11,11 +11,16 @@ class BrowserCubit extends Cubit<BrowserState>
   final ViewType? initialViewType;
 
   BrowserCubit({required this.auth, required this.repo, this.initialViewType})
-    : super(const BrowserInitialState());
+    : super(BrowserInitialState(viewType: initialViewType));
 
   void reset() {
+    final viewType = state is BrowserSearchState
+        ? (state as BrowserSearchState).viewType
+        : (state is BrowserInitialState
+              ? (state as BrowserInitialState).viewType
+              : null);
     _allBuckets.clear();
-    emit(const BrowserInitialState());
+    emit(BrowserInitialState(viewType: viewType));
   }
 
   Future<void> refresh() async {
@@ -24,43 +29,29 @@ class BrowserCubit extends Cubit<BrowserState>
   }
 
   Future<void> init() async {
+    final currentViewType = state is BrowserSearchState
+        ? (state as BrowserSearchState).viewType
+        : (state is BrowserInitialState
+              ? (state as BrowserInitialState).viewType
+              : null);
+
+    final viewType = currentViewType ?? initialViewType ?? ViewType.list;
+
     try {
-      emit(
-        BrowserSearchingState(
-          buckets: [],
-          viewType:
-              initialViewType ??
-              (state is BrowserSearchState
-                  ? (state as BrowserSearchState).viewType
-                  : ViewType.list),
-        ),
-      );
+      emit(BrowserSearchingState(buckets: [], viewType: viewType));
 
       _allBuckets = await repo.listBuckets(
         access: auth.access,
         secret: auth.secret,
       );
 
-      emit(
-        BrowserSearchOkState(
-          buckets: _allBuckets,
-          viewType:
-              initialViewType ??
-              (state is BrowserSearchState
-                  ? (state as BrowserSearchState).viewType
-                  : ViewType.list),
-        ),
-      );
+      emit(BrowserSearchOkState(buckets: _allBuckets, viewType: viewType));
     } catch (exc) {
       emit(
         BrowserSearchErrorState(
           ExceptionConverter.parse(exc),
           buckets: _allBuckets,
-          viewType:
-              initialViewType ??
-              (state is BrowserSearchState
-                  ? (state as BrowserSearchState).viewType
-                  : ViewType.list),
+          viewType: viewType,
         ),
       );
     }
@@ -71,6 +62,8 @@ class BrowserCubit extends Cubit<BrowserState>
       final currentState = state as BrowserSearchState;
       if (currentState.viewType == viewType) return;
       emit(currentState.copyWith(viewType: viewType));
+    } else if (state is BrowserInitialState) {
+      emit(BrowserInitialState(viewType: viewType));
     }
   }
 
@@ -137,7 +130,9 @@ abstract class BrowserState {
 }
 
 class BrowserInitialState extends BrowserState {
-  const BrowserInitialState();
+  final ViewType? viewType;
+
+  const BrowserInitialState({this.viewType});
 }
 
 //------------------------- SEARCH -------------------------\\
