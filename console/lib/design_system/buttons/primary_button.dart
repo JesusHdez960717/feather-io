@@ -51,12 +51,14 @@ class PrimaryButton extends StatelessWidget {
   }
 
   static Widget svgIcon({
-    required VoidCallback onPressed,
     required SvgAsset icon,
+    VoidCallback? onPressed,
     String? tooltipMessage,
     Color? iconColor,
     Color? backgroundColor,
+    Color? disabledBackgroundColor,
     double? buttonSize,
+    double? iconSize,
     BorderRadius? borderRadius,
   }) {
     Widget build() {
@@ -65,9 +67,10 @@ class PrimaryButton extends StatelessWidget {
         color:
             backgroundColor ??
             app.colors.primary.background3.withValues(alpha: 0.75),
+        disabledColor: disabledBackgroundColor ?? backgroundColor,
         title: '',
         icon: icon.build(
-          size: 16,
+          size: iconSize ?? (buttonSize != null ? (buttonSize * 0.5) : 16),
           color: iconColor ?? app.colors.neutral.grey2,
         ),
         h: buttonSize ?? 36,
@@ -84,8 +87,9 @@ class PrimaryButton extends StatelessWidget {
         : build();
   }
 
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final Color color;
+  final Color? disabledColor;
   final Widget? icon;
   final String title;
   final TextStyle? titleStyle;
@@ -94,9 +98,10 @@ class PrimaryButton extends StatelessWidget {
   final BorderRadius? borderRadius;
 
   const PrimaryButton({
-    required this.onPressed,
     required this.color,
     required this.title,
+    this.onPressed,
+    this.disabledColor,
     this.titleStyle,
     this.icon,
     this.w,
@@ -115,6 +120,7 @@ class PrimaryButton extends StatelessWidget {
         style: FilledButton.styleFrom(
           padding: EdgeInsets.zero,
           backgroundColor: color,
+          disabledBackgroundColor: disabledColor,
           shape: RoundedRectangleBorder(
             borderRadius: borderRadius ?? app.dimensions.border.borderRadius.xs,
           ),
