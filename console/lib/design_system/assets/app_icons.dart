@@ -8,11 +8,24 @@ class AppIcons {
   final LanguageIcons language = const LanguageIcons();
   final ViewTypeIcons viewType = const ViewTypeIcons();
   final StorageIcons storage = const StorageIcons();
+  final NavigationIcons navigation = const NavigationIcons();
 
   SvgAsset get admin => const SvgAsset(
     'assets/icons/actions/delete.svg',
     defaultColor: Colors.white,
   );
+}
+
+class NavigationIcons {
+  const NavigationIcons();
+
+  static const String _navigation = 'assets/icons/navigation';
+
+  SvgAsset get left => const SvgAsset('$_navigation/left.svg');
+
+  SvgAsset get right => const SvgAsset('$_navigation/right.svg');
+
+  SvgAsset get next => const SvgAsset('$_navigation/next.svg');
 }
 
 class StorageIcons {
@@ -21,7 +34,9 @@ class StorageIcons {
   static const String _storage = 'assets/icons/storage';
 
   SvgAsset get bucket => const SvgAsset('$_storage/bucket.svg');
+
   SvgAsset get object => const SvgAsset('$_storage/object.svg');
+
   SvgAsset get storage => const SvgAsset('$_storage/storage.svg');
 }
 
@@ -49,6 +64,8 @@ class ActionsIcons {
   SvgAsset get delete => const SvgAsset('$_actions/delete.svg');
 
   SvgAsset get edit => const SvgAsset('$_actions/edit.svg');
+
+  SvgAsset get filter => const SvgAsset('$_actions/filter.svg');
 
   SvgAsset get logout => const SvgAsset('$_actions/logout.svg');
 

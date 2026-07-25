@@ -70,10 +70,11 @@ flutter:
 
   assets:
     - assets/icons/
-    - assets/icons/languages/
     - assets/icons/actions/
-    - assets/icons/view_type/
+    - assets/icons/languages/
+    - assets/icons/navigation/
     - assets/icons/storage/
+    - assets/icons/view_type/
   fonts:
     - family: DMSans
       fonts:
