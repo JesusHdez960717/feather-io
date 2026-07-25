@@ -10,7 +10,22 @@ class BrowserScreenNavigator {
   String get path => '/browser';
 
   Widget builder(BuildContext context, GoRouterState state) {
-    return const BrowserScreen();
+    final viewTypeStr = state.uri.queryParameters['view_type'];
+    final initialViewType = ViewType.fromName(viewTypeStr);
+
+    return BlocProvider(
+      create: (context) => BrowserCubit(
+        auth: app.di.find(),
+        repo: app.di.find(),
+        initialViewType: initialViewType,
+      ),
+      lazy: false,
+      child: const BrowserScreen(),
+    );
+  }
+
+  void updateViewType(ViewType viewType) {
+    app.navigator.go(name, queryParameters: {'view_type': viewType.name});
   }
 
   void neglectGo() {
@@ -53,9 +68,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
           final isBucketSelected = state.selectedBucket != null;
           return Scaffold(
             appBar: CustomAppBar.build(
-              title: isBucketSelected
-                  ? 'Bucket: ${state.selectedBucket!.name}'
-                  : 'Buckets',
+              title: 'Browser',
               leading: isBucketSelected
                   ? IconButton(
                       icon: const Icon(Icons.arrow_back),
@@ -92,6 +105,10 @@ class _BrowserScreenState extends State<BrowserScreen> {
                       onSelected: (obj) {
                         // TODO: Implement file selection
                       },
+                      onViewTypeChanged: (type) {
+                        cubit.changeViewType(type);
+                        BrowserScreen.navigator.updateViewType(type);
+                      },
                     )
                   : BucketsSubScreen(
                       state: state,
@@ -99,6 +116,10 @@ class _BrowserScreenState extends State<BrowserScreen> {
                       onRetry: () => cubit.init(),
                       onSelected: (bucket) =>
                           cubit.selectBucket(bucket: bucket),
+                      onViewTypeChanged: (type) {
+                        cubit.changeViewType(type);
+                        BrowserScreen.navigator.updateViewType(type);
+                      },
                     ),
             ),
           );

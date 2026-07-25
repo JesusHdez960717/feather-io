@@ -8,7 +8,9 @@ class BrowserCubit extends Cubit<BrowserState>
 
   List<BucketModel> _allBuckets = [];
 
-  BrowserCubit({required this.auth, required this.repo})
+  final ViewType? initialViewType;
+
+  BrowserCubit({required this.auth, required this.repo, this.initialViewType})
     : super(const BrowserInitialState());
 
   void reset() {
@@ -25,20 +27,28 @@ class BrowserCubit extends Cubit<BrowserState>
     try {
       emit(
         BrowserSearchingState(
-          buckets: _allBuckets,
+          buckets: [],
+          viewType:
+              initialViewType ??
+              (state is BrowserSearchState
+                  ? (state as BrowserSearchState).viewType
+                  : ViewType.list),
         ),
       );
 
-      if (_allBuckets.isEmpty) {
-        _allBuckets = await repo.listBuckets(
-          access: auth.access,
-          secret: auth.secret,
-        );
-      }
+      _allBuckets = await repo.listBuckets(
+        access: auth.access,
+        secret: auth.secret,
+      );
 
       emit(
         BrowserSearchOkState(
           buckets: _allBuckets,
+          viewType:
+              initialViewType ??
+              (state is BrowserSearchState
+                  ? (state as BrowserSearchState).viewType
+                  : ViewType.list),
         ),
       );
     } catch (exc) {
@@ -46,8 +56,21 @@ class BrowserCubit extends Cubit<BrowserState>
         BrowserSearchErrorState(
           ExceptionConverter.parse(exc),
           buckets: _allBuckets,
+          viewType:
+              initialViewType ??
+              (state is BrowserSearchState
+                  ? (state as BrowserSearchState).viewType
+                  : ViewType.list),
         ),
       );
+    }
+  }
+
+  void changeViewType(ViewType viewType) {
+    if (state is BrowserSearchState) {
+      final currentState = state as BrowserSearchState;
+      if (currentState.viewType == viewType) return;
+      emit(currentState.copyWith(viewType: viewType));
     }
   }
 
@@ -58,15 +81,15 @@ class BrowserCubit extends Cubit<BrowserState>
     await listObjects(bucket: bucket, prefix: prefix);
   }
 
-  Future<void> listObjects({
-    BucketModel? bucket,
-    String? prefix,
-  }) async {
-    final targetBucket = bucket ??
+  Future<void> listObjects({BucketModel? bucket, String? prefix}) async {
+    final targetBucket =
+        bucket ??
         (state is BrowserSearchState
             ? (state as BrowserSearchState).selectedBucket
             : null);
     if (targetBucket == null) return;
+
+    final viewType = (state as BrowserSearchState).viewType;
 
     try {
       emit(
@@ -74,6 +97,7 @@ class BrowserCubit extends Cubit<BrowserState>
           buckets: _allBuckets,
           selectedBucket: targetBucket,
           prefix: prefix ?? '',
+          viewType: viewType,
         ),
       );
 
@@ -91,6 +115,7 @@ class BrowserCubit extends Cubit<BrowserState>
           selectedBucket: targetBucket,
           prefix: prefix ?? '',
           objects: objects,
+          viewType: viewType,
         ),
       );
     } catch (exc) {
@@ -100,6 +125,7 @@ class BrowserCubit extends Cubit<BrowserState>
           buckets: _allBuckets,
           selectedBucket: targetBucket,
           prefix: prefix ?? '',
+          viewType: viewType,
         ),
       );
     }
@@ -122,12 +148,22 @@ abstract class BrowserSearchState extends BrowserState {
   final String prefix;
   final String delimiter = '/';
   final ListObjectsModel? objects;
+  final ViewType viewType;
 
   BrowserSearchState({
     required this.buckets,
     this.selectedBucket,
     this.prefix = '',
     this.objects,
+    this.viewType = ViewType.list,
+  });
+
+  BrowserSearchState copyWith({
+    List<BucketModel>? buckets,
+    BucketModel? selectedBucket,
+    String? prefix,
+    ListObjectsModel? objects,
+    ViewType? viewType,
   });
 }
 
@@ -137,7 +173,25 @@ class BrowserSearchingState extends BrowserSearchState {
     super.selectedBucket,
     super.prefix = '',
     super.objects,
+    super.viewType,
   });
+
+  @override
+  BrowserSearchingState copyWith({
+    List<BucketModel>? buckets,
+    BucketModel? selectedBucket,
+    String? prefix,
+    ListObjectsModel? objects,
+    ViewType? viewType,
+  }) {
+    return BrowserSearchingState(
+      buckets: buckets ?? this.buckets,
+      selectedBucket: selectedBucket ?? this.selectedBucket,
+      prefix: prefix ?? this.prefix,
+      objects: objects ?? this.objects,
+      viewType: viewType ?? this.viewType,
+    );
+  }
 }
 
 class BrowserSearchOkState extends BrowserSearchState {
@@ -146,7 +200,25 @@ class BrowserSearchOkState extends BrowserSearchState {
     super.selectedBucket,
     super.prefix = '',
     super.objects,
+    super.viewType,
   });
+
+  @override
+  BrowserSearchOkState copyWith({
+    List<BucketModel>? buckets,
+    BucketModel? selectedBucket,
+    String? prefix,
+    ListObjectsModel? objects,
+    ViewType? viewType,
+  }) {
+    return BrowserSearchOkState(
+      buckets: buckets ?? this.buckets,
+      selectedBucket: selectedBucket ?? this.selectedBucket,
+      prefix: prefix ?? this.prefix,
+      objects: objects ?? this.objects,
+      viewType: viewType ?? this.viewType,
+    );
+  }
 }
 
 class BrowserSearchErrorState extends BrowserSearchState {
@@ -158,5 +230,25 @@ class BrowserSearchErrorState extends BrowserSearchState {
     super.selectedBucket,
     super.prefix = '',
     super.objects,
+    super.viewType,
   });
+
+  @override
+  BrowserSearchErrorState copyWith({
+    List<BucketModel>? buckets,
+    BucketModel? selectedBucket,
+    String? prefix,
+    ListObjectsModel? objects,
+    ViewType? viewType,
+    GlobalException? exception,
+  }) {
+    return BrowserSearchErrorState(
+      exception ?? this.exception,
+      buckets: buckets ?? this.buckets,
+      selectedBucket: selectedBucket ?? this.selectedBucket,
+      prefix: prefix ?? this.prefix,
+      objects: objects ?? this.objects,
+      viewType: viewType ?? this.viewType,
+    );
+  }
 }

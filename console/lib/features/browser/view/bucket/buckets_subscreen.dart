@@ -8,12 +8,14 @@ class BucketsSubScreen extends StatefulWidget {
   final VoidCallback onRefresh;
   final VoidCallback onRetry;
   final Function(BucketModel) onSelected;
+  final Function(ViewType) onViewTypeChanged;
 
   const BucketsSubScreen({
     required this.state,
     required this.onRefresh,
     required this.onRetry,
     required this.onSelected,
+    required this.onViewTypeChanged,
     super.key,
   });
 
@@ -24,7 +26,6 @@ class BucketsSubScreen extends StatefulWidget {
 class _BucketsSubScreenState extends State<BucketsSubScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<BucketModel> _filteredBuckets = [];
-  ViewType _viewType = ViewType.list;
 
   @override
   void initState() {
@@ -80,7 +81,7 @@ class _BucketsSubScreenState extends State<BucketsSubScreen> {
                     children: [
                       _buildSearchSection(),
                       Expanded(
-                        child: _viewType == ViewType.list
+                        child: widget.state.viewType == ViewType.list
                             ? BucketsTableDatasource(
                                 state: widget.state,
                                 filteredBuckets: _filteredBuckets,
@@ -202,7 +203,11 @@ class _BucketsSubScreenState extends State<BucketsSubScreen> {
               Container(
                 padding: EdgeInsets.all(app.dimensions.padding.m),
                 decoration: BoxDecoration(
-                  color: app.colors.primary.purple.withValues(alpha: 0.1),
+                  color: Color.lerp(
+                    app.colors.primary.purple,
+                    app.colors.neutral.white,
+                    0.1,
+                  )!.withValues(alpha: 0.2),
                   borderRadius: app.dimensions.border.borderRadius.m,
                 ),
                 child: icon.build(size: 24, color: app.colors.neutral.grey1),
@@ -290,12 +295,8 @@ class _BucketsSubScreenState extends State<BucketsSubScreen> {
             ),
             app.dimensions.padding.l.gap(),
             ViewTypeSelector(
-              currentType: _viewType,
-              onChanged: (type) {
-                setState(() {
-                  _viewType = type;
-                });
-              },
+              currentType: widget.state.viewType,
+              onChanged: widget.onViewTypeChanged,
             ),
           ],
         ),

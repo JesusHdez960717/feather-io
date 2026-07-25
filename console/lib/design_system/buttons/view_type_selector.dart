@@ -1,7 +1,18 @@
 import 'package:console/app_exporter.dart';
 import 'package:flutter/material.dart';
 
-enum ViewType { list, grid }
+enum ViewType {
+  list,
+  grid;
+
+  static ViewType? fromName(String? name) {
+    if (name == null) return null;
+    return ViewType.values.firstWhere(
+      (e) => e.name == name,
+      orElse: () => ViewType.list,
+    );
+  }
+}
 
 class ViewTypeSelector extends StatelessWidget {
   final ViewType currentType;
@@ -69,8 +80,9 @@ class _ViewTypeButton extends StatelessWidget {
         alignment: Alignment.center,
         child: icon.build(
           size: 18,
-          color:
-              isSelected ? app.colors.neutral.white : app.colors.neutral.grey3,
+          color: isSelected
+              ? app.colors.neutral.white
+              : app.colors.neutral.grey3,
         ),
       ),
     );

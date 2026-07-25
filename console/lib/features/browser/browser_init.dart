@@ -7,8 +7,5 @@ class BrowserInit {
 
     BrowserRepo repo = BrowserRepo(client);
     app.di.put(repo);
-
-    BrowserCubit cubit = BrowserCubit(repo: repo, auth: app.di.find());
-    app.di.put(cubit);
   }
 }

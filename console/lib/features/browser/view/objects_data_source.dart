@@ -10,6 +10,7 @@ class ObjectsDataGrid extends StatefulWidget {
   final VoidCallback onRefresh;
   final VoidCallback onBack;
   final Function(BrowserObjectModel) onSelected;
+  final Function(ViewType) onViewTypeChanged;
 
   const ObjectsDataGrid({
     required this.state,
@@ -17,6 +18,7 @@ class ObjectsDataGrid extends StatefulWidget {
     required this.onRefresh,
     required this.onBack,
     required this.onSelected,
+    required this.onViewTypeChanged,
     super.key,
   });
 
@@ -228,6 +230,11 @@ class _ObjectsDataGridState extends State<ObjectsDataGrid> {
                   h: 42,
                   icon: app.assets.icons.actions.refresh,
                 ),
+                app.dimensions.padding.l.gap(),
+                ViewTypeSelector(
+                  currentType: widget.state.viewType,
+                  onChanged: widget.onViewTypeChanged,
+                ),
               ],
             ),
           ),
@@ -240,7 +247,9 @@ class _ObjectsDataGridState extends State<ObjectsDataGrid> {
                   children: [
                     IgnorePointer(
                       ignoring: widget.state is! BrowserSearchOkState,
-                      child: _buildDataGrid(constraints),
+                      child: widget.state.viewType == ViewType.list
+                          ? _buildDataGrid(constraints)
+                          : _buildDataGridView(constraints),
                     ),
                     if (widget.state is BrowserSearchingState)
                       Positioned.fill(
@@ -352,6 +361,73 @@ class _ObjectsDataGridState extends State<ObjectsDataGrid> {
           label: header('Last Modified'),
         ),
       ],
+    );
+  }
+
+  Widget _buildDataGridView(BoxConstraints constraints) {
+    if (_filteredWrappers.isEmpty && widget.state is BrowserSearchOkState) {
+      return NoDataPage(
+        title: _searchController.text.isEmpty
+            ? 'No objects found'
+            : 'No objects matching "${_searchController.text}"',
+      );
+    }
+
+    return GridView.builder(
+      padding: EdgeInsets.all(app.dimensions.padding.m),
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 150,
+        mainAxisSpacing: app.dimensions.padding.m,
+        crossAxisSpacing: app.dimensions.padding.m,
+        childAspectRatio: 0.9,
+      ),
+      itemCount: _filteredWrappers.length,
+      itemBuilder: (context, index) {
+        final wrapper = _filteredWrappers[index];
+        return InkWell(
+          onTap: () {
+            if (wrapper.isFolder) {
+              widget.onNavigate(wrapper.fullPath);
+            } else {
+              final obj = widget.state.objects!.objects.firstWhere(
+                (o) => o.key == wrapper.fullPath,
+              );
+              widget.onSelected(obj);
+            }
+          },
+          borderRadius: app.dimensions.border.borderRadius.m,
+          child: Container(
+            decoration: BoxDecoration(
+              color: app.colors.primary.background3,
+              borderRadius: app.dimensions.border.borderRadius.m,
+              border: Border.all(color: app.colors.neutral.grey5),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  wrapper.isFolder ? Icons.folder : Icons.insert_drive_file,
+                  size: 40,
+                  color: wrapper.isFolder ? Colors.amber : Colors.blue,
+                ),
+                app.dimensions.padding.s.gap(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text(
+                    wrapper.name,
+                    style: app.textTheme.bodyMedium?.copyWith(
+                      color: app.colors.neutral.white,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

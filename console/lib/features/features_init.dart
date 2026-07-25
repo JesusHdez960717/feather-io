@@ -59,9 +59,5 @@ class FeaturesInit {
     BlocProvider<LanguageCubit>(
       create: (context) => app.di.find<LanguageCubit>(),
     ),
-    //BROWSER
-    BlocProvider<BrowserCubit>(
-      create: (context) => app.di.find<BrowserCubit>(),
-    ),
   ];
 }
