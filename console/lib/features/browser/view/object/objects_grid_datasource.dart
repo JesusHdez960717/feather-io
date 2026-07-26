@@ -1,20 +1,25 @@
 import 'package:console/app_exporter.dart';
 import 'package:flutter/material.dart';
+
 import 'object_info_helper.dart';
 
 class ObjectsGridDatasource extends StatelessWidget {
   final BrowserSearchState state;
   final List<BrowserObjectWrapper> filteredWrappers;
+  final List<BrowserObjectWrapper> selectedWrappers;
   final TextEditingController searchController;
   final Function(String prefix) onNavigate;
   final Function(BrowserObjectModel) onSelected;
+  final Function(List<BrowserObjectWrapper> selected) onSelectionChanged;
 
   const ObjectsGridDatasource({
     required this.state,
     required this.filteredWrappers,
+    required this.selectedWrappers,
     required this.searchController,
     required this.onNavigate,
     required this.onSelected,
+    required this.onSelectionChanged,
     super.key,
   });
 
@@ -47,12 +52,28 @@ class ObjectsGridDatasource extends StatelessWidget {
         itemBuilder: (context, index) {
           final wrapper = filteredWrappers[index];
           final fileInfo = ObjectInfoHelper.getFileInfo(wrapper);
+          final isSelected = selectedWrappers.contains(wrapper);
+          final anySelected = selectedWrappers.isNotEmpty;
+
           return _ObjectGridItem(
             wrapper: wrapper,
             fileInfo: fileInfo,
             state: state,
+            isSelected: isSelected,
+            anySelected: anySelected,
             onNavigate: onNavigate,
             onSelected: onSelected,
+            onToggleSelection: () {
+              final newSelection = List<BrowserObjectWrapper>.from(
+                selectedWrappers,
+              );
+              if (isSelected) {
+                newSelection.remove(wrapper);
+              } else {
+                newSelection.add(wrapper);
+              }
+              onSelectionChanged(newSelection);
+            },
           );
         },
       ),
@@ -64,15 +85,21 @@ class _ObjectGridItem extends StatefulWidget {
   final BrowserObjectWrapper wrapper;
   final ({String name, IconData icon}) fileInfo;
   final BrowserSearchState state;
+  final bool isSelected;
+  final bool anySelected;
   final Function(String prefix) onNavigate;
   final Function(BrowserObjectModel) onSelected;
+  final VoidCallback onToggleSelection;
 
   const _ObjectGridItem({
     required this.wrapper,
     required this.fileInfo,
     required this.state,
+    required this.isSelected,
+    required this.anySelected,
     required this.onNavigate,
     required this.onSelected,
+    required this.onToggleSelection,
   });
 
   @override
@@ -105,12 +132,16 @@ class _ObjectGridItemState extends State<_ObjectGridItem> {
               width: double.infinity,
               height: double.infinity,
               decoration: BoxDecoration(
-                color: _isHovered
+                color: widget.isSelected
+                    ? app.colors.neutral.transparent
+                    : _isHovered
                     ? app.colors.neutral.grey5.withValues(alpha: 0.3)
                     : app.colors.neutral.transparent,
                 borderRadius: app.dimensions.border.borderRadius.s,
                 border: Border.all(
-                  color: app.colors.neutral.grey3,
+                  color: widget.isSelected
+                      ? app.colors.primary.tertiary
+                      : app.colors.neutral.grey3,
                 ),
                 boxShadow: _isHovered
                     ? [
@@ -183,6 +214,20 @@ class _ObjectGridItemState extends State<_ObjectGridItem> {
               ),
             ),
           ),
+          if (_isHovered || widget.anySelected)
+            Positioned(
+              top: 0,
+              left: 0,
+              child: Checkbox(
+                value: widget.isSelected,
+                onChanged: (_) => widget.onToggleSelection(),
+                activeColor: app.colors.primary.tertiary,
+                side: BorderSide(color: app.colors.neutral.grey2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: app.dimensions.border.borderRadius.xs,
+                ),
+              ),
+            ),
           if (_isHovered)
             Positioned(
               top: 4,

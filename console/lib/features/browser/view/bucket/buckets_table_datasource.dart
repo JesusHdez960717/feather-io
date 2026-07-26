@@ -66,6 +66,7 @@ class _BucketsTableDatasourceState extends State<BucketsTableDatasource> {
 
         _BucketsDataSource dataSource = _BucketsDataSource(
           buckets: widget.filteredBuckets,
+          onRowTap: widget.onSelected,
         );
 
         return SfDataGrid(
@@ -74,33 +75,32 @@ class _BucketsTableDatasourceState extends State<BucketsTableDatasource> {
           rowHeight: 42,
           selectionMode: SelectionMode.single,
           navigationMode: GridNavigationMode.row,
-          onCellTap: (details) {
-            if (details.rowColumnIndex.rowIndex > 0) {
-              final bucket =
-                  widget.filteredBuckets[details.rowColumnIndex.rowIndex - 1];
-              widget.onSelected(bucket);
-            }
-          },
           allowColumnsResizing: true,
           onColumnResizeUpdate: (details) {
             setState(() {
               columnWidths[details.column.columnName] = details.width;
 
-              final sum = columnWidths.values.fold(
-                0.0,
-                (previousValue, element) => previousValue + (element ?? 0),
-              );
+              // Si redimensionamos cualquier columna que NO sea last_modified,
+              // ajustamos last_modified para que la tabla no se achique.
+              final othersWidth =
+                  (columnWidths['name'] ?? nameWidth) +
+                  (columnWidths['objects'] ?? objectsWidth) +
+                  (columnWidths['size'] ?? sizeWidth);
 
-              final dif = totalWidth - sum;
-              if (columnWidths['created_at'] == null) {
-                columnWidths['created_at'] = createdAtWidth + dif;
-              } else {
-                columnWidths['created_at'] = columnWidths['created_at']! + dif;
-              }
+              columnWidths['created_at'] = (totalWidth - othersWidth).clamp(
+                150.0,
+                totalWidth,
+              );
             });
             return true;
           },
           columns: [
+            GridColumn(
+              columnName: 'bucket',
+              width: 0,
+              minimumWidth: 0,
+              label: const SizedBox.shrink(),
+            ),
             GridColumn(
               columnName: 'name',
               width: columnWidths['name'] ?? nameWidth,
@@ -134,8 +134,9 @@ class _BucketsTableDatasourceState extends State<BucketsTableDatasource> {
 
 class _BucketsDataSource extends DataGridSource {
   final List<BucketModel> buckets;
+  final void Function(BucketModel bucket) onRowTap;
 
-  _BucketsDataSource({required this.buckets}) {
+  _BucketsDataSource({required this.buckets, required this.onRowTap}) {
     _rows = buckets.map(_buildRow).toList();
   }
 
@@ -146,16 +147,25 @@ class _BucketsDataSource extends DataGridSource {
 
   @override
   DataGridRowAdapter buildRow(DataGridRow row) {
+    final bucket = row.getCells()[0].value as BucketModel;
+
     return DataGridRowAdapter(
       cells: row.getCells().map<Widget>((cell) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              cell.value.toString(),
-              style: app.textTheme.bodyMedium?.copyWith(
-                color: app.colors.neutral.white,
+        return MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => onRowTap(bucket),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  cell.value.toString(),
+                  style: app.textTheme.bodyMedium?.copyWith(
+                    color: app.colors.neutral.white,
+                  ),
+                ),
               ),
             ),
           ),
@@ -167,6 +177,7 @@ class _BucketsDataSource extends DataGridSource {
   DataGridRow _buildRow(BucketModel bucket) {
     return DataGridRow(
       cells: [
+        DataGridCell<BucketModel>(columnName: 'bucket', value: bucket),
         DataGridCell<String>(columnName: 'name', value: bucket.name),
         DataGridCell<int>(columnName: 'objects', value: bucket.objectCount),
         DataGridCell<String>(

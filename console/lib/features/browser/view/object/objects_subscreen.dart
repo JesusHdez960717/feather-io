@@ -34,6 +34,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
   final TextEditingController _searchController = TextEditingController();
   List<BrowserObjectWrapper> _allWrappers = [];
   List<BrowserObjectWrapper> _filteredWrappers = [];
+  List<BrowserObjectWrapper> _selectedWrappers = [];
 
   @override
   void initState() {
@@ -61,6 +62,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
   void _initializeWrappers() {
     final ListObjectsModel? objectsModel = widget.state.objects;
     _allWrappers = [];
+    _selectedWrappers = [];
 
     if (objectsModel != null) {
       for (final cp in objectsModel.commonPrefixes) {
@@ -84,6 +86,18 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
       }
     }
     _onSearchChanged();
+  }
+
+  void _onSelectionChanged(List<BrowserObjectWrapper> selected) {
+    setState(() {
+      _selectedWrappers = selected;
+    });
+  }
+
+  void _onDeleteSelected(List<BrowserObjectWrapper> selected) {
+    // TODO: Implement actual deletion logic, possibly via Cubit
+    // For now, we just pass the selected wrappers to whatever handler is needed
+    debugPrint('Deleting ${selected.length} objects');
   }
 
   void _onSearchChanged() {
@@ -220,10 +234,15 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                       children: [
                         PrimaryButton.svgIcon(
                           icon: app.assets.icons.actions.delete,
-                          onPressed: null,
+                          onPressed: _selectedWrappers.isNotEmpty
+                              ? () => _onDeleteSelected(_selectedWrappers)
+                              : null,
                           buttonSize: 42,
                           iconSize: 18,
                           backgroundColor: app.colors.neutral.transparent,
+                          iconColor: _selectedWrappers.isNotEmpty
+                              ? app.colors.primary.red
+                              : app.colors.neutral.grey5,
                         ),
                       ],
                     ),
@@ -243,16 +262,20 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                       ? ObjectsTableDatasource(
                           state: widget.state,
                           filteredWrappers: _filteredWrappers,
+                          selectedWrappers: _selectedWrappers,
                           searchController: _searchController,
                           onNavigate: widget.onNavigate,
                           onSelected: widget.onSelected,
+                          onSelectionChanged: _onSelectionChanged,
                         )
                       : ObjectsGridDatasource(
                           state: widget.state,
                           filteredWrappers: _filteredWrappers,
+                          selectedWrappers: _selectedWrappers,
                           searchController: _searchController,
                           onNavigate: widget.onNavigate,
                           onSelected: widget.onSelected,
+                          onSelectionChanged: _onSelectionChanged,
                         ),
                 ),
                 if (widget.state is BrowserSearchingState)

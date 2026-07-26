@@ -31,7 +31,8 @@ dependencies:
   top_snackbar_flutter: 3.3.0     #snackbars
   flutter_secure_storage: 10.3.1       #for the remember-me in login
   gap: 3.0.1
-  syncfusion_flutter_datagrid: 33.2.12       #Logs table
+  syncfusion_flutter_datagrid: 33.2.12       #table
+  syncfusion_flutter_core: 33.2.12            #tables utils
 
   #utils
   logger: 2.7.0
