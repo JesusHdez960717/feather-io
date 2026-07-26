@@ -100,6 +100,101 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
     debugPrint('Deleting ${selected.length} objects');
   }
 
+  void _onShowOptions(BrowserObjectWrapper wrapper, RenderBox buttonBox) {
+    final RenderBox overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
+
+    final RelativeRect position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        buttonBox.localToGlobal(Offset.zero, ancestor: overlay),
+        buttonBox.localToGlobal(
+          buttonBox.size.bottomRight(Offset.zero),
+          ancestor: overlay,
+        ),
+      ),
+      Offset.zero & overlay.size,
+    );
+
+    showMenu(
+      context: context,
+      position: position,
+      color: app.colors.primary.background2,
+      elevation: 8,
+      shape: RoundedRectangleBorder(
+        borderRadius: app.dimensions.border.borderRadius.s,
+        side: BorderSide(color: app.colors.neutral.grey5),
+      ),
+      items: [
+        PopupMenuItem(
+          value: 'view',
+          onTap: () {
+            if (wrapper.isFolder) {
+              widget.onNavigate(wrapper.fullPath);
+            } else {
+              final obj = widget.state.objects!.objects.firstWhere(
+                (o) => o.key == wrapper.fullPath,
+              );
+              widget.onSelected(obj);
+            }
+          },
+          child: Row(
+            children: [
+              Icon(
+                Icons.visibility_outlined,
+                size: 18,
+                color: app.colors.neutral.white,
+              ),
+              app.dimensions.padding.m.gap(),
+              Text(
+                'View',
+                style: app.textTheme.bodyMedium?.copyWith(
+                  color: app.colors.neutral.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'share',
+          child: Row(
+            children: [
+              Icon(
+                Icons.share_outlined,
+                size: 18,
+                color: app.colors.neutral.white,
+              ),
+              app.dimensions.padding.m.gap(),
+              Text(
+                'Share',
+                style: app.textTheme.bodyMedium?.copyWith(
+                  color: app.colors.neutral.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'delete',
+          child: Row(
+            children: [
+              app.assets.icons.actions.delete.build(
+                size: 18,
+                color: app.colors.primary.red,
+              ),
+              app.dimensions.padding.m.gap(),
+              Text(
+                'Delete',
+                style: app.textTheme.bodyMedium?.copyWith(
+                  color: app.colors.primary.red,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   void _onSearchChanged() {
     final query = _searchController.text.toLowerCase();
     setState(() {
@@ -267,6 +362,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                           onNavigate: widget.onNavigate,
                           onSelected: widget.onSelected,
                           onSelectionChanged: _onSelectionChanged,
+                          onShowOptions: _onShowOptions,
                         )
                       : ObjectsGridDatasource(
                           state: widget.state,
@@ -276,6 +372,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                           onNavigate: widget.onNavigate,
                           onSelected: widget.onSelected,
                           onSelectionChanged: _onSelectionChanged,
+                          onShowOptions: _onShowOptions,
                         ),
                 ),
                 if (widget.state is BrowserSearchingState)

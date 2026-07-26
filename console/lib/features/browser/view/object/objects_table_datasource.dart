@@ -13,6 +13,7 @@ class ObjectsTableDatasource extends StatefulWidget {
   final Function(String prefix) onNavigate;
   final Function(BrowserObjectModel) onSelected;
   final Function(List<BrowserObjectWrapper> selected) onSelectionChanged;
+  final Function(BrowserObjectWrapper wrapper, RenderBox box) onShowOptions;
 
   const ObjectsTableDatasource({
     required this.state,
@@ -22,6 +23,7 @@ class ObjectsTableDatasource extends StatefulWidget {
     required this.onNavigate,
     required this.onSelected,
     required this.onSelectionChanged,
+    required this.onShowOptions,
     super.key,
   });
 
@@ -62,6 +64,7 @@ class _ObjectsTableDatasourceState extends State<ObjectsTableDatasource> {
   _ObjectsDataSource _buildDataSource() {
     return _ObjectsDataSource(
       wrappers: widget.filteredWrappers,
+      onShowOptions: widget.onShowOptions,
       onRowTap: (wrapper) {
         if (wrapper.isFolder) {
           widget.onNavigate(wrapper.fullPath);
@@ -245,11 +248,17 @@ class _ObjectsTableDatasourceState extends State<ObjectsTableDatasource> {
 class _ObjectsDataSource extends DataGridSource {
   final List<BrowserObjectWrapper> wrappers;
   final void Function(BrowserObjectWrapper wrapper) onRowTap;
+  final void Function(BrowserObjectWrapper wrapper, RenderBox box)
+  onShowOptions;
   final ValueNotifier<BrowserObjectWrapper?> hoveredWrapper = ValueNotifier(
     null,
   );
 
-  _ObjectsDataSource({required this.wrappers, required this.onRowTap}) {
+  _ObjectsDataSource({
+    required this.wrappers,
+    required this.onRowTap,
+    required this.onShowOptions,
+  }) {
     _rows = wrappers.map(_buildRow).toList();
   }
 
@@ -276,19 +285,25 @@ class _ObjectsDataSource extends DataGridSource {
               return Opacity(
                 opacity: isHovered ? 1.0 : 0.0,
                 child: Center(
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.more_vert,
-                      size: 18,
-                      color: app.colors.neutral.grey2,
-                    ),
-                    onPressed: isHovered
-                        ? () {
-                            // TODO: Implementar menú de opciones
-                          }
-                        : null,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+                  child: Builder(
+                    builder: (context) {
+                      return IconButton(
+                        icon: Icon(
+                          Icons.more_vert,
+                          size: 18,
+                          color: app.colors.neutral.grey2,
+                        ),
+                        onPressed: isHovered
+                            ? () {
+                                final RenderBox box =
+                                    context.findRenderObject() as RenderBox;
+                                onShowOptions(wrapper, box);
+                              }
+                            : null,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      );
+                    },
                   ),
                 ),
               );

@@ -11,6 +11,7 @@ class ObjectsGridDatasource extends StatelessWidget {
   final Function(String prefix) onNavigate;
   final Function(BrowserObjectModel) onSelected;
   final Function(List<BrowserObjectWrapper> selected) onSelectionChanged;
+  final Function(BrowserObjectWrapper wrapper, RenderBox box) onShowOptions;
 
   const ObjectsGridDatasource({
     required this.state,
@@ -20,6 +21,7 @@ class ObjectsGridDatasource extends StatelessWidget {
     required this.onNavigate,
     required this.onSelected,
     required this.onSelectionChanged,
+    required this.onShowOptions,
     super.key,
   });
 
@@ -63,6 +65,7 @@ class ObjectsGridDatasource extends StatelessWidget {
             anySelected: anySelected,
             onNavigate: onNavigate,
             onSelected: onSelected,
+            onShowOptions: onShowOptions,
             onToggleSelection: () {
               final newSelection = List<BrowserObjectWrapper>.from(
                 selectedWrappers,
@@ -89,6 +92,7 @@ class _ObjectGridItem extends StatefulWidget {
   final bool anySelected;
   final Function(String prefix) onNavigate;
   final Function(BrowserObjectModel) onSelected;
+  final Function(BrowserObjectWrapper wrapper, RenderBox box) onShowOptions;
   final VoidCallback onToggleSelection;
 
   const _ObjectGridItem({
@@ -99,6 +103,7 @@ class _ObjectGridItem extends StatefulWidget {
     required this.anySelected,
     required this.onNavigate,
     required this.onSelected,
+    required this.onShowOptions,
     required this.onToggleSelection,
   });
 
@@ -232,14 +237,20 @@ class _ObjectGridItemState extends State<_ObjectGridItem> {
             Positioned(
               top: 4,
               right: 4,
-              child: IconButton(
-                icon: Icon(
-                  Icons.more_vert,
-                  size: 18,
-                  color: app.colors.neutral.grey2,
-                ),
-                onPressed: () {
-                  // TODO: Implementar menú de opciones
+              child: Builder(
+                builder: (context) {
+                  return IconButton(
+                    icon: Icon(
+                      Icons.more_vert,
+                      size: 18,
+                      color: app.colors.neutral.grey2,
+                    ),
+                    onPressed: () {
+                      final RenderBox box =
+                          context.findRenderObject() as RenderBox;
+                      widget.onShowOptions(widget.wrapper, box);
+                    },
+                  );
                 },
               ),
             ),
