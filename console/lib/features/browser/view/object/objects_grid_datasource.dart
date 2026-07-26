@@ -1,6 +1,6 @@
 import 'package:console/app_exporter.dart';
 import 'package:flutter/material.dart';
-import 'objects_subscreen.dart';
+import 'object_info_helper.dart';
 
 class ObjectsGridDatasource extends StatelessWidget {
   final BrowserSearchState state;
@@ -28,61 +28,178 @@ class ObjectsGridDatasource extends StatelessWidget {
       );
     }
 
-    return GridView.builder(
-      padding: EdgeInsets.all(app.dimensions.padding.m),
-      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 150,
-        mainAxisSpacing: app.dimensions.padding.m,
-        crossAxisSpacing: app.dimensions.padding.m,
-        childAspectRatio: 0.9,
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          left: BorderSide(color: app.colors.neutral.grey5),
+          right: BorderSide(color: app.colors.neutral.grey5),
+          bottom: BorderSide(color: app.colors.neutral.grey5),
+        ),
       ),
-      itemCount: filteredWrappers.length,
-      itemBuilder: (context, index) {
-        final wrapper = filteredWrappers[index];
-        return InkWell(
-          onTap: () {
-            if (wrapper.isFolder) {
-              onNavigate(wrapper.fullPath);
-            } else {
-              final obj = state.objects!.objects.firstWhere(
-                (o) => o.key == wrapper.fullPath,
-              );
-              onSelected(obj);
-            }
-          },
-          borderRadius: app.dimensions.border.borderRadius.m,
-          child: Container(
-            decoration: BoxDecoration(
-              color: app.colors.primary.background3,
-              borderRadius: app.dimensions.border.borderRadius.m,
-              border: Border.all(color: app.colors.neutral.grey5),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  wrapper.isFolder ? Icons.folder : Icons.insert_drive_file,
-                  size: 40,
-                  color: wrapper.isFolder ? Colors.amber : Colors.blue,
+      child: GridView.builder(
+        padding: EdgeInsets.all(app.dimensions.padding.m),
+        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 180,
+          mainAxisSpacing: app.dimensions.padding.m,
+          crossAxisSpacing: app.dimensions.padding.m,
+        ),
+        itemCount: filteredWrappers.length,
+        itemBuilder: (context, index) {
+          final wrapper = filteredWrappers[index];
+          final fileInfo = ObjectInfoHelper.getFileInfo(wrapper);
+          return _ObjectGridItem(
+            wrapper: wrapper,
+            fileInfo: fileInfo,
+            state: state,
+            onNavigate: onNavigate,
+            onSelected: onSelected,
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ObjectGridItem extends StatefulWidget {
+  final BrowserObjectWrapper wrapper;
+  final ({String name, IconData icon}) fileInfo;
+  final BrowserSearchState state;
+  final Function(String prefix) onNavigate;
+  final Function(BrowserObjectModel) onSelected;
+
+  const _ObjectGridItem({
+    required this.wrapper,
+    required this.fileInfo,
+    required this.state,
+    required this.onNavigate,
+    required this.onSelected,
+  });
+
+  @override
+  State<_ObjectGridItem> createState() => _ObjectGridItemState();
+}
+
+class _ObjectGridItemState extends State<_ObjectGridItem> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: Stack(
+        children: [
+          InkWell(
+            onTap: () {
+              if (widget.wrapper.isFolder) {
+                widget.onNavigate(widget.wrapper.fullPath);
+              } else {
+                final obj = widget.state.objects!.objects.firstWhere(
+                  (o) => o.key == widget.wrapper.fullPath,
+                );
+                widget.onSelected(obj);
+              }
+            },
+            borderRadius: app.dimensions.border.borderRadius.s,
+            child: Container(
+              width: double.infinity,
+              height: double.infinity,
+              decoration: BoxDecoration(
+                color: _isHovered
+                    ? app.colors.neutral.grey5.withValues(alpha: 0.3)
+                    : app.colors.neutral.transparent,
+                borderRadius: app.dimensions.border.borderRadius.s,
+                border: Border.all(
+                  color: app.colors.neutral.grey3,
                 ),
-                app.dimensions.padding.s.gap(),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Text(
-                    wrapper.name,
-                    style: app.textTheme.bodyMedium?.copyWith(
-                      color: app.colors.neutral.white,
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                boxShadow: _isHovered
+                    ? [
+                        BoxShadow(
+                          color: app.colors.neutral.black.withValues(
+                            alpha: 0.4,
+                          ),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                          spreadRadius: 1,
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    widget.fileInfo.icon,
+                    size: 26,
+                    color: app.colors.neutral.grey2,
                   ),
-                ),
-              ],
+                  app.dimensions.padding.l.gap(),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Column(
+                      children: [
+                        Text(
+                          widget.wrapper.name,
+                          style: app.textTheme.bodyLarge?.copyWith(
+                            color: app.colors.neutral.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        app.dimensions.padding.m.gap(),
+                        Text(
+                          widget.wrapper.isFolder
+                              ? 'Carpeta'
+                              : '${app.storageFormatter.formatSize(widget.wrapper.size!)} • ${widget.fileInfo.name}',
+                          style: app.textTheme.labelSmall?.copyWith(
+                            color: app.colors.neutral.grey3,
+                            fontWeight: FontWeight.w400,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        app.dimensions.padding.xs.gap(),
+                        Text(
+                          widget.wrapper.lastModified != null
+                              ? app.dateFormatter.s.format(
+                                  widget.wrapper.lastModified!,
+                                )
+                              : '-',
+                          style: app.textTheme.labelSmall?.copyWith(
+                            color: app.colors.neutral.grey3,
+                            fontWeight: FontWeight.w400,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        );
-      },
+          if (_isHovered)
+            Positioned(
+              top: 4,
+              right: 4,
+              child: IconButton(
+                icon: Icon(
+                  Icons.more_vert,
+                  size: 18,
+                  color: app.colors.neutral.grey2,
+                ),
+                onPressed: () {
+                  // TODO: Implementar menú de opciones
+                },
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

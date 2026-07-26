@@ -1,7 +1,7 @@
 import 'package:console/app_exporter.dart';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_datagrid/datagrid.dart';
-import 'objects_subscreen.dart';
+import 'object_info_helper.dart';
 
 class ObjectsTableDatasource extends StatefulWidget {
   final BrowserSearchState state;
@@ -26,6 +26,7 @@ class ObjectsTableDatasource extends StatefulWidget {
 class _ObjectsTableDatasourceState extends State<ObjectsTableDatasource> {
   Map<String, double?> columnWidths = {
     'name': null,
+    'type': null,
     'size': null,
     'last_modified': null,
   };
@@ -36,9 +37,11 @@ class _ObjectsTableDatasourceState extends State<ObjectsTableDatasource> {
       builder: (context, constraints) {
         final totalWidth = constraints.maxWidth;
 
-        final nameWidth = totalWidth * 0.5;
+        final nameWidth = totalWidth * 0.4;
+        final typeWidth = totalWidth * 0.2;
         final sizeWidth = totalWidth * 0.2;
-        final lastModifiedWidth = (totalWidth - (nameWidth + sizeWidth)).clamp(
+        final lastModifiedWidth =
+            (totalWidth - (nameWidth + typeWidth + sizeWidth)).clamp(
           150.0,
           totalWidth,
         );
@@ -115,6 +118,12 @@ class _ObjectsTableDatasourceState extends State<ObjectsTableDatasource> {
               label: header('Name'),
             ),
             GridColumn(
+              columnName: 'type',
+              width: columnWidths['type'] ?? typeWidth,
+              minimumWidth: 100,
+              label: header('Type'),
+            ),
+            GridColumn(
               columnName: 'size',
               width: columnWidths['size'] ?? sizeWidth,
               minimumWidth: 100,
@@ -155,14 +164,15 @@ class _ObjectsDataSource extends DataGridSource {
             : null;
 
         if (isName && wrapper != null) {
+          final fileInfo = ObjectInfoHelper.getFileInfo(wrapper);
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Row(
               children: [
                 Icon(
-                  wrapper.isFolder ? Icons.folder : Icons.insert_drive_file,
+                  fileInfo.icon,
                   size: 18,
-                  color: wrapper.isFolder ? Colors.amber : Colors.blue,
+                  color: app.colors.neutral.grey2,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -196,9 +206,11 @@ class _ObjectsDataSource extends DataGridSource {
   }
 
   DataGridRow _buildRow(BrowserObjectWrapper wrapper) {
+    final fileInfo = ObjectInfoHelper.getFileInfo(wrapper);
     return DataGridRow(
       cells: [
         DataGridCell<BrowserObjectWrapper>(columnName: 'name', value: wrapper),
+        DataGridCell<String>(columnName: 'type', value: fileInfo.name),
         DataGridCell<String>(
           columnName: 'size',
           value: wrapper.isFolder

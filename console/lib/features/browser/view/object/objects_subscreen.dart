@@ -129,6 +129,9 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                       children: [
                         PrimaryButton.svgIcon(
                           onPressed: prefix.isNotEmpty ? widget.onBack : null,
+                          iconColor: prefix.isNotEmpty
+                              ? null
+                              : app.colors.neutral.grey5,
                           icon: app.assets.icons.navigation.left,
                           backgroundColor: app.colors.neutral.transparent,
                           buttonSize: 38,
@@ -137,6 +140,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                         PrimaryButton.svgIcon(
                           onPressed: null,
                           icon: app.assets.icons.navigation.right,
+                          iconColor: app.colors.neutral.grey5,
                           backgroundColor: app.colors.neutral.transparent,
                           buttonSize: 38,
                         ),
