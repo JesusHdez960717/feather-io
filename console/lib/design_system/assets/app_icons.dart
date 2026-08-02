@@ -72,6 +72,8 @@ class ActionsIcons {
   SvgAsset get refresh => const SvgAsset('$_actions/refresh.svg');
 
   SvgAsset get search => const SvgAsset('$_actions/search.svg');
+
+  SvgAsset get upload => const SvgAsset('$_actions/upload.svg');
 }
 
 class LanguageIcons {

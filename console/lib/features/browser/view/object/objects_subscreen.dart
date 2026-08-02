@@ -1,6 +1,8 @@
 import 'dart:ui';
 
 import 'package:console/app_exporter.dart';
+import 'package:cross_file/cross_file.dart';
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
 
 import 'objects_grid_datasource.dart';
@@ -14,6 +16,7 @@ class ObjectsSubscreen extends StatefulWidget {
   final Function(BrowserObjectModel) onSelected;
   final Function(ViewType) onViewTypeChanged;
   final Function(List<String> keys) onDelete;
+  final Function(List<XFile> files) onUpload;
   final void Function() onExit;
 
   const ObjectsSubscreen({
@@ -24,6 +27,7 @@ class ObjectsSubscreen extends StatefulWidget {
     required this.onSelected,
     required this.onViewTypeChanged,
     required this.onDelete,
+    required this.onUpload,
     required this.onExit,
     super.key,
   });
@@ -37,6 +41,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
   List<BrowserObjectWrapper> _allWrappers = [];
   List<BrowserObjectWrapper> _filteredWrappers = [];
   List<BrowserObjectWrapper> _selectedWrappers = [];
+  bool _isDragging = false;
 
   @override
   void initState() {
@@ -360,58 +365,70 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
           ),
         ),
         Expanded(
-          child: ClipRect(
-            child: Stack(
-              children: [
-                IgnorePointer(
-                  ignoring: widget.state is! BrowserSearchOkState,
-                  child: widget.state.viewType == ViewType.list
-                      ? ObjectsTableDatasource(
-                          state: widget.state,
-                          filteredWrappers: _filteredWrappers,
-                          selectedWrappers: _selectedWrappers,
-                          searchController: _searchController,
-                          onNavigate: widget.onNavigate,
-                          onSelected: widget.onSelected,
-                          onSelectionChanged: _onSelectionChanged,
-                          onShowOptions: _onShowOptions,
-                        )
-                      : ObjectsGridDatasource(
-                          state: widget.state,
-                          filteredWrappers: _filteredWrappers,
-                          selectedWrappers: _selectedWrappers,
-                          searchController: _searchController,
-                          onNavigate: widget.onNavigate,
-                          onSelected: widget.onSelected,
-                          onSelectionChanged: _onSelectionChanged,
-                          onShowOptions: _onShowOptions,
-                        ),
-                ),
-                if (widget.state is BrowserSearchingState ||
-                    widget.state is BrowserProcessingInProgressState)
-                  Positioned.fill(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 0.5, sigmaY: 0.5),
-                      child: Container(
-                        color: app.colors.neutral.black.withValues(alpha: 0.08),
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: app.colors.primary.purple,
+          child: DropTarget(
+            onDragEntered: (details) => setState(() => _isDragging = true),
+            onDragExited: (details) => setState(() => _isDragging = false),
+            onDragDone: (details) async {
+              setState(() => _isDragging = false);
+              widget.onUpload(details.files);
+            },
+            child: ClipRect(
+              child: Stack(
+                children: [
+                  IgnorePointer(
+                    ignoring: widget.state is! BrowserSearchOkState,
+                    child: widget.state.viewType == ViewType.list
+                        ? ObjectsTableDatasource(
+                            state: widget.state,
+                            filteredWrappers: _filteredWrappers,
+                            selectedWrappers: _selectedWrappers,
+                            searchController: _searchController,
+                            onNavigate: widget.onNavigate,
+                            onSelected: widget.onSelected,
+                            onSelectionChanged: _onSelectionChanged,
+                            onShowOptions: _onShowOptions,
+                          )
+                        : ObjectsGridDatasource(
+                            state: widget.state,
+                            filteredWrappers: _filteredWrappers,
+                            selectedWrappers: _selectedWrappers,
+                            searchController: _searchController,
+                            onNavigate: widget.onNavigate,
+                            onSelected: widget.onSelected,
+                            onSelectionChanged: _onSelectionChanged,
+                            onShowOptions: _onShowOptions,
+                          ),
+                  ),
+                  if (_isDragging)
+                    Positioned.fill(child: _buildDraggingOverlay()),
+                  if (widget.state is BrowserSearchingState ||
+                      widget.state is BrowserProcessingInProgressState)
+                    Positioned.fill(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 0.5, sigmaY: 0.5),
+                        child: Container(
+                          color: app.colors.neutral.black.withValues(
+                            alpha: 0.08,
+                          ),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: app.colors.primary.purple,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                if (widget.state is BrowserSearchErrorState)
-                  Positioned.fill(
-                    child: ErrorPage(
-                      message: (widget.state as BrowserSearchErrorState)
-                          .exception
-                          .message,
-                      onRetry: widget.onRefresh,
+                  if (widget.state is BrowserSearchErrorState)
+                    Positioned.fill(
+                      child: ErrorPage(
+                        message: (widget.state as BrowserSearchErrorState)
+                            .exception
+                            .message,
+                        onRetry: widget.onRefresh,
+                      ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -573,6 +590,41 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(children: children),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDraggingOverlay() {
+    return BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 4.5, sigmaY: 4.5),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            left: BorderSide(color: app.colors.neutral.grey5, width: 0.5),
+            right: BorderSide(color: app.colors.neutral.grey5, width: 0.5),
+            bottom: BorderSide(color: app.colors.neutral.grey5, width: 0.5),
+          ),
+          color: app.colors.neutral.white.withValues(alpha: 0.03),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              app.assets.icons.actions.upload.build(
+                size: 48,
+                color: app.colors.neutral.white,
+              ),
+              app.dimensions.padding.m.gap(),
+              Text(
+                'Suelte aqui para subir',
+                style: app.textTheme.titleLarge?.copyWith(
+                  color: app.colors.neutral.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
         ),
       ),

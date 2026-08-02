@@ -54,6 +54,24 @@ class BrowserClient extends BaseClient {
       options: options(access: access, secret: secret),
     );
   }
+
+  Future<void> uploadObject({
+    required String access,
+    required String secret,
+    required String bucket,
+    required String key,
+    required Stream<List<int>> data,
+    required int length,
+  }) async {
+    final opt = options(access: access, secret: secret);
+    opt.headers!['content-length'] = length;
+
+    await dio.put(
+      '$baseUrl/$bucket/$key',
+      data: data,
+      options: opt,
+    );
+  }
 }
 
 //--- BUCKET RESPONSE ---

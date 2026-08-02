@@ -1,4 +1,5 @@
 import 'package:console/app_exporter.dart';
+import 'package:cross_file/cross_file.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -106,6 +107,11 @@ class _BrowserScreenState extends State<BrowserScreen> {
                       onDelete: (keys) => cubit.deleteObjects(
                         bucket: state.selectedBucket!,
                         keys: keys,
+                      ),
+                      onUpload: (files) => cubit.uploadFiles(
+                        bucket: state.selectedBucket!,
+                        prefix: state.prefix,
+                        files: files,
                       ),
                       onViewTypeChanged: (type) {
                         cubit.changeViewType(type);

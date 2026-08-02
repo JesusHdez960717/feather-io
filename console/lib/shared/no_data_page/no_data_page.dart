@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 
 class NoDataPage extends StatelessWidget {
   final String? title;
+  final String? description;
 
-  const NoDataPage({this.title, super.key});
+  const NoDataPage({this.title, this.description, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +35,16 @@ class NoDataPage extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
               ),
+              if (description != null) ...[
+                app.dimensions.padding.m.gap(),
+                Text(
+                  description!,
+                  style: app.textTheme.bodyMedium?.copyWith(
+                    color: app.colors.neutral.grey3,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
               (5 * app.dimensions.padding.xxl).gap(),
             ],
           ),

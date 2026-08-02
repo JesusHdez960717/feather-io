@@ -1,4 +1,5 @@
 import 'package:console/app_exporter.dart';
+import 'package:cross_file/cross_file.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class BrowserCubit extends Cubit<BrowserState>
@@ -11,14 +12,14 @@ class BrowserCubit extends Cubit<BrowserState>
   final ViewType? initialViewType;
 
   BrowserCubit({required this.auth, required this.repo, this.initialViewType})
-    : super(BrowserInitialState(viewType: initialViewType));
+      : super(BrowserInitialState(viewType: initialViewType));
 
   void reset() {
     final viewType = state is BrowserSearchState
         ? (state as BrowserSearchState).viewType
         : (state is BrowserInitialState
-              ? (state as BrowserInitialState).viewType
-              : null);
+        ? (state as BrowserInitialState).viewType
+        : null);
     _allBuckets.clear();
     emit(BrowserInitialState(viewType: viewType));
   }
@@ -32,8 +33,8 @@ class BrowserCubit extends Cubit<BrowserState>
     final currentViewType = state is BrowserSearchState
         ? (state as BrowserSearchState).viewType
         : (state is BrowserInitialState
-              ? (state as BrowserInitialState).viewType
-              : null);
+        ? (state as BrowserInitialState).viewType
+        : null);
 
     final viewType = currentViewType ?? initialViewType ?? ViewType.list;
 
@@ -77,9 +78,9 @@ class BrowserCubit extends Cubit<BrowserState>
   Future<void> listObjects({BucketModel? bucket, String? prefix}) async {
     final targetBucket =
         bucket ??
-        (state is BrowserSearchState
-            ? (state as BrowserSearchState).selectedBucket
-            : null);
+            (state is BrowserSearchState
+                ? (state as BrowserSearchState).selectedBucket
+                : null);
     if (targetBucket == null) return;
 
     final viewType = (state as BrowserSearchState).viewType;
@@ -148,6 +149,58 @@ class BrowserCubit extends Cubit<BrowserState>
         bucket: bucket.name,
         keys: keys,
       );
+
+      await listObjects(bucket: bucket, prefix: currentState.prefix);
+    } catch (exc) {
+      emit(
+        BrowserSearchErrorState(
+          ExceptionConverter.parse(exc),
+          buckets: currentState.buckets,
+          selectedBucket: currentState.selectedBucket,
+          prefix: currentState.prefix,
+          objects: currentState.objects,
+          viewType: currentState.viewType,
+        ),
+      );
+    }
+  }
+
+  Future<void> uploadFiles({
+    required BucketModel bucket,
+    required String prefix,
+    required List<XFile> files,
+  }) async {
+    if (state is! BrowserSearchState) return;
+    final currentState = state as BrowserSearchState;
+
+    try {
+      emit(
+        BrowserProcessingInProgressState(
+          buckets: currentState.buckets,
+          selectedBucket: currentState.selectedBucket,
+          prefix: currentState.prefix,
+          objects: currentState.objects,
+          viewType: currentState.viewType,
+        ),
+      );
+
+      for (final file in files) {
+        String relativePath = file.name;
+        if (file.path.startsWith('/') && file.path.length > 1) {
+          relativePath = file.path.substring(1);
+        }
+
+        final key = '$prefix$relativePath';
+        final length = await file.length();
+        await repo.uploadObject(
+          access: auth.access,
+          secret: auth.secret,
+          bucket: bucket.name,
+          key: key,
+          data: file.openRead(),
+          length: length,
+        );
+      }
 
       await listObjects(bucket: bucket, prefix: currentState.prefix);
     } catch (exc) {
@@ -286,8 +339,7 @@ class BrowserProcessingInProgressState extends BrowserSearchState {
 class BrowserSearchErrorState extends BrowserSearchState {
   final GlobalException exception;
 
-  BrowserSearchErrorState(
-    this.exception, {
+  BrowserSearchErrorState(this.exception, {
     required super.buckets,
     super.selectedBucket,
     super.prefix = '',

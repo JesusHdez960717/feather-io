@@ -16,7 +16,7 @@ class ConfirmDialog extends StatelessWidget {
     DialogTemplate.open(
       title: title,
       w: w ?? 400,
-      h: w ?? 200,
+      h: h ?? 250,
       child: ConfirmDialog(
         description: description,
         confirmAction: confirmAction,

@@ -55,6 +55,28 @@ class BrowserRepo {
       throw ExceptionConverter.parse(e);
     }
   }
+
+  Future<void> uploadObject({
+    required String access,
+    required String secret,
+    required String bucket,
+    required String key,
+    required Stream<List<int>> data,
+    required int length,
+  }) async {
+    try {
+      await client.uploadObject(
+        access: access,
+        secret: secret,
+        bucket: bucket,
+        key: key,
+        data: data,
+        length: length,
+      );
+    } catch (e) {
+      throw ExceptionConverter.parse(e);
+    }
+  }
 }
 
 extension BucketResponseMapping on BucketResponse {

@@ -32,6 +32,9 @@ class ObjectsGridDatasource extends StatelessWidget {
         title: searchController.text.isEmpty
             ? 'No objects found'
             : 'No objects matching "${searchController.text}"',
+        description: searchController.text.isEmpty
+            ? 'Arrastre ficheros aqui para subir'
+            : null,
       );
     }
 

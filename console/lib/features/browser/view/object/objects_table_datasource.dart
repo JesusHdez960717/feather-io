@@ -141,6 +141,9 @@ class _ObjectsTableDatasourceState extends State<ObjectsTableDatasource> {
             title: widget.searchController.text.isEmpty
                 ? 'No objects found'
                 : 'No objects matching "${widget.searchController.text}"',
+            description: widget.searchController.text.isEmpty
+                ? 'Arrastre ficheros aqui para subir'
+                : null,
           );
         }
 
