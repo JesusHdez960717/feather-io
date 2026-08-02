@@ -1,6 +1,5 @@
 import 'package:console/app_exporter.dart';
 import 'package:cross_file/cross_file.dart';
-import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class BrowserCubit extends Cubit<BrowserState>
@@ -185,19 +184,15 @@ class BrowserCubit extends Cubit<BrowserState>
         ),
       );
 
-      List<({String key, XFile file})> flatFiles = _flattenDropItems(
-        files,
-        prefix,
-      );
-
-      for (final file in flatFiles) {
-        final length = await file.file.length();
+      for (final file in files) {
+        final length = await file.length();
+        final key = prefix.isNotEmpty ? '$prefix/${file.name}' : file.name;
         await repo.uploadObject(
           access: auth.access,
           secret: auth.secret,
           bucket: bucket.name,
-          key: file.key,
-          data: file.file.openRead(),
+          key: key,
+          data: file.openRead(),
           length: length,
         );
       }
@@ -216,38 +211,6 @@ class BrowserCubit extends Cubit<BrowserState>
       );
     }
   }
-}
-
-List<({String key, XFile file})> _flattenDropItems(
-  List<XFile> items,
-  String prefix,
-) {
-  final result = <({String key, XFile file})>[];
-
-  void walkDrop(DropItem item, String prefix) {
-    if (item is DropItemDirectory) {
-      final path = prefix.isEmpty ? item.name : '$prefix/${item.name}';
-      for (final child in item.children) {
-        walkDrop(child, path);
-      }
-    } else if (item is DropItemFile) {
-      final path = prefix.isEmpty ? item.name : '$prefix/${item.name}';
-      result.add((
-        key: path,
-        file: XFile(item.path, name: item.name, mimeType: item.mimeType),
-      ));
-    }
-  }
-
-  for (final item in items) {
-    if (item is DropItem) {
-      walkDrop(item, prefix);
-    } else {
-      result.add((key: item.name, file: item));
-    }
-  }
-
-  return result;
 }
 
 abstract class BrowserState {

@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:js_interop';
 import 'dart:ui';
 
 import 'package:console/app_exporter.dart';
@@ -5,9 +7,16 @@ import 'package:cross_file/cross_file.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:web/web.dart' as web;
 
 import 'objects_grid_datasource.dart';
 import 'objects_table_datasource.dart';
+
+// webkitRelativePath no es parte de la API estándar de File,
+// así que se expone como extension type sobre web.File.
+extension type _FileWithRelativePath(web.File file) implements web.File {
+  external String? get webkitRelativePath;
+}
 
 class ObjectsSubscreen extends StatefulWidget {
   final BrowserSearchState state;
@@ -99,6 +108,19 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
   void _onSelectionChanged(List<BrowserObjectWrapper> selected) {
     setState(() {
       _selectedWrappers = selected;
+    });
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        _filteredWrappers = _allWrappers;
+      } else {
+        _filteredWrappers = _allWrappers
+            .where((w) => w.name.toLowerCase().contains(query))
+            .toList();
+      }
     });
   }
 
@@ -213,26 +235,126 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
     );
   }
 
-  void _onSearchChanged() {
-    final query = _searchController.text.toLowerCase();
-    setState(() {
-      if (query.isEmpty) {
-        _filteredWrappers = _allWrappers;
-      } else {
-        _filteredWrappers = _allWrappers
-            .where((w) => w.name.toLowerCase().contains(query))
-            .toList();
-      }
-    });
-  }
-
   Future<void> _onUploadFiles() async {
     final result = await FilePicker.pickFiles(
       allowMultiple: true,
       withData: true,
     );
 
-    widget.onUpload(result?.xFiles ?? []);
+    widget.onUpload(_flattenDropItems(result?.xFiles ?? []));
+  }
+
+  Future<void> _onUploadFolder() async {
+    Future<XFile> webFileToXFile(web.File file) async {
+      final buffer = await file.arrayBuffer().toDart;
+      final bytes = buffer.toDart.asUint8List();
+
+      final relativePath = _FileWithRelativePath(file).webkitRelativePath;
+      final name = (relativePath != null && relativePath.isNotEmpty)
+          ? relativePath
+          : file.name;
+
+      return XFile.fromData(
+        bytes,
+        name: name,
+        length: bytes.length,
+        lastModified: DateTime.fromMillisecondsSinceEpoch(file.lastModified),
+        mimeType: file.type,
+      );
+    }
+
+    final input = web.HTMLInputElement()..type = 'file';
+    input.setAttribute('webkitdirectory', 'true');
+    input.setAttribute('directory', 'true');
+
+    final completer = Completer<void>();
+    input.addEventListener(
+      'change',
+      (web.Event event) {
+        completer.complete();
+      }.toJS,
+    );
+
+    input.click();
+    await completer.future;
+
+    final fileList = input.files;
+    if (fileList == null) return;
+
+    final xFiles = <XFile>[];
+    for (var i = 0; i < fileList.length; i++) {
+      final file = fileList.item(i);
+      if (file == null) continue;
+      xFiles.add(await webFileToXFile(file));
+    }
+
+    widget.onUpload(_flattenDropItems(xFiles));
+  }
+
+  void _onShowUploadMenu(BuildContext context) {
+    final RenderBox buttonBox = context.findRenderObject() as RenderBox;
+    final RenderBox overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
+
+    final RelativeRect position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        buttonBox.localToGlobal(Offset.zero, ancestor: overlay),
+        buttonBox.localToGlobal(
+          buttonBox.size.bottomRight(Offset.zero),
+          ancestor: overlay,
+        ),
+      ),
+      Offset.zero & overlay.size,
+    );
+
+    showMenu(
+      context: context,
+      position: position,
+      color: app.colors.primary.background2,
+      elevation: 8,
+      shape: RoundedRectangleBorder(
+        borderRadius: app.dimensions.border.borderRadius.s,
+        side: BorderSide(color: app.colors.neutral.grey5),
+      ),
+      items: [
+        PopupMenuItem(
+          onTap: _onUploadFiles,
+          child: Row(
+            children: [
+              app.assets.icons.actions.uploadFile.build(
+                size: 18,
+                color: app.colors.neutral.white,
+              ),
+              app.dimensions.padding.m.gap(),
+              Text(
+                'Upload files',
+                style: app.textTheme.bodyMedium?.copyWith(
+                  color: app.colors.neutral.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          onTap: _onUploadFolder,
+          child: Row(
+            children: [
+              app.assets.icons.actions.uploadFolder.build(
+                size: 18,
+                color: app.colors.neutral.white,
+              ),
+              app.dimensions.padding.m.gap(),
+              Text(
+                'Upload directory',
+                style: app.textTheme.bodyMedium?.copyWith(
+                  color: app.colors.neutral.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -294,20 +416,16 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                     app.dimensions.padding.xl.gap(),
                     Row(
                       children: [
-                        PrimaryButton.primary(
-                          title: 'Upload file',
-                          icon: app.assets.icons.actions.upload,
-                          onPressed: _onUploadFiles,
-                          w: 150,
-                          h: 38,
-                        ),
-                        app.dimensions.padding.l.gap(),
-                        PrimaryButton.primary(
-                          title: 'Upload directory',
-                          icon: app.assets.icons.actions.upload,
-                          onPressed: () {},
-                          w: 170,
-                          h: 38,
+                        Builder(
+                          builder: (context) {
+                            return PrimaryButton.primary(
+                              title: 'Upload',
+                              icon: app.assets.icons.actions.upload,
+                              onPressed: () => _onShowUploadMenu(context),
+                              w: 150,
+                              h: 38,
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -388,7 +506,8 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
             onDragExited: (details) => setState(() => _isDragging = false),
             onDragDone: (details) async {
               setState(() => _isDragging = false);
-              widget.onUpload(details.files);
+
+              widget.onUpload(_flattenDropItems(details.files));
             },
             child: ClipRect(
               child: Stack(
@@ -488,12 +607,12 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              Text(
+              /*Text(
                 'Bucket storage: ${app.storageFormatter.formatSize(bucket.sizeBytes)}',
                 style: app.textTheme.bodyMedium?.copyWith(
                   color: app.colors.neutral.grey3,
                 ),
-              ),
+              ),*/
             ],
           ),
         ],
@@ -534,7 +653,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: Row(
               children: [
-                if (icon != null) icon,
+                ?icon,
                 if (icon != null && label.isNotEmpty)
                   app.dimensions.padding.s.gap(),
                 Text(
@@ -551,19 +670,6 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
         ),
       );
     }
-
-    /*children.add(
-      breadcrumbItem(
-        onTap: widget.onExit,
-        isLast: false,
-        label: '',
-        icon: app.assets.icons.storage.bucket.build(
-          color: app.colors.neutral.white,
-          size: 14,
-        ),
-      ),
-    );
-    children.add(separator());*/
 
     // Bucket name (root of object navigation)
     children.add(
@@ -664,4 +770,30 @@ class BrowserObjectWrapper {
     this.size,
     this.lastModified,
   });
+}
+
+List<XFile> _flattenDropItems(List<XFile> items) {
+  final result = <XFile>[];
+
+  void walkDrop(DropItem item, String prefix) {
+    if (item is DropItemDirectory) {
+      final path = prefix.isEmpty ? item.name : '$prefix/${item.name}';
+      for (final child in item.children) {
+        walkDrop(child, path);
+      }
+    } else if (item is DropItemFile) {
+      final path = prefix.isEmpty ? item.name : '$prefix/${item.name}';
+      result.add(XFile(item.path, name: path, mimeType: item.mimeType));
+    }
+  }
+
+  for (final item in items) {
+    if (item is DropItem) {
+      walkDrop(item, '');
+    } else {
+      result.add(item);
+    }
+  }
+
+  return result;
 }
