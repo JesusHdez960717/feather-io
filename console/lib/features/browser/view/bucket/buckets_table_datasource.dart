@@ -69,63 +69,72 @@ class _BucketsTableDatasourceState extends State<BucketsTableDatasource> {
           onRowTap: widget.onSelected,
         );
 
-        return SfDataGrid(
-          source: dataSource,
-          headerRowHeight: 42,
-          rowHeight: 42,
-          selectionMode: SelectionMode.single,
-          navigationMode: GridNavigationMode.row,
-          allowColumnsResizing: true,
-          onColumnResizeUpdate: (details) {
-            setState(() {
-              columnWidths[details.column.columnName] = details.width;
+        return Container(
+          decoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(color: app.colors.neutral.grey5, width: 0.5),
+              right: BorderSide(color: app.colors.neutral.grey5, width: 0.5),
+              bottom: BorderSide(color: app.colors.neutral.grey5, width: 0.5),
+            ),
+          ),
+          child: SfDataGrid(
+            source: dataSource,
+            headerRowHeight: 42,
+            rowHeight: 42,
+            selectionMode: SelectionMode.single,
+            navigationMode: GridNavigationMode.row,
+            allowColumnsResizing: true,
+            onColumnResizeUpdate: (details) {
+              setState(() {
+                columnWidths[details.column.columnName] = details.width;
 
-              // Si redimensionamos cualquier columna que NO sea last_modified,
-              // ajustamos last_modified para que la tabla no se achique.
-              final othersWidth =
-                  (columnWidths['name'] ?? nameWidth) +
-                  (columnWidths['objects'] ?? objectsWidth) +
-                  (columnWidths['size'] ?? sizeWidth);
+                // Si redimensionamos cualquier columna que NO sea last_modified,
+                // ajustamos last_modified para que la tabla no se achique.
+                final othersWidth =
+                    (columnWidths['name'] ?? nameWidth) +
+                    (columnWidths['objects'] ?? objectsWidth) +
+                    (columnWidths['size'] ?? sizeWidth);
 
-              columnWidths['created_at'] = (totalWidth - othersWidth).clamp(
-                150.0,
-                totalWidth,
-              );
-            });
-            return true;
-          },
-          columns: [
-            GridColumn(
-              columnName: 'bucket',
-              width: 0,
-              minimumWidth: 0,
-              label: const SizedBox.shrink(),
-            ),
-            GridColumn(
-              columnName: 'name',
-              width: columnWidths['name'] ?? nameWidth,
-              minimumWidth: 150,
-              label: header('Name'),
-            ),
-            GridColumn(
-              columnName: 'objects',
-              width: columnWidths['objects'] ?? objectsWidth,
-              minimumWidth: 100,
-              label: header('Objects'),
-            ),
-            GridColumn(
-              columnName: 'size',
-              width: columnWidths['size'] ?? sizeWidth,
-              minimumWidth: 100,
-              label: header('Size'),
-            ),
-            GridColumn(
-              columnName: 'created_at',
-              width: columnWidths['created_at'] ?? createdAtWidth,
-              minimumWidth: 150,
-              label: header('Created At'),
-            ),
-          ],
+                columnWidths['created_at'] = (totalWidth - othersWidth).clamp(
+                  150.0,
+                  totalWidth,
+                );
+              });
+              return true;
+            },
+            columns: [
+              GridColumn(
+                columnName: 'bucket',
+                width: 0,
+                minimumWidth: 0,
+                label: const SizedBox.shrink(),
+              ),
+              GridColumn(
+                columnName: 'name',
+                width: columnWidths['name'] ?? nameWidth,
+                minimumWidth: 150,
+                label: header('Name'),
+              ),
+              GridColumn(
+                columnName: 'objects',
+                width: columnWidths['objects'] ?? objectsWidth,
+                minimumWidth: 100,
+                label: header('Objects'),
+              ),
+              GridColumn(
+                columnName: 'size',
+                width: columnWidths['size'] ?? sizeWidth,
+                minimumWidth: 100,
+                label: header('Size'),
+              ),
+              GridColumn(
+                columnName: 'created_at',
+                width: columnWidths['created_at'] ?? createdAtWidth,
+                minimumWidth: 150,
+                label: header('Created At'),
+              ),
+            ],
+          ),
         );
       },
     );

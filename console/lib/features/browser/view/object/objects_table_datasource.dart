@@ -144,99 +144,108 @@ class _ObjectsTableDatasourceState extends State<ObjectsTableDatasource> {
           );
         }
 
-        return SfDataGridTheme(
-          data: SfDataGridThemeData(
-            //para configurar los colores de background de una fila del hover y el selection
-            selectionColor: app.colors.primary.background3.withValues(
-              alpha: 0.8,
-            ),
-            rowHoverColor: app.colors.primary.background3.withValues(
-              alpha: 0.2,
+        return Container(
+          decoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(color: app.colors.neutral.grey5, width: 0.5),
+              right: BorderSide(color: app.colors.neutral.grey5, width: 0.5),
+              bottom: BorderSide(color: app.colors.neutral.grey5, width: 0.5),
             ),
           ),
-          child: Theme(
-            data: Theme.of(context).copyWith(
-              checkboxTheme: CheckboxThemeData(
-                fillColor: WidgetStateProperty.resolveWith((states) {
-                  //para configurar el color del checkbox
-                  if (states.contains(WidgetState.selected)) {
-                    return app.colors.primary.tertiary;
-                  }
-                  return Colors.transparent;
-                }),
-                side: BorderSide(color: app.colors.neutral.grey3, width: 1.5),
-                // Borde gris
-                checkColor: WidgetStateProperty.all(
-                  app.colors.primary.background1,
-                ), // Tick oscuro
+          child: SfDataGridTheme(
+            data: SfDataGridThemeData(
+              //para configurar los colores de background de una fila del hover y el selection
+              selectionColor: app.colors.primary.background3.withValues(
+                alpha: 0.8,
+              ),
+              rowHoverColor: app.colors.primary.background3.withValues(
+                alpha: 0.2,
               ),
             ),
-            child: SfDataGrid(
-              source: _dataSource,
-              controller: _dataGridController,
-              headerRowHeight: 42,
-              rowHeight: 42,
-              selectionMode: SelectionMode.multiple,
-              showCheckboxColumn: true,
-              checkboxColumnSettings: const DataGridCheckboxColumnSettings(
-                width: checkboxWidth,
+            child: Theme(
+              data: Theme.of(context).copyWith(
+                checkboxTheme: CheckboxThemeData(
+                  fillColor: WidgetStateProperty.resolveWith((states) {
+                    //para configurar el color del checkbox
+                    if (states.contains(WidgetState.selected)) {
+                      return app.colors.primary.tertiary;
+                    }
+                    return Colors.transparent;
+                  }),
+                  side: BorderSide(color: app.colors.neutral.grey3, width: 1.5),
+                  // Borde gris
+                  checkColor: WidgetStateProperty.all(
+                    app.colors.primary.background1,
+                  ), // Tick oscuro
+                ),
               ),
-              onSelectionChanged: (addedRows, removedRows) {
-                _handleSelectionChanged();
-              },
-              navigationMode: GridNavigationMode.row,
-              gridLinesVisibility: GridLinesVisibility.horizontal,
-              headerGridLinesVisibility: GridLinesVisibility.horizontal,
-              allowColumnsResizing: true,
-              onColumnResizeUpdate: (details) {
-                setState(() {
-                  columnWidths[details.column.columnName] = details.width;
+              child: SfDataGrid(
+                source: _dataSource,
+                controller: _dataGridController,
+                headerRowHeight: 42,
+                rowHeight: 42,
+                selectionMode: SelectionMode.multiple,
+                showCheckboxColumn: true,
+                checkboxColumnSettings: const DataGridCheckboxColumnSettings(
+                  width: checkboxWidth,
+                ),
+                onSelectionChanged: (addedRows, removedRows) {
+                  _handleSelectionChanged();
+                },
+                navigationMode: GridNavigationMode.row,
+                gridLinesVisibility: GridLinesVisibility.horizontal,
+                headerGridLinesVisibility: GridLinesVisibility.horizontal,
+                allowColumnsResizing: true,
+                onColumnResizeUpdate: (details) {
+                  setState(() {
+                    columnWidths[details.column.columnName] = details.width;
 
-                  // Si redimensionamos cualquier columna que NO sea last_modified,
-                  // ajustamos last_modified para que la tabla no se achique.
-                  final othersWidth =
-                      (columnWidths['name'] ?? nameWidth) +
-                      (columnWidths['type'] ?? typeWidth) +
-                      (columnWidths['size'] ?? sizeWidth) +
-                      (columnWidths['actions'] ?? actionsWidth) +
-                      checkboxWidth;
+                    // Si redimensionamos cualquier columna que NO sea last_modified,
+                    // ajustamos last_modified para que la tabla no se achique.
+                    final othersWidth =
+                        (columnWidths['name'] ?? nameWidth) +
+                        (columnWidths['type'] ?? typeWidth) +
+                        (columnWidths['size'] ?? sizeWidth) +
+                        (columnWidths['actions'] ?? actionsWidth) +
+                        checkboxWidth;
 
-                  columnWidths['last_modified'] = (totalWidth - othersWidth)
-                      .clamp(150.0, totalWidth);
-                });
-                return true;
-              },
-              columns: [
-                GridColumn(
-                  columnName: 'name',
-                  width: columnWidths['name'] ?? nameWidth,
-                  minimumWidth: 150,
-                  label: header('Name'),
-                ),
-                GridColumn(
-                  columnName: 'type',
-                  width: columnWidths['type'] ?? typeWidth,
-                  minimumWidth: 100,
-                  label: header('Type'),
-                ),
-                GridColumn(
-                  columnName: 'size',
-                  width: columnWidths['size'] ?? sizeWidth,
-                  minimumWidth: 100,
-                  label: header('Size'),
-                ),
-                GridColumn(
-                  columnName: 'last_modified',
-                  width: columnWidths['last_modified'] ?? lastModifiedWidth,
-                  minimumWidth: 150,
-                  label: header('Last Modified'),
-                ),
-                GridColumn(
-                  columnName: 'actions',
-                  width: actionsWidth,
-                  label: const SizedBox.shrink(),
-                ),
-              ],
+                    columnWidths['last_modified'] = (totalWidth - othersWidth)
+                        .clamp(150.0, totalWidth);
+                  });
+                  return true;
+                },
+                columns: [
+                  GridColumn(
+                    columnName: 'name',
+                    width: columnWidths['name'] ?? nameWidth,
+                    minimumWidth: 150,
+                    label: header('Name'),
+                  ),
+                  GridColumn(
+                    columnName: 'type',
+                    width: columnWidths['type'] ?? typeWidth,
+                    minimumWidth: 100,
+                    label: header('Type'),
+                  ),
+                  GridColumn(
+                    columnName: 'size',
+                    width: columnWidths['size'] ?? sizeWidth,
+                    minimumWidth: 100,
+                    label: header('Size'),
+                  ),
+                  GridColumn(
+                    columnName: 'last_modified',
+                    width: columnWidths['last_modified'] ?? lastModifiedWidth,
+                    minimumWidth: 150,
+                    label: header('Last Modified'),
+                  ),
+                  GridColumn(
+                    columnName: 'actions',
+                    width: actionsWidth,
+                    label: const SizedBox.shrink(),
+                  ),
+                ],
+              ),
             ),
           ),
         );
