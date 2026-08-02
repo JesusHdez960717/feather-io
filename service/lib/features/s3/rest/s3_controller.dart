@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:mime/mime.dart';
 import 'package:service/features/features.dart';
 import 'package:winter/winter.dart';
@@ -30,6 +32,11 @@ class S3Controller {
             filterConfig: hasRole('admin').toFilterConfig(),
           ),
         ],
+      ),
+      Route.post(
+        path: '/{bucket}',
+        handler: multiDelete,
+        filterConfig: hasRole('admin').toFilterConfig(),
       ),
     ],
   );
@@ -107,6 +114,31 @@ class S3Controller {
     );
 
     return ResponseEntity.ok(body: 'File deleted successfully.');
+  }
+
+  Future<ResponseEntity> multiDelete(RequestEntity request) async {
+    final bucketName = request.pathParams['bucket']!;
+
+    if (!request.queryParams.containsKey('delete')) {
+      throw BadRequestException(
+        body: 'Multi-object delete requires ?delete parameter',
+      );
+    }
+
+    try {
+      final bodyString = await utf8.decodeStream(request.read());
+      final Map<String, dynamic> body = jsonDecode(bodyString);
+      final deleteRequest = DeleteObjectsRequest.fromJson(body);
+
+      final result = await fileManagement.deleteObjects(
+        bucketName: bucketName,
+        request: deleteRequest,
+      );
+
+      return ResponseEntity.ok(body: result);
+    } catch (e) {
+      throw BadRequestException(body: 'Invalid JSON for delete request: $e');
+    }
   }
 
   String _mapBucketsToXml(List<BucketModel> buckets) {

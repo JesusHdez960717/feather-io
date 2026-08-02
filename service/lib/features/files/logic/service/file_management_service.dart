@@ -226,18 +226,61 @@ class FileManagementService {
       throw BadRequestException(body: 'El key $key no es valido');
     }
 
-    final file = _getFile(bucketName, key);
+    final fullPath = p.join(_getBucketPath(bucketName), key);
+    final type = await FileSystemEntity.type(fullPath);
 
-    if (!await file.exists()) {
+    if (type == FileSystemEntityType.notFound) {
       throw NotFoundException(body: 'El archivo "$key" no existe.');
     }
 
-    await file.delete();
+    if (type == FileSystemEntityType.directory) {
+      // Si es un directorio, borramos recursivamente (comportamiento de carpeta)
+      await Directory(fullPath).delete(recursive: true);
+    } else {
+      // Si es un archivo normal
+      await File(fullPath).delete();
+    }
 
-    // Limpieza recursiva de carpetas vacías
-    await _deleteEmptyParents(file.parent, _getBucketPath(bucketName));
+    // Limpieza recursiva de carpetas vacías (si aplica)
+    await _deleteEmptyParents(
+      Directory(fullPath).parent,
+      _getBucketPath(bucketName),
+    );
 
     return true;
+  }
+
+  Future<DeleteObjectsResponse> deleteObjects({
+    required String bucketName,
+    required DeleteObjectsRequest request,
+  }) async {
+    final deleted = <String>[];
+    final errors = <DeleteError>[];
+
+    for (final key in request.keys) {
+      try {
+        await deleteFile(bucketName: bucketName, key: key);
+        deleted.add(key);
+      } on NotFoundException {
+        // En S3, borrar algo que no existe se considera éxito o se ignora silenciosamente
+        // pero podemos reportarlo si queremos. S3 usualmente devuelve éxito.
+        deleted.add(key);
+      } catch (e) {
+        errors.add(
+          DeleteError(
+            key: key,
+            code: 'InternalError',
+            message: e.toString(),
+          ),
+        );
+      }
+    }
+
+    return DeleteObjectsResponse(
+      deleted: deleted,
+      errors: errors,
+      quiet: request.quiet,
+    );
   }
 
   Future<void> _deleteEmptyParents(Directory dir, String bucketPath) async {
