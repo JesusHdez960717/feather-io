@@ -123,6 +123,46 @@ class BrowserCubit extends Cubit<BrowserState>
       );
     }
   }
+
+  Future<void> deleteObjects({
+    required BucketModel bucket,
+    required List<String> keys,
+  }) async {
+    if (state is! BrowserSearchState) return;
+    final currentState = state as BrowserSearchState;
+
+    try {
+      emit(
+        BrowserProcessingInProgressState(
+          buckets: currentState.buckets,
+          selectedBucket: currentState.selectedBucket,
+          prefix: currentState.prefix,
+          objects: currentState.objects,
+          viewType: currentState.viewType,
+        ),
+      );
+
+      await repo.deleteObjects(
+        access: auth.access,
+        secret: auth.secret,
+        bucket: bucket.name,
+        keys: keys,
+      );
+
+      await listObjects(bucket: bucket, prefix: currentState.prefix);
+    } catch (exc) {
+      emit(
+        BrowserSearchErrorState(
+          ExceptionConverter.parse(exc),
+          buckets: currentState.buckets,
+          selectedBucket: currentState.selectedBucket,
+          prefix: currentState.prefix,
+          objects: currentState.objects,
+          viewType: currentState.viewType,
+        ),
+      );
+    }
+  }
 }
 
 abstract class BrowserState {
@@ -207,6 +247,33 @@ class BrowserSearchOkState extends BrowserSearchState {
     ViewType? viewType,
   }) {
     return BrowserSearchOkState(
+      buckets: buckets ?? this.buckets,
+      selectedBucket: selectedBucket ?? this.selectedBucket,
+      prefix: prefix ?? this.prefix,
+      objects: objects ?? this.objects,
+      viewType: viewType ?? this.viewType,
+    );
+  }
+}
+
+class BrowserProcessingInProgressState extends BrowserSearchState {
+  BrowserProcessingInProgressState({
+    required super.buckets,
+    super.selectedBucket,
+    super.prefix = '',
+    super.objects,
+    super.viewType,
+  });
+
+  @override
+  BrowserProcessingInProgressState copyWith({
+    List<BucketModel>? buckets,
+    BucketModel? selectedBucket,
+    String? prefix,
+    ListObjectsModel? objects,
+    ViewType? viewType,
+  }) {
+    return BrowserProcessingInProgressState(
       buckets: buckets ?? this.buckets,
       selectedBucket: selectedBucket ?? this.selectedBucket,
       prefix: prefix ?? this.prefix,

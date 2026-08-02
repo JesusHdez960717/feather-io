@@ -30,11 +30,29 @@ class BrowserClient extends BaseClient {
   }) async {
     Response rawResponse = await dio.get(
       '$baseUrl/$bucket',
-      queryParameters: {'prefix': ?prefix, 'delimiter': ?delimiter},
+      queryParameters: {'prefix': prefix, 'delimiter': delimiter},
       options: options(access: access, secret: secret),
     );
 
     return ListObjectsResponse.fromJson(rawResponse.data);
+  }
+
+  Future<void> deleteObjects({
+    required String access,
+    required String secret,
+    required String bucket,
+    required List<String> keys,
+  }) async {
+    await dio.post(
+      '$baseUrl/$bucket',
+      queryParameters: {'delete': ''},
+      data: {
+        'delete': {
+          'objects': keys.map((k) => {'key': k}).toList(),
+        },
+      },
+      options: options(access: access, secret: secret),
+    );
   }
 }
 

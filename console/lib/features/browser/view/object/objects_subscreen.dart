@@ -13,6 +13,7 @@ class ObjectsSubscreen extends StatefulWidget {
   final VoidCallback onBack;
   final Function(BrowserObjectModel) onSelected;
   final Function(ViewType) onViewTypeChanged;
+  final Function(List<String> keys) onDelete;
   final void Function() onExit;
 
   const ObjectsSubscreen({
@@ -22,6 +23,7 @@ class ObjectsSubscreen extends StatefulWidget {
     required this.onBack,
     required this.onSelected,
     required this.onViewTypeChanged,
+    required this.onDelete,
     required this.onExit,
     super.key,
   });
@@ -95,9 +97,18 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
   }
 
   void _onDeleteSelected(List<BrowserObjectWrapper> selected) {
-    // TODO: Implement actual deletion logic, possibly via Cubit
-    // For now, we just pass the selected wrappers to whatever handler is needed
-    debugPrint('Deleting ${selected.length} objects');
+    final bucket = widget.state.selectedBucket;
+    if (bucket == null) return;
+
+    final keys = selected.map((w) => w.fullPath).toList();
+
+    ConfirmDialog.show(
+      title: 'Delete objects',
+      description: 'Are you sure you want to delete ${keys.length} objects?',
+      confirmTitle: 'Delete',
+      confirmColor: app.colors.primary.red,
+      confirmAction: () => widget.onDelete(keys),
+    );
   }
 
   void _onShowOptions(BrowserObjectWrapper wrapper, RenderBox buttonBox) {
@@ -175,6 +186,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
         ),
         PopupMenuItem(
           value: 'delete',
+          onTap: () => _onDeleteSelected([wrapper]),
           child: Row(
             children: [
               app.assets.icons.actions.delete.build(
@@ -375,7 +387,8 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                           onShowOptions: _onShowOptions,
                         ),
                 ),
-                if (widget.state is BrowserSearchingState)
+                if (widget.state is BrowserSearchingState ||
+                    widget.state is BrowserProcessingInProgressState)
                   Positioned.fill(
                     child: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 0.5, sigmaY: 0.5),

@@ -37,6 +37,24 @@ class BrowserRepo {
       throw ExceptionConverter.parse(e);
     }
   }
+
+  Future<void> deleteObjects({
+    required String access,
+    required String secret,
+    required String bucket,
+    required List<String> keys,
+  }) async {
+    try {
+      await client.deleteObjects(
+        access: access,
+        secret: secret,
+        bucket: bucket,
+        keys: keys,
+      );
+    } catch (e) {
+      throw ExceptionConverter.parse(e);
+    }
+  }
 }
 
 extension BucketResponseMapping on BucketResponse {

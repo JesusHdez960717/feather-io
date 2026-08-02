@@ -103,6 +103,10 @@ class _BrowserScreenState extends State<BrowserScreen> {
                       },
                       onSelected: (obj) {},
                       onExit: () => cubit.reset(),
+                      onDelete: (keys) => cubit.deleteObjects(
+                        bucket: state.selectedBucket!,
+                        keys: keys,
+                      ),
                       onViewTypeChanged: (type) {
                         cubit.changeViewType(type);
                         BrowserScreen.navigator.updateViewType(type);
