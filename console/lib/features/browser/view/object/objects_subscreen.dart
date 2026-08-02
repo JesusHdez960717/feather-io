@@ -48,6 +48,7 @@ class ObjectsSubscreen extends StatefulWidget {
 
 class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _breadcrumbScrollController = ScrollController();
   List<BrowserObjectWrapper> _allWrappers = [];
   List<BrowserObjectWrapper> _filteredWrappers = [];
   List<BrowserObjectWrapper> _selectedWrappers = [];
@@ -58,6 +59,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
     super.initState();
     _initializeWrappers();
     _searchController.addListener(_onSearchChanged);
+    _scrollToEnd();
   }
 
   @override
@@ -66,13 +68,29 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
     if (oldWidget.state.objects != widget.state.objects ||
         oldWidget.state.prefix != widget.state.prefix) {
       _initializeWrappers();
+      if (oldWidget.state.prefix != widget.state.prefix) {
+        _scrollToEnd();
+      }
     }
+  }
+
+  void _scrollToEnd() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_breadcrumbScrollController.hasClients) {
+        _breadcrumbScrollController.animateTo(
+          _breadcrumbScrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   @override
   void dispose() {
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
+    _breadcrumbScrollController.dispose();
     super.dispose();
   }
 
@@ -653,7 +671,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: Row(
               children: [
-                ?icon,
+                if (icon != null) icon,
                 if (icon != null && label.isNotEmpty)
                   app.dimensions.padding.s.gap(),
                 Text(
@@ -712,6 +730,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 3.5),
           child: SingleChildScrollView(
+            controller: _breadcrumbScrollController,
             scrollDirection: Axis.horizontal,
             child: Row(children: children),
           ),
