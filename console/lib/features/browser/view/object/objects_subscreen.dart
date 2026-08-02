@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:console/app_exporter.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:desktop_drop/desktop_drop.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import 'objects_grid_datasource.dart';
@@ -225,6 +226,15 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
     });
   }
 
+  Future<void> _onUploadFiles() async {
+    final result = await FilePicker.pickFiles(
+      allowMultiple: true,
+      withData: true,
+    );
+
+    widget.onUpload(result?.xFiles ?? []);
+  }
+
   @override
   Widget build(BuildContext context) {
     final prefix = widget.state.prefix;
@@ -285,10 +295,18 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                     Row(
                       children: [
                         PrimaryButton.primary(
-                          title: 'Upload folder',
-                          icon: app.assets.icons.actions.edit,
-                          onPressed: () {},
+                          title: 'Upload file',
+                          icon: app.assets.icons.actions.upload,
+                          onPressed: _onUploadFiles,
                           w: 150,
+                          h: 38,
+                        ),
+                        app.dimensions.padding.l.gap(),
+                        PrimaryButton.primary(
+                          title: 'Upload directory',
+                          icon: app.assets.icons.actions.upload,
+                          onPressed: () {},
+                          w: 170,
                           h: 38,
                         ),
                       ],
@@ -516,7 +534,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: Row(
               children: [
-                ?icon,
+                if (icon != null) icon,
                 if (icon != null && label.isNotEmpty)
                   app.dimensions.padding.s.gap(),
                 Text(

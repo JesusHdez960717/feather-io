@@ -35,6 +35,7 @@ dependencies:
   syncfusion_flutter_core: 33.2.12            #tables utils
   desktop_drop: 0.7.1                     #to drop files
   cross_file: 0.3.5+4
+  file_picker: 11.0.3
 
   #utils
   logger: 2.7.0

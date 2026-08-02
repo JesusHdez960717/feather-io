@@ -1,5 +1,6 @@
 import 'package:console/app_exporter.dart';
 import 'package:cross_file/cross_file.dart';
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class BrowserCubit extends Cubit<BrowserState>
@@ -12,14 +13,14 @@ class BrowserCubit extends Cubit<BrowserState>
   final ViewType? initialViewType;
 
   BrowserCubit({required this.auth, required this.repo, this.initialViewType})
-      : super(BrowserInitialState(viewType: initialViewType));
+    : super(BrowserInitialState(viewType: initialViewType));
 
   void reset() {
     final viewType = state is BrowserSearchState
         ? (state as BrowserSearchState).viewType
         : (state is BrowserInitialState
-        ? (state as BrowserInitialState).viewType
-        : null);
+              ? (state as BrowserInitialState).viewType
+              : null);
     _allBuckets.clear();
     emit(BrowserInitialState(viewType: viewType));
   }
@@ -33,8 +34,8 @@ class BrowserCubit extends Cubit<BrowserState>
     final currentViewType = state is BrowserSearchState
         ? (state as BrowserSearchState).viewType
         : (state is BrowserInitialState
-        ? (state as BrowserInitialState).viewType
-        : null);
+              ? (state as BrowserInitialState).viewType
+              : null);
 
     final viewType = currentViewType ?? initialViewType ?? ViewType.list;
 
@@ -78,9 +79,9 @@ class BrowserCubit extends Cubit<BrowserState>
   Future<void> listObjects({BucketModel? bucket, String? prefix}) async {
     final targetBucket =
         bucket ??
-            (state is BrowserSearchState
-                ? (state as BrowserSearchState).selectedBucket
-                : null);
+        (state is BrowserSearchState
+            ? (state as BrowserSearchState).selectedBucket
+            : null);
     if (targetBucket == null) return;
 
     final viewType = (state as BrowserSearchState).viewType;
@@ -184,20 +185,19 @@ class BrowserCubit extends Cubit<BrowserState>
         ),
       );
 
-      for (final file in files) {
-        String relativePath = file.name;
-        if (file.path.startsWith('/') && file.path.length > 1) {
-          relativePath = file.path.substring(1);
-        }
+      List<({String key, XFile file})> flatFiles = _flattenDropItems(
+        files,
+        prefix,
+      );
 
-        final key = '$prefix$relativePath';
-        final length = await file.length();
+      for (final file in flatFiles) {
+        final length = await file.file.length();
         await repo.uploadObject(
           access: auth.access,
           secret: auth.secret,
           bucket: bucket.name,
-          key: key,
-          data: file.openRead(),
+          key: file.key,
+          data: file.file.openRead(),
           length: length,
         );
       }
@@ -216,6 +216,38 @@ class BrowserCubit extends Cubit<BrowserState>
       );
     }
   }
+}
+
+List<({String key, XFile file})> _flattenDropItems(
+  List<XFile> items,
+  String prefix,
+) {
+  final result = <({String key, XFile file})>[];
+
+  void walkDrop(DropItem item, String prefix) {
+    if (item is DropItemDirectory) {
+      final path = prefix.isEmpty ? item.name : '$prefix/${item.name}';
+      for (final child in item.children) {
+        walkDrop(child, path);
+      }
+    } else if (item is DropItemFile) {
+      final path = prefix.isEmpty ? item.name : '$prefix/${item.name}';
+      result.add((
+        key: path,
+        file: XFile(item.path, name: item.name, mimeType: item.mimeType),
+      ));
+    }
+  }
+
+  for (final item in items) {
+    if (item is DropItem) {
+      walkDrop(item, prefix);
+    } else {
+      result.add((key: item.name, file: item));
+    }
+  }
+
+  return result;
 }
 
 abstract class BrowserState {
@@ -339,7 +371,8 @@ class BrowserProcessingInProgressState extends BrowserSearchState {
 class BrowserSearchErrorState extends BrowserSearchState {
   final GlobalException exception;
 
-  BrowserSearchErrorState(this.exception, {
+  BrowserSearchErrorState(
+    this.exception, {
     required super.buckets,
     super.selectedBucket,
     super.prefix = '',
