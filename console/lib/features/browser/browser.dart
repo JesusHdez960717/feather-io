@@ -7,3 +7,5 @@ export 'logic/model/bucket_model.dart';
 export 'view/browser_screen.dart';
 export 'view/bucket/buckets_subscreen.dart';
 export 'view/object/objects_subscreen.dart';
+export 'view/object/widget/browser_breadcrumbs.dart';
+export 'view/object/widget/dragging_zone_overlay.dart';

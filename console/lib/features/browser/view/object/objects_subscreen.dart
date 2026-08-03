@@ -1,22 +1,12 @@
-import 'dart:async';
-import 'dart:js_interop';
 import 'dart:ui';
 
 import 'package:console/app_exporter.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:desktop_drop/desktop_drop.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:web/web.dart' as web;
 
 import 'objects_grid_datasource.dart';
 import 'objects_table_datasource.dart';
-
-// webkitRelativePath no es parte de la API estándar de File,
-// así que se expone como extension type sobre web.File.
-extension type _FileWithRelativePath(web.File file) implements web.File {
-  external String? get webkitRelativePath;
-}
 
 class ObjectsSubscreen extends StatefulWidget {
   final BrowserSearchState state;
@@ -59,7 +49,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
     super.initState();
     _initializeWrappers();
     _searchController.addListener(_onSearchChanged);
-    _scrollToEnd();
+    _scrollBreadcrumbsToEnd();
   }
 
   @override
@@ -69,12 +59,12 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
         oldWidget.state.prefix != widget.state.prefix) {
       _initializeWrappers();
       if (oldWidget.state.prefix != widget.state.prefix) {
-        _scrollToEnd();
+        _scrollBreadcrumbsToEnd();
       }
     }
   }
 
-  void _scrollToEnd() {
+  void _scrollBreadcrumbsToEnd() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_breadcrumbScrollController.hasClients) {
         _breadcrumbScrollController.animateTo(
@@ -157,7 +147,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
     );
   }
 
-  void _onShowOptions(BrowserObjectWrapper wrapper, RenderBox buttonBox) {
+  void _onShowObjectOptions(BrowserObjectWrapper wrapper, RenderBox buttonBox) {
     final RenderBox overlay =
         Overlay.of(context).context.findRenderObject() as RenderBox;
 
@@ -253,62 +243,6 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
     );
   }
 
-  Future<void> _onUploadFiles() async {
-    final result = await FilePicker.pickFiles(
-      allowMultiple: true,
-      withData: true,
-    );
-
-    widget.onUpload(_flattenDropItems(result?.xFiles ?? []));
-  }
-
-  Future<void> _onUploadFolder() async {
-    Future<XFile> webFileToXFile(web.File file) async {
-      final buffer = await file.arrayBuffer().toDart;
-      final bytes = buffer.toDart.asUint8List();
-
-      final relativePath = _FileWithRelativePath(file).webkitRelativePath;
-      final name = (relativePath != null && relativePath.isNotEmpty)
-          ? relativePath
-          : file.name;
-
-      return XFile.fromData(
-        bytes,
-        name: name,
-        length: bytes.length,
-        lastModified: DateTime.fromMillisecondsSinceEpoch(file.lastModified),
-        mimeType: file.type,
-      );
-    }
-
-    final input = web.HTMLInputElement()..type = 'file';
-    input.setAttribute('webkitdirectory', 'true');
-    input.setAttribute('directory', 'true');
-
-    final completer = Completer<void>();
-    input.addEventListener(
-      'change',
-      (web.Event event) {
-        completer.complete();
-      }.toJS,
-    );
-
-    input.click();
-    await completer.future;
-
-    final fileList = input.files;
-    if (fileList == null) return;
-
-    final xFiles = <XFile>[];
-    for (var i = 0; i < fileList.length; i++) {
-      final file = fileList.item(i);
-      if (file == null) continue;
-      xFiles.add(await webFileToXFile(file));
-    }
-
-    widget.onUpload(_flattenDropItems(xFiles));
-  }
-
   void _onShowUploadMenu(BuildContext context) {
     final RenderBox buttonBox = context.findRenderObject() as RenderBox;
     final RenderBox overlay =
@@ -336,7 +270,12 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
       ),
       items: [
         PopupMenuItem(
-          onTap: _onUploadFiles,
+          onTap: () async {
+            final xFiles = await FilePicker.pickFiles(multiple: true);
+            if (xFiles.isNotEmpty) {
+              widget.onUpload(_flattenDropItems(xFiles));
+            }
+          },
           child: Row(
             children: [
               app.assets.icons.actions.uploadFile.build(
@@ -354,7 +293,12 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
           ),
         ),
         PopupMenuItem(
-          onTap: _onUploadFolder,
+          onTap: () async {
+            final xFiles = await FilePicker.pickDirectory();
+            if (xFiles.isNotEmpty) {
+              widget.onUpload(_flattenDropItems(xFiles));
+            }
+          },
           child: Row(
             children: [
               app.assets.icons.actions.uploadFolder.build(
@@ -430,7 +374,12 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                       ],
                     ),
                     app.dimensions.padding.xl.gap(),
-                    _buildBreadcrumbs(),
+                    BrowserBreadcrumbs(
+                      bucketName: widget.state.selectedBucket?.name ?? '',
+                      prefix: widget.state.prefix,
+                      onNavigate: widget.onNavigate,
+                      scrollController: _breadcrumbScrollController,
+                    ),
                     app.dimensions.padding.xl.gap(),
                     Row(
                       children: [
@@ -541,7 +490,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                             onNavigate: widget.onNavigate,
                             onSelected: widget.onSelected,
                             onSelectionChanged: _onSelectionChanged,
-                            onShowOptions: _onShowOptions,
+                            onShowOptions: _onShowObjectOptions,
                           )
                         : ObjectsGridDatasource(
                             state: widget.state,
@@ -551,11 +500,11 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                             onNavigate: widget.onNavigate,
                             onSelected: widget.onSelected,
                             onSelectionChanged: _onSelectionChanged,
-                            onShowOptions: _onShowOptions,
+                            onShowOptions: _onShowObjectOptions,
                           ),
                   ),
                   if (_isDragging)
-                    Positioned.fill(child: _buildDraggingOverlay()),
+                    const Positioned.fill(child: DraggingZoneOverlay()),
                   if (widget.state is BrowserSearchingState ||
                       widget.state is BrowserProcessingInProgressState)
                     Positioned.fill(
@@ -634,142 +583,6 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildBreadcrumbs() {
-    final bucketName = widget.state.selectedBucket?.name ?? '';
-    final prefix = widget.state.prefix;
-    final parts = prefix.split('/').where((s) => s.isNotEmpty).toList();
-
-    List<Widget> children = [];
-
-    Widget separator() => Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: app.assets.icons.navigation.next.build(
-        size: 16,
-        color: app.colors.neutral.grey3,
-      ),
-    );
-
-    Widget breadcrumbItem({
-      required VoidCallback? onTap,
-      required bool isLast,
-      required String label,
-      Widget? icon,
-    }) {
-      return Container(
-        decoration: BoxDecoration(
-          color: app.colors.primary.background2,
-          borderRadius: app.dimensions.border.borderRadius.xs,
-        ),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: app.dimensions.border.borderRadius.xs,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: Row(
-              children: [
-                if (icon != null) icon,
-                if (icon != null && label.isNotEmpty)
-                  app.dimensions.padding.s.gap(),
-                Text(
-                  label,
-                  style: app.textTheme.bodyMedium?.copyWith(
-                    fontSize: 16,
-                    color: app.colors.neutral.white,
-                    fontWeight: isLast ? FontWeight.normal : FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    // Bucket name (root of object navigation)
-    children.add(
-      breadcrumbItem(
-        label: bucketName,
-        onTap: parts.isEmpty ? null : () => widget.onNavigate(''),
-        isLast: parts.isEmpty,
-        icon: app.assets.icons.storage.bucket.build(
-          color: app.colors.neutral.white,
-          size: 14,
-        ),
-      ),
-    );
-
-    String cumulativePath = '';
-    for (int i = 0; i < parts.length; i++) {
-      final part = parts[i];
-      cumulativePath += '$part/';
-      final isLast = i == parts.length - 1;
-      final targetPath = cumulativePath;
-
-      children.add(separator());
-      children.add(
-        breadcrumbItem(
-          label: part,
-          onTap: isLast ? null : () => widget.onNavigate(targetPath),
-          isLast: isLast,
-        ),
-      );
-    }
-
-    return Expanded(
-      child: Container(
-        height: 38,
-        alignment: Alignment.centerLeft,
-        decoration: BoxDecoration(
-          color: app.colors.primary.background3,
-          borderRadius: app.dimensions.border.borderRadius.xs,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 3.5),
-          child: SingleChildScrollView(
-            controller: _breadcrumbScrollController,
-            scrollDirection: Axis.horizontal,
-            child: Row(children: children),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDraggingOverlay() {
-    return BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 4.5, sigmaY: 4.5),
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border(
-            left: BorderSide(color: app.colors.neutral.grey5, width: 0.5),
-            right: BorderSide(color: app.colors.neutral.grey5, width: 0.5),
-            bottom: BorderSide(color: app.colors.neutral.grey5, width: 0.5),
-          ),
-          color: app.colors.neutral.white.withValues(alpha: 0.03),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              app.assets.icons.actions.upload.build(
-                size: 48,
-                color: app.colors.neutral.white,
-              ),
-              app.dimensions.padding.m.gap(),
-              Text(
-                'Suelte aqui para subir',
-                style: app.textTheme.titleLarge?.copyWith(
-                  color: app.colors.neutral.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
