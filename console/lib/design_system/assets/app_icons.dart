@@ -63,6 +63,8 @@ class ActionsIcons {
 
   SvgAsset get delete => const SvgAsset('$_actions/delete.svg');
 
+  SvgAsset get download => const SvgAsset('$_actions/download.svg');
+
   SvgAsset get edit => const SvgAsset('$_actions/edit.svg');
 
   SvgAsset get filter => const SvgAsset('$_actions/filter.svg');
