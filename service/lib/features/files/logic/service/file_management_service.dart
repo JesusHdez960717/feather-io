@@ -1,7 +1,8 @@
 import 'dart:io';
 
-import 'package:service/feather.dart';
+import 'package:archive/archive.dart';
 import 'package:path/path.dart' as p;
+import 'package:service/feather.dart';
 
 class FileManagementService {
   final bool createBucketIfNotExist;
@@ -89,7 +90,7 @@ class FileManagementService {
   }
 
   Future<List<BucketModel>> listBuckets() async {
-    final storageDir = Directory(env.storagePath);
+    final storageDir = Directory(env.storageVolumePath);
     if (!await storageDir.exists()) {
       return [];
     }
@@ -121,7 +122,8 @@ class FileManagementService {
             name: bucketName,
             objectCount: objectCount,
             size: totalSize,
-            creationDate: stat.changed, // Usamos la fecha de cambio/creación del directorio
+            creationDate: stat
+                .changed, // Usamos la fecha de cambio/creación del directorio
           ),
         );
       }
@@ -146,8 +148,9 @@ class FileManagementService {
     }
 
     // Listamos los archivos del directorio recursivamente para soportar subcarpetas
-    final List<FileSystemEntity> entities =
-        await dir.list(recursive: true).toList();
+    final List<FileSystemEntity> entities = await dir
+        .list(recursive: true)
+        .toList();
 
     final List<FileModel> filesList = [];
     final Set<String> commonPrefixes = {};
@@ -157,7 +160,9 @@ class FileManagementService {
     for (var entity in entities) {
       if (entity is File) {
         // Obtenemos la ruta relativa al bucket para usarla como key (ej: files/test/123.jpg)
-        final key = p.relative(entity.path, from: bucketPath).replaceAll('\\', '/');
+        final key = p
+            .relative(entity.path, from: bucketPath)
+            .replaceAll('\\', '/');
 
         // Filtrar por prefijo
         if (!key.startsWith(normalizedPrefix)) continue;
@@ -169,7 +174,9 @@ class FileManagementService {
 
           if (delimiterIndex != -1) {
             // Es una "carpeta" (Common Prefix)
-            final commonPrefix = normalizedPrefix + remainingKey.substring(0, delimiterIndex + 1);
+            final commonPrefix =
+                normalizedPrefix +
+                remainingKey.substring(0, delimiterIndex + 1);
             commonPrefixes.add(commonPrefix);
             continue;
           }
@@ -177,11 +184,7 @@ class FileManagementService {
 
         final stat = await entity.stat();
         filesList.add(
-          FileModel(
-            key: key,
-            size: stat.size,
-            lastModified: stat.modified,
-          ),
+          FileModel(key: key, size: stat.size, lastModified: stat.modified),
         );
       }
     }
@@ -213,6 +216,47 @@ class FileManagementService {
     }
 
     return file;
+  }
+
+  Future<List<int>> zipObjects({
+    required String bucketName,
+    required List<String> keys,
+  }) async {
+    if (!isValidBucketName(bucketName)) {
+      throw BadRequestException(body: 'El bucket $bucketName no es valido');
+    }
+
+    final bucketPath = _getBucketPath(bucketName);
+    final archive = Archive();
+
+    for (final key in keys) {
+      final fullPath = p.join(bucketPath, key);
+      final type = await FileSystemEntity.type(fullPath);
+
+      if (type == FileSystemEntityType.file) {
+        final file = File(fullPath);
+        final bytes = await file.readAsBytes();
+        archive.addFile(ArchiveFile(key, bytes.length, bytes));
+      } else if (type == FileSystemEntityType.directory) {
+        final dir = Directory(fullPath);
+        final entities = await dir.list(recursive: true).toList();
+        for (final entity in entities) {
+          if (entity is File) {
+            final relativeKey = p
+                .relative(entity.path, from: bucketPath)
+                .replaceAll('\\', '/');
+            final bytes = await entity.readAsBytes();
+            archive.addFile(ArchiveFile(relativeKey, bytes.length, bytes));
+          }
+        }
+      }
+    }
+
+    if (archive.isEmpty) {
+      throw NotFoundException(body: 'No se encontraron archivos para descargar.');
+    }
+
+    return ZipEncoder().encode(archive);
   }
 
   Future<bool> deleteFile({
@@ -267,11 +311,7 @@ class FileManagementService {
         deleted.add(key);
       } catch (e) {
         errors.add(
-          DeleteError(
-            key: key,
-            code: 'InternalError',
-            message: e.toString(),
-          ),
+          DeleteError(key: key, code: 'InternalError', message: e.toString()),
         );
       }
     }
@@ -303,7 +343,7 @@ class FileManagementService {
   }
 
   String _getBucketPath(String bucketName) {
-    return p.join(env.storagePath, bucketName);
+    return p.join(env.storageVolumePath, bucketName);
   }
 
   File _getFile(String bucketName, String key) {

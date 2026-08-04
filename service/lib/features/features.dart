@@ -1,2 +1,3 @@
 export 'files/files.dart';
-export 's3/rest/s3_controller.dart';
+export 's3/s3.dart';
+export 'admin/admin.dart';

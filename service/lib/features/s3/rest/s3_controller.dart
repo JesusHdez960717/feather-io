@@ -7,39 +7,51 @@ import 'package:winter/winter.dart';
 class S3Controller {
   final FileManagementService fileManagement;
 
-  Route get routing => Route.parent(
-    path: '/',
-    routes: [
-      Route.get(
-        path: '/',
-        handler: listBuckets,
-        filterConfig: hasRole('admin').toFilterConfig(),
-      ),
-      Route.get(
-        path: '/{bucket}',
-        handler: listFiles,
-        filterConfig: hasRole('admin').toFilterConfig(),
-        routes: [
-          Route.put(
-            path: '/{key|.*}',
-            handler: uploadFile,
-            filterConfig: AuthFilter(rules: hasRole('admin')).toFilterConfig(),
-          ),
-          Route.get(path: '/{key|.*}', key: 's3.get-file', handler: getFile),
-          Route.delete(
-            path: '/{key|.*}',
-            handler: deleteFile,
-            filterConfig: hasRole('admin').toFilterConfig(),
-          ),
-        ],
-      ),
-      Route.post(
-        path: '/{bucket}',
-        handler: multiDelete,
-        filterConfig: hasRole('admin').toFilterConfig(),
-      ),
-    ],
-  );
+  Route get routing {
+    ReservedBucketFilter reservedBucketFilter = ReservedBucketFilter();
+
+    return Route.parent(
+      path: '/',
+      routes: [
+        Route.get(
+          path: '/',
+          handler: listBuckets,
+          filterConfig: hasRole('admin').toFilterConfig(),
+        ),
+        Route.get(
+          path: '/{bucket}',
+          handler: listFiles,
+          filterConfig: [
+            hasRole('admin').toFilter(),
+            reservedBucketFilter,
+          ].toFilterConfig(),
+          routes: [
+            Route.put(
+              path: '/{key|.*}',
+              handler: uploadFile,
+              filterConfig: AuthFilter(
+                rules: hasRole('admin'),
+              ).toFilterConfig(),
+            ),
+            Route.get(path: '/{key|.*}', key: 's3.get-file', handler: getFile),
+            Route.delete(
+              path: '/{key|.*}',
+              handler: deleteFile,
+              filterConfig: hasRole('admin').toFilterConfig(),
+            ),
+          ],
+        ),
+        Route.post(
+          path: '/{bucket}',
+          handler: multiDelete,
+          filterConfig: [
+            hasRole('admin').toFilter(),
+            reservedBucketFilter,
+          ].toFilterConfig(),
+        ),
+      ],
+    );
+  }
 
   S3Controller({required this.fileManagement});
 
@@ -90,10 +102,10 @@ class S3Controller {
   }
 
   Future<ResponseEntity> getFile(RequestEntity request) async {
-    final file = await fileManagement.getFile(
-      bucketName: request.pathParams['bucket']!,
-      key: request.pathParams['key']!,
-    );
+    final bucketName = request.pathParams['bucket']!;
+    final key = request.pathParams['key']!;
+
+    final file = await fileManagement.getFile(bucketName: bucketName, key: key);
 
     final contentType =
         lookupMimeType(file.path) ?? MediaType.applicationOctetStream;
