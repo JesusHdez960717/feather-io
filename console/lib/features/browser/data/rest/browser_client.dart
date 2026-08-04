@@ -72,6 +72,38 @@ class BrowserClient extends BaseClient {
       options: opt,
     );
   }
+
+  Future<List<int>> getObject({
+    required String access,
+    required String secret,
+    required String bucket,
+    required String key,
+  }) async {
+    Response<List<int>> response = await dio.get<List<int>>(
+      '$baseUrl/$bucket/$key',
+      options: options(access: access, secret: secret).copyWith(
+        responseType: ResponseType.bytes,
+      ),
+    );
+    return response.data!;
+  }
+
+  Future<List<int>> download({
+    required String access,
+    required String secret,
+    required String bucket,
+    required List<String> keys,
+  }) async {
+    final admin = Environment.adminPrefix;
+    Response<List<int>> response = await dio.post<List<int>>(
+      '$baseUrl/$admin/bucket/$bucket/download',
+      data: {'keys': keys},
+      options: options(access: access, secret: secret).copyWith(
+        responseType: ResponseType.bytes,
+      ),
+    );
+    return response.data!;
+  }
 }
 
 //--- BUCKET RESPONSE ---

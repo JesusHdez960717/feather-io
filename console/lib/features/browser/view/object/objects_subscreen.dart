@@ -17,6 +17,7 @@ class ObjectsSubscreen extends StatefulWidget {
   final Function(ViewType) onViewTypeChanged;
   final Function(List<String> keys) onDelete;
   final Function(List<XFile> files) onUpload;
+  final Function(List<String> keys, {String? zipName}) onDownload;
   final void Function() onExit;
 
   const ObjectsSubscreen({
@@ -28,6 +29,7 @@ class ObjectsSubscreen extends StatefulWidget {
     required this.onViewTypeChanged,
     required this.onDelete,
     required this.onUpload,
+    required this.onDownload,
     required this.onExit,
     super.key,
   });
@@ -172,7 +174,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
         side: BorderSide(color: app.colors.neutral.grey5),
       ),
       items: [
-        PopupMenuItem(
+        /*PopupMenuItem(
           value: 'view',
           onTap: () {
             if (wrapper.isFolder) {
@@ -213,6 +215,27 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
               app.dimensions.padding.m.gap(),
               Text(
                 'Share',
+                style: app.textTheme.bodyMedium?.copyWith(
+                  color: app.colors.neutral.white,
+                ),
+              ),
+            ],
+          ),
+        ),*/
+        PopupMenuItem(
+          value: 'download',
+          onTap: () =>
+              widget.onDownload([wrapper.fullPath], zipName: wrapper.name),
+          child: Row(
+            children: [
+              Icon(
+                Icons.download_outlined,
+                size: 18,
+                color: app.colors.neutral.white,
+              ),
+              app.dimensions.padding.m.gap(),
+              Text(
+                'Download',
                 style: app.textTheme.bodyMedium?.copyWith(
                   color: app.colors.neutral.white,
                 ),
@@ -447,6 +470,23 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                     app.dimensions.padding.m.gap(),
                     Row(
                       children: [
+                        PrimaryButton.svgIcon(
+                          icon: app.assets.icons.actions.download,
+                          onPressed: _selectedWrappers.isNotEmpty
+                              ? () => widget.onDownload(
+                                  _selectedWrappers
+                                      .map((w) => w.fullPath)
+                                      .toList(),
+                                )
+                              : null,
+                          buttonSize: 42,
+                          iconSize: 18,
+                          backgroundColor: app.colors.neutral.transparent,
+                          iconColor: _selectedWrappers.isNotEmpty
+                              ? app.colors.neutral.white
+                              : app.colors.neutral.grey5,
+                        ),
+                        app.dimensions.padding.xs.gap(),
                         PrimaryButton.svgIcon(
                           icon: app.assets.icons.actions.delete,
                           onPressed: _selectedWrappers.isNotEmpty

@@ -1,6 +1,10 @@
+import 'dart:js_interop';
+import 'dart:typed_data';
+
 import 'package:console/app_exporter.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:web/web.dart' as web;
 
 class BrowserCubit extends Cubit<BrowserState>
     with GlobalEventBusCommunication<BrowserState> {
@@ -198,6 +202,74 @@ class BrowserCubit extends Cubit<BrowserState>
       }
 
       await listObjects(bucket: bucket, prefix: currentState.prefix);
+    } catch (exc) {
+      emit(
+        BrowserSearchErrorState(
+          ExceptionConverter.parse(exc),
+          buckets: currentState.buckets,
+          selectedBucket: currentState.selectedBucket,
+          prefix: currentState.prefix,
+          objects: currentState.objects,
+          viewType: currentState.viewType,
+        ),
+      );
+    }
+  }
+
+  Future<void> download({
+    required BucketModel bucket,
+    required List<String> keys,
+    String? zipName,
+  }) async {
+    if (state is! BrowserSearchState) return;
+    final currentState = state as BrowserSearchState;
+
+    try {
+      emit(
+        BrowserProcessingInProgressState(
+          buckets: currentState.buckets,
+          selectedBucket: currentState.selectedBucket,
+          prefix: currentState.prefix,
+          objects: currentState.objects,
+          viewType: currentState.viewType,
+        ),
+      );
+
+      final bytes = await repo.download(
+        access: auth.access,
+        secret: auth.secret,
+        bucket: bucket.name,
+        keys: keys,
+      );
+
+      final String fileName;
+      if (zipName != null) {
+        fileName = zipName.endsWith('.zip') ? zipName : '$zipName.zip';
+      } else if (keys.length == 1) {
+        final name = keys.first.split('/').where((s) => s.isNotEmpty).last;
+        fileName = '$name.zip';
+      } else {
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        fileName = 'download_$timestamp.zip';
+      }
+
+      final blob = web.Blob([Uint8List.fromList(bytes).toJS].toJS);
+      final url = web.URL.createObjectURL(blob);
+      final anchor = web.document.createElement('a') as web.HTMLAnchorElement;
+      anchor.href = url;
+      anchor.download = fileName;
+      anchor.click();
+      web.URL.revokeObjectURL(url);
+
+      emit(
+        BrowserSearchOkState(
+          buckets: currentState.buckets,
+          selectedBucket: currentState.selectedBucket,
+          prefix: currentState.prefix,
+          objects: currentState.objects,
+          viewType: currentState.viewType,
+        ),
+      );
     } catch (exc) {
       emit(
         BrowserSearchErrorState(

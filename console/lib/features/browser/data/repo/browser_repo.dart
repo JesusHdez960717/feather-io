@@ -77,6 +77,42 @@ class BrowserRepo {
       throw ExceptionConverter.parse(e);
     }
   }
+
+  Future<List<int>> getObject({
+    required String access,
+    required String secret,
+    required String bucket,
+    required String key,
+  }) async {
+    try {
+      return await client.getObject(
+        access: access,
+        secret: secret,
+        bucket: bucket,
+        key: key,
+      );
+    } catch (e) {
+      throw ExceptionConverter.parse(e);
+    }
+  }
+
+  Future<List<int>> download({
+    required String access,
+    required String secret,
+    required String bucket,
+    required List<String> keys,
+  }) async {
+    try {
+      return await client.download(
+        access: access,
+        secret: secret,
+        bucket: bucket,
+        keys: keys,
+      );
+    } catch (e) {
+      throw ExceptionConverter.parse(e);
+    }
+  }
 }
 
 extension BucketResponseMapping on BucketResponse {

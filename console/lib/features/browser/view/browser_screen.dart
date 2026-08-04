@@ -113,6 +113,11 @@ class _BrowserScreenState extends State<BrowserScreen> {
                         prefix: state.prefix,
                         files: files,
                       ),
+                      onDownload: (keys, {zipName}) => cubit.download(
+                        bucket: state.selectedBucket!,
+                        keys: keys,
+                        zipName: zipName,
+                      ),
                       onViewTypeChanged: (type) {
                         cubit.changeViewType(type);
                         BrowserScreen.navigator.updateViewType(type);
