@@ -63,13 +63,20 @@ class BrowserClient extends BaseClient {
     required Stream<List<int>> data,
     required int length,
   }) async {
-    final opt = options(access: access, secret: secret);
-    opt.headers!['content-length'] = length;
+    final uri = Uri.parse('$baseUrl/$bucket/$key');
+    final signer = S3SigV4Signer(accessKey: access, secretKey: secret);
+
+    final signedHeaders = signer.sign(
+      method: 'PUT',
+      uri: uri,
+      headers: {'content-length': length.toString()},
+      payloadHash: 'UNSIGNED-PAYLOAD',
+    );
 
     await dio.put(
-      '$baseUrl/$bucket/$key',
+      uri.toString(),
       data: data,
-      options: opt,
+      options: Options(headers: signedHeaders),
     );
   }
 
@@ -81,9 +88,10 @@ class BrowserClient extends BaseClient {
   }) async {
     Response<List<int>> response = await dio.get<List<int>>(
       '$baseUrl/$bucket/$key',
-      options: options(access: access, secret: secret).copyWith(
-        responseType: ResponseType.bytes,
-      ),
+      options: options(
+        access: access,
+        secret: secret,
+      ).copyWith(responseType: ResponseType.bytes),
     );
     return response.data!;
   }
@@ -98,9 +106,10 @@ class BrowserClient extends BaseClient {
     Response<List<int>> response = await dio.post<List<int>>(
       '$baseUrl/$admin/bucket/$bucket/download',
       data: {'keys': keys},
-      options: options(access: access, secret: secret).copyWith(
-        responseType: ResponseType.bytes,
-      ),
+      options: options(
+        access: access,
+        secret: secret,
+      ).copyWith(responseType: ResponseType.bytes),
     );
     return response.data!;
   }
