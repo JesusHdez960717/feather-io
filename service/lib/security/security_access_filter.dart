@@ -51,4 +51,9 @@ class SecurityAccessFilter extends Filter {
     return await chain.doFilter(request);
     */
   }
+
+  @override
+  bool shouldFilter(RequestEntity request) {
+    return !(request.routingContext?.key == 'put-object');
+  }
 }

@@ -1,8 +1,7 @@
 import 'dart:convert';
 
 import 'package:mime/mime.dart';
-import 'package:service/features/features.dart';
-import 'package:winter/winter.dart';
+import 'package:service/feather.dart';
 
 class S3Controller {
   final FileManagementService fileManagement;
@@ -16,28 +15,30 @@ class S3Controller {
         Route.get(
           path: '/',
           handler: listBuckets,
-          filterConfig: hasRole('admin').toFilterConfig(),
+          //filterConfig: hasRole('admin').toFilterConfig(),
         ),
         Route.get(
           path: '/{bucket}',
           handler: listFiles,
           filterConfig: [
-            hasRole('admin').toFilter(),
+            //hasRole('admin').toFilter(),
             reservedBucketFilter,
           ].toFilterConfig(),
           routes: [
             Route.put(
+              key: 'put-object',
               path: '/{key|.*}',
               handler: uploadFile,
-              filterConfig: AuthFilter(
-                rules: hasRole('admin'),
-              ).toFilterConfig(),
+              filterConfig: [
+                S3SigV4Filter(),
+                //AuthFilter(rules: hasRole('admin')),
+              ].toFilterConfig(),
             ),
             Route.get(path: '/{key|.*}', key: 's3.get-file', handler: getFile),
             Route.delete(
               path: '/{key|.*}',
               handler: deleteFile,
-              filterConfig: hasRole('admin').toFilterConfig(),
+              //filterConfig: hasRole('admin').toFilterConfig(),
             ),
           ],
         ),
@@ -45,7 +46,7 @@ class S3Controller {
           path: '/{bucket}',
           handler: multiDelete,
           filterConfig: [
-            hasRole('admin').toFilter(),
+            //hasRole('admin').toFilter(),
             reservedBucketFilter,
           ].toFilterConfig(),
         ),

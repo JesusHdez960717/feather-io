@@ -25,7 +25,7 @@ class FeatherIO {
 
     await Winter.start(
       config: ServerConfig(port: port),
-      globalFilterConfig: [SecurityAccessFilter()].toFilterConfig(),
+      //globalFilterConfig: [SecurityAccessFilter()].toFilterConfig(),
       securityConfig: SecurityConfig(cors: const CorsConfig()),
       router: WinterRouter(
         config: RouterConfig(onLoadedRoutes: DefaultOnLoadedRoutes.log()),
