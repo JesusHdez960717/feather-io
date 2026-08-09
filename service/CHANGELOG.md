@@ -1,3 +1,3 @@
 * 0.0.1:
-    * **DATE** 📅: 2026-06-24.
-    * **START** 🛠️: Start of project, basic api to test deployment
+    * **DATE** 📅: 202X-XX-XX.
+    * **START** 🛠️: Start of project, basic api to test deployment. POC of this service
