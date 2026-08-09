@@ -37,14 +37,12 @@ class FeaturesInit {
 
     await Future.wait([BrowserInit.init()]);
 
-    //once the auth is initialized, I subscribe to listen to logout changes to reset cubits
-    /*app.di.find<AuthCubit>().stream.listen((event) async {
-      if (event is AuthLogoutOkState) {
-        app.loading.hide();
+    // Listen for logout to reset other cubits
+    app.di.find<AuthCubit>().stream.listen((state) async {
+      if (state is AuthLogoutState) {
         await _resetCubits();
-        LoginScreen.navigator.neglectGo();
       }
-    });*/
+    });
   }
 
   static Future<void> _resetCubits() async {

@@ -6,11 +6,12 @@ class BrowserRepo {
   BrowserRepo(this.client);
 
   Future<List<BucketModel>> listBuckets({
-    required String access,
-    required String secret,
+    String? token,
   }) async {
     try {
-      final response = await client.listBuckets(access: access, secret: secret);
+      final response = await client.listBuckets(
+        token: token,
+      );
       return response.map((e) => e.toModel()).toList();
     } catch (e) {
       throw ExceptionConverter.parse(e);
@@ -18,16 +19,14 @@ class BrowserRepo {
   }
 
   Future<ListObjectsModel> listObjects({
-    required String access,
-    required String secret,
+    String? token,
     required String bucket,
     String? prefix,
     String? delimiter,
   }) async {
     try {
       final response = await client.listObjects(
-        access: access,
-        secret: secret,
+        token: token,
         bucket: bucket,
         prefix: prefix,
         delimiter: delimiter,
@@ -39,15 +38,13 @@ class BrowserRepo {
   }
 
   Future<void> deleteObjects({
-    required String access,
-    required String secret,
+    String? token,
     required String bucket,
     required List<String> keys,
   }) async {
     try {
       await client.deleteObjects(
-        access: access,
-        secret: secret,
+        token: token,
         bucket: bucket,
         keys: keys,
       );
@@ -57,8 +54,7 @@ class BrowserRepo {
   }
 
   Future<void> uploadObject({
-    required String access,
-    required String secret,
+    String? token,
     required String bucket,
     required String key,
     required Stream<List<int>> data,
@@ -66,8 +62,7 @@ class BrowserRepo {
   }) async {
     try {
       await client.uploadObject(
-        access: access,
-        secret: secret,
+        token: token,
         bucket: bucket,
         key: key,
         data: data,
@@ -78,34 +73,31 @@ class BrowserRepo {
     }
   }
 
-  Future<List<int>> getObject({
-    required String access,
-    required String secret,
+  Future<ObjectDataModel> getObject({
+    String? token,
     required String bucket,
     required String key,
   }) async {
     try {
-      return await client.getObject(
-        access: access,
-        secret: secret,
+      final response = await client.getObject(
+        token: token,
         bucket: bucket,
         key: key,
       );
+      return response.toModel();
     } catch (e) {
       throw ExceptionConverter.parse(e);
     }
   }
 
   Future<List<int>> download({
-    required String access,
-    required String secret,
+    String? token,
     required String bucket,
     required List<String> keys,
   }) async {
     try {
       return await client.download(
-        access: access,
-        secret: secret,
+        token: token,
         bucket: bucket,
         keys: keys,
       );
@@ -144,6 +136,15 @@ extension ObjectResponseMapping on ObjectResponse {
       key: key,
       sizeBytes: sizeBytes,
       lastModified: lastModified,
+    );
+  }
+}
+
+extension ObjectDataResponseMapping on ObjectDataResponse {
+  ObjectDataModel toModel() {
+    return ObjectDataModel(
+      bytes: bytes,
+      contentType: contentType,
     );
   }
 }

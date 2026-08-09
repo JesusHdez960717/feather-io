@@ -46,8 +46,7 @@ class BrowserCubit extends Cubit<BrowserState>
       emit(BrowserSearchingState(buckets: [], viewType: viewType));
 
       _allBuckets = await repo.listBuckets(
-        access: auth.access,
-        secret: auth.secret,
+        token: auth.auth?.accessToken,
       );
 
       emit(BrowserSearchOkState(buckets: _allBuckets, viewType: viewType));
@@ -100,8 +99,7 @@ class BrowserCubit extends Cubit<BrowserState>
       );
 
       final objects = await repo.listObjects(
-        access: auth.access,
-        secret: auth.secret,
+        token: auth.auth?.accessToken,
         bucket: targetBucket.name,
         prefix: prefix,
         delimiter: '/',
@@ -148,8 +146,7 @@ class BrowserCubit extends Cubit<BrowserState>
       );
 
       await repo.deleteObjects(
-        access: auth.access,
-        secret: auth.secret,
+        token: auth.auth?.accessToken,
         bucket: bucket.name,
         keys: keys,
       );
@@ -192,8 +189,7 @@ class BrowserCubit extends Cubit<BrowserState>
         final length = await file.length();
         final key = prefix.isNotEmpty ? '$prefix/${file.name}' : file.name;
         await repo.uploadObject(
-          access: auth.access,
-          secret: auth.secret,
+          token: auth.auth?.accessToken,
           bucket: bucket.name,
           key: key,
           data: file.openRead(),
@@ -236,8 +232,7 @@ class BrowserCubit extends Cubit<BrowserState>
       );
 
       final bytes = await repo.download(
-        access: auth.access,
-        secret: auth.secret,
+        token: auth.auth?.accessToken,
         bucket: bucket.name,
         keys: keys,
       );
@@ -260,6 +255,61 @@ class BrowserCubit extends Cubit<BrowserState>
       anchor.download = fileName;
       anchor.click();
       web.URL.revokeObjectURL(url);
+
+      emit(
+        BrowserSearchOkState(
+          buckets: currentState.buckets,
+          selectedBucket: currentState.selectedBucket,
+          prefix: currentState.prefix,
+          objects: currentState.objects,
+          viewType: currentState.viewType,
+        ),
+      );
+    } catch (exc) {
+      emit(
+        BrowserSearchErrorState(
+          ExceptionConverter.parse(exc),
+          buckets: currentState.buckets,
+          selectedBucket: currentState.selectedBucket,
+          prefix: currentState.prefix,
+          objects: currentState.objects,
+          viewType: currentState.viewType,
+        ),
+      );
+    }
+  }
+
+  Future<void> viewObject({
+    required BucketModel bucket,
+    required String key,
+  }) async {
+    if (state is! BrowserSearchState) return;
+    final currentState = state as BrowserSearchState;
+
+    try {
+      emit(
+        BrowserProcessingInProgressState(
+          buckets: currentState.buckets,
+          selectedBucket: currentState.selectedBucket,
+          prefix: currentState.prefix,
+          objects: currentState.objects,
+          viewType: currentState.viewType,
+        ),
+      );
+
+      final data = await repo.getObject(
+        token: auth.auth?.accessToken,
+        bucket: bucket.name,
+        key: key,
+      );
+
+      final blob = web.Blob(
+        [Uint8List.fromList(data.bytes).toJS].toJS,
+        web.BlobPropertyBag(type: data.contentType ?? 'application/octet-stream'),
+      );
+      final url = web.URL.createObjectURL(blob);
+
+      web.window.open(url, '_blank');
 
       emit(
         BrowserSearchOkState(

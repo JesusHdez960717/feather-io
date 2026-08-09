@@ -8,12 +8,11 @@ class BrowserClient extends BaseClient {
   BrowserClient(super.dio);
 
   Future<List<BucketResponse>> listBuckets({
-    required String access,
-    required String secret,
+    String? token,
   }) async {
     Response rawResponse = await dio.get(
       baseUrl,
-      options: options(access: access, secret: secret),
+      options: options(token: token),
     );
 
     return (rawResponse.data as List)
@@ -22,8 +21,7 @@ class BrowserClient extends BaseClient {
   }
 
   Future<ListObjectsResponse> listObjects({
-    required String access,
-    required String secret,
+    String? token,
     required String bucket,
     String? prefix,
     String? delimiter,
@@ -31,15 +29,14 @@ class BrowserClient extends BaseClient {
     Response rawResponse = await dio.get(
       '$baseUrl/$bucket',
       queryParameters: {'prefix': prefix, 'delimiter': delimiter},
-      options: options(access: access, secret: secret),
+      options: options(token: token),
     );
 
     return ListObjectsResponse.fromJson(rawResponse.data);
   }
 
   Future<void> deleteObjects({
-    required String access,
-    required String secret,
+    String? token,
     required String bucket,
     required List<String> keys,
   }) async {
@@ -51,54 +48,50 @@ class BrowserClient extends BaseClient {
           'objects': keys.map((k) => {'key': k}).toList(),
         },
       },
-      options: options(access: access, secret: secret),
+      options: options(token: token),
     );
   }
 
   Future<void> uploadObject({
-    required String access,
-    required String secret,
+    String? token,
     required String bucket,
     required String key,
     required Stream<List<int>> data,
     required int length,
   }) async {
     final uri = Uri.parse('$baseUrl/$bucket/$key');
-    final signer = S3SigV4Signer(accessKey: access, secretKey: secret);
 
-    final signedHeaders = signer.sign(
-      method: 'PUT',
-      uri: uri,
-      headers: {'content-length': length.toString()},
-      payloadHash: 'UNSIGNED-PAYLOAD',
-    );
+    Map<String, dynamic> headers = {
+      'content-length': length.toString(),
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
 
     await dio.put(
       uri.toString(),
       data: data,
-      options: Options(headers: signedHeaders),
+      options: Options(headers: headers),
     );
   }
 
-  Future<List<int>> getObject({
-    required String access,
-    required String secret,
+  Future<ObjectDataResponse> getObject({
+    String? token,
     required String bucket,
     required String key,
   }) async {
     Response<List<int>> response = await dio.get<List<int>>(
       '$baseUrl/$bucket/$key',
       options: options(
-        access: access,
-        secret: secret,
+        token: token,
       ).copyWith(responseType: ResponseType.bytes),
     );
-    return response.data!;
+    return ObjectDataResponse(
+      bytes: response.data!,
+      contentType: response.headers.value('content-type'),
+    );
   }
 
   Future<List<int>> download({
-    required String access,
-    required String secret,
+    String? token,
     required String bucket,
     required List<String> keys,
   }) async {
@@ -107,8 +100,7 @@ class BrowserClient extends BaseClient {
       '$baseUrl/$admin/bucket/$bucket/download',
       data: {'keys': keys},
       options: options(
-        access: access,
-        secret: secret,
+        token: token,
       ).copyWith(responseType: ResponseType.bytes),
     );
     return response.data!;
@@ -186,4 +178,14 @@ class ObjectResponse {
       lastModified: DateTime.parse(json['last_modified']),
     );
   }
+}
+
+class ObjectDataResponse {
+  final List<int> bytes;
+  final String? contentType;
+
+  ObjectDataResponse({
+    required this.bytes,
+    this.contentType,
+  });
 }

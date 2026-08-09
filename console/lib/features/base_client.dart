@@ -16,11 +16,13 @@ abstract class BaseClient {
 
   BaseClient(this.dio);
 
-  Options options({String? access, String? secret, AcceptedTypes? accept}) {
+  Options options({
+    String? token,
+    AcceptedTypes? accept,
+  }) {
     return Options(
       headers: <String, dynamic>{
-        'FEATHER_ACCESS': access,
-        'FEATHER_SECRET': secret,
+        if (token != null) 'Authorization': 'Bearer $token',
         'Accept': (accept ?? AcceptedTypes.json).contentType,
       },
     );

@@ -34,7 +34,8 @@ class JwtFilter extends Filter {
         request.securityContext.clearContext();
       }
     } else {
-      request.securityContext.clearContext();
+      request.securityContext
+          .clearContext(); //TODO: aqui deberia ir el anonimo para las url publicas, y luego la validacion en el endpoint
     }
 
     return await chain.doFilter(request);
