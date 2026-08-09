@@ -118,6 +118,10 @@ class _BrowserScreenState extends State<BrowserScreen> {
                         keys: keys,
                         zipName: zipName,
                       ),
+                      onView: (key) => cubit.viewObject(
+                        bucket: state.selectedBucket!,
+                        key: key,
+                      ),
                       onViewTypeChanged: (type) {
                         cubit.changeViewType(type);
                         BrowserScreen.navigator.updateViewType(type);

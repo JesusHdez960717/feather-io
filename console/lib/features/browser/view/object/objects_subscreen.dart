@@ -18,6 +18,7 @@ class ObjectsSubscreen extends StatefulWidget {
   final Function(List<String> keys) onDelete;
   final Function(List<XFile> files) onUpload;
   final Function(List<String> keys, {String? zipName}) onDownload;
+  final Function(String key) onView;
   final void Function() onExit;
 
   const ObjectsSubscreen({
@@ -30,6 +31,7 @@ class ObjectsSubscreen extends StatefulWidget {
     required this.onDelete,
     required this.onUpload,
     required this.onDownload,
+    required this.onView,
     required this.onExit,
     super.key,
   });
@@ -174,62 +176,33 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
         side: BorderSide(color: app.colors.neutral.grey5),
       ),
       items: [
-        /*PopupMenuItem(
-          value: 'view',
-          onTap: () {
-            if (wrapper.isFolder) {
-              widget.onNavigate(wrapper.fullPath);
-            } else {
-              final obj = widget.state.objects!.objects.firstWhere(
-                (o) => o.key == wrapper.fullPath,
-              );
-              widget.onSelected(obj);
-            }
-          },
-          child: Row(
-            children: [
-              Icon(
-                Icons.visibility_outlined,
-                size: 18,
-                color: app.colors.neutral.white,
-              ),
-              app.dimensions.padding.m.gap(),
-              Text(
-                'View',
-                style: app.textTheme.bodyMedium?.copyWith(
+        if (!wrapper.isFolder)
+          PopupMenuItem(
+            value: 'view',
+            onTap: () => widget.onView(wrapper.fullPath),
+            child: Row(
+              children: [
+                app.assets.icons.actions.view.build(
+                  size: 18,
                   color: app.colors.neutral.white,
                 ),
-              ),
-            ],
-          ),
-        ),
-        PopupMenuItem(
-          value: 'share',
-          child: Row(
-            children: [
-              Icon(
-                Icons.share_outlined,
-                size: 18,
-                color: app.colors.neutral.white,
-              ),
-              app.dimensions.padding.m.gap(),
-              Text(
-                'Share',
-                style: app.textTheme.bodyMedium?.copyWith(
-                  color: app.colors.neutral.white,
+                app.dimensions.padding.m.gap(),
+                Text(
+                  'Preview',
+                  style: app.textTheme.bodyMedium?.copyWith(
+                    color: app.colors.neutral.white,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),*/
         PopupMenuItem(
           value: 'download',
           onTap: () =>
               widget.onDownload([wrapper.fullPath], zipName: wrapper.name),
           child: Row(
             children: [
-              Icon(
-                Icons.download_outlined,
+              app.assets.icons.actions.download.build(
                 size: 18,
                 color: app.colors.neutral.white,
               ),

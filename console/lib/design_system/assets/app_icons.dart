@@ -80,6 +80,8 @@ class ActionsIcons {
   SvgAsset get uploadFile => const SvgAsset('$_actions/upload-file.svg');
 
   SvgAsset get uploadFolder => const SvgAsset('$_actions/upload-folder.svg');
+
+  SvgAsset get view => const SvgAsset('$_actions/view.svg');
 }
 
 class LanguageIcons {
