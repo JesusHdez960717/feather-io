@@ -3,13 +3,30 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 class RouteConfig {
-  static RouterConfig<Object> router = GoRouter(
-    initialLocation:
-        //true app.di.find<AuthCubit>().isLoggedIn
-        BrowserScreen.navigator.path,
-        //: LoginScreen.navigator.path,
+  static final GoRouter router = GoRouter(
+    initialLocation: BrowserScreen.navigator.path,
     navigatorKey: navigatorKey,
+    refreshListenable: GoRouterRefreshStream(app.di.find<AuthCubit>().stream),
+    redirect: (context, state) {
+      final auth = app.di.find<AuthCubit>();
+      final isLoggingIn = state.matchedLocation == LoginScreen.navigator.path;
+
+      if (auth.auth == null) {
+        return isLoggingIn ? null : LoginScreen.navigator.path;
+      }
+
+      if (isLoggingIn) {
+        return BrowserScreen.navigator.path;
+      }
+
+      return null;
+    },
     routes: [
+      GoRoute(
+        name: LoginScreen.navigator.name,
+        path: LoginScreen.navigator.path,
+        builder: LoginScreen.navigator.builder,
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return BaseScreen(navigationShell);
@@ -29,4 +46,11 @@ class RouteConfig {
       ),
     ],
   );
+}
+
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    stream.listen((_) => notifyListeners());
+  }
 }
