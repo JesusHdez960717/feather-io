@@ -13,12 +13,15 @@ dependencies:
 #      url: https://github.com/Root-101/winter.git
 #      ref: feature/retake_project
 
-  path: 1.9.1
+  path: 1.9.1                   #storage
 
-  mime: 2.0.0
+  mime: 2.0.0                   #file extensions
 
-  archive: 4.0.9
-  crypto: 3.0.7
+  archive: 4.0.9                #zip
+  crypto: 3.0.7                 #HMAC & S3 Sig V4
+
+
+  dart_jsonwebtoken: 3.4.1      #JWT
 
 dev_dependencies:
   http: 1.6.0
