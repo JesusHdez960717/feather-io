@@ -11,6 +11,12 @@ class FeatherIO {
         (data) => DownloadObjectsRequest.fromJson(data),
       ),
     );
+    om.addDeserializer(
+      Deserializer<LoginRequest>((data) => LoginRequest.fromJson(data)),
+    );
+
+    JwtService jwtService = JwtService();
+    di.put(jwtService);
 
     FileManagementService fileManagement = FileManagementService();
     di.put(fileManagement);
@@ -20,12 +26,13 @@ class FeatherIO {
 
     AdminController adminController = AdminController(
       fileManagement: di.find(),
+      jwtService: di.find(),
     );
     di.put(adminController);
 
     await Winter.start(
       config: ServerConfig(port: port),
-      //globalFilterConfig: [SecurityAccessFilter()].toFilterConfig(),
+      globalFilterConfig: FilterConfig([JwtFilter()]),
       securityConfig: SecurityConfig(cors: const CorsConfig()),
       router: WinterRouter(
         config: RouterConfig(onLoadedRoutes: DefaultOnLoadedRoutes.log()),

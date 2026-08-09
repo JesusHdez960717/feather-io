@@ -1,7 +1,15 @@
 import 'package:service/feather.dart';
 
 class ReservedBucketFilter extends Filter {
-  List<String> reservedBucketNames = env.reservedBucketNames;
+  static final ReservedBucketFilter _instance = ReservedBucketFilter._();
+
+  late final List<String> reservedBucketNames;
+
+  ReservedBucketFilter._() {
+    reservedBucketNames = env.reservedBucketNames;
+  }
+
+  factory ReservedBucketFilter() => _instance;
 
   @override
   Future<ResponseEntity> doFilter(

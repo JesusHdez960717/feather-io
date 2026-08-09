@@ -7,48 +7,61 @@ class S3Controller {
   final FileManagementService fileManagement;
 
   Route get routing {
-    ReservedBucketFilter reservedBucketFilter = ReservedBucketFilter();
-
     return Route.parent(
       path: '/',
+      filterConfig: FilterConfig([JwtFilter(), S3SigV4Filter()]),
       routes: [
         Route.get(
+          key: 's3.list-buckets',
           path: '/',
           handler: listBuckets,
-          //filterConfig: hasRole('admin').toFilterConfig(),
+          filterConfig: FilterConfig([
+            AuthFilter(rules: hasPermission('s3.list-buckets')),
+          ]),
         ),
         Route.get(
+          key: 's3.list-objects',
           path: '/{bucket}',
-          handler: listFiles,
-          filterConfig: [
-            //hasRole('admin').toFilter(),
-            reservedBucketFilter,
-          ].toFilterConfig(),
+          handler: listObjects,
+          filterConfig: FilterConfig([
+            AuthFilter(rules: hasPermission('s3.list-objects')),
+            ReservedBucketFilter(),
+          ]),
           routes: [
             Route.put(
-              key: 'put-object',
+              key: 's3.put-object',
               path: '/{key|.*}',
-              handler: uploadFile,
-              filterConfig: [
-                S3SigV4Filter(),
-                //AuthFilter(rules: hasRole('admin')),
-              ].toFilterConfig(),
+              handler: putObject,
+              filterConfig: FilterConfig([
+                AuthFilter(rules: hasPermission('s3.put-object')),
+              ]),
             ),
-            Route.get(path: '/{key|.*}', key: 's3.get-file', handler: getFile),
+            Route.get(
+              key: 's3.get-object',
+              path: '/{key|.*}',
+              handler: getFile,
+              filterConfig: FilterConfig([
+                AuthFilter(rules: hasPermission('s3.get-object')),
+              ]),
+            ),
             Route.delete(
+              key: 's3.delete-object',
               path: '/{key|.*}',
               handler: deleteFile,
-              //filterConfig: hasRole('admin').toFilterConfig(),
+              filterConfig: FilterConfig([
+                AuthFilter(rules: hasPermission('s3.delete-object')),
+              ]),
             ),
           ],
         ),
         Route.post(
+          key: 's3.multi-delete-objects',
           path: '/{bucket}',
           handler: multiDelete,
-          filterConfig: [
-            //hasRole('admin').toFilter(),
-            reservedBucketFilter,
-          ].toFilterConfig(),
+          filterConfig: FilterConfig([
+            AuthFilter(rules: hasPermission('s3.multi-delete-objects')),
+            ReservedBucketFilter(),
+          ]),
         ),
       ],
     );
@@ -70,7 +83,7 @@ class S3Controller {
     }
   }
 
-  Future<ResponseEntity> uploadFile(RequestEntity request) async {
+  Future<ResponseEntity> putObject(RequestEntity request) async {
     await fileManagement.uploadFile(
       bucketName: request.pathParams['bucket']!,
       key: request.pathParams['key']!,
@@ -80,7 +93,7 @@ class S3Controller {
     return ResponseEntity.ok(body: 'File uploaded successfully.');
   }
 
-  Future<ResponseEntity> listFiles(RequestEntity request) async {
+  Future<ResponseEntity> listObjects(RequestEntity request) async {
     final bucketName = request.pathParams['bucket']!;
     final prefix = request.queryParams['prefix'];
     final delimiter = request.queryParams['delimiter'];

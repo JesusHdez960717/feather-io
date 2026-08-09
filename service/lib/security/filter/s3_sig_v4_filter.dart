@@ -4,10 +4,14 @@ import 'package:crypto/crypto.dart';
 import 'package:service/feather.dart';
 
 class S3SigV4Filter extends Filter {
+  static final S3SigV4Filter _instance = S3SigV4Filter._();
+
   final String region;
   final String service;
 
-  S3SigV4Filter({this.region = 'us-east-1', this.service = 's3'});
+  S3SigV4Filter._() : service = 's3', region = 'us-east-1';
+
+  factory S3SigV4Filter() => _instance;
 
   @override
   Future<ResponseEntity> doFilter(
@@ -91,7 +95,18 @@ class S3SigV4Filter extends Filter {
 
       // Authenticate the request
       request.securityContext.setAuthentication(
-        Authentication(principal: accessKey, roles: {'admin'}),
+        Authentication(
+          principal: accessKey,
+          roles: {'admin'},
+          permissions: {
+            's3.list-buckets',
+            's3.list-objects',
+            's3.put-object',
+            's3.get-object',
+            's3.delete-object',
+            's3.multi-delete-objects',
+          },
+        ),
       );
 
       return chain.doFilter(request);
@@ -158,5 +173,16 @@ class S3SigV4Filter extends Filter {
     final kService = _hmacSha256(kRegion, serviceName);
     final kSigning = _hmacSha256(kService, 'aws4_request');
     return kSigning;
+  }
+
+  ///Solo filtro si NO esta autenticado aun (por si ya paso por el jwt)
+  @override
+  bool shouldFilter(RequestEntity request) {
+    return !request.securityContext.isAuthenticated;
+  }
+
+  @override
+  String toString() {
+    return 'S3SigV4Filter()';
   }
 }
