@@ -7,6 +7,8 @@ extension ExtendedEnv on Env {
 
   String get access => find<String>('FEATHER_ACCESS', required: true)!;
 
+  String get jwtSecret => find<String>('JWT_SECRET', required: true)!;
+
   String get storageVolumePath =>
       find<String>('STORAGE_VOLUME_PATH', required: true)!;
 
