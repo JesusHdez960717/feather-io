@@ -1,5 +1,5 @@
 import 'package:console/main.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class GridDotPainter extends CustomPainter {
   final double? spacing;

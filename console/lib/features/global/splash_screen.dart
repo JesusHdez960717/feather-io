@@ -1,5 +1,5 @@
 import 'package:console/app_exporter.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class SplashScreen extends StatelessWidget {
   static const String splashImageUrl = 'assets/app/app_splashscreen_full.png';

@@ -1,6 +1,6 @@
+import 'package:console/app_exporter.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:console/app_exporter.dart';
 
 class ApiExceptionConverter {
   static GlobalException parse(DioException error) {
@@ -13,14 +13,17 @@ class ApiExceptionConverter {
       case DioExceptionType.connectionTimeout:
         return GlobalException(
           type: GlobalExceptionType.general,
-          message:
-              'Connection timeout with API server. Revisa el internet', //TODO: intl
+          message: 'Connection timeout with API server. Revisa el internet', //TODO: intl
+        );
+      case DioExceptionType.transformTimeout:
+        return GlobalException(
+          type: GlobalExceptionType.general,
+          message: 'Connection to API server failed due to internet connection', //TODO: intl
         );
       case DioExceptionType.unknown:
         return GlobalException(
           type: GlobalExceptionType.general,
-          message:
-              'Connection to API server failed due to internet connection', //TODO: intl
+          message: 'Connection to API server failed due to internet connection', //TODO: intl
         );
       case DioExceptionType.receiveTimeout:
         return GlobalException(

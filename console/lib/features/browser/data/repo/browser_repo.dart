@@ -19,8 +19,7 @@ class BrowserRepo {
   }
 
   Future<ListObjectsModel> listObjects({
-    String? token,
-    required String bucket,
+    required String bucket, String? token,
     String? prefix,
     String? delimiter,
   }) async {
@@ -38,9 +37,7 @@ class BrowserRepo {
   }
 
   Future<void> deleteObjects({
-    String? token,
-    required String bucket,
-    required List<String> keys,
+    required String bucket, required List<String> keys, String? token,
   }) async {
     try {
       await client.deleteObjects(
@@ -54,11 +51,7 @@ class BrowserRepo {
   }
 
   Future<void> uploadObject({
-    String? token,
-    required String bucket,
-    required String key,
-    required Stream<List<int>> data,
-    required int length,
+    required String bucket, required String key, required Stream<List<int>> data, required int length, String? token,
   }) async {
     try {
       await client.uploadObject(
@@ -74,9 +67,7 @@ class BrowserRepo {
   }
 
   Future<ObjectDataModel> getObject({
-    String? token,
-    required String bucket,
-    required String key,
+    required String bucket, required String key, String? token,
   }) async {
     try {
       final response = await client.getObject(
@@ -91,9 +82,7 @@ class BrowserRepo {
   }
 
   Future<List<int>> download({
-    String? token,
-    required String bucket,
-    required List<String> keys,
+    required String bucket, required List<String> keys, String? token,
   }) async {
     try {
       return await client.download(

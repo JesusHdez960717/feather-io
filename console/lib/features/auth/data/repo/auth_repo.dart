@@ -1,6 +1,4 @@
 import 'package:console/app_exporter.dart';
-import '../rest/auth_client.dart';
-import '../../logic/model/auth_model.dart';
 
 class AuthRepo {
   final AuthClient client;

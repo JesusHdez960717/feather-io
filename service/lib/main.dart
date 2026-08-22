@@ -1,5 +1,12 @@
 import 'feather.dart';
 
+//versions
+//fvm flutter pub outdated
+//fvm flutter pub upgrade --major-versions
+
+//migration
+//dart fix --dry-run
+//dart fix --apply
 void main() async {
   await FeatherIO.start();
 }

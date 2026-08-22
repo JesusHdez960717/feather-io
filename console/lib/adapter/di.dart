@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:material_ui/material_ui.dart';
 
 ///La unica dependencia de Get, que es el framework por detras SOLO debe estar en esta clase
 
@@ -26,7 +26,7 @@ class DI {
 }
 
 /// CubitView is a great way of quickly access your Cubit
-/// without having to call app.di.find<AwesomeCubit>() yourself.
+/// without having to call app.di.find&lt;AwesomeCubit&gt;() yourself.
 ///
 /// Sample:
 /// ```

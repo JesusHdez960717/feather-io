@@ -1,5 +1,5 @@
 import 'package:console/app_exporter.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:syncfusion_flutter_core/theme.dart';
 import 'package:syncfusion_flutter_datagrid/datagrid.dart';
 
@@ -70,7 +70,7 @@ class _ObjectsTableDatasourceState extends State<ObjectsTableDatasource> {
           widget.onNavigate(wrapper.fullPath);
         } else {
           final obj = widget.state.objects!.objects.firstWhere(
-            (o) => o.key == wrapper.fullPath,
+                (o) => o.key == wrapper.fullPath,
           );
           widget.onSelected(obj);
         }
@@ -115,13 +115,13 @@ class _ObjectsTableDatasourceState extends State<ObjectsTableDatasource> {
         const checkboxWidth = 60.0;
 
         final lastModifiedWidth =
-            (totalWidth -
-                    (nameWidth +
-                        typeWidth +
-                        sizeWidth +
-                        actionsWidth +
-                        checkboxWidth))
-                .clamp(150.0, totalWidth);
+        (totalWidth -
+            (nameWidth +
+                typeWidth +
+                sizeWidth +
+                actionsWidth +
+                checkboxWidth))
+            .clamp(150.0, totalWidth);
 
         Widget header(String text) {
           return Padding(
@@ -207,10 +207,10 @@ class _ObjectsTableDatasourceState extends State<ObjectsTableDatasource> {
                     // ajustamos last_modified para que la tabla no se achique.
                     final othersWidth =
                         (columnWidths['name'] ?? nameWidth) +
-                        (columnWidths['type'] ?? typeWidth) +
-                        (columnWidths['size'] ?? sizeWidth) +
-                        (columnWidths['actions'] ?? actionsWidth) +
-                        checkboxWidth;
+                            (columnWidths['type'] ?? typeWidth) +
+                            (columnWidths['size'] ?? sizeWidth) +
+                            (columnWidths['actions'] ?? actionsWidth) +
+                            checkboxWidth;
 
                     columnWidths['last_modified'] = (totalWidth - othersWidth)
                         .clamp(150.0, totalWidth);
@@ -307,12 +307,12 @@ class _ObjectsDataSource extends DataGridSource {
                         ),
                         onPressed: isHovered
                             ? () {
-                                final RenderBox box =
-                                    context.findRenderObject() as RenderBox;
-                                onShowOptions(wrapper, box);
-                              }
+                          final RenderBox box =
+                          context.findRenderObject() as RenderBox;
+                          onShowOptions(wrapper, box);
+                        }
                             : null,
-                        padding: EdgeInsets.zero,
+                        padding: const EdgeInsets.all(4.0),
                         constraints: const BoxConstraints(),
                       );
                     },

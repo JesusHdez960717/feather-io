@@ -19,10 +19,8 @@ class ListObjectsModel {
 
   ListObjectsModel({
     required this.bucketName,
-    this.prefix,
+    required this.objects, required this.commonPrefixes, this.prefix,
     this.delimiter,
-    required this.objects,
-    required this.commonPrefixes,
   });
 }
 

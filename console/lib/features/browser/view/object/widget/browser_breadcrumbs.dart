@@ -1,5 +1,5 @@
 import 'package:console/app_exporter.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class BrowserBreadcrumbs extends StatelessWidget {
   final String bucketName;
@@ -97,7 +97,7 @@ class BrowserBreadcrumbs extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           child: Row(
             children: [
-              if (icon != null) icon,
+              ?icon,
               if (icon != null && label.isNotEmpty)
                 app.dimensions.padding.s.gap(),
               Text(

@@ -21,8 +21,7 @@ class BrowserClient extends BaseClient {
   }
 
   Future<ListObjectsResponse> listObjects({
-    String? token,
-    required String bucket,
+    required String bucket, String? token,
     String? prefix,
     String? delimiter,
   }) async {
@@ -36,9 +35,7 @@ class BrowserClient extends BaseClient {
   }
 
   Future<void> deleteObjects({
-    String? token,
-    required String bucket,
-    required List<String> keys,
+    required String bucket, required List<String> keys, String? token,
   }) async {
     await dio.post(
       '$baseUrl/$bucket',
@@ -53,11 +50,7 @@ class BrowserClient extends BaseClient {
   }
 
   Future<void> uploadObject({
-    String? token,
-    required String bucket,
-    required String key,
-    required Stream<List<int>> data,
-    required int length,
+    required String bucket, required String key, required Stream<List<int>> data, required int length, String? token,
   }) async {
     final uri = Uri.parse('$baseUrl/$bucket/$key');
 
@@ -74,9 +67,7 @@ class BrowserClient extends BaseClient {
   }
 
   Future<ObjectDataResponse> getObject({
-    String? token,
-    required String bucket,
-    required String key,
+    required String bucket, required String key, String? token,
   }) async {
     Response<List<int>> response = await dio.get<List<int>>(
       '$baseUrl/$bucket/$key',
@@ -91,9 +82,7 @@ class BrowserClient extends BaseClient {
   }
 
   Future<List<int>> download({
-    String? token,
-    required String bucket,
-    required List<String> keys,
+    required String bucket, required List<String> keys, String? token,
   }) async {
     final admin = Environment.adminPrefix;
     Response<List<int>> response = await dio.post<List<int>>(
@@ -141,10 +130,8 @@ class ListObjectsResponse {
 
   ListObjectsResponse({
     required this.bucketName,
-    this.prefix,
+    required this.contents, required this.commonPrefixes, this.prefix,
     this.delimiter,
-    required this.contents,
-    required this.commonPrefixes,
   });
 
   factory ListObjectsResponse.fromJson(Map<String, dynamic> json) {

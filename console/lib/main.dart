@@ -1,5 +1,5 @@
 import 'package:console/app_exporter.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logger/logger.dart';
@@ -13,6 +13,12 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 //versions
 //fvm flutter pub outdated
 //fvm flutter pub upgrade --major-versions
+
+//migration
+//fvm dart fix --dry-run
+//fvm dart fix --apply
+//
+//fvm flutter analyze
 class Init {
   Init._();
 

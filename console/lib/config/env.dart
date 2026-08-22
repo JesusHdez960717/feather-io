@@ -1,3 +1,4 @@
+// ignore_for_file: non_constant_identifier_names
 import 'dart:js_interop';
 
 @JS('window.env')
@@ -22,7 +23,7 @@ class Environment {
   static String get adminPrefix => env.ADMIN_PREFIX ?? '_admin';
 
   static Map<String, String> get raw => {
-        'SERVICE_URL': env.SERVICE_URL,
-        'ADMIN_PREFIX': adminPrefix,
-      };
+    'SERVICE_URL': env.SERVICE_URL,
+    'ADMIN_PREFIX': adminPrefix,
+  };
 }

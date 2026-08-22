@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:console/app_exporter.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:desktop_drop/desktop_drop.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'objects_grid_datasource.dart';
 import 'objects_table_datasource.dart';

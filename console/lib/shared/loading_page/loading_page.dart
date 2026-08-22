@@ -1,5 +1,5 @@
 import 'package:console/app_exporter.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class LoadingPage extends StatelessWidget {
   const LoadingPage({super.key});
@@ -13,7 +13,7 @@ class LoadingPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text('Loading'),
+            const Text('Loading'),
             app.dimensions.padding.m.gap(),
             const CircularProgressIndicator(),
           ],
