@@ -37,3 +37,4 @@ console/*.iml
 #env
 console/web/env.js
 console/.metadata
+service/service.iml

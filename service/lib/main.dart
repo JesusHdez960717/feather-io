@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'feather.dart';
 
 //versions
@@ -15,6 +17,7 @@ void main() async {
 
 class FeatherIO {
   static Future start({int port = 8080}) async {
+    //--------------- OM ---------------\\
     om.addDeserializer(
       Deserializer<DownloadObjectsRequest>(
         (data) => DownloadObjectsRequest.fromJson(data),
@@ -24,6 +27,7 @@ class FeatherIO {
       Deserializer<LoginRequest>((data) => LoginRequest.fromJson(data)),
     );
 
+    //--------------- DI ---------------\\
     JwtService jwtService = JwtService();
     di.put(jwtService);
 
@@ -39,13 +43,45 @@ class FeatherIO {
     );
     di.put(adminController);
 
+    final database = AppDatabase();
+    di.put(database);
+
     await Winter.start(
       config: ServerConfig(port: port),
       globalFilterConfig: FilterConfig([JwtFilter()]),
       securityConfig: SecurityConfig(cors: const CorsConfig()),
       router: WinterRouter(
         config: RouterConfig(onLoadedRoutes: DefaultOnLoadedRoutes.log()),
-        routes: [adminController.routing, s3controller.routing],
+        routes: [
+          Route.get(
+            path: '/test',
+            handler: (request) async {
+              AppDatabase database = di.find<AppDatabase>();
+
+              await database
+                  .into(database.bucket)
+                  .insert(
+                    BucketCompanion.insert(
+                      name: 'random: ${Random().nextInt(50)}',
+                    ),
+                  );
+
+              List<BucketData> allItems = await database
+                  .select(database.bucket)
+                  .get();
+
+              return ResponseEntity.ok(
+                body: allItems.fold(
+                  '',
+                  (previousValue, element) =>
+                      '$previousValue - ${element.name}',
+                ),
+              );
+            },
+          ),
+          adminController.routing,
+          s3controller.routing,
+        ],
       ),
     );
   }
