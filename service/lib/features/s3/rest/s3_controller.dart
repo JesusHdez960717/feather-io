@@ -9,7 +9,14 @@ class S3Controller {
   Route get routing {
     return Route.parent(
       path: '/',
-      filterConfig: FilterConfig([JwtFilter(), S3SigV4Filter()]),
+      filterConfig: FilterConfig([
+        AnonymousAccessFilter(
+          bucketName: 's3-test',
+          rules: [AnonymousRuleModel('text/*', AnonymousAccessType.readOnly)],
+        ),
+        JwtFilter(),
+        S3SigV4Filter(),
+      ]),
       routes: [
         Route.get(
           key: 's3.list-buckets',
@@ -24,7 +31,16 @@ class S3Controller {
           path: '/{bucket}',
           handler: listObjects,
           filterConfig: FilterConfig([
-            AuthFilter(rules: hasPermission('s3.list-objects')),
+            AuthFilter(
+              rules:
+                  hasPermission('s3.list-objects') |
+                  hasPermission('s3.anonymous.list-objects'),
+              shouldFilter: (request) {
+                //solo aplica este filtro si es esta misma ruta, asi no se hereda para los childs
+                //asi el get-object no tiene que tener el permiso del list-objects
+                return request.routingContext?.key == 's3.list-objects';
+              },
+            ),
             ReservedBucketFilter(),
           ]),
           routes: [
@@ -33,7 +49,11 @@ class S3Controller {
               path: '/{key|.*}',
               handler: putObject,
               filterConfig: FilterConfig([
-                AuthFilter(rules: hasPermission('s3.put-object')),
+                AuthFilter(
+                  rules:
+                      hasPermission('s3.put-object') |
+                      hasPermission('s3.anonymous.put-object'),
+                ),
               ]),
             ),
             Route.get(
@@ -41,7 +61,11 @@ class S3Controller {
               path: '/{key|.*}',
               handler: getFile,
               filterConfig: FilterConfig([
-                AuthFilter(rules: hasPermission('s3.get-object')),
+                AuthFilter(
+                  rules:
+                      hasPermission('s3.get-object') |
+                      hasPermission('s3.anonymous.get-object'),
+                ),
               ]),
             ),
             Route.delete(
@@ -49,7 +73,11 @@ class S3Controller {
               path: '/{key|.*}',
               handler: deleteFile,
               filterConfig: FilterConfig([
-                AuthFilter(rules: hasPermission('s3.delete-object')),
+                AuthFilter(
+                  rules:
+                      hasPermission('s3.delete-object') |
+                      hasPermission('s3.anonymous.delete-object'),
+                ),
               ]),
             ),
           ],
@@ -59,7 +87,11 @@ class S3Controller {
           path: '/{bucket}',
           handler: multiDelete,
           filterConfig: FilterConfig([
-            AuthFilter(rules: hasPermission('s3.multi-delete-objects')),
+            AuthFilter(
+              rules:
+                  hasPermission('s3.multi-delete-objects') |
+                  hasPermission('s3.anonymous.multi-delete-objects'),
+            ),
             ReservedBucketFilter(),
           ]),
         ),
