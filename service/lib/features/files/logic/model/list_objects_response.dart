@@ -1,5 +1,4 @@
 import 'package:service/feather.dart';
-import 'package:service/features/files/logic/model/file_model.dart';
 
 class ListObjectsResponse implements Serializable {
   final String bucketName;

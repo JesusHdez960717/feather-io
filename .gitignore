@@ -28,6 +28,8 @@ console/.flutter-plugins-dependencies
 #fvm
 console/.fvm/flutter_sdk
 console/.fvm/versions/
+service/.fvm/flutter_sdk
+service/.fvm/versions/
 
 console/.idea/
 console/*.iml

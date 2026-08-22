@@ -7,6 +7,8 @@ import 'feather.dart';
 //migration
 //dart fix --dry-run
 //dart fix --apply
+//
+//fvm flutter analyze
 void main() async {
   await FeatherIO.start();
 }

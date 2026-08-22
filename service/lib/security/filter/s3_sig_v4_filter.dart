@@ -109,7 +109,7 @@ class S3SigV4Filter extends Filter {
         ),
       );
 
-      return chain.doFilter(request);
+      return await chain.doFilter(request);
     } catch (e) {
       return ResponseEntity.forbidden(body: 'Authentication error: $e');
     }

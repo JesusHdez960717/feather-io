@@ -4,7 +4,7 @@ version: 0.0.1
 publish_to: none
 
 environment:
-  sdk: ^3.12.0
+  sdk: ^3.13.0
 
 dependencies:
   winter:
@@ -17,13 +17,12 @@ dependencies:
 
   mime: 2.0.0                   #file extensions
 
-  archive: 4.0.9                #zip
+  archive: 4.1.0                #zip
   crypto: 3.0.7                 #HMAC & S3 Sig V4
-
 
   dart_jsonwebtoken: 3.4.1      #JWT
 
 dev_dependencies:
   http: 1.6.0
   lints: 6.1.0
-  test: 1.31.1
+  test: 1.31.2
