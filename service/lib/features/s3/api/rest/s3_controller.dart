@@ -99,7 +99,7 @@ class S3Controller {
     );
   }
 
-  S3Controller({required this.fileManagement});
+  S3Controller() : fileManagement = di.find();
 
   Future<ResponseEntity> listBuckets(RequestEntity request) async {
     final buckets = await fileManagement.listBuckets();

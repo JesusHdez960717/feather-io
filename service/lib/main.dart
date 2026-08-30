@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'feather.dart';
 
 //versions
@@ -11,6 +9,8 @@ import 'feather.dart';
 //dart fix --apply
 //
 //fvm flutter analyze
+//
+//fvm dart run build_runner build
 void main() async {
   await FeatherIO.start();
 }
@@ -27,24 +27,23 @@ class FeatherIO {
       Deserializer<LoginRequest>((data) => LoginRequest.fromJson(data)),
     );
 
-    //--------------- DI ---------------\\
-    JwtService jwtService = JwtService();
-    di.put(jwtService);
+    //--------------- DB ---------------\\
+    final database = AppDatabase();
+    di.put(database);
 
+    //--------------- File ---------------\\
     FileManagementService fileManagement = FileManagementService();
     di.put(fileManagement);
 
-    S3Controller s3controller = S3Controller(fileManagement: di.find());
-    di.put(s3controller);
+    //--------------- JWT ---------------\\
+    JwtService jwtService = JwtService();
+    di.put(jwtService);
 
-    AdminController adminController = AdminController(
-      fileManagement: di.find(),
-      jwtService: di.find(),
-    );
-    di.put(adminController);
+    //--------------- s3 ---------------\\
+    S3Controller s3controller = S3Controller();
 
-    final database = AppDatabase();
-    di.put(database);
+    //--------------- admin ---------------\\
+    AdminController adminController = AdminController();
 
     await Winter.start(
       config: ServerConfig(port: port),
@@ -52,36 +51,7 @@ class FeatherIO {
       securityConfig: SecurityConfig(cors: const CorsConfig()),
       router: WinterRouter(
         config: RouterConfig(onLoadedRoutes: DefaultOnLoadedRoutes.log()),
-        routes: [
-          Route.get(
-            path: '/test',
-            handler: (request) async {
-              AppDatabase database = di.find<AppDatabase>();
-
-              await database
-                  .into(database.bucket)
-                  .insert(
-                    BucketCompanion.insert(
-                      name: 'random: ${Random().nextInt(50)}',
-                    ),
-                  );
-
-              List<BucketData> allItems = await database
-                  .select(database.bucket)
-                  .get();
-
-              return ResponseEntity.ok(
-                body: allItems.fold(
-                  '',
-                  (previousValue, element) =>
-                      '$previousValue - ${element.name}',
-                ),
-              );
-            },
-          ),
-          adminController.routing,
-          s3controller.routing,
-        ],
+        routes: [adminController.routing, s3controller.routing],
       ),
     );
   }
