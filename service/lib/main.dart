@@ -26,6 +26,16 @@ class FeatherIO {
     om.addDeserializer(
       Deserializer<LoginRequest>((data) => LoginRequest.fromJson(data)),
     );
+    om.addDeserializer(
+      Deserializer<CreateRuleRequest>(
+        (data) => CreateRuleRequest.fromJson(data),
+      ),
+    );
+    om.addDeserializer(
+      Deserializer<DeleteRuleRequest>(
+        (data) => DeleteRuleRequest.fromJson(data),
+      ),
+    );
 
     //--------------- DB ---------------\\
     final database = AppDatabase();

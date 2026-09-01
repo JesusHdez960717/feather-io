@@ -10,6 +10,6 @@ class AnonymousRuleModel implements Serializable {
 
   @override
   Object? toJson() {
-    return {'prefix': prefix, 'access': access.toString()};
+    return {'prefix': prefix, 'access': access.name};
   }
 }

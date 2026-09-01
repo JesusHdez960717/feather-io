@@ -15,10 +15,35 @@ class AdminController {
         path: '/login',
         handler: authController.login,
       ),
-      Route.post(
-        key: 'admin.bucket.anonymous-access',
+      Route.get(
+        key: 'admin.bucket.anonymous-access.get-rules',
         path: '/bucket/{bucket}/anonymous-access',
         handler: anonymousAccessController.getRules,
+        filterConfig: FilterConfig([
+          AuthFilter(
+            rules: hasPermission('admin.bucket.anonymous-access.get-rules'),
+          ),
+        ]),
+      ),
+      Route.post(
+        key: 'admin.bucket.anonymous-access.write-rule',
+        path: '/bucket/{bucket}/anonymous-access',
+        handler: anonymousAccessController.createRule,
+        filterConfig: FilterConfig([
+          AuthFilter(
+            rules: hasPermission('admin.bucket.anonymous-access.write-rule'),
+          ),
+        ]),
+      ),
+      Route.delete(
+        key: 'admin.bucket.anonymous-access.delete-rule',
+        path: '/bucket/{bucket}/anonymous-access',
+        handler: anonymousAccessController.deleteRule,
+        filterConfig: FilterConfig([
+          AuthFilter(
+            rules: hasPermission('admin.bucket.anonymous-access.delete-rule'),
+          ),
+        ]),
       ),
       Route.post(
         key: 'admin.bucket.download',

@@ -39,6 +39,17 @@ class AccessRuleTableRepo {
             prefix: model.prefix,
             access: model.access,
           ),
+          mode: InsertMode.insertOrReplace,
         );
+  }
+
+  Future deleteRule({
+    required String bucketName,
+    required String prefix,
+  }) async {
+    await (_db.delete(_db.anonymousRulesTable)
+          ..where((tbl) => tbl.bucketName.equals(bucketName))
+          ..where((tbl) => tbl.prefix.equals(prefix)))
+        .go();
   }
 }

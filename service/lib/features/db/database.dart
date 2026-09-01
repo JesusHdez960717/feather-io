@@ -15,7 +15,7 @@ class AnonymousRulesTable extends Table {
 
   IntColumn get id => integer().autoIncrement()();
 
-  TextColumn get bucketName => text().unique()();
+  TextColumn get bucketName => text()();
 
   TextColumn get prefix => text()();
 

@@ -20,8 +20,6 @@ class AuthController {
         'sub': loginReq.access,
         'roles': ['admin'],
         'permissions': [
-          //admin stuff
-          'admin.bucket.download',
           //s3 stuff
           's3.list-buckets',
           's3.list-objects',
@@ -29,6 +27,11 @@ class AuthController {
           's3.get-object',
           's3.delete-object',
           's3.multi-delete-objects',
+          //admin stuff
+          'admin.bucket.download',
+          'admin.bucket.anonymous-access.get-rules',
+          'admin.bucket.anonymous-access.write-rule',
+          'admin.bucket.anonymous-access.delete-rule',
         ],
         'exp': expireAt.millisecondsSinceEpoch ~/ 1000,
       });
