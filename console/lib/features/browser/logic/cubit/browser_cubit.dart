@@ -16,7 +16,11 @@ class BrowserCubit extends Cubit<BrowserState>
   final ViewType? initialViewType;
 
   BrowserCubit({required this.auth, required this.repo, this.initialViewType})
-    : super(BrowserInitialState(viewType: initialViewType));
+    : super(BrowserInitialState(viewType: initialViewType)) {
+    onBus<BucketProcessingOKState>((event) {
+      refresh();
+    });
+  }
 
   void reset() {
     final viewType = state is BrowserSearchState
@@ -45,9 +49,7 @@ class BrowserCubit extends Cubit<BrowserState>
     try {
       emit(BrowserSearchingState(buckets: [], viewType: viewType));
 
-      _allBuckets = await repo.listBuckets(
-        token: auth.auth?.accessToken,
-      );
+      _allBuckets = await repo.listBuckets(token: auth.auth?.accessToken);
 
       emit(BrowserSearchOkState(buckets: _allBuckets, viewType: viewType));
     } catch (exc) {
@@ -305,7 +307,9 @@ class BrowserCubit extends Cubit<BrowserState>
 
       final blob = web.Blob(
         [Uint8List.fromList(data.bytes).toJS].toJS,
-        web.BlobPropertyBag(type: data.contentType ?? 'application/octet-stream'),
+        web.BlobPropertyBag(
+          type: data.contentType ?? 'application/octet-stream',
+        ),
       );
       final url = web.URL.createObjectURL(blob);
 

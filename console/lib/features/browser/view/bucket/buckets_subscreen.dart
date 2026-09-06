@@ -166,7 +166,9 @@ class _BucketsSubScreenState extends State<BucketsSubScreen> {
             ),
             app.dimensions.padding.m.gap(),
             PrimaryButton.primary(
-              onPressed: () {},
+              onPressed: () {
+                BucketCreateForm.open(context);
+              },
               title: 'Create Bucket',
               h: 42,
               w: 160,
