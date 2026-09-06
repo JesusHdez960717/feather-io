@@ -1,8 +1,9 @@
 import 'package:console/app_exporter.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart' as old;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logger/logger.dart';
+import 'package:material_ui/material_ui.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -86,8 +87,16 @@ class App extends StatelessWidget {
             );
           } else {
             return MaterialApp.router(
+              builder: (BuildContext context, Widget? child) {
+                return MaterialUiCompatibilityBridge(
+                  child: old.Material(
+                    type: old.MaterialType.transparency,
+                    child: child!,
+                  ),
+                );
+              },
               debugShowCheckedModeBanner: false,
-              title: 'Maple Admin',
+              title: 'Feather-IO',
               theme: ThemeConfig.theme,
               locale: locale,
               routerConfig: RouteConfig.router,

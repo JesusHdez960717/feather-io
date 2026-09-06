@@ -60,39 +60,41 @@ class _EMTextSearchFieldState extends State<EMTextSearchField> {
       );
     }
 
-    return AppTextInput.textField(
+    return AppFormInput(
       minLines: 1,
       maxLines: 1,
       maxLength: 50,
       hint: widget.hint,
       controller: widget.controller,
-      contentPadding: EdgeInsetsGeometry.zero,
       borderColor: app.colors.neutral.grey3,
       onChange: _onSearchChanged,
       height: 42,
       prefix: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
         child: app.assets.icons.actions.search.build(
           color: app.colors.neutral.grey3,
         ),
       ),
-      suffix: widget.extraSuffix == null
-          ? buildNativeSuffix()
-          : Row(
-              children: [
-                buildNativeSuffix(),
+      suffix: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2.0),
+        child: widget.extraSuffix == null
+            ? buildNativeSuffix()
+            : Row(
+                children: [
+                  buildNativeSuffix(),
 
-                app.dimensions.padding.xs.gap(),
-                VerticalDivider(
-                  color: app.colors.neutral.grey3,
-                  indent: 8.0,
-                  endIndent: 8.0,
-                ),
-                app.dimensions.padding.xs.gap(),
+                  app.dimensions.padding.xs.gap(),
+                  VerticalDivider(
+                    color: app.colors.neutral.grey3,
+                    indent: 8.0,
+                    endIndent: 8.0,
+                  ),
+                  app.dimensions.padding.xs.gap(),
 
-                widget.extraSuffix!,
-              ],
-            ),
+                  widget.extraSuffix!,
+                ],
+              ),
+      ),
       borderRadius: widget.borderRadius ?? app.dimensions.border.borderRadius.s,
     );
   }

@@ -3,7 +3,7 @@ import 'package:material_ui/material_ui.dart';
 
 class PrimaryButton extends StatelessWidget {
   static PrimaryButton primary({
-    required VoidCallback onPressed,
+    required VoidCallback? onPressed,
     required String title,
     SvgAsset? icon,
     Color? iconColor,
@@ -27,7 +27,7 @@ class PrimaryButton extends StatelessWidget {
   }
 
   static PrimaryButton secondary({
-    required VoidCallback onPressed,
+    required VoidCallback? onPressed,
     required String title,
     Color? color,
     SvgAsset? icon,

@@ -1,7 +1,7 @@
 import 'package:console/app_exporter.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
 
 class LoginScreenNavigator {
   String get name => 'login';
@@ -85,14 +85,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     textAlign: TextAlign.center,
                   ),
                   app.dimensions.padding.l.gap(),
-                  AppTextInput.textField(
+                  AppFormInput(
                     controller: _accessController,
                     label: 'Access Key',
                     hint: 'Enter your access key',
                     validator: (v) => v?.isEmpty == true ? 'Required' : null,
                   ),
                   app.dimensions.padding.m.gap(),
-                  AppTextInput.passwordField(
+                  AppFormPasswordInput(
                     controller: _secretController,
                     label: 'Secret Key',
                     hint: 'Enter your secret key',
