@@ -7,7 +7,7 @@ class AuthController {
 
   Future<ResponseEntity> login(RequestEntity request) async {
     try {
-      final loginReq = (await request.body<LoginRequest>())!;
+      final loginReq = await request.body<LoginRequest>();
 
       if (loginReq.access != env.access || loginReq.secret != env.secret) {
         throw ForbiddenException(body: 'Invalid credentials');
@@ -22,6 +22,8 @@ class AuthController {
         'permissions': [
           //s3 stuff
           's3.list-buckets',
+          's3.create-bucket',
+          's3.delete-bucket',
           's3.list-objects',
           's3.put-object',
           's3.get-object',

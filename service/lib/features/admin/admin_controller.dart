@@ -6,60 +6,63 @@ class AdminController {
   final AuthController authController;
   final AnonymousAccessController anonymousAccessController;
 
-  Route get routing => Route.parent(
-    path: '/$adminPrefix',
-    filterConfig: [JwtFilter()].toFilterConfig(),
-    routes: [
-      Route.post(
-        key: 'admin.auth.login',
-        path: '/login',
-        handler: authController.login,
-      ),
-      Route.get(
-        key: 'admin.bucket.anonymous-access.get-rules',
-        path: '/bucket/{bucket}/anonymous-access',
-        handler: anonymousAccessController.getRules,
-        filterConfig: FilterConfig([
-          AuthFilter(
-            rules: hasPermission('admin.bucket.anonymous-access.get-rules'),
+  Route get routing =>
+      Route.parent(
+        path: '/$adminPrefix',
+        filterConfig: [S3BucketNameFilter(), JwtFilter()].toFilterConfig(),
+        routes: [
+          Route.post(
+            key: 'admin.auth.login',
+            path: '/login',
+            handler: authController.login,
           ),
-        ]),
-      ),
-      Route.post(
-        key: 'admin.bucket.anonymous-access.write-rule',
-        path: '/bucket/{bucket}/anonymous-access',
-        handler: anonymousAccessController.createRule,
-        filterConfig: FilterConfig([
-          AuthFilter(
-            rules: hasPermission('admin.bucket.anonymous-access.write-rule'),
+          Route.get(
+            key: 'admin.bucket.anonymous-access.get-rules',
+            path: '/bucket/{bucket}/anonymous-access',
+            handler: anonymousAccessController.getRules,
+            filterConfig: FilterConfig([
+              AuthFilter(
+                rules: hasPermission('admin.bucket.anonymous-access.get-rules'),
+              ),
+            ]),
           ),
-        ]),
-      ),
-      Route.delete(
-        key: 'admin.bucket.anonymous-access.delete-rule',
-        path: '/bucket/{bucket}/anonymous-access',
-        handler: anonymousAccessController.deleteRule,
-        filterConfig: FilterConfig([
-          AuthFilter(
-            rules: hasPermission('admin.bucket.anonymous-access.delete-rule'),
+          Route.post(
+            key: 'admin.bucket.anonymous-access.write-rule',
+            path: '/bucket/{bucket}/anonymous-access',
+            handler: anonymousAccessController.createRule,
+            filterConfig: FilterConfig([
+              AuthFilter(
+                rules: hasPermission(
+                    'admin.bucket.anonymous-access.write-rule'),
+              ),
+            ]),
           ),
-        ]),
-      ),
-      Route.post(
-        key: 'admin.bucket.download',
-        path: '/bucket/{bucket}/download',
-        handler: downloadObjects,
-        filterConfig: FilterConfig([
-          AuthFilter(rules: hasPermission('admin.bucket.download')),
-        ]),
-      ),
-    ],
-  );
+          Route.delete(
+            key: 'admin.bucket.anonymous-access.delete-rule',
+            path: '/bucket/{bucket}/anonymous-access',
+            handler: anonymousAccessController.deleteRule,
+            filterConfig: FilterConfig([
+              AuthFilter(
+                rules: hasPermission(
+                    'admin.bucket.anonymous-access.delete-rule'),
+              ),
+            ]),
+          ),
+          Route.post(
+            key: 'admin.bucket.download',
+            path: '/bucket/{bucket}/download',
+            handler: downloadObjects,
+            filterConfig: FilterConfig([
+              AuthFilter(rules: hasPermission('admin.bucket.download')),
+            ]),
+          ),
+        ],
+      );
 
   AdminController()
-    : fileManagement = di.find(),
-      authController = AuthController(),
-      anonymousAccessController = AnonymousAccessController();
+      : fileManagement = di.find(),
+        authController = AuthController(),
+        anonymousAccessController = AnonymousAccessController();
 
   final FileManagementService fileManagement;
 
@@ -68,14 +71,16 @@ class AdminController {
 
     try {
       DownloadObjectsRequest downloadRequest = (await request
-          .body<DownloadObjectsRequest>())!;
+          .body<DownloadObjectsRequest>());
 
       final zipData = await fileManagement.zipObjects(
         bucketName: bucketName,
         keys: downloadRequest.keys,
       );
 
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final timestamp = DateTime
+          .now()
+          .millisecondsSinceEpoch;
       final fileName = 'download_$timestamp.zip';
 
       return ResponseEntity.ok(

@@ -5,15 +5,13 @@ import 'package:service/feather.dart';
 
 class S3Controller {
   final FileManagementService fileManagement;
+  final BucketService bucketService;
 
   Route get routing {
     return Route.parent(
       path: '/',
       filterConfig: FilterConfig([
-        AnonymousAccessFilter(
-          bucketName: 's3-test',
-          rules: [AnonymousRuleModel('text/*', AnonymousAccessType.readOnly)],
-        ),
+        S3BucketNameFilter(),
         JwtFilter(),
         S3SigV4Filter(),
       ]),
@@ -24,6 +22,22 @@ class S3Controller {
           handler: listBuckets,
           filterConfig: FilterConfig([
             AuthFilter(rules: hasPermission('s3.list-buckets')),
+          ]),
+        ),
+        Route.put(
+          key: 's3.create-bucket',
+          path: '/{bucket}',
+          handler: createBucket,
+          filterConfig: FilterConfig([
+            AuthFilter(rules: hasPermission('s3.create-bucket')),
+          ]),
+        ),
+        Route.delete(
+          key: 's3.delete-bucket',
+          path: '/{bucket}',
+          handler: deleteBucket,
+          filterConfig: FilterConfig([
+            AuthFilter(rules: hasPermission('s3.delete-bucket')),
           ]),
         ),
         Route.get(
@@ -99,10 +113,10 @@ class S3Controller {
     );
   }
 
-  S3Controller() : fileManagement = di.find();
+  S3Controller() : fileManagement = di.find(), bucketService = BucketService();
 
   Future<ResponseEntity> listBuckets(RequestEntity request) async {
-    final buckets = await fileManagement.listBuckets();
+    final buckets = await bucketService.listBuckets();
 
     if (request.headers['accept']?.contains('application/json') == true) {
       return ResponseEntity.ok(body: buckets);
@@ -113,6 +127,34 @@ class S3Controller {
         headers: {'content-type': 'application/xml'},
       );
     }
+  }
+
+  Future<ResponseEntity> createBucket(RequestEntity request) async {
+    final bucketName = request.pathParams['bucket']!;
+
+    CreateBucketRequest? createRequest;
+    try {
+      createRequest = await request.body<CreateBucketRequest>();
+    } catch (_) {
+      // Usamos defaults si el body no es válido o está vacío
+      createRequest = null;
+    }
+
+    await bucketService.createBucket(
+      bucketName: bucketName,
+      description: createRequest?.description,
+      color: createRequest?.color,
+    );
+
+    return ResponseEntity.ok(body: 'Bucket created successfully.');
+  }
+
+  Future<ResponseEntity> deleteBucket(RequestEntity request) async {
+    final bucketName = request.pathParams['bucket']!;
+
+    await bucketService.deleteBucket(bucketName: bucketName);
+
+    return ResponseEntity(204);
   }
 
   Future<ResponseEntity> putObject(RequestEntity request) async {
@@ -171,7 +213,7 @@ class S3Controller {
       key: request.pathParams['key']!,
     );
 
-    return ResponseEntity.ok(body: 'File deleted successfully.');
+    return ResponseEntity(204);
   }
 
   Future<ResponseEntity> multiDelete(RequestEntity request) async {
@@ -209,6 +251,12 @@ class S3Controller {
     for (final bucket in buckets) {
       buffer.writeln('    <Bucket>');
       buffer.writeln('      <Name>${bucket.name}</Name>');
+      if (bucket.description != null) {
+        buffer.writeln(
+          '      <Description>${bucket.description}</Description>',
+        );
+      }
+      buffer.writeln('      <Color>${bucket.color}</Color>');
       buffer.writeln(
         '      <CreationDate>${bucket.creationDate.toIso8601String()}</CreationDate>',
       );

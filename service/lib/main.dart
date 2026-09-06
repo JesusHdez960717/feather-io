@@ -36,6 +36,11 @@ class FeatherIO {
         (data) => DeleteRuleRequest.fromJson(data),
       ),
     );
+    om.addDeserializer(
+      Deserializer<CreateBucketRequest>(
+        (data) => CreateBucketRequest.fromJson(data),
+      ),
+    );
 
     //--------------- DB ---------------\\
     final database = AppDatabase();
