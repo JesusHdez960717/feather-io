@@ -40,3 +40,5 @@ console/.metadata
 service/service.iml
 
 .vscode/
+
+.artifacts/
