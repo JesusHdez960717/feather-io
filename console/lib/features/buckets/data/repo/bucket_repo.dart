@@ -24,7 +24,7 @@ class BucketRepo {
 
   Future<void> deleteBucket({
     required String name,
-    required String token,
+    String? token,
   }) async {
     try {
       await _client.deleteBucket(name: name, token: token);

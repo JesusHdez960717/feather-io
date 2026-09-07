@@ -11,6 +11,7 @@ class BucketsSubScreen extends StatefulWidget {
   final VoidCallback onRefresh;
   final VoidCallback onRetry;
   final Function(BucketModel) onSelected;
+  final Function(BucketModel) onDelete;
   final Function(ViewType) onViewTypeChanged;
 
   const BucketsSubScreen({
@@ -18,6 +19,7 @@ class BucketsSubScreen extends StatefulWidget {
     required this.onRefresh,
     required this.onRetry,
     required this.onSelected,
+    required this.onDelete,
     required this.onViewTypeChanged,
     super.key,
   });
@@ -65,6 +67,67 @@ class _BucketsSubScreenState extends State<BucketsSubScreen> {
     });
   }
 
+  void _onDeleteSelected(BucketModel selected) {
+    ConfirmDialog.show(
+      title: 'Delete bucket',
+      description:
+          'Are you sure you want to delete the ${selected.name} bucket?',
+      confirmTitle: 'Delete',
+      confirmColor: app.colors.primary.red,
+      confirmAction: () => widget.onDelete(selected),
+    );
+  }
+
+  void _onShowBucketOptions(BucketModel bucket, RenderBox buttonBox) {
+    final RenderBox overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
+
+    final RelativeRect position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        buttonBox.localToGlobal(Offset.zero, ancestor: overlay),
+        buttonBox.localToGlobal(
+          buttonBox.size.bottomRight(Offset.zero),
+          ancestor: overlay,
+        ),
+      ),
+      Offset.zero & overlay.size,
+    );
+
+    showMenu(
+      context: context,
+      position: position,
+      color: app.colors.primary.background2,
+      elevation: 8,
+      shape: RoundedRectangleBorder(
+        borderRadius: app.dimensions.border.borderRadius.s,
+        side: BorderSide(color: app.colors.neutral.grey5),
+      ),
+      items: [
+        PopupMenuItem(
+          value: 'delete',
+          onTap: () {
+            _onDeleteSelected(bucket);
+          },
+          child: Row(
+            children: [
+              app.assets.icons.actions.delete.build(
+                size: 18,
+                color: app.colors.primary.red,
+              ),
+              app.dimensions.padding.m.gap(),
+              Text(
+                'Delete',
+                style: app.textTheme.bodyMedium?.copyWith(
+                  color: app.colors.primary.red,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -90,12 +153,14 @@ class _BucketsSubScreenState extends State<BucketsSubScreen> {
                                 filteredBuckets: _filteredBuckets,
                                 searchController: _searchController,
                                 onSelected: widget.onSelected,
+                                onShowOptions: _onShowBucketOptions,
                               )
                             : BucketsGridDatasource(
                                 state: widget.state,
                                 filteredBuckets: _filteredBuckets,
                                 searchController: _searchController,
                                 onSelected: widget.onSelected,
+                                onShowOptions: _onShowBucketOptions,
                               ),
                       ),
                     ],

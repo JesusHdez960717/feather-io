@@ -564,11 +564,13 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
           Container(
             padding: EdgeInsets.all(app.dimensions.padding.m),
             decoration: BoxDecoration(
-              color: Color.lerp(
-                app.colors.primary.purple,
-                app.colors.neutral.white,
-                0.1,
-              )!.withValues(alpha: 0.2),
+              color:
+                  bucket.uiColor ??
+                  Color.lerp(
+                    app.colors.primary.purple,
+                    app.colors.neutral.white,
+                    0.1,
+                  )!.withValues(alpha: 0.2),
               borderRadius: app.dimensions.border.borderRadius.m,
             ),
             child: app.assets.icons.storage.bucket.build(
@@ -577,23 +579,39 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
             ),
           ),
           app.dimensions.padding.l.gap(),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                bucket.name,
-                style: app.textTheme.headlineMedium?.copyWith(
-                  color: app.colors.neutral.white,
-                  fontWeight: FontWeight.bold,
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.sizeOf(context).width * 0.5,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      bucket.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: app.textTheme.headlineMedium?.copyWith(
+                        color: app.colors.neutral.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (bucket.description?.isNotEmpty == true)
+                      Text(
+                        bucket.description!,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: app.textTheme.bodyMedium?.copyWith(
+                          color: app.colors.neutral.grey3,
+                        ),
+                      ),
+                  ],
                 ),
               ),
-              /*Text(
-                'Bucket storage: ${app.storageFormatter.formatSize(bucket.sizeBytes)}',
-                style: app.textTheme.bodyMedium?.copyWith(
-                  color: app.colors.neutral.grey3,
-                ),
-              ),*/
-            ],
+            ),
           ),
         ],
       ),

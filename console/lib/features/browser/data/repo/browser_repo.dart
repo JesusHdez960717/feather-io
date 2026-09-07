@@ -100,6 +100,8 @@ extension BucketResponseMapping on BucketResponse {
   BucketModel toModel() {
     return BucketModel(
       name: name,
+      description: description,
+      color: color,
       objectCount: objectCount,
       sizeBytes: sizeBytes,
       creationDate: creationDate,

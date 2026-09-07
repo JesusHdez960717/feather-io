@@ -7,9 +7,7 @@ class BrowserClient extends BaseClient {
 
   BrowserClient(super.dio);
 
-  Future<List<BucketResponse>> listBuckets({
-    String? token,
-  }) async {
+  Future<List<BucketResponse>> listBuckets({String? token}) async {
     Response rawResponse = await dio.get(
       baseUrl,
       options: options(token: token),
@@ -21,7 +19,8 @@ class BrowserClient extends BaseClient {
   }
 
   Future<ListObjectsResponse> listObjects({
-    required String bucket, String? token,
+    required String bucket,
+    String? token,
     String? prefix,
     String? delimiter,
   }) async {
@@ -35,7 +34,9 @@ class BrowserClient extends BaseClient {
   }
 
   Future<void> deleteObjects({
-    required String bucket, required List<String> keys, String? token,
+    required String bucket,
+    required List<String> keys,
+    String? token,
   }) async {
     await dio.post(
       '$baseUrl/$bucket',
@@ -50,7 +51,11 @@ class BrowserClient extends BaseClient {
   }
 
   Future<void> uploadObject({
-    required String bucket, required String key, required Stream<List<int>> data, required int length, String? token,
+    required String bucket,
+    required String key,
+    required Stream<List<int>> data,
+    required int length,
+    String? token,
   }) async {
     final uri = Uri.parse('$baseUrl/$bucket/$key');
 
@@ -67,13 +72,13 @@ class BrowserClient extends BaseClient {
   }
 
   Future<ObjectDataResponse> getObject({
-    required String bucket, required String key, String? token,
+    required String bucket,
+    required String key,
+    String? token,
   }) async {
     Response<List<int>> response = await dio.get<List<int>>(
       '$baseUrl/$bucket/$key',
-      options: options(
-        token: token,
-      ).copyWith(responseType: ResponseType.bytes),
+      options: options(token: token).copyWith(responseType: ResponseType.bytes),
     );
     return ObjectDataResponse(
       bytes: response.data!,
@@ -82,15 +87,15 @@ class BrowserClient extends BaseClient {
   }
 
   Future<List<int>> download({
-    required String bucket, required List<String> keys, String? token,
+    required String bucket,
+    required List<String> keys,
+    String? token,
   }) async {
     final admin = Environment.adminPrefix;
     Response<List<int>> response = await dio.post<List<int>>(
       '$baseUrl/$admin/bucket/$bucket/download',
       data: {'keys': keys},
-      options: options(
-        token: token,
-      ).copyWith(responseType: ResponseType.bytes),
+      options: options(token: token).copyWith(responseType: ResponseType.bytes),
     );
     return response.data!;
   }
@@ -103,16 +108,23 @@ class BucketResponse {
   final int sizeBytes;
   final DateTime creationDate;
 
+  final String? description;
+  final int? color;
+
   BucketResponse({
     required this.name,
     required this.objectCount,
     required this.sizeBytes,
     required this.creationDate,
+    this.description,
+    this.color,
   });
 
   factory BucketResponse.fromJson(Map<String, dynamic> json) {
     return BucketResponse(
       name: json['name'],
+      description: json['description'],
+      color: json['color'],
       objectCount: json['object_count'],
       sizeBytes: json['size_bytes'],
       creationDate: DateTime.parse(json['creation_date']),
@@ -130,7 +142,9 @@ class ListObjectsResponse {
 
   ListObjectsResponse({
     required this.bucketName,
-    required this.contents, required this.commonPrefixes, this.prefix,
+    required this.contents,
+    required this.commonPrefixes,
+    this.prefix,
     this.delimiter,
   });
 
@@ -171,8 +185,5 @@ class ObjectDataResponse {
   final List<int> bytes;
   final String? contentType;
 
-  ObjectDataResponse({
-    required this.bytes,
-    this.contentType,
-  });
+  ObjectDataResponse({required this.bytes, this.contentType});
 }

@@ -16,6 +16,7 @@ class BrowserScreenNavigator {
       create: (context) => BrowserCubit(
         auth: app.di.find(),
         repo: app.di.find(),
+        bucketRepo: app.di.find(),
         initialViewType: initialViewType,
       ),
       lazy: false,
@@ -54,7 +55,20 @@ class _BrowserScreenState extends State<BrowserScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<BrowserCubit, BrowserState>(
+    return BlocConsumer<BrowserCubit, BrowserState>(
+      listener: (context, state) {
+        if (state is BrowserBucketDeleteInProgressState) {
+          app.loading.show();
+        } else {
+          app.loading.hide();
+        }
+
+        if (state is BrowserBucketDeleteOKState) {
+          // Ya se refresca solo por el onBus del cubit
+        } else if (state is BrowserBucketDeleteErrorState) {
+          app.snack.showError(message: state.message, context: context);
+        }
+      },
       buildWhen: (previous, current) =>
           current is BrowserSearchState || current is BrowserInitialState,
       builder: (context, state) {
@@ -132,6 +146,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
                       onRetry: () => cubit.init(),
                       onSelected: (bucket) =>
                           cubit.selectBucket(bucket: bucket),
+                      onDelete: (bucket) => cubit.deleteBucket(bucket: bucket),
                       onViewTypeChanged: (type) {
                         cubit.changeViewType(type);
                         BrowserScreen.navigator.updateViewType(type);

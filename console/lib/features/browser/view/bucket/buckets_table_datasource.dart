@@ -7,12 +7,14 @@ class BucketsTableDatasource extends StatefulWidget {
   final TextEditingController searchController;
   final List<BucketModel> filteredBuckets;
   final Function(BucketModel) onSelected;
+  final Function(BucketModel bucket, RenderBox box) onShowOptions;
 
   const BucketsTableDatasource({
     required this.state,
     required this.searchController,
     required this.filteredBuckets,
     required this.onSelected,
+    required this.onShowOptions,
     super.key,
   });
 
@@ -26,6 +28,7 @@ class _BucketsTableDatasourceState extends State<BucketsTableDatasource> {
     'objects': null,
     'size': null,
     'created_at': null,
+    'actions': null,
   };
 
   @override
@@ -37,11 +40,14 @@ class _BucketsTableDatasourceState extends State<BucketsTableDatasource> {
         final nameWidth = totalWidth * 0.4;
         final objectsWidth = totalWidth * 0.15;
         final sizeWidth = totalWidth * 0.2;
+        final actionsWidth = 50.0;
+
         final createdAtWidth =
-            (totalWidth - (nameWidth + objectsWidth + sizeWidth)).clamp(
-              130.0,
-              totalWidth,
-            );
+            (totalWidth - (nameWidth + objectsWidth + sizeWidth + actionsWidth))
+                .clamp(
+                  130.0,
+                  totalWidth,
+                );
 
         Widget header(String text) {
           return Padding(
@@ -67,6 +73,7 @@ class _BucketsTableDatasourceState extends State<BucketsTableDatasource> {
         _BucketsDataSource dataSource = _BucketsDataSource(
           buckets: widget.filteredBuckets,
           onRowTap: widget.onSelected,
+          onShowOptions: widget.onShowOptions,
         );
 
         return Container(
@@ -93,7 +100,8 @@ class _BucketsTableDatasourceState extends State<BucketsTableDatasource> {
                 final othersWidth =
                     (columnWidths['name'] ?? nameWidth) +
                     (columnWidths['objects'] ?? objectsWidth) +
-                    (columnWidths['size'] ?? sizeWidth);
+                    (columnWidths['size'] ?? sizeWidth) +
+                    (columnWidths['actions'] ?? actionsWidth);
 
                 columnWidths['created_at'] = (totalWidth - othersWidth).clamp(
                   150.0,
@@ -133,6 +141,11 @@ class _BucketsTableDatasourceState extends State<BucketsTableDatasource> {
                 minimumWidth: 150,
                 label: header('Created At'),
               ),
+              GridColumn(
+                columnName: 'actions',
+                width: actionsWidth,
+                label: const SizedBox.shrink(),
+              ),
             ],
           ),
         );
@@ -144,8 +157,15 @@ class _BucketsTableDatasourceState extends State<BucketsTableDatasource> {
 class _BucketsDataSource extends DataGridSource {
   final List<BucketModel> buckets;
   final void Function(BucketModel bucket) onRowTap;
+  final void Function(BucketModel bucket, RenderBox box) onShowOptions;
 
-  _BucketsDataSource({required this.buckets, required this.onRowTap}) {
+  final ValueNotifier<BucketModel?> hoveredBucket = ValueNotifier(null);
+
+  _BucketsDataSource({
+    required this.buckets,
+    required this.onRowTap,
+    required this.onShowOptions,
+  }) {
     _rows = buckets.map(_buildRow).toList();
   }
 
@@ -160,23 +180,65 @@ class _BucketsDataSource extends DataGridSource {
 
     return DataGridRowAdapter(
       cells: row.getCells().map<Widget>((cell) {
+        final bool isActions = cell.columnName == 'actions';
+
+        Widget content;
+
+        if (isActions) {
+          content = ValueListenableBuilder<BucketModel?>(
+            valueListenable: hoveredBucket,
+            builder: (context, hovered, _) {
+              final isHovered = hovered == bucket;
+              return Opacity(
+                opacity: isHovered ? 1.0 : 0.0,
+                child: Center(
+                  child: Builder(
+                    builder: (context) {
+                      return IconButton(
+                        icon: Icon(
+                          Icons.more_vert,
+                          size: 18,
+                          color: app.colors.neutral.grey2,
+                        ),
+                        onPressed: isHovered
+                            ? () {
+                                final RenderBox box =
+                                    context.findRenderObject() as RenderBox;
+                                onShowOptions(bucket, box);
+                              }
+                            : null,
+                        padding: const EdgeInsets.all(4.0),
+                        constraints: const BoxConstraints(),
+                      );
+                    },
+                  ),
+                ),
+              );
+            },
+          );
+        } else {
+          content = Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                cell.value.toString(),
+                style: app.textTheme.bodyMedium?.copyWith(
+                  color: app.colors.neutral.white,
+                ),
+              ),
+            ),
+          );
+        }
+
         return MouseRegion(
+          onEnter: (_) => hoveredBucket.value = bucket,
+          onExit: (_) => hoveredBucket.value = null,
           cursor: SystemMouseCursors.click,
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () => onRowTap(bucket),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  cell.value.toString(),
-                  style: app.textTheme.bodyMedium?.copyWith(
-                    color: app.colors.neutral.white,
-                  ),
-                ),
-              ),
-            ),
+            child: content,
           ),
         );
       }).toList(),
@@ -197,6 +259,7 @@ class _BucketsDataSource extends DataGridSource {
           columnName: 'created_at',
           value: app.dateFormatter.l.format(bucket.creationDate),
         ),
+        DataGridCell<BucketModel>(columnName: 'actions', value: bucket),
       ],
     );
   }
