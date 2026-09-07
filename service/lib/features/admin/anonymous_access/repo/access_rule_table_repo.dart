@@ -6,19 +6,19 @@ class AccessRuleTableRepo {
 
   AccessRuleTableRepo(this._db);
 
-  Future<List<AnonymousRulesTableData>> getRulesByBucket({
+  Future<List<AnonymousRuleTableData>> getRulesByBucket({
     required String bucket,
   }) {
     return (_db.select(
-      _db.anonymousRulesTable,
+      _db.anonymousRuleTable,
     )..where((tbl) => tbl.bucketName.equals(bucket))).get();
   }
 
-  Future<AnonymousRulesTableData?> getRule({
+  Future<AnonymousRuleTableData?> getRule({
     required String bucket,
     required String prefix,
   }) {
-    return (_db.select(_db.anonymousRulesTable)..where(
+    return (_db.select(_db.anonymousRuleTable)..where(
           (tbl) => Expression.and([
             tbl.bucketName.equals(bucket),
             tbl.prefix.equals(prefix),
@@ -32,9 +32,9 @@ class AccessRuleTableRepo {
     required AnonymousRuleModel model,
   }) async {
     await _db
-        .into(_db.anonymousRulesTable)
+        .into(_db.anonymousRuleTable)
         .insert(
-          AnonymousRulesTableCompanion.insert(
+          AnonymousRuleTableCompanion.insert(
             bucketName: bucketName,
             prefix: model.prefix,
             access: model.access,
@@ -47,7 +47,7 @@ class AccessRuleTableRepo {
     required String bucketName,
     required String prefix,
   }) async {
-    await (_db.delete(_db.anonymousRulesTable)
+    await (_db.delete(_db.anonymousRuleTable)
           ..where((tbl) => tbl.bucketName.equals(bucketName))
           ..where((tbl) => tbl.prefix.equals(prefix)))
         .go();

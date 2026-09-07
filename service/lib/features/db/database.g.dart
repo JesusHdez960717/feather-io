@@ -3,12 +3,12 @@
 part of 'database.dart';
 
 // ignore_for_file: type=lint
-class $AnonymousRulesTableTable extends AnonymousRuleTable
-    with TableInfo<$AnonymousRulesTableTable, AnonymousRulesTableData> {
+class $AnonymousRuleTableTable extends AnonymousRuleTable
+    with TableInfo<$AnonymousRuleTableTable, AnonymousRuleTableData> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $AnonymousRulesTableTable(this.attachedDatabase, [this._alias]);
+  $AnonymousRuleTableTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -52,7 +52,7 @@ class $AnonymousRulesTableTable extends AnonymousRuleTable
         type: DriftSqlType.string,
         requiredDuringInsert: true,
       ).withConverter<AnonymousAccessType>(
-        $AnonymousRulesTableTable.$converteraccess,
+        $AnonymousRuleTableTable.$converteraccess,
       );
   @override
   List<GeneratedColumn> get $columns => [id, bucketName, prefix, access];
@@ -60,10 +60,10 @@ class $AnonymousRulesTableTable extends AnonymousRuleTable
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'anonymous_rules';
+  static const String $name = 'anonymous_rule';
   @override
   VerificationContext validateIntegrity(
-    Insertable<AnonymousRulesTableData> instance, {
+    Insertable<AnonymousRuleTableData> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -93,12 +93,9 @@ class $AnonymousRulesTableTable extends AnonymousRuleTable
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  AnonymousRulesTableData map(
-    Map<String, dynamic> data, {
-    String? tablePrefix,
-  }) {
+  AnonymousRuleTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return AnonymousRulesTableData(
+    return AnonymousRuleTableData(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}id'],
@@ -111,7 +108,7 @@ class $AnonymousRulesTableTable extends AnonymousRuleTable
         DriftSqlType.string,
         data['${effectivePrefix}prefix'],
       )!,
-      access: $AnonymousRulesTableTable.$converteraccess.fromSql(
+      access: $AnonymousRuleTableTable.$converteraccess.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.string,
           data['${effectivePrefix}access'],
@@ -121,8 +118,8 @@ class $AnonymousRulesTableTable extends AnonymousRuleTable
   }
 
   @override
-  $AnonymousRulesTableTable createAlias(String alias) {
-    return $AnonymousRulesTableTable(attachedDatabase, alias);
+  $AnonymousRuleTableTable createAlias(String alias) {
+    return $AnonymousRuleTableTable(attachedDatabase, alias);
   }
 
   static JsonTypeConverter2<AnonymousAccessType, String, String>
@@ -131,13 +128,13 @@ class $AnonymousRulesTableTable extends AnonymousRuleTable
   );
 }
 
-class AnonymousRulesTableData extends DataClass
-    implements Insertable<AnonymousRulesTableData> {
+class AnonymousRuleTableData extends DataClass
+    implements Insertable<AnonymousRuleTableData> {
   final int id;
   final String bucketName;
   final String prefix;
   final AnonymousAccessType access;
-  const AnonymousRulesTableData({
+  const AnonymousRuleTableData({
     required this.id,
     required this.bucketName,
     required this.prefix,
@@ -151,14 +148,14 @@ class AnonymousRulesTableData extends DataClass
     map['prefix'] = Variable<String>(prefix);
     {
       map['access'] = Variable<String>(
-        $AnonymousRulesTableTable.$converteraccess.toSql(access),
+        $AnonymousRuleTableTable.$converteraccess.toSql(access),
       );
     }
     return map;
   }
 
-  AnonymousRulesTableCompanion toCompanion(bool nullToAbsent) {
-    return AnonymousRulesTableCompanion(
+  AnonymousRuleTableCompanion toCompanion(bool nullToAbsent) {
+    return AnonymousRuleTableCompanion(
       id: Value(id),
       bucketName: Value(bucketName),
       prefix: Value(prefix),
@@ -166,16 +163,16 @@ class AnonymousRulesTableData extends DataClass
     );
   }
 
-  factory AnonymousRulesTableData.fromJson(
+  factory AnonymousRuleTableData.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return AnonymousRulesTableData(
+    return AnonymousRuleTableData(
       id: serializer.fromJson<int>(json['id']),
       bucketName: serializer.fromJson<String>(json['bucketName']),
       prefix: serializer.fromJson<String>(json['prefix']),
-      access: $AnonymousRulesTableTable.$converteraccess.fromJson(
+      access: $AnonymousRuleTableTable.$converteraccess.fromJson(
         serializer.fromJson<String>(json['access']),
       ),
     );
@@ -188,24 +185,24 @@ class AnonymousRulesTableData extends DataClass
       'bucketName': serializer.toJson<String>(bucketName),
       'prefix': serializer.toJson<String>(prefix),
       'access': serializer.toJson<String>(
-        $AnonymousRulesTableTable.$converteraccess.toJson(access),
+        $AnonymousRuleTableTable.$converteraccess.toJson(access),
       ),
     };
   }
 
-  AnonymousRulesTableData copyWith({
+  AnonymousRuleTableData copyWith({
     int? id,
     String? bucketName,
     String? prefix,
     AnonymousAccessType? access,
-  }) => AnonymousRulesTableData(
+  }) => AnonymousRuleTableData(
     id: id ?? this.id,
     bucketName: bucketName ?? this.bucketName,
     prefix: prefix ?? this.prefix,
     access: access ?? this.access,
   );
-  AnonymousRulesTableData copyWithCompanion(AnonymousRulesTableCompanion data) {
-    return AnonymousRulesTableData(
+  AnonymousRuleTableData copyWithCompanion(AnonymousRuleTableCompanion data) {
+    return AnonymousRuleTableData(
       id: data.id.present ? data.id.value : this.id,
       bucketName: data.bucketName.present
           ? data.bucketName.value
@@ -217,7 +214,7 @@ class AnonymousRulesTableData extends DataClass
 
   @override
   String toString() {
-    return (StringBuffer('AnonymousRulesTableData(')
+    return (StringBuffer('AnonymousRuleTableData(')
           ..write('id: $id, ')
           ..write('bucketName: $bucketName, ')
           ..write('prefix: $prefix, ')
@@ -231,26 +228,26 @@ class AnonymousRulesTableData extends DataClass
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is AnonymousRulesTableData &&
+      (other is AnonymousRuleTableData &&
           other.id == this.id &&
           other.bucketName == this.bucketName &&
           other.prefix == this.prefix &&
           other.access == this.access);
 }
 
-class AnonymousRulesTableCompanion
-    extends UpdateCompanion<AnonymousRulesTableData> {
+class AnonymousRuleTableCompanion
+    extends UpdateCompanion<AnonymousRuleTableData> {
   final Value<int> id;
   final Value<String> bucketName;
   final Value<String> prefix;
   final Value<AnonymousAccessType> access;
-  const AnonymousRulesTableCompanion({
+  const AnonymousRuleTableCompanion({
     this.id = const Value.absent(),
     this.bucketName = const Value.absent(),
     this.prefix = const Value.absent(),
     this.access = const Value.absent(),
   });
-  AnonymousRulesTableCompanion.insert({
+  AnonymousRuleTableCompanion.insert({
     this.id = const Value.absent(),
     required String bucketName,
     required String prefix,
@@ -258,7 +255,7 @@ class AnonymousRulesTableCompanion
   }) : bucketName = Value(bucketName),
        prefix = Value(prefix),
        access = Value(access);
-  static Insertable<AnonymousRulesTableData> custom({
+  static Insertable<AnonymousRuleTableData> custom({
     Expression<int>? id,
     Expression<String>? bucketName,
     Expression<String>? prefix,
@@ -272,13 +269,13 @@ class AnonymousRulesTableCompanion
     });
   }
 
-  AnonymousRulesTableCompanion copyWith({
+  AnonymousRuleTableCompanion copyWith({
     Value<int>? id,
     Value<String>? bucketName,
     Value<String>? prefix,
     Value<AnonymousAccessType>? access,
   }) {
-    return AnonymousRulesTableCompanion(
+    return AnonymousRuleTableCompanion(
       id: id ?? this.id,
       bucketName: bucketName ?? this.bucketName,
       prefix: prefix ?? this.prefix,
@@ -300,7 +297,7 @@ class AnonymousRulesTableCompanion
     }
     if (access.present) {
       map['access'] = Variable<String>(
-        $AnonymousRulesTableTable.$converteraccess.toSql(access.value),
+        $AnonymousRuleTableTable.$converteraccess.toSql(access.value),
       );
     }
     return map;
@@ -308,7 +305,7 @@ class AnonymousRulesTableCompanion
 
   @override
   String toString() {
-    return (StringBuffer('AnonymousRulesTableCompanion(')
+    return (StringBuffer('AnonymousRuleTableCompanion(')
           ..write('id: $id, ')
           ..write('bucketName: $bucketName, ')
           ..write('prefix: $prefix, ')
@@ -318,12 +315,12 @@ class AnonymousRulesTableCompanion
   }
 }
 
-class $BucketsTableTable extends BucketTable
-    with TableInfo<$BucketsTableTable, BucketsTableData> {
+class $BucketTableTable extends BucketTable
+    with TableInfo<$BucketTableTable, BucketTableData> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $BucketsTableTable(this.attachedDatabase, [this._alias]);
+  $BucketTableTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
@@ -349,10 +346,9 @@ class $BucketsTableTable extends BucketTable
   late final GeneratedColumn<int> color = GeneratedColumn<int>(
     'color',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.int,
     requiredDuringInsert: false,
-    defaultValue: const Constant(0),
   );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
@@ -390,10 +386,10 @@ class $BucketsTableTable extends BucketTable
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'buckets';
+  static const String $name = 'bucket';
   @override
   VerificationContext validateIntegrity(
-    Insertable<BucketsTableData> instance, {
+    Insertable<BucketTableData> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -439,9 +435,9 @@ class $BucketsTableTable extends BucketTable
   @override
   Set<GeneratedColumn> get $primaryKey => {name};
   @override
-  BucketsTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
+  BucketTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return BucketsTableData(
+    return BucketTableData(
       name: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}name'],
@@ -453,7 +449,7 @@ class $BucketsTableTable extends BucketTable
       color: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}color'],
-      )!,
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -466,22 +462,21 @@ class $BucketsTableTable extends BucketTable
   }
 
   @override
-  $BucketsTableTable createAlias(String alias) {
-    return $BucketsTableTable(attachedDatabase, alias);
+  $BucketTableTable createAlias(String alias) {
+    return $BucketTableTable(attachedDatabase, alias);
   }
 }
 
-class BucketsTableData extends DataClass
-    implements Insertable<BucketsTableData> {
+class BucketTableData extends DataClass implements Insertable<BucketTableData> {
   final String name;
   final String? description;
-  final int color;
+  final int? color;
   final DateTime createdAt;
   final DateTime updatedAt;
-  const BucketsTableData({
+  const BucketTableData({
     required this.name,
     this.description,
-    required this.color,
+    this.color,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -492,33 +487,37 @@ class BucketsTableData extends DataClass
     if (!nullToAbsent || description != null) {
       map['description'] = Variable<String>(description);
     }
-    map['color'] = Variable<int>(color);
+    if (!nullToAbsent || color != null) {
+      map['color'] = Variable<int>(color);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
   }
 
-  BucketsTableCompanion toCompanion(bool nullToAbsent) {
-    return BucketsTableCompanion(
+  BucketTableCompanion toCompanion(bool nullToAbsent) {
+    return BucketTableCompanion(
       name: Value(name),
       description: description == null && nullToAbsent
           ? const Value.absent()
           : Value(description),
-      color: Value(color),
+      color: color == null && nullToAbsent
+          ? const Value.absent()
+          : Value(color),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
   }
 
-  factory BucketsTableData.fromJson(
+  factory BucketTableData.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return BucketsTableData(
+    return BucketTableData(
       name: serializer.fromJson<String>(json['name']),
       description: serializer.fromJson<String?>(json['description']),
-      color: serializer.fromJson<int>(json['color']),
+      color: serializer.fromJson<int?>(json['color']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -529,27 +528,27 @@ class BucketsTableData extends DataClass
     return <String, dynamic>{
       'name': serializer.toJson<String>(name),
       'description': serializer.toJson<String?>(description),
-      'color': serializer.toJson<int>(color),
+      'color': serializer.toJson<int?>(color),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
   }
 
-  BucketsTableData copyWith({
+  BucketTableData copyWith({
     String? name,
     Value<String?> description = const Value.absent(),
-    int? color,
+    Value<int?> color = const Value.absent(),
     DateTime? createdAt,
     DateTime? updatedAt,
-  }) => BucketsTableData(
+  }) => BucketTableData(
     name: name ?? this.name,
     description: description.present ? description.value : this.description,
-    color: color ?? this.color,
+    color: color.present ? color.value : this.color,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
-  BucketsTableData copyWithCompanion(BucketsTableCompanion data) {
-    return BucketsTableData(
+  BucketTableData copyWithCompanion(BucketTableCompanion data) {
+    return BucketTableData(
       name: data.name.present ? data.name.value : this.name,
       description: data.description.present
           ? data.description.value
@@ -562,7 +561,7 @@ class BucketsTableData extends DataClass
 
   @override
   String toString() {
-    return (StringBuffer('BucketsTableData(')
+    return (StringBuffer('BucketTableData(')
           ..write('name: $name, ')
           ..write('description: $description, ')
           ..write('color: $color, ')
@@ -578,7 +577,7 @@ class BucketsTableData extends DataClass
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is BucketsTableData &&
+      (other is BucketTableData &&
           other.name == this.name &&
           other.description == this.description &&
           other.color == this.color &&
@@ -586,14 +585,14 @@ class BucketsTableData extends DataClass
           other.updatedAt == this.updatedAt);
 }
 
-class BucketsTableCompanion extends UpdateCompanion<BucketsTableData> {
+class BucketTableCompanion extends UpdateCompanion<BucketTableData> {
   final Value<String> name;
   final Value<String?> description;
-  final Value<int> color;
+  final Value<int?> color;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
-  const BucketsTableCompanion({
+  const BucketTableCompanion({
     this.name = const Value.absent(),
     this.description = const Value.absent(),
     this.color = const Value.absent(),
@@ -601,7 +600,7 @@ class BucketsTableCompanion extends UpdateCompanion<BucketsTableData> {
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  BucketsTableCompanion.insert({
+  BucketTableCompanion.insert({
     required String name,
     this.description = const Value.absent(),
     this.color = const Value.absent(),
@@ -609,7 +608,7 @@ class BucketsTableCompanion extends UpdateCompanion<BucketsTableData> {
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : name = Value(name);
-  static Insertable<BucketsTableData> custom({
+  static Insertable<BucketTableData> custom({
     Expression<String>? name,
     Expression<String>? description,
     Expression<int>? color,
@@ -627,15 +626,15 @@ class BucketsTableCompanion extends UpdateCompanion<BucketsTableData> {
     });
   }
 
-  BucketsTableCompanion copyWith({
+  BucketTableCompanion copyWith({
     Value<String>? name,
     Value<String?>? description,
-    Value<int>? color,
+    Value<int?>? color,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
   }) {
-    return BucketsTableCompanion(
+    return BucketTableCompanion(
       name: name ?? this.name,
       description: description ?? this.description,
       color: color ?? this.color,
@@ -671,7 +670,7 @@ class BucketsTableCompanion extends UpdateCompanion<BucketsTableData> {
 
   @override
   String toString() {
-    return (StringBuffer('BucketsTableCompanion(')
+    return (StringBuffer('BucketTableCompanion(')
           ..write('name: $name, ')
           ..write('description: $description, ')
           ..write('color: $color, ')
@@ -686,37 +685,37 @@ class BucketsTableCompanion extends UpdateCompanion<BucketsTableData> {
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
-  late final $AnonymousRulesTableTable anonymousRulesTable =
-      $AnonymousRulesTableTable(this);
-  late final $BucketsTableTable bucketsTable = $BucketsTableTable(this);
+  late final $AnonymousRuleTableTable anonymousRuleTable =
+      $AnonymousRuleTableTable(this);
+  late final $BucketTableTable bucketTable = $BucketTableTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
-    anonymousRulesTable,
-    bucketsTable,
+    anonymousRuleTable,
+    bucketTable,
   ];
 }
 
-typedef $$AnonymousRulesTableTableCreateCompanionBuilder =
-    AnonymousRulesTableCompanion Function({
+typedef $$AnonymousRuleTableTableCreateCompanionBuilder =
+    AnonymousRuleTableCompanion Function({
       Value<int> id,
       required String bucketName,
       required String prefix,
       required AnonymousAccessType access,
     });
-typedef $$AnonymousRulesTableTableUpdateCompanionBuilder =
-    AnonymousRulesTableCompanion Function({
+typedef $$AnonymousRuleTableTableUpdateCompanionBuilder =
+    AnonymousRuleTableCompanion Function({
       Value<int> id,
       Value<String> bucketName,
       Value<String> prefix,
       Value<AnonymousAccessType> access,
     });
 
-class $$AnonymousRulesTableTableFilterComposer
-    extends Composer<_$AppDatabase, $AnonymousRulesTableTable> {
-  $$AnonymousRulesTableTableFilterComposer({
+class $$AnonymousRuleTableTableFilterComposer
+    extends Composer<_$AppDatabase, $AnonymousRuleTableTable> {
+  $$AnonymousRuleTableTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -749,9 +748,9 @@ class $$AnonymousRulesTableTableFilterComposer
   );
 }
 
-class $$AnonymousRulesTableTableOrderingComposer
-    extends Composer<_$AppDatabase, $AnonymousRulesTableTable> {
-  $$AnonymousRulesTableTableOrderingComposer({
+class $$AnonymousRuleTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $AnonymousRuleTableTable> {
+  $$AnonymousRuleTableTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -779,9 +778,9 @@ class $$AnonymousRulesTableTableOrderingComposer
   );
 }
 
-class $$AnonymousRulesTableTableAnnotationComposer
-    extends Composer<_$AppDatabase, $AnonymousRulesTableTable> {
-  $$AnonymousRulesTableTableAnnotationComposer({
+class $$AnonymousRuleTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AnonymousRuleTableTable> {
+  $$AnonymousRuleTableTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -803,44 +802,41 @@ class $$AnonymousRulesTableTableAnnotationComposer
       $composableBuilder(column: $table.access, builder: (column) => column);
 }
 
-class $$AnonymousRulesTableTableTableManager
+class $$AnonymousRuleTableTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $AnonymousRulesTableTable,
-          AnonymousRulesTableData,
-          $$AnonymousRulesTableTableFilterComposer,
-          $$AnonymousRulesTableTableOrderingComposer,
-          $$AnonymousRulesTableTableAnnotationComposer,
-          $$AnonymousRulesTableTableCreateCompanionBuilder,
-          $$AnonymousRulesTableTableUpdateCompanionBuilder,
+          $AnonymousRuleTableTable,
+          AnonymousRuleTableData,
+          $$AnonymousRuleTableTableFilterComposer,
+          $$AnonymousRuleTableTableOrderingComposer,
+          $$AnonymousRuleTableTableAnnotationComposer,
+          $$AnonymousRuleTableTableCreateCompanionBuilder,
+          $$AnonymousRuleTableTableUpdateCompanionBuilder,
           (
-            AnonymousRulesTableData,
+            AnonymousRuleTableData,
             BaseReferences<
               _$AppDatabase,
-              $AnonymousRulesTableTable,
-              AnonymousRulesTableData
+              $AnonymousRuleTableTable,
+              AnonymousRuleTableData
             >,
           ),
-          AnonymousRulesTableData,
+          AnonymousRuleTableData,
           PrefetchHooks Function()
         > {
-  $$AnonymousRulesTableTableTableManager(
+  $$AnonymousRuleTableTableTableManager(
     _$AppDatabase db,
-    $AnonymousRulesTableTable table,
+    $AnonymousRuleTableTable table,
   ) : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$AnonymousRulesTableTableFilterComposer($db: db, $table: table),
+              $$AnonymousRuleTableTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$AnonymousRulesTableTableOrderingComposer(
-                $db: db,
-                $table: table,
-              ),
+              $$AnonymousRuleTableTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$AnonymousRulesTableTableAnnotationComposer(
+              $$AnonymousRuleTableTableAnnotationComposer(
                 $db: db,
                 $table: table,
               ),
@@ -850,7 +846,7 @@ class $$AnonymousRulesTableTableTableManager
                 Value<String> bucketName = const Value.absent(),
                 Value<String> prefix = const Value.absent(),
                 Value<AnonymousAccessType> access = const Value.absent(),
-              }) => AnonymousRulesTableCompanion(
+              }) => AnonymousRuleTableCompanion(
                 id: id,
                 bucketName: bucketName,
                 prefix: prefix,
@@ -862,7 +858,7 @@ class $$AnonymousRulesTableTableTableManager
                 required String bucketName,
                 required String prefix,
                 required AnonymousAccessType access,
-              }) => AnonymousRulesTableCompanion.insert(
+              }) => AnonymousRuleTableCompanion.insert(
                 id: id,
                 bucketName: bucketName,
                 prefix: prefix,
@@ -876,49 +872,49 @@ class $$AnonymousRulesTableTableTableManager
       );
 }
 
-typedef $$AnonymousRulesTableTableProcessedTableManager =
+typedef $$AnonymousRuleTableTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $AnonymousRulesTableTable,
-      AnonymousRulesTableData,
-      $$AnonymousRulesTableTableFilterComposer,
-      $$AnonymousRulesTableTableOrderingComposer,
-      $$AnonymousRulesTableTableAnnotationComposer,
-      $$AnonymousRulesTableTableCreateCompanionBuilder,
-      $$AnonymousRulesTableTableUpdateCompanionBuilder,
+      $AnonymousRuleTableTable,
+      AnonymousRuleTableData,
+      $$AnonymousRuleTableTableFilterComposer,
+      $$AnonymousRuleTableTableOrderingComposer,
+      $$AnonymousRuleTableTableAnnotationComposer,
+      $$AnonymousRuleTableTableCreateCompanionBuilder,
+      $$AnonymousRuleTableTableUpdateCompanionBuilder,
       (
-        AnonymousRulesTableData,
+        AnonymousRuleTableData,
         BaseReferences<
           _$AppDatabase,
-          $AnonymousRulesTableTable,
-          AnonymousRulesTableData
+          $AnonymousRuleTableTable,
+          AnonymousRuleTableData
         >,
       ),
-      AnonymousRulesTableData,
+      AnonymousRuleTableData,
       PrefetchHooks Function()
     >;
-typedef $$BucketsTableTableCreateCompanionBuilder =
-    BucketsTableCompanion Function({
+typedef $$BucketTableTableCreateCompanionBuilder =
+    BucketTableCompanion Function({
       required String name,
       Value<String?> description,
-      Value<int> color,
+      Value<int?> color,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
     });
-typedef $$BucketsTableTableUpdateCompanionBuilder =
-    BucketsTableCompanion Function({
+typedef $$BucketTableTableUpdateCompanionBuilder =
+    BucketTableCompanion Function({
       Value<String> name,
       Value<String?> description,
-      Value<int> color,
+      Value<int?> color,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
     });
 
-class $$BucketsTableTableFilterComposer
-    extends Composer<_$AppDatabase, $BucketsTableTable> {
-  $$BucketsTableTableFilterComposer({
+class $$BucketTableTableFilterComposer
+    extends Composer<_$AppDatabase, $BucketTableTable> {
+  $$BucketTableTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -951,9 +947,9 @@ class $$BucketsTableTableFilterComposer
   );
 }
 
-class $$BucketsTableTableOrderingComposer
-    extends Composer<_$AppDatabase, $BucketsTableTable> {
-  $$BucketsTableTableOrderingComposer({
+class $$BucketTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $BucketTableTable> {
+  $$BucketTableTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -986,9 +982,9 @@ class $$BucketsTableTableOrderingComposer
   );
 }
 
-class $$BucketsTableTableAnnotationComposer
-    extends Composer<_$AppDatabase, $BucketsTableTable> {
-  $$BucketsTableTableAnnotationComposer({
+class $$BucketTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $BucketTableTable> {
+  $$BucketTableTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -1013,44 +1009,44 @@ class $$BucketsTableTableAnnotationComposer
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 }
 
-class $$BucketsTableTableTableManager
+class $$BucketTableTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $BucketsTableTable,
-          BucketsTableData,
-          $$BucketsTableTableFilterComposer,
-          $$BucketsTableTableOrderingComposer,
-          $$BucketsTableTableAnnotationComposer,
-          $$BucketsTableTableCreateCompanionBuilder,
-          $$BucketsTableTableUpdateCompanionBuilder,
+          $BucketTableTable,
+          BucketTableData,
+          $$BucketTableTableFilterComposer,
+          $$BucketTableTableOrderingComposer,
+          $$BucketTableTableAnnotationComposer,
+          $$BucketTableTableCreateCompanionBuilder,
+          $$BucketTableTableUpdateCompanionBuilder,
           (
-            BucketsTableData,
-            BaseReferences<_$AppDatabase, $BucketsTableTable, BucketsTableData>,
+            BucketTableData,
+            BaseReferences<_$AppDatabase, $BucketTableTable, BucketTableData>,
           ),
-          BucketsTableData,
+          BucketTableData,
           PrefetchHooks Function()
         > {
-  $$BucketsTableTableTableManager(_$AppDatabase db, $BucketsTableTable table)
+  $$BucketTableTableTableManager(_$AppDatabase db, $BucketTableTable table)
     : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$BucketsTableTableFilterComposer($db: db, $table: table),
+              $$BucketTableTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$BucketsTableTableOrderingComposer($db: db, $table: table),
+              $$BucketTableTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$BucketsTableTableAnnotationComposer($db: db, $table: table),
+              $$BucketTableTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<String> name = const Value.absent(),
                 Value<String?> description = const Value.absent(),
-                Value<int> color = const Value.absent(),
+                Value<int?> color = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => BucketsTableCompanion(
+              }) => BucketTableCompanion(
                 name: name,
                 description: description,
                 color: color,
@@ -1062,11 +1058,11 @@ class $$BucketsTableTableTableManager
               ({
                 required String name,
                 Value<String?> description = const Value.absent(),
-                Value<int> color = const Value.absent(),
+                Value<int?> color = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => BucketsTableCompanion.insert(
+              }) => BucketTableCompanion.insert(
                 name: name,
                 description: description,
                 color: color,
@@ -1082,29 +1078,29 @@ class $$BucketsTableTableTableManager
       );
 }
 
-typedef $$BucketsTableTableProcessedTableManager =
+typedef $$BucketTableTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $BucketsTableTable,
-      BucketsTableData,
-      $$BucketsTableTableFilterComposer,
-      $$BucketsTableTableOrderingComposer,
-      $$BucketsTableTableAnnotationComposer,
-      $$BucketsTableTableCreateCompanionBuilder,
-      $$BucketsTableTableUpdateCompanionBuilder,
+      $BucketTableTable,
+      BucketTableData,
+      $$BucketTableTableFilterComposer,
+      $$BucketTableTableOrderingComposer,
+      $$BucketTableTableAnnotationComposer,
+      $$BucketTableTableCreateCompanionBuilder,
+      $$BucketTableTableUpdateCompanionBuilder,
       (
-        BucketsTableData,
-        BaseReferences<_$AppDatabase, $BucketsTableTable, BucketsTableData>,
+        BucketTableData,
+        BaseReferences<_$AppDatabase, $BucketTableTable, BucketTableData>,
       ),
-      BucketsTableData,
+      BucketTableData,
       PrefetchHooks Function()
     >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
-  $$AnonymousRulesTableTableTableManager get anonymousRulesTable =>
-      $$AnonymousRulesTableTableTableManager(_db, _db.anonymousRulesTable);
-  $$BucketsTableTableTableManager get bucketsTable =>
-      $$BucketsTableTableTableManager(_db, _db.bucketsTable);
+  $$AnonymousRuleTableTableTableManager get anonymousRuleTable =>
+      $$AnonymousRuleTableTableTableManager(_db, _db.anonymousRuleTable);
+  $$BucketTableTableTableManager get bucketTable =>
+      $$BucketTableTableTableManager(_db, _db.bucketTable);
 }

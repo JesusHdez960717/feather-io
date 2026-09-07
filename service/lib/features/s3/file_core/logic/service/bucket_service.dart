@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:path/path.dart' as p;
 import 'package:service/feather.dart';
 
@@ -7,8 +8,8 @@ class BucketService {
   final FileManagementService fileManagement;
 
   BucketService()
-      : bucketRepo = BucketTableRepo(di.find()),
-        fileManagement = di.find();
+    : bucketRepo = BucketTableRepo(di.find()),
+      fileManagement = di.find();
 
   Future<bool> createBucket({
     required String bucketName,
@@ -72,11 +73,11 @@ class BucketService {
         buckets.add(
           BucketModel(
             name: bucketName,
-            description: dbBucket?.description,
-            color: dbBucket?.color ?? 0,
             objectCount: objectCount,
             size: totalSize,
             creationDate: dbBucket?.createdAt ?? stat.changed,
+            description: dbBucket?.description,
+            color: dbBucket?.color,
           ),
         );
       }

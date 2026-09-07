@@ -6,32 +6,31 @@ class BucketTableRepo {
 
   BucketTableRepo(this._db);
 
-  Future<List<BucketsTableData>> findAll() {
-    return _db.select(_db.bucketsTable).get();
+  Future<List<BucketTableData>> findAll() {
+    return _db.select(_db.bucketTable).get();
   }
 
-  Future<BucketsTableData?> findByName(String name) {
-    return (_db.select(_db.bucketsTable)..where((tbl) => tbl.name.equals(name)))
-        .getSingleOrNull();
+  Future<BucketTableData?> findByName(String name) {
+    return (_db.select(
+      _db.bucketTable,
+    )..where((tbl) => tbl.name.equals(name))).getSingleOrNull();
   }
 
-  Future save({
-    required String name,
-    String? description,
-    int? color,
-  }) async {
-    await _db.into(_db.bucketsTable).insert(
-          BucketsTableCompanion.insert(
+  Future save({required String name, String? description, int? color}) async {
+    await _db
+        .into(_db.bucketTable)
+        .insert(
+          BucketTableCompanion.insert(
             name: name,
             description: Value(description),
-            color: color != null ? Value(color) : const Value.absent(),
+            color: Value(color),
             createdAt: Value(DateTime.now()),
             updatedAt: Value(DateTime.now()),
           ),
           onConflict: DoUpdate(
-            (old) => BucketsTableCompanion.custom(
+            (old) => BucketTableCompanion.custom(
               description: Variable(description),
-              color: color != null ? Variable(color) : old.color,
+              color: Variable(color),
               updatedAt: Variable(DateTime.now()),
             ),
           ),
@@ -39,7 +38,8 @@ class BucketTableRepo {
   }
 
   Future delete(String name) async {
-    await (_db.delete(_db.bucketsTable)..where((tbl) => tbl.name.equals(name)))
-        .go();
+    await (_db.delete(
+      _db.bucketTable,
+    )..where((tbl) => tbl.name.equals(name))).go();
   }
 }

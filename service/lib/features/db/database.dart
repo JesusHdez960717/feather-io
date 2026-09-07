@@ -17,7 +17,7 @@ class BucketTable extends Table {
 
   TextColumn get description => text().nullable()();
 
-  IntColumn get color => integer().withDefault(const Constant(0))();
+  IntColumn get color => integer().nullable()();
 
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
