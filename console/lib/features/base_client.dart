@@ -16,10 +16,7 @@ abstract class BaseClient {
 
   BaseClient(this.dio);
 
-  Options options({
-    String? token,
-    AcceptedTypes? accept,
-  }) {
+  Options options({String? token, AcceptedTypes? accept}) {
     return Options(
       headers: <String, dynamic>{
         if (token != null) 'Authorization': 'Bearer $token',

@@ -7,17 +7,6 @@ class BrowserClient extends BaseClient {
 
   BrowserClient(super.dio);
 
-  Future<List<BucketResponse>> listBuckets({String? token}) async {
-    Response rawResponse = await dio.get(
-      baseUrl,
-      options: options(token: token),
-    );
-
-    return (rawResponse.data as List)
-        .map((e) => BucketResponse.fromJson(e))
-        .toList();
-  }
-
   Future<ListObjectsResponse> listObjects({
     required String bucket,
     String? token,
@@ -41,11 +30,7 @@ class BrowserClient extends BaseClient {
     await dio.post(
       '$baseUrl/$bucket',
       queryParameters: {'delete': ''},
-      data: {
-        'delete': {
-          'objects': keys.map((k) => {'key': k}).toList(),
-        },
-      },
+      data: DeleteObjectsRequest(keys: keys).toJson(),
       options: options(token: token),
     );
   }
@@ -57,18 +42,10 @@ class BrowserClient extends BaseClient {
     required int length,
     String? token,
   }) async {
-    final uri = Uri.parse('$baseUrl/$bucket/$key');
+    final requestOptions = options(token: token);
+    requestOptions.headers!['content-length'] = length.toString();
 
-    Map<String, dynamic> headers = {
-      'content-length': length.toString(),
-      if (token != null) 'Authorization': 'Bearer $token',
-    };
-
-    await dio.put(
-      uri.toString(),
-      data: data,
-      options: Options(headers: headers),
-    );
+    await dio.put('$baseUrl/$bucket/$key', data: data, options: requestOptions);
   }
 
   Future<ObjectDataResponse> getObject({
@@ -94,45 +71,40 @@ class BrowserClient extends BaseClient {
     final admin = Environment.adminPrefix;
     Response<List<int>> response = await dio.post<List<int>>(
       '$baseUrl/$admin/bucket/$bucket/download',
-      data: {'keys': keys},
+      data: DownloadObjectsRequest(keys: keys).toJson(),
       options: options(token: token).copyWith(responseType: ResponseType.bytes),
     );
     return response.data!;
   }
 }
 
-//--- BUCKET RESPONSE ---
-class BucketResponse {
-  final String name;
-  final int objectCount;
-  final int sizeBytes;
-  final DateTime creationDate;
+//---------- DELETE OBJECTS REQUEST ----------
+class DeleteObjectsRequest {
+  final List<String> keys;
 
-  final String? description;
-  final int? color;
+  DeleteObjectsRequest({required this.keys});
 
-  BucketResponse({
-    required this.name,
-    required this.objectCount,
-    required this.sizeBytes,
-    required this.creationDate,
-    this.description,
-    this.color,
-  });
-
-  factory BucketResponse.fromJson(Map<String, dynamic> json) {
-    return BucketResponse(
-      name: json['name'],
-      description: json['description'],
-      color: json['color'],
-      objectCount: json['object_count'],
-      sizeBytes: json['size_bytes'],
-      creationDate: DateTime.parse(json['creation_date']),
-    );
+  Map<String, dynamic> toJson() {
+    return {
+      'delete': {
+        'objects': keys.map((k) => {'key': k}).toList(),
+      },
+    };
   }
 }
 
-//--- LIST OBJECTS RESPONSE ---
+//---------- DOWNLOAD OBJECTS REQUEST ----------
+class DownloadObjectsRequest {
+  final List<String> keys;
+
+  DownloadObjectsRequest({required this.keys});
+
+  Map<String, dynamic> toJson() {
+    return {'keys': keys};
+  }
+}
+
+//---------- LIST OBJECTS RESPONSE ----------
 class ListObjectsResponse {
   final String bucketName;
   final String? prefix;
@@ -161,6 +133,7 @@ class ListObjectsResponse {
   }
 }
 
+//---------- OBJECT RESPONSE ----------
 class ObjectResponse {
   final String key;
   final int sizeBytes;
@@ -181,6 +154,7 @@ class ObjectResponse {
   }
 }
 
+//---------- OBJECT DATA RESPONSE ----------
 class ObjectDataResponse {
   final List<int> bytes;
   final String? contentType;

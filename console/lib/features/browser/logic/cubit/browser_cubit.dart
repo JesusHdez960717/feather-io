@@ -6,71 +6,32 @@ import 'package:cross_file/cross_file.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:web/web.dart' as web;
 
+///Navegacion por los objetos de un bucket.
+///El listado/creacion/borrado de buckets es responsabilidad de [BucketCubit].
 class BrowserCubit extends Cubit<BrowserState>
     with GlobalEventBusCommunication<BrowserState> {
   final AuthCubit auth;
   final BrowserRepo repo;
-  final BucketRepo bucketRepo;
-
-  List<BucketModel> _allBuckets = [];
 
   final ViewType? initialViewType;
 
-  BrowserCubit({
-    required this.auth,
-    required this.repo,
-    required this.bucketRepo,
-    this.initialViewType,
-  }) : super(BrowserInitialState(viewType: initialViewType)) {
-    onBus<BucketProcessingOKState>((event) {
-      refresh();
-    });
+  BrowserCubit({required this.auth, required this.repo, this.initialViewType})
+    : super(BrowserInitialState(viewType: initialViewType));
 
-    onBus<BrowserBucketDeleteOKState>((event) {
-      refresh();
-    });
+  ViewType get _viewType => switch (state) {
+    BrowserSearchState(:final viewType) => viewType,
+    BrowserInitialState(:final viewType) =>
+      viewType ?? initialViewType ?? ViewType.list,
+    _ => initialViewType ?? ViewType.list,
+  };
+
+  ///Estado sin bucket seleccionado (se muestra el listado de buckets)
+  void init() {
+    emit(BrowserLoadingSuccessState(viewType: _viewType));
   }
 
-  void reset() {
-    final viewType = state is BrowserSearchState
-        ? (state as BrowserSearchState).viewType
-        : (state is BrowserInitialState
-              ? (state as BrowserInitialState).viewType
-              : null);
-    _allBuckets.clear();
-    emit(BrowserInitialState(viewType: viewType));
-  }
-
-  Future<void> refresh() async {
-    _allBuckets.clear();
-    await init();
-  }
-
-  Future<void> init() async {
-    final currentViewType = state is BrowserSearchState
-        ? (state as BrowserSearchState).viewType
-        : (state is BrowserInitialState
-              ? (state as BrowserInitialState).viewType
-              : null);
-
-    final viewType = currentViewType ?? initialViewType ?? ViewType.list;
-
-    try {
-      emit(BrowserSearchingState(buckets: [], viewType: viewType));
-
-      _allBuckets = await repo.listBuckets(token: auth.auth?.accessToken);
-
-      emit(BrowserSearchOkState(buckets: _allBuckets, viewType: viewType));
-    } catch (exc) {
-      emit(
-        BrowserSearchErrorState(
-          ExceptionConverter.parse(exc),
-          buckets: _allBuckets,
-          viewType: viewType,
-        ),
-      );
-    }
-  }
+  ///Sale del bucket seleccionado
+  void reset() => init();
 
   void changeViewType(ViewType viewType) {
     if (state is BrowserSearchState) {
@@ -97,12 +58,11 @@ class BrowserCubit extends Cubit<BrowserState>
             : null);
     if (targetBucket == null) return;
 
-    final viewType = (state as BrowserSearchState).viewType;
+    final viewType = _viewType;
 
     try {
       emit(
-        BrowserSearchingState(
-          buckets: _allBuckets,
+        BrowserLoadingInProgressState(
           selectedBucket: targetBucket,
           prefix: prefix ?? '',
           viewType: viewType,
@@ -117,8 +77,7 @@ class BrowserCubit extends Cubit<BrowserState>
       );
 
       emit(
-        BrowserSearchOkState(
-          buckets: _allBuckets,
+        BrowserLoadingSuccessState(
           selectedBucket: targetBucket,
           prefix: prefix ?? '',
           objects: objects,
@@ -127,9 +86,8 @@ class BrowserCubit extends Cubit<BrowserState>
       );
     } catch (exc) {
       emit(
-        BrowserSearchErrorState(
+        BrowserLoadingErrorState(
           ExceptionConverter.parse(exc),
-          buckets: _allBuckets,
           selectedBucket: targetBucket,
           prefix: prefix ?? '',
           viewType: viewType,
@@ -142,20 +100,7 @@ class BrowserCubit extends Cubit<BrowserState>
     required BucketModel bucket,
     required List<String> keys,
   }) async {
-    if (state is! BrowserSearchState) return;
-    final currentState = state as BrowserSearchState;
-
-    try {
-      emit(
-        BrowserProcessingInProgressState(
-          buckets: currentState.buckets,
-          selectedBucket: currentState.selectedBucket,
-          prefix: currentState.prefix,
-          objects: currentState.objects,
-          viewType: currentState.viewType,
-        ),
-      );
-
+    await _process((currentState) async {
       await repo.deleteObjects(
         token: auth.auth?.accessToken,
         bucket: bucket.name,
@@ -163,18 +108,7 @@ class BrowserCubit extends Cubit<BrowserState>
       );
 
       await listObjects(bucket: bucket, prefix: currentState.prefix);
-    } catch (exc) {
-      emit(
-        BrowserSearchErrorState(
-          ExceptionConverter.parse(exc),
-          buckets: currentState.buckets,
-          selectedBucket: currentState.selectedBucket,
-          prefix: currentState.prefix,
-          objects: currentState.objects,
-          viewType: currentState.viewType,
-        ),
-      );
-    }
+    });
   }
 
   Future<void> uploadFiles({
@@ -182,20 +116,7 @@ class BrowserCubit extends Cubit<BrowserState>
     required String prefix,
     required List<XFile> files,
   }) async {
-    if (state is! BrowserSearchState) return;
-    final currentState = state as BrowserSearchState;
-
-    try {
-      emit(
-        BrowserProcessingInProgressState(
-          buckets: currentState.buckets,
-          selectedBucket: currentState.selectedBucket,
-          prefix: currentState.prefix,
-          objects: currentState.objects,
-          viewType: currentState.viewType,
-        ),
-      );
-
+    await _process((currentState) async {
       for (final file in files) {
         final length = await file.length();
         final key = prefix.isNotEmpty ? '$prefix/${file.name}' : file.name;
@@ -209,18 +130,7 @@ class BrowserCubit extends Cubit<BrowserState>
       }
 
       await listObjects(bucket: bucket, prefix: currentState.prefix);
-    } catch (exc) {
-      emit(
-        BrowserSearchErrorState(
-          ExceptionConverter.parse(exc),
-          buckets: currentState.buckets,
-          selectedBucket: currentState.selectedBucket,
-          prefix: currentState.prefix,
-          objects: currentState.objects,
-          viewType: currentState.viewType,
-        ),
-      );
-    }
+    });
   }
 
   Future<void> download({
@@ -228,20 +138,7 @@ class BrowserCubit extends Cubit<BrowserState>
     required List<String> keys,
     String? zipName,
   }) async {
-    if (state is! BrowserSearchState) return;
-    final currentState = state as BrowserSearchState;
-
-    try {
-      emit(
-        BrowserProcessingInProgressState(
-          buckets: currentState.buckets,
-          selectedBucket: currentState.selectedBucket,
-          prefix: currentState.prefix,
-          objects: currentState.objects,
-          viewType: currentState.viewType,
-        ),
-      );
-
+    await _process((currentState) async {
       final bytes = await repo.download(
         token: auth.auth?.accessToken,
         bucket: bucket.name,
@@ -267,47 +164,15 @@ class BrowserCubit extends Cubit<BrowserState>
       anchor.click();
       web.URL.revokeObjectURL(url);
 
-      emit(
-        BrowserSearchOkState(
-          buckets: currentState.buckets,
-          selectedBucket: currentState.selectedBucket,
-          prefix: currentState.prefix,
-          objects: currentState.objects,
-          viewType: currentState.viewType,
-        ),
-      );
-    } catch (exc) {
-      emit(
-        BrowserSearchErrorState(
-          ExceptionConverter.parse(exc),
-          buckets: currentState.buckets,
-          selectedBucket: currentState.selectedBucket,
-          prefix: currentState.prefix,
-          objects: currentState.objects,
-          viewType: currentState.viewType,
-        ),
-      );
-    }
+      emit(_loadingSuccessFrom(currentState));
+    });
   }
 
   Future<void> viewObject({
     required BucketModel bucket,
     required String key,
   }) async {
-    if (state is! BrowserSearchState) return;
-    final currentState = state as BrowserSearchState;
-
-    try {
-      emit(
-        BrowserProcessingInProgressState(
-          buckets: currentState.buckets,
-          selectedBucket: currentState.selectedBucket,
-          prefix: currentState.prefix,
-          objects: currentState.objects,
-          viewType: currentState.viewType,
-        ),
-      );
-
+    await _process((currentState) async {
       final data = await repo.getObject(
         token: auth.auth?.accessToken,
         bucket: bucket.name,
@@ -324,61 +189,32 @@ class BrowserCubit extends Cubit<BrowserState>
 
       web.window.open(url, '_blank');
 
-      emit(
-        BrowserSearchOkState(
-          buckets: currentState.buckets,
-          selectedBucket: currentState.selectedBucket,
-          prefix: currentState.prefix,
-          objects: currentState.objects,
-          viewType: currentState.viewType,
-        ),
-      );
-    } catch (exc) {
-      emit(
-        BrowserSearchErrorState(
-          ExceptionConverter.parse(exc),
-          buckets: currentState.buckets,
-          selectedBucket: currentState.selectedBucket,
-          prefix: currentState.prefix,
-          objects: currentState.objects,
-          viewType: currentState.viewType,
-        ),
-      );
-    }
+      emit(_loadingSuccessFrom(currentState));
+    });
   }
 
-  Future<void> deleteBucket({required BucketModel bucket}) async {
+  ///Emite [BrowserProcessInProgressState], ejecuta la accion y, si falla,
+  ///emite [BrowserLoadingErrorState] conservando el contexto actual.
+  Future<void> _process(
+    Future<void> Function(BrowserSearchState currentState) action,
+  ) async {
     if (state is! BrowserSearchState) return;
     final currentState = state as BrowserSearchState;
 
-    emit(
-      BrowserBucketDeleteInProgressState(
-        buckets: currentState.buckets,
-        selectedBucket: currentState.selectedBucket,
-        prefix: currentState.prefix,
-        objects: currentState.objects,
-        viewType: currentState.viewType,
-      ),
-    );
     try {
-      await bucketRepo.deleteBucket(
-        name: bucket.name,
-        token: auth.auth?.accessToken,
-      );
       emit(
-        BrowserBucketDeleteOKState(
-          buckets: currentState.buckets,
+        BrowserProcessInProgressState(
           selectedBucket: currentState.selectedBucket,
           prefix: currentState.prefix,
           objects: currentState.objects,
           viewType: currentState.viewType,
         ),
       );
+      await action(currentState);
     } catch (exc) {
       emit(
-        BrowserBucketDeleteErrorState(
-          ExceptionConverter.parse(exc).message,
-          buckets: currentState.buckets,
+        BrowserLoadingErrorState(
+          ExceptionConverter.parse(exc),
           selectedBucket: currentState.selectedBucket,
           prefix: currentState.prefix,
           objects: currentState.objects,
@@ -387,6 +223,14 @@ class BrowserCubit extends Cubit<BrowserState>
       );
     }
   }
+
+  BrowserLoadingSuccessState _loadingSuccessFrom(BrowserSearchState state) =>
+      BrowserLoadingSuccessState(
+        selectedBucket: state.selectedBucket,
+        prefix: state.prefix,
+        objects: state.objects,
+        viewType: state.viewType,
+      );
 }
 
 abstract class BrowserState {
@@ -401,8 +245,6 @@ class BrowserInitialState extends BrowserState {
 
 //------------------------- SEARCH -------------------------\\
 abstract class BrowserSearchState extends BrowserState {
-  final List<BucketModel> buckets;
-
   final BucketModel? selectedBucket;
   final String prefix;
   final String delimiter = '/';
@@ -410,7 +252,6 @@ abstract class BrowserSearchState extends BrowserState {
   final ViewType viewType;
 
   BrowserSearchState({
-    required this.buckets,
     this.selectedBucket,
     this.prefix = '',
     this.objects,
@@ -418,7 +259,6 @@ abstract class BrowserSearchState extends BrowserState {
   });
 
   BrowserSearchState copyWith({
-    List<BucketModel>? buckets,
     BucketModel? selectedBucket,
     String? prefix,
     ListObjectsModel? objects,
@@ -426,9 +266,8 @@ abstract class BrowserSearchState extends BrowserState {
   });
 }
 
-class BrowserSearchingState extends BrowserSearchState {
-  BrowserSearchingState({
-    required super.buckets,
+class BrowserLoadingInProgressState extends BrowserSearchState {
+  BrowserLoadingInProgressState({
     super.selectedBucket,
     super.prefix = '',
     super.objects,
@@ -436,15 +275,13 @@ class BrowserSearchingState extends BrowserSearchState {
   });
 
   @override
-  BrowserSearchingState copyWith({
-    List<BucketModel>? buckets,
+  BrowserLoadingInProgressState copyWith({
     BucketModel? selectedBucket,
     String? prefix,
     ListObjectsModel? objects,
     ViewType? viewType,
   }) {
-    return BrowserSearchingState(
-      buckets: buckets ?? this.buckets,
+    return BrowserLoadingInProgressState(
       selectedBucket: selectedBucket ?? this.selectedBucket,
       prefix: prefix ?? this.prefix,
       objects: objects ?? this.objects,
@@ -453,9 +290,8 @@ class BrowserSearchingState extends BrowserSearchState {
   }
 }
 
-class BrowserSearchOkState extends BrowserSearchState {
-  BrowserSearchOkState({
-    required super.buckets,
+class BrowserLoadingSuccessState extends BrowserSearchState {
+  BrowserLoadingSuccessState({
     super.selectedBucket,
     super.prefix = '',
     super.objects,
@@ -463,15 +299,13 @@ class BrowserSearchOkState extends BrowserSearchState {
   });
 
   @override
-  BrowserSearchOkState copyWith({
-    List<BucketModel>? buckets,
+  BrowserLoadingSuccessState copyWith({
     BucketModel? selectedBucket,
     String? prefix,
     ListObjectsModel? objects,
     ViewType? viewType,
   }) {
-    return BrowserSearchOkState(
-      buckets: buckets ?? this.buckets,
+    return BrowserLoadingSuccessState(
       selectedBucket: selectedBucket ?? this.selectedBucket,
       prefix: prefix ?? this.prefix,
       objects: objects ?? this.objects,
@@ -480,9 +314,8 @@ class BrowserSearchOkState extends BrowserSearchState {
   }
 }
 
-class BrowserProcessingInProgressState extends BrowserSearchState {
-  BrowserProcessingInProgressState({
-    required super.buckets,
+class BrowserProcessInProgressState extends BrowserSearchState {
+  BrowserProcessInProgressState({
     super.selectedBucket,
     super.prefix = '',
     super.objects,
@@ -490,15 +323,13 @@ class BrowserProcessingInProgressState extends BrowserSearchState {
   });
 
   @override
-  BrowserProcessingInProgressState copyWith({
-    List<BucketModel>? buckets,
+  BrowserProcessInProgressState copyWith({
     BucketModel? selectedBucket,
     String? prefix,
     ListObjectsModel? objects,
     ViewType? viewType,
   }) {
-    return BrowserProcessingInProgressState(
-      buckets: buckets ?? this.buckets,
+    return BrowserProcessInProgressState(
       selectedBucket: selectedBucket ?? this.selectedBucket,
       prefix: prefix ?? this.prefix,
       objects: objects ?? this.objects,
@@ -507,12 +338,11 @@ class BrowserProcessingInProgressState extends BrowserSearchState {
   }
 }
 
-class BrowserSearchErrorState extends BrowserSearchState {
+class BrowserLoadingErrorState extends BrowserSearchState {
   final GlobalException exception;
 
-  BrowserSearchErrorState(
+  BrowserLoadingErrorState(
     this.exception, {
-    required super.buckets,
     super.selectedBucket,
     super.prefix = '',
     super.objects,
@@ -520,105 +350,15 @@ class BrowserSearchErrorState extends BrowserSearchState {
   });
 
   @override
-  BrowserSearchErrorState copyWith({
-    List<BucketModel>? buckets,
+  BrowserLoadingErrorState copyWith({
     BucketModel? selectedBucket,
     String? prefix,
     ListObjectsModel? objects,
     ViewType? viewType,
     GlobalException? exception,
   }) {
-    return BrowserSearchErrorState(
+    return BrowserLoadingErrorState(
       exception ?? this.exception,
-      buckets: buckets ?? this.buckets,
-      selectedBucket: selectedBucket ?? this.selectedBucket,
-      prefix: prefix ?? this.prefix,
-      objects: objects ?? this.objects,
-      viewType: viewType ?? this.viewType,
-    );
-  }
-}
-
-//------------------------- DELETE -------------------------\\
-
-class BrowserBucketDeleteInProgressState extends BrowserSearchState {
-  BrowserBucketDeleteInProgressState({
-    required super.buckets,
-    super.selectedBucket,
-    super.prefix = '',
-    super.objects,
-    super.viewType,
-  });
-
-  @override
-  BrowserBucketDeleteInProgressState copyWith({
-    List<BucketModel>? buckets,
-    BucketModel? selectedBucket,
-    String? prefix,
-    ListObjectsModel? objects,
-    ViewType? viewType,
-  }) {
-    return BrowserBucketDeleteInProgressState(
-      buckets: buckets ?? this.buckets,
-      selectedBucket: selectedBucket ?? this.selectedBucket,
-      prefix: prefix ?? this.prefix,
-      objects: objects ?? this.objects,
-      viewType: viewType ?? this.viewType,
-    );
-  }
-}
-
-class BrowserBucketDeleteOKState extends BrowserSearchState {
-  BrowserBucketDeleteOKState({
-    required super.buckets,
-    super.selectedBucket,
-    super.prefix = '',
-    super.objects,
-    super.viewType,
-  });
-
-  @override
-  BrowserBucketDeleteOKState copyWith({
-    List<BucketModel>? buckets,
-    BucketModel? selectedBucket,
-    String? prefix,
-    ListObjectsModel? objects,
-    ViewType? viewType,
-  }) {
-    return BrowserBucketDeleteOKState(
-      buckets: buckets ?? this.buckets,
-      selectedBucket: selectedBucket ?? this.selectedBucket,
-      prefix: prefix ?? this.prefix,
-      objects: objects ?? this.objects,
-      viewType: viewType ?? this.viewType,
-    );
-  }
-}
-
-class BrowserBucketDeleteErrorState extends BrowserSearchState {
-  final String message;
-
-  BrowserBucketDeleteErrorState(
-    this.message, {
-    required super.buckets,
-    super.selectedBucket,
-    super.prefix = '',
-    super.objects,
-    super.viewType,
-  });
-
-  @override
-  BrowserBucketDeleteErrorState copyWith({
-    List<BucketModel>? buckets,
-    BucketModel? selectedBucket,
-    String? prefix,
-    ListObjectsModel? objects,
-    ViewType? viewType,
-    String? message,
-  }) {
-    return BrowserBucketDeleteErrorState(
-      message ?? this.message,
-      buckets: buckets ?? this.buckets,
       selectedBucket: selectedBucket ?? this.selectedBucket,
       prefix: prefix ?? this.prefix,
       objects: objects ?? this.objects,

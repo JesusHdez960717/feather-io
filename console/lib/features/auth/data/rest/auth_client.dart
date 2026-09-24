@@ -27,10 +27,7 @@ class LoginRequest {
   LoginRequest({required this.access, required this.secret});
 
   Map<String, dynamic> toJson() {
-    return {
-      'access': access,
-      'secret': secret,
-    };
+    return {'access': access, 'secret': secret};
   }
 }
 
@@ -48,9 +45,9 @@ class LoginResponse {
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
     return LoginResponse(
-      accessToken: json['accessToken'],
-      expiresIn: json['expiresIn'],
-      expireAt: DateTime.fromMillisecondsSinceEpoch(json['expireAt']),
+      accessToken: json['access_token'],
+      expiresIn: json['expires_in'],
+      expireAt: DateTime.fromMillisecondsSinceEpoch(json['expire_at']),
     );
   }
 }

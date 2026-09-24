@@ -4,15 +4,14 @@ import 'package:material_ui/material_ui.dart';
 class LanguageModel {
   final SvgAsset icon;
   final String key;
-  final String name;
 
-  LanguageModel({required this.icon, required this.key, required this.name});
+  LanguageModel({required this.icon, required this.key});
 
   Locale get locale => Locale(key);
 
   @override
   String toString() {
-    return 'LanguageModel[key = $key, name = $name]';
+    return 'LanguageModel[key = $key]';
   }
 
   @override

@@ -2,8 +2,6 @@ import 'package:console/app_exporter.dart';
 import 'package:material_ui/material_ui.dart';
 
 class SplashScreen extends StatelessWidget {
-  static const String splashImageUrl = 'assets/app/app_splashscreen_full.png';
-
   const SplashScreen({super.key});
 
   @override
@@ -11,6 +9,8 @@ class SplashScreen extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeConfig.theme,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => Scaffold(
         body: SizedBox.expand(
           child: Stack(
@@ -29,7 +29,10 @@ class SplashScreen extends StatelessWidget {
                       size: 148,
                     ),
                     app.dimensions.padding.xxl.gap(),
-                    Text('Admin', style: TextTheme.of(context).headlineLarge),
+                    Text(
+                      context.intl.splashTitle,
+                      style: TextTheme.of(context).headlineLarge,
+                    ),
                   ],
                 ),
               ),
@@ -39,7 +42,7 @@ class SplashScreen extends StatelessWidget {
                 bottom: 20,
                 child: Center(
                   child: Text(
-                    'With ♥ from Maple',
+                    context.intl.splashFooter,
                     style: TextTheme.of(context).titleSmall,
                   ),
                 ),

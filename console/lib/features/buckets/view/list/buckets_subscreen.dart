@@ -1,25 +1,20 @@
 import 'dart:ui';
 
 import 'package:console/app_exporter.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'buckets_grid_datasource.dart';
 import 'buckets_table_datasource.dart';
 
 class BucketsSubScreen extends StatefulWidget {
-  final BrowserSearchState state;
-  final VoidCallback onRefresh;
-  final VoidCallback onRetry;
+  final ViewType viewType;
   final Function(BucketModel) onSelected;
-  final Function(BucketModel) onDelete;
   final Function(ViewType) onViewTypeChanged;
 
   const BucketsSubScreen({
-    required this.state,
-    required this.onRefresh,
-    required this.onRetry,
+    required this.viewType,
     required this.onSelected,
-    required this.onDelete,
     required this.onViewTypeChanged,
     super.key,
   });
@@ -29,6 +24,68 @@ class BucketsSubScreen extends StatefulWidget {
 }
 
 class _BucketsSubScreenState extends State<BucketsSubScreen> {
+  late final BucketCubit cubit;
+
+  @override
+  void initState() {
+    super.initState();
+    cubit = context.read<BucketCubit>();
+    cubit.load();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocConsumer<BucketCubit, BucketState>(
+      listener: (context, state) {
+        if (state is BucketProcessInProgressState) {
+          app.loading.show();
+        } else {
+          app.loading.hide();
+        }
+
+        if (state is BucketProcessingErrorState) {
+          app.snack.showError(message: state.message, context: context);
+        }
+      },
+      builder: (context, state) {
+        return _BucketsView(
+          state: state,
+          viewType: widget.viewType,
+          onRefresh: cubit.load,
+          onRetry: cubit.load,
+          onSelected: widget.onSelected,
+          onDelete: (bucket) => cubit.deleteBucket(bucket: bucket),
+          onViewTypeChanged: widget.onViewTypeChanged,
+        );
+      },
+    );
+  }
+}
+
+class _BucketsView extends StatefulWidget {
+  final BucketState state;
+  final ViewType viewType;
+  final VoidCallback onRefresh;
+  final VoidCallback onRetry;
+  final Function(BucketModel) onSelected;
+  final Function(BucketModel) onDelete;
+  final Function(ViewType) onViewTypeChanged;
+
+  const _BucketsView({
+    required this.state,
+    required this.viewType,
+    required this.onRefresh,
+    required this.onRetry,
+    required this.onSelected,
+    required this.onDelete,
+    required this.onViewTypeChanged,
+  });
+
+  @override
+  State<_BucketsView> createState() => _BucketsViewState();
+}
+
+class _BucketsViewState extends State<_BucketsView> {
   final TextEditingController _searchController = TextEditingController();
   List<BucketModel> _filteredBuckets = [];
 
@@ -40,7 +97,7 @@ class _BucketsSubScreenState extends State<BucketsSubScreen> {
   }
 
   @override
-  void didUpdateWidget(covariant BucketsSubScreen oldWidget) {
+  void didUpdateWidget(covariant _BucketsView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.state.buckets != widget.state.buckets) {
       _onSearchChanged();
@@ -69,10 +126,9 @@ class _BucketsSubScreenState extends State<BucketsSubScreen> {
 
   void _onDeleteSelected(BucketModel selected) {
     ConfirmDialog.show(
-      title: 'Delete bucket',
-      description:
-          'Are you sure you want to delete the ${selected.name} bucket?',
-      confirmTitle: 'Delete',
+      title: app.intl.bucketsDeleteTitle,
+      description: app.intl.bucketsDeleteConfirm(selected.name),
+      confirmTitle: app.intl.delete,
       confirmColor: app.colors.primary.red,
       confirmAction: () => widget.onDelete(selected),
     );
@@ -116,7 +172,7 @@ class _BucketsSubScreenState extends State<BucketsSubScreen> {
               ),
               app.dimensions.padding.m.gap(),
               Text(
-                'Delete',
+                app.intl.delete,
                 style: app.textTheme.bodyMedium?.copyWith(
                   color: app.colors.primary.red,
                 ),
@@ -142,12 +198,12 @@ class _BucketsSubScreenState extends State<BucketsSubScreen> {
             child: Stack(
               children: [
                 IgnorePointer(
-                  ignoring: widget.state is! BrowserSearchOkState,
+                  ignoring: widget.state is! BucketLoadingSuccessState,
                   child: Column(
                     children: [
                       _buildSearchSection(),
                       Expanded(
-                        child: widget.state.viewType == ViewType.list
+                        child: widget.viewType == ViewType.list
                             ? BucketsTableDatasource(
                                 state: widget.state,
                                 filteredBuckets: _filteredBuckets,
@@ -166,7 +222,7 @@ class _BucketsSubScreenState extends State<BucketsSubScreen> {
                     ],
                   ),
                 ),
-                if (widget.state is BrowserSearchingState)
+                if (widget.state is BucketLoadingInProgressState)
                   Positioned.fill(
                     child: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 0.5, sigmaY: 0.5),
@@ -180,10 +236,10 @@ class _BucketsSubScreenState extends State<BucketsSubScreen> {
                       ),
                     ),
                   ),
-                if (widget.state is BrowserSearchErrorState)
+                if (widget.state is BucketLoadingErrorState)
                   Positioned.fill(
                     child: ErrorPage(
-                      message: (widget.state as BrowserSearchErrorState)
+                      message: (widget.state as BucketLoadingErrorState)
                           .exception
                           .message,
                       onRetry: widget.onRetry,
@@ -205,14 +261,14 @@ class _BucketsSubScreenState extends State<BucketsSubScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Buckets',
+              app.intl.bucketsTitle,
               style: app.textTheme.headlineMedium?.copyWith(
                 color: app.colors.neutral.white,
                 fontWeight: FontWeight.bold,
               ),
             ),
             Text(
-              'Manage your S3 compatible buckets and storage resources.',
+              app.intl.bucketsSubtitle,
               style: app.textTheme.bodyMedium?.copyWith(
                 color: app.colors.neutral.grey3,
               ),
@@ -224,7 +280,7 @@ class _BucketsSubScreenState extends State<BucketsSubScreen> {
           children: [
             PrimaryButton.secondary(
               onPressed: widget.onRefresh,
-              title: 'Refresh',
+              title: app.intl.refresh,
               h: 42,
               w: 120,
               icon: app.assets.icons.actions.refresh,
@@ -234,7 +290,7 @@ class _BucketsSubScreenState extends State<BucketsSubScreen> {
               onPressed: () {
                 BucketCreateForm.open(context);
               },
-              title: 'Create Bucket',
+              title: app.intl.bucketsCreate,
               h: 42,
               w: 160,
               icon: app.assets.icons.actions.add,
@@ -311,19 +367,19 @@ class _BucketsSubScreenState extends State<BucketsSubScreen> {
     return Row(
       children: [
         buildSummaryCard(
-          title: 'Total Buckets',
+          title: app.intl.bucketsTotalBuckets,
           value: totalBuckets.toString(),
           icon: app.assets.icons.storage.bucket,
         ),
         app.dimensions.padding.l.gap(),
         buildSummaryCard(
-          title: 'Total Objects',
+          title: app.intl.bucketsTotalObjects,
           value: totalObjects.toString(),
           icon: app.assets.icons.storage.object,
         ),
         app.dimensions.padding.l.gap(),
         buildSummaryCard(
-          title: 'Total Storage',
+          title: app.intl.bucketsTotalStorage,
           value: app.storageFormatter.formatSize(totalSizeBytes),
           icon: app.assets.icons.storage.storage,
         ),
@@ -346,17 +402,17 @@ class _BucketsSubScreenState extends State<BucketsSubScreen> {
         child: Row(
           children: [
             Expanded(
-              child: EMTextSearchField(
+              child: AppTextSearchField(
                 controller: _searchController,
                 onSearch: (value) {
                   // Handled by listener
                 },
-                hint: 'Search buckets...',
+                hint: app.intl.bucketsSearchHint,
               ),
             ),
             app.dimensions.padding.l.gap(),
             ViewTypeSelector(
-              currentType: widget.state.viewType,
+              currentType: widget.viewType,
               onChanged: widget.onViewTypeChanged,
             ),
           ],

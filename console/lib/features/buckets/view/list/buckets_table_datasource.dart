@@ -3,7 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:syncfusion_flutter_datagrid/datagrid.dart';
 
 class BucketsTableDatasource extends StatefulWidget {
-  final BrowserState state;
+  final BucketState state;
   final TextEditingController searchController;
   final List<BucketModel> filteredBuckets;
   final Function(BucketModel) onSelected;
@@ -44,10 +44,7 @@ class _BucketsTableDatasourceState extends State<BucketsTableDatasource> {
 
         final createdAtWidth =
             (totalWidth - (nameWidth + objectsWidth + sizeWidth + actionsWidth))
-                .clamp(
-                  130.0,
-                  totalWidth,
-                );
+                .clamp(130.0, totalWidth);
 
         Widget header(String text) {
           return Padding(
@@ -62,11 +59,11 @@ class _BucketsTableDatasourceState extends State<BucketsTableDatasource> {
         }
 
         if (widget.filteredBuckets.isEmpty &&
-            widget.state is BrowserSearchOkState) {
+            widget.state is BucketLoadingSuccessState) {
           return NoDataPage(
             title: widget.searchController.text.isEmpty
-                ? 'No buckets found'
-                : 'No buckets matching "${widget.searchController.text}"',
+                ? app.intl.bucketsEmpty
+                : app.intl.bucketsNoMatch(widget.searchController.text),
           );
         }
 
@@ -121,25 +118,25 @@ class _BucketsTableDatasourceState extends State<BucketsTableDatasource> {
                 columnName: 'name',
                 width: columnWidths['name'] ?? nameWidth,
                 minimumWidth: 150,
-                label: header('Name'),
+                label: header(app.intl.name),
               ),
               GridColumn(
                 columnName: 'objects',
                 width: columnWidths['objects'] ?? objectsWidth,
                 minimumWidth: 100,
-                label: header('Objects'),
+                label: header(app.intl.objects),
               ),
               GridColumn(
                 columnName: 'size',
                 width: columnWidths['size'] ?? sizeWidth,
                 minimumWidth: 100,
-                label: header('Size'),
+                label: header(app.intl.size),
               ),
               GridColumn(
                 columnName: 'created_at',
                 width: columnWidths['created_at'] ?? createdAtWidth,
                 minimumWidth: 150,
-                label: header('Created At'),
+                label: header(app.intl.createdAt),
               ),
               GridColumn(
                 columnName: 'actions',

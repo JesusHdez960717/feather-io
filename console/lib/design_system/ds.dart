@@ -11,7 +11,6 @@ export 'customs/grid_dot_painter.dart';
 export 'dialogs/confirm_dialog.dart';
 export 'dialogs/dialog_template.dart';
 export 'dimensions.dart';
-export 'table/table_paged_footer.dart';
 export 'text_input/app_form_input.dart';
 export 'text_input/app_form_password_input.dart';
 export 'text_input/app_text_search_field.dart';

@@ -27,13 +27,13 @@ class ObjectsGridDatasource extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (filteredWrappers.isEmpty && state is BrowserSearchOkState) {
+    if (filteredWrappers.isEmpty && state is BrowserLoadingSuccessState) {
       return NoDataPage(
         title: searchController.text.isEmpty
-            ? 'No objects found'
-            : 'No objects matching "${searchController.text}"',
+            ? app.intl.objectsEmpty
+            : app.intl.objectsNoMatch(searchController.text),
         description: searchController.text.isEmpty
-            ? 'Arrastre ficheros aqui para subir'
+            ? app.intl.objectsDragHint
             : null,
       );
     }
@@ -190,7 +190,7 @@ class _ObjectGridItemState extends State<_ObjectGridItem> {
                         app.dimensions.padding.m.gap(),
                         Text(
                           widget.wrapper.isFolder
-                              ? 'Carpeta'
+                              ? app.intl.fileTypeFolder
                               : '${app.storageFormatter.formatSize(widget.wrapper.size!)} • ${widget.fileInfo.name}',
                           style: app.textTheme.labelSmall?.copyWith(
                             color: app.colors.neutral.grey3,

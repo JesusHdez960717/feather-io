@@ -70,7 +70,7 @@ class _ObjectsTableDatasourceState extends State<ObjectsTableDatasource> {
           widget.onNavigate(wrapper.fullPath);
         } else {
           final obj = widget.state.objects!.objects.firstWhere(
-                (o) => o.key == wrapper.fullPath,
+            (o) => o.key == wrapper.fullPath,
           );
           widget.onSelected(obj);
         }
@@ -115,13 +115,13 @@ class _ObjectsTableDatasourceState extends State<ObjectsTableDatasource> {
         const checkboxWidth = 60.0;
 
         final lastModifiedWidth =
-        (totalWidth -
-            (nameWidth +
-                typeWidth +
-                sizeWidth +
-                actionsWidth +
-                checkboxWidth))
-            .clamp(150.0, totalWidth);
+            (totalWidth -
+                    (nameWidth +
+                        typeWidth +
+                        sizeWidth +
+                        actionsWidth +
+                        checkboxWidth))
+                .clamp(150.0, totalWidth);
 
         Widget header(String text) {
           return Padding(
@@ -136,13 +136,13 @@ class _ObjectsTableDatasourceState extends State<ObjectsTableDatasource> {
         }
 
         if (widget.filteredWrappers.isEmpty &&
-            widget.state is BrowserSearchOkState) {
+            widget.state is BrowserLoadingSuccessState) {
           return NoDataPage(
             title: widget.searchController.text.isEmpty
-                ? 'No objects found'
-                : 'No objects matching "${widget.searchController.text}"',
+                ? app.intl.objectsEmpty
+                : app.intl.objectsNoMatch(widget.searchController.text),
             description: widget.searchController.text.isEmpty
-                ? 'Arrastre ficheros aqui para subir'
+                ? app.intl.objectsDragHint
                 : null,
           );
         }
@@ -207,10 +207,10 @@ class _ObjectsTableDatasourceState extends State<ObjectsTableDatasource> {
                     // ajustamos last_modified para que la tabla no se achique.
                     final othersWidth =
                         (columnWidths['name'] ?? nameWidth) +
-                            (columnWidths['type'] ?? typeWidth) +
-                            (columnWidths['size'] ?? sizeWidth) +
-                            (columnWidths['actions'] ?? actionsWidth) +
-                            checkboxWidth;
+                        (columnWidths['type'] ?? typeWidth) +
+                        (columnWidths['size'] ?? sizeWidth) +
+                        (columnWidths['actions'] ?? actionsWidth) +
+                        checkboxWidth;
 
                     columnWidths['last_modified'] = (totalWidth - othersWidth)
                         .clamp(150.0, totalWidth);
@@ -222,25 +222,25 @@ class _ObjectsTableDatasourceState extends State<ObjectsTableDatasource> {
                     columnName: 'name',
                     width: columnWidths['name'] ?? nameWidth,
                     minimumWidth: 150,
-                    label: header('Name'),
+                    label: header(app.intl.name),
                   ),
                   GridColumn(
                     columnName: 'type',
                     width: columnWidths['type'] ?? typeWidth,
                     minimumWidth: 100,
-                    label: header('Type'),
+                    label: header(app.intl.type),
                   ),
                   GridColumn(
                     columnName: 'size',
                     width: columnWidths['size'] ?? sizeWidth,
                     minimumWidth: 100,
-                    label: header('Size'),
+                    label: header(app.intl.size),
                   ),
                   GridColumn(
                     columnName: 'last_modified',
                     width: columnWidths['last_modified'] ?? lastModifiedWidth,
                     minimumWidth: 150,
-                    label: header('Last Modified'),
+                    label: header(app.intl.lastModified),
                   ),
                   GridColumn(
                     columnName: 'actions',
@@ -307,10 +307,10 @@ class _ObjectsDataSource extends DataGridSource {
                         ),
                         onPressed: isHovered
                             ? () {
-                          final RenderBox box =
-                          context.findRenderObject() as RenderBox;
-                          onShowOptions(wrapper, box);
-                        }
+                                final RenderBox box =
+                                    context.findRenderObject() as RenderBox;
+                                onShowOptions(wrapper, box);
+                              }
                             : null,
                         padding: const EdgeInsets.all(4.0),
                         constraints: const BoxConstraints(),

@@ -143,9 +143,9 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
     final keys = selected.map((w) => w.fullPath).toList();
 
     ConfirmDialog.show(
-      title: 'Delete objects',
-      description: 'Are you sure you want to delete ${keys.length} objects?',
-      confirmTitle: 'Delete',
+      title: app.intl.objectsDeleteTitle,
+      description: app.intl.objectsDeleteConfirm(keys.length),
+      confirmTitle: app.intl.delete,
       confirmColor: app.colors.primary.red,
       confirmAction: () => widget.onDelete(keys),
     );
@@ -188,7 +188,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                 ),
                 app.dimensions.padding.m.gap(),
                 Text(
-                  'Preview',
+                  app.intl.preview,
                   style: app.textTheme.bodyMedium?.copyWith(
                     color: app.colors.neutral.white,
                   ),
@@ -208,7 +208,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
               ),
               app.dimensions.padding.m.gap(),
               Text(
-                'Download',
+                app.intl.download,
                 style: app.textTheme.bodyMedium?.copyWith(
                   color: app.colors.neutral.white,
                 ),
@@ -227,7 +227,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
               ),
               app.dimensions.padding.m.gap(),
               Text(
-                'Delete',
+                app.intl.delete,
                 style: app.textTheme.bodyMedium?.copyWith(
                   color: app.colors.primary.red,
                 ),
@@ -280,7 +280,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
               ),
               app.dimensions.padding.m.gap(),
               Text(
-                'Upload files',
+                app.intl.objectsUploadFiles,
                 style: app.textTheme.bodyMedium?.copyWith(
                   color: app.colors.neutral.white,
                 ),
@@ -303,7 +303,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
               ),
               app.dimensions.padding.m.gap(),
               Text(
-                'Upload directory',
+                app.intl.objectsUploadDirectory,
                 style: app.textTheme.bodyMedium?.copyWith(
                   color: app.colors.neutral.white,
                 ),
@@ -382,7 +382,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                         Builder(
                           builder: (context) {
                             return PrimaryButton.primary(
-                              title: 'Upload',
+                              title: app.intl.upload,
                               icon: app.assets.icons.actions.upload,
                               onPressed: () => _onShowUploadMenu(context),
                               w: 150,
@@ -405,10 +405,10 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          EMTextSearchField(
+                          AppTextSearchField(
                             controller: _searchController,
                             onSearch: (value) {},
-                            hint: 'Search objects...',
+                            hint: app.intl.objectsSearchHint,
                           ),
                         ],
                       ),
@@ -419,7 +419,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                       backgroundColor: app.colors.primary.purple,
                       textColor: app.colors.neutral.white,
                       child: PrimaryButton.primary(
-                        title: 'Filter',
+                        title: app.intl.filter,
                         color: app.colors.primary.background3.withValues(
                           alpha: 0.75,
                         ),
@@ -493,7 +493,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
               child: Stack(
                 children: [
                   IgnorePointer(
-                    ignoring: widget.state is! BrowserSearchOkState,
+                    ignoring: widget.state is! BrowserLoadingSuccessState,
                     child: widget.state.viewType == ViewType.list
                         ? ObjectsTableDatasource(
                             state: widget.state,
@@ -518,8 +518,8 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                   ),
                   if (_isDragging)
                     const Positioned.fill(child: DraggingZoneOverlay()),
-                  if (widget.state is BrowserSearchingState ||
-                      widget.state is BrowserProcessingInProgressState)
+                  if (widget.state is BrowserLoadingInProgressState ||
+                      widget.state is BrowserProcessInProgressState)
                     Positioned.fill(
                       child: BackdropFilter(
                         filter: ImageFilter.blur(sigmaX: 0.5, sigmaY: 0.5),
@@ -535,10 +535,10 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                         ),
                       ),
                     ),
-                  if (widget.state is BrowserSearchErrorState)
+                  if (widget.state is BrowserLoadingErrorState)
                     Positioned.fill(
                       child: ErrorPage(
-                        message: (widget.state as BrowserSearchErrorState)
+                        message: (widget.state as BrowserLoadingErrorState)
                             .exception
                             .message,
                         onRetry: widget.onRefresh,
@@ -617,22 +617,6 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
       ),
     );
   }
-}
-
-class BrowserObjectWrapper {
-  final String name;
-  final bool isFolder;
-  final int? size;
-  final DateTime? lastModified;
-  final String fullPath;
-
-  BrowserObjectWrapper({
-    required this.name,
-    required this.isFolder,
-    required this.fullPath,
-    this.size,
-    this.lastModified,
-  });
 }
 
 List<XFile> _flattenDropItems(List<XFile> items) {

@@ -13,7 +13,7 @@ class LoadingPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Text('Loading'),
+            Text(app.intl.loading),
             app.dimensions.padding.m.gap(),
             const CircularProgressIndicator(),
           ],

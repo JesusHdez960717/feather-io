@@ -14,7 +14,7 @@ class FormDrawerTemplate extends StatelessWidget {
     showGeneralDialog(
       context: context ?? app.context,
       barrierDismissible: true,
-      barrierLabel: 'Close',
+      barrierLabel: app.intl.close,
       barrierColor: Colors.black.withValues(alpha: 0.5),
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, animation, secondaryAnimation) {

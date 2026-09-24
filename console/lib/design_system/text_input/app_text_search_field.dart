@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:console/app_exporter.dart';
 import 'package:material_ui/material_ui.dart';
 
-class EMTextSearchField extends StatefulWidget {
+class AppTextSearchField extends StatefulWidget {
   final TextEditingController controller;
   final String? hint;
   final int delay;
@@ -11,7 +11,7 @@ class EMTextSearchField extends StatefulWidget {
   final BorderRadius? borderRadius;
   final Widget? extraSuffix;
 
-  const EMTextSearchField({
+  const AppTextSearchField({
     required this.controller,
     required this.onSearch,
     this.borderRadius,
@@ -22,10 +22,10 @@ class EMTextSearchField extends StatefulWidget {
   });
 
   @override
-  State<EMTextSearchField> createState() => _EMTextSearchFieldState();
+  State<AppTextSearchField> createState() => _AppTextSearchFieldState();
 }
 
-class _EMTextSearchFieldState extends State<EMTextSearchField> {
+class _AppTextSearchFieldState extends State<AppTextSearchField> {
   Timer? _debounce;
 
   void _onSearchChanged(String query) {

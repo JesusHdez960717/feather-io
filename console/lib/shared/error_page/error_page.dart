@@ -33,7 +33,7 @@ class ErrorPage extends StatelessWidget {
                 ),
                 child: SelectionArea(
                   child: Text(
-                    message ?? 'Error',
+                    message ?? app.intl.error,
                     style: app.textTheme.titleLarge,
                     textAlign: TextAlign.center,
                   ),
@@ -46,7 +46,7 @@ class ErrorPage extends StatelessWidget {
                     horizontal: 2 * app.dimensions.padding.xxl,
                   ),
                   child: PrimaryButton.primary(
-                    title: buttonText ?? 'Try again',
+                    title: buttonText ?? app.intl.tryAgain,
                     onPressed: onRetry ?? () {},
                     w: 260,
                   ),

@@ -3,16 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class BucketCreateForm extends StatefulWidget {
+  ///Usa el [BucketCubit] de la pantalla que lo abre, asi el listado se recarga
+  ///y la carga/errores los muestra esa pantalla
   static void open(BuildContext context) {
     final key = GlobalKey<BucketCreateFormState>();
+    final cubit = context.read<BucketCubit>();
     FormDrawerTemplate.showAsDialog(
-      title: 'Create Bucket',
-      description: 'Configure high-performance object storage parameters, redundancy, and protection policies.',
+      title: app.intl.bucketsCreate,
+      description: app.intl.bucketCreateDescription,
       icon: app.assets.icons.storage.bucket,
       footerActions: [
         PrimaryButton.secondary(
           onPressed: () => Navigator.of(context).pop(),
-          title: 'Cancel',
+          title: app.intl.cancel,
           h: 40,
           w: 100,
         ),
@@ -20,15 +23,14 @@ class BucketCreateForm extends StatefulWidget {
           onPressed: () {
             key.currentState?.submit();
           },
-          title: 'Create Bucket',
+          title: app.intl.bucketsCreate,
           h: 40,
           w: 160,
           icon: app.assets.icons.actions.add,
         ),
       ],
-      child: BlocProvider(
-        create: (context) => BucketCubit(app.di.find(), app.di.find()),
-        lazy: false,
+      child: BlocProvider.value(
+        value: cubit,
         child: BucketCreateForm(key: key),
       ),
     );
@@ -67,17 +69,17 @@ class BucketCreateFormState extends State<BucketCreateForm> {
 
   String? _validateName(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Bucket name is required';
+      return app.intl.bucketNameRequired;
     }
     if (value.length < 3 || value.length > 63) {
-      return 'Between 3 and 63 characters';
+      return app.intl.bucketNameLength;
     }
     final regex = RegExp(r'^[a-z0-9-]+$');
     if (!regex.hasMatch(value)) {
-      return 'Lowercase, numbers and hyphens only';
+      return app.intl.bucketNameChars;
     }
     if (value.startsWith('-') || value.endsWith('-')) {
-      return 'Cannot start or end with a hyphen';
+      return app.intl.bucketNameHyphenEdges;
     }
     return null;
   }
@@ -85,33 +87,22 @@ class BucketCreateFormState extends State<BucketCreateForm> {
   @override
   Widget build(BuildContext context) {
     return BlocListener<BucketCubit, BucketState>(
-      listener: (context, state) {
-        if (state is BucketProcessInProgressState) {
-          app.loading.show();
-        } else {
-          app.loading.hide();
-        }
-
-        if (state is BucketProcessingOKState) {
-          app.navigator.pop();
-        } else if (state is BucketProcessingErrorState) {
-          app.snack.showError(message: state.message, context: context);
-        }
-      },
+      listenWhen: (previous, current) => current is BucketProcessingOKState,
+      listener: (context, state) => app.navigator.pop(),
       child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildSection(
-              title: '01 General Configuration',
+              title: app.intl.bucketCreateSectionGeneral,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   AppFormInput(
                     controller: _nameController,
-                    label: 'Bucket Identifier',
-                    hint: 'my-bucket-name',
+                    label: app.intl.bucketCreateNameLabel,
+                    hint: app.intl.bucketCreateNameHint,
                     showCounter: true,
                     maxLength: 63,
                     validator: _validateName,
@@ -124,11 +115,11 @@ class BucketCreateFormState extends State<BucketCreateForm> {
             ),
             app.dimensions.padding.xl.gap(),
             _buildSection(
-              title: '02 Additional Info',
+              title: app.intl.bucketCreateSectionAdditional,
               child: AppFormInput(
-                label: 'Description (Optional)',
+                label: app.intl.bucketCreateDescriptionLabel,
                 controller: _descriptionController,
-                hint: 'Brief description of the bucket usage',
+                hint: app.intl.bucketCreateDescriptionHint,
                 maxLines: 3,
                 showCounter: true,
                 maxLength: 1024,
@@ -199,10 +190,13 @@ class BucketCreateFormState extends State<BucketCreateForm> {
       spacing: app.dimensions.padding.l,
       runSpacing: app.dimensions.padding.s,
       children: [
-        buildItem('Between 3 and 63 chars', isLenOk),
-        buildItem('Lowercase & numbers only', isCharsOk),
-        buildItem('Hyphens allowed', true),
-        buildItem('No hyphen at start/end', noHyphenStartEnd || name.isEmpty),
+        buildItem(app.intl.bucketNameLength, isLenOk),
+        buildItem(app.intl.bucketRuleChars, isCharsOk),
+        buildItem(app.intl.bucketRuleHyphens, true),
+        buildItem(
+          app.intl.bucketRuleHyphenEdges,
+          noHyphenStartEnd || name.isEmpty,
+        ),
       ],
     );
   }

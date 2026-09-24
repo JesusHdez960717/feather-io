@@ -82,8 +82,11 @@ class App extends StatelessWidget {
               debugShowCheckedModeBanner: false,
               theme: ThemeConfig.theme,
               locale: locale,
-              builder: (context, child) =>
-                  const Scaffold(body: Center(child: Text('Need more space'))),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              builder: (context, child) => Scaffold(
+                body: Center(child: Text(context.intl.appNeedMoreSpace)),
+              ),
             );
           } else {
             return MaterialApp.router(
@@ -96,7 +99,7 @@ class App extends StatelessWidget {
                 );
               },
               debugShowCheckedModeBanner: false,
-              title: 'Feather-IO',
+              onGenerateTitle: (context) => context.intl.appName,
               theme: ThemeConfig.theme,
               locale: locale,
               routerConfig: RouteConfig.router,

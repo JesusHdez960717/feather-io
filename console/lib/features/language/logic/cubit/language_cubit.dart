@@ -10,16 +10,11 @@ class LanguageCubit extends Cubit<LanguageState>
   static final LanguageModel defaultLanguage = LanguageModel(
     icon: app.assets.icons.language.en,
     key: 'en',
-    name: 'English',
   );
 
   List<LanguageModel> languages = [
     defaultLanguage,
-    LanguageModel(
-      icon: app.assets.icons.language.es,
-      key: 'es',
-      name: 'Español',
-    ),
+    LanguageModel(icon: app.assets.icons.language.es, key: 'es'),
   ];
 
   LanguageModel currentSelectedLanguage = defaultLanguage;

@@ -44,7 +44,7 @@ class _BaseScreenState extends State<BaseScreen> {
                   icon: app.assets.icons.actions.search.build(
                     color: app.colors.neutral.white,
                   ),
-                  label: const Text('Browser'),
+                  label: Text(app.intl.navBrowser),
                 ),
               ],
               trailing: Expanded(

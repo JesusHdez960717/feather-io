@@ -2,7 +2,7 @@ import 'package:console/app_exporter.dart';
 import 'package:material_ui/material_ui.dart';
 
 class BucketsGridDatasource extends StatelessWidget {
-  final BrowserState state;
+  final BucketState state;
   final TextEditingController searchController;
   final List<BucketModel> filteredBuckets;
   final Function(BucketModel) onSelected;
@@ -21,11 +21,11 @@ class BucketsGridDatasource extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (filteredBuckets.isEmpty && state is BrowserSearchOkState) {
+    if (filteredBuckets.isEmpty && state is BucketLoadingSuccessState) {
       return NoDataPage(
         title: searchController.text.isEmpty
-            ? 'No buckets found'
-            : 'No buckets matching "${searchController.text}"',
+            ? app.intl.bucketsEmpty
+            : app.intl.bucketsNoMatch(searchController.text),
       );
     }
 
@@ -130,7 +130,7 @@ class _BucketGridItemState extends State<_BucketGridItem> {
                                 ),
                                 app.dimensions.padding.m.gap(),
                                 Tooltip(
-                                  message: 'En este bucket se tiene acceso de Lectura y Escritura',
+                                  message: app.intl.bucketsReadWriteTooltip,
                                   child: Container(
                                     padding: EdgeInsets.symmetric(
                                       horizontal: app.dimensions.padding.xs,
@@ -142,7 +142,7 @@ class _BucketGridItemState extends State<_BucketGridItem> {
                                       ),
                                     ),
                                     child: Text(
-                                      'R/W',
+                                      app.intl.bucketsReadWriteBadge,
                                       style: app.textTheme.bodyMedium?.copyWith(
                                         color: app.colors.neutral.white,
                                       ),
@@ -154,7 +154,11 @@ class _BucketGridItemState extends State<_BucketGridItem> {
                               ],
                             ),
                             Text(
-                              'Created ${app.dateFormatter.l.format(widget.bucket.creationDate)}',
+                              app.intl.bucketsCreatedAt(
+                                app.dateFormatter.l.format(
+                                  widget.bucket.creationDate,
+                                ),
+                              ),
                               style: app.textTheme.labelMedium?.copyWith(
                                 color: app.colors.neutral.white,
                                 fontWeight: FontWeight.w300,
@@ -180,11 +184,11 @@ class _BucketGridItemState extends State<_BucketGridItem> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       _buildInfoItem(
-                        label: 'Objects',
+                        label: app.intl.objects,
                         value: widget.bucket.objectCount.toString(),
                       ),
                       _buildInfoItem(
-                        label: 'Size',
+                        label: app.intl.size,
                         value: app.storageFormatter.formatSize(
                           widget.bucket.sizeBytes,
                         ),

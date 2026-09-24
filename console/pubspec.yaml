@@ -76,7 +76,6 @@ flutter:
   generate: true
 
   assets:
-    - assets/icons/
     - assets/icons/actions/
     - assets/icons/languages/
     - assets/icons/navigation/

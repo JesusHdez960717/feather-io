@@ -6,42 +6,100 @@ class BucketCubit extends Cubit<BucketState>
   final BucketRepo _repo;
   final AuthCubit _auth;
 
-  BucketCubit(this._repo, this._auth) : super(BucketInitialState());
+  BucketCubit(this._repo, this._auth) : super(const BucketInitialState());
+
+  Future<void> load() async {
+    emit(BucketLoadingInProgressState(buckets: state.buckets));
+    try {
+      final buckets = await _repo.listBuckets(token: _auth.auth?.accessToken);
+      emit(BucketLoadingSuccessState(buckets: buckets));
+    } catch (e) {
+      emit(
+        BucketLoadingErrorState(
+          ExceptionConverter.parse(e),
+          buckets: state.buckets,
+        ),
+      );
+    }
+  }
 
   Future<void> createBucket({
     required String name,
     String? description,
     int? color,
   }) async {
-    emit(BucketProcessInProgressState());
-    try {
-      await _repo.createBucket(
+    await _process(
+      () => _repo.createBucket(
         name: name,
         description: description,
         color: color,
         token: _auth.auth?.accessToken,
-      );
-      emit(BucketProcessingOKState());
-    } catch (e) {
-      emit(BucketProcessingErrorState(e.toString()));
-    }
+      ),
+    );
   }
 
-  void reset() {
-    emit(BucketInitialState());
+  Future<void> deleteBucket({required BucketModel bucket}) async {
+    await _process(
+      () =>
+          _repo.deleteBucket(name: bucket.name, token: _auth.auth?.accessToken),
+    );
+  }
+
+  ///Ejecuta una accion sobre los buckets y, si sale bien, recarga el listado
+  Future<void> _process(Future<void> Function() action) async {
+    emit(BucketProcessInProgressState(buckets: state.buckets));
+    try {
+      await action();
+      emit(BucketProcessingOKState(buckets: state.buckets));
+    } catch (e) {
+      emit(
+        BucketProcessingErrorState(
+          ExceptionConverter.parse(e).message,
+          buckets: state.buckets,
+        ),
+      );
+      return;
+    }
+    await load();
   }
 }
 
-abstract class BucketState {}
+abstract class BucketState {
+  final List<BucketModel> buckets;
 
-class BucketInitialState extends BucketState {}
+  const BucketState({this.buckets = const []});
+}
 
-class BucketProcessInProgressState extends BucketState {}
+class BucketInitialState extends BucketState {
+  const BucketInitialState();
+}
 
-class BucketProcessingOKState extends BucketState {}
+//------------------------- LOADING -------------------------\\
+class BucketLoadingInProgressState extends BucketState {
+  const BucketLoadingInProgressState({super.buckets});
+}
+
+class BucketLoadingSuccessState extends BucketState {
+  const BucketLoadingSuccessState({super.buckets});
+}
+
+class BucketLoadingErrorState extends BucketState {
+  final GlobalException exception;
+
+  const BucketLoadingErrorState(this.exception, {super.buckets});
+}
+
+//------------------------- PROCESSING -------------------------\\
+class BucketProcessInProgressState extends BucketState {
+  const BucketProcessInProgressState({super.buckets});
+}
+
+class BucketProcessingOKState extends BucketState {
+  const BucketProcessingOKState({super.buckets});
+}
 
 class BucketProcessingErrorState extends BucketState {
   final String message;
 
-  BucketProcessingErrorState(this.message);
+  const BucketProcessingErrorState(this.message, {super.buckets});
 }

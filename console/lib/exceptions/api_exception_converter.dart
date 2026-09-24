@@ -8,37 +8,37 @@ class ApiExceptionConverter {
       case DioExceptionType.cancel:
         return GlobalException(
           type: GlobalExceptionType.general,
-          message: 'Request to API server was cancelled', //TODO: intl
+          message: app.intl.errorRequestCancelled,
         );
       case DioExceptionType.connectionTimeout:
         return GlobalException(
           type: GlobalExceptionType.general,
-          message: 'Connection timeout with API server. Revisa el internet', //TODO: intl
+          message: app.intl.errorConnectionTimeout,
         );
       case DioExceptionType.transformTimeout:
         return GlobalException(
           type: GlobalExceptionType.general,
-          message: 'Connection to API server failed due to internet connection', //TODO: intl
+          message: app.intl.errorNoConnection,
         );
       case DioExceptionType.unknown:
         return GlobalException(
           type: GlobalExceptionType.general,
-          message: 'Connection to API server failed due to internet connection', //TODO: intl
+          message: app.intl.errorNoConnection,
         );
       case DioExceptionType.receiveTimeout:
         return GlobalException(
           type: GlobalExceptionType.general,
-          message: 'Receive timeout in connection with API server', //TODO: intl
+          message: app.intl.errorReceiveTimeout,
         );
       case DioExceptionType.sendTimeout:
         return GlobalException(
           type: GlobalExceptionType.general,
-          message: 'Send timeout with server', //TODO: intl
+          message: app.intl.errorSendTimeout,
         );
       case DioExceptionType.badCertificate:
         return GlobalException(
           type: GlobalExceptionType.general,
-          message: 'Bad Certificate', //TODO: intl
+          message: app.intl.errorBadCertificate,
         );
       case DioExceptionType.connectionError:
         //TODO: revisar con mas detalles el error en web
@@ -47,12 +47,12 @@ class ApiExceptionConverter {
             //in web, dio handle 403/401 as a connection error, some weird stuff with navigator closing the connection
             //all other status 200,404,422, work ok, only 403/401, so we gonna handle this connection error as an auth exception
             type: GlobalExceptionType.auth,
-            message: 'Connection Error', //TODO: intl
+            message: app.intl.errorConnection,
           );
         } else {
           return GlobalException(
             type: GlobalExceptionType.general,
-            message: 'Connection Error', //TODO: intl
+            message: app.intl.errorConnection,
           );
         }
       case DioExceptionType.badResponse:
@@ -64,7 +64,7 @@ class ApiExceptionConverter {
     if (error.response!.statusCode == 422) {
       return GlobalException(
         type: GlobalExceptionType.validation,
-        message: 'Validation error', //TODO: intl
+        message: app.intl.errorValidation,
         data: (error.response!.data as List<dynamic>)
             .map(
               (json) => ValidationError.fromJson(json as Map<String, dynamic>),
@@ -74,7 +74,7 @@ class ApiExceptionConverter {
     } else if (error.response!.statusCode! >= 500) {
       return GlobalException(
         type: GlobalExceptionType.general,
-        message: 'Server error',
+        message: app.intl.errorServer,
         data: error.response!.data,
       );
     } else {

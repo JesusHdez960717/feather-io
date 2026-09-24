@@ -77,7 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Feather IO',
+                    app.intl.appName,
                     style: app.textTheme.headlineMedium?.copyWith(
                       color: app.colors.neutral.white,
                       fontWeight: FontWeight.bold,
@@ -87,24 +87,28 @@ class _LoginScreenState extends State<LoginScreen> {
                   app.dimensions.padding.l.gap(),
                   AppFormInput(
                     controller: _accessController,
-                    label: 'Access Key',
-                    hint: 'Enter your access key',
-                    validator: (v) => v?.isEmpty == true ? 'Required' : null,
+                    label: app.intl.loginAccessKey,
+                    hint: app.intl.loginAccessKeyHint,
+                    validator: (v) =>
+                        v?.isEmpty == true ? app.intl.required : null,
                   ),
                   app.dimensions.padding.m.gap(),
                   AppFormPasswordInput(
                     controller: _secretController,
-                    label: 'Secret Key',
-                    hint: 'Enter your secret key',
-                    validator: (v) => v?.isEmpty == true ? 'Required' : null,
+                    label: app.intl.loginSecretKey,
+                    hint: app.intl.loginSecretKeyHint,
+                    validator: (v) =>
+                        v?.isEmpty == true ? app.intl.required : null,
                   ),
                   app.dimensions.padding.xl.gap(),
                   BlocBuilder<AuthCubit, AuthState>(
                     builder: (context, state) {
-                      final isLoading = state is AuthProcessingInProgressState;
+                      final isLoading = state is AuthProcessInProgressState;
                       return PrimaryButton.primary(
                         onPressed: isLoading ? () {} : _onLogin,
-                        title: isLoading ? 'Logging in...' : 'Login',
+                        title: isLoading
+                            ? app.intl.loginInProgress
+                            : app.intl.loginButton,
                       );
                     },
                   ),

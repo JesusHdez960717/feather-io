@@ -8,7 +8,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class FeaturesInit {
   static Future<void> init() async {
     FlutterSecureStorage storage = const FlutterSecureStorage(
-      webOptions: WebOptions(publicKey: 'exp-man-admin'),
+      webOptions: WebOptions(publicKey: 'feather-io'),
     );
     app.di.put(storage);
 
@@ -47,7 +47,6 @@ class FeaturesInit {
 
   static Future<void> _resetCubits() async {
     app.di.find<AuthCubit>().reset();
-    app.di.find<BrowserCubit>().reset();
   }
 
   static List<BlocProvider> blocProviders = [

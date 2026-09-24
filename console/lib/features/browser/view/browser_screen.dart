@@ -12,14 +12,20 @@ class BrowserScreenNavigator {
     final viewTypeStr = state.uri.queryParameters['view_type'];
     final initialViewType = ViewType.fromName(viewTypeStr);
 
-    return BlocProvider(
-      create: (context) => BrowserCubit(
-        auth: app.di.find(),
-        repo: app.di.find(),
-        bucketRepo: app.di.find(),
-        initialViewType: initialViewType,
-      ),
-      lazy: false,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => BrowserCubit(
+            auth: app.di.find(),
+            repo: app.di.find(),
+            initialViewType: initialViewType,
+          ),
+          lazy: false,
+        ),
+        BlocProvider(
+          create: (context) => BucketCubit(app.di.find(), app.di.find()),
+        ),
+      ],
       child: const BrowserScreen(),
     );
   }
@@ -55,22 +61,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<BrowserCubit, BrowserState>(
-      listener: (context, state) {
-        if (state is BrowserBucketDeleteInProgressState) {
-          app.loading.show();
-        } else {
-          app.loading.hide();
-        }
-
-        if (state is BrowserBucketDeleteOKState) {
-          // Ya se refresca solo por el onBus del cubit
-        } else if (state is BrowserBucketDeleteErrorState) {
-          app.snack.showError(message: state.message, context: context);
-        }
-      },
-      buildWhen: (previous, current) =>
-          current is BrowserSearchState || current is BrowserInitialState,
+    return BlocBuilder<BrowserCubit, BrowserState>(
       builder: (context, state) {
         if (state is BrowserInitialState) {
           cubit.init();
@@ -81,7 +72,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
           final isBucketSelected = state.selectedBucket != null;
           return Scaffold(
             appBar: CustomAppBar.build(
-              title: 'Browser',
+              title: app.intl.navBrowser,
               leading: isBucketSelected
                   ? IconButton(
                       icon: const Icon(Icons.arrow_back),
@@ -141,12 +132,9 @@ class _BrowserScreenState extends State<BrowserScreen> {
                       },
                     )
                   : BucketsSubScreen(
-                      state: state,
-                      onRefresh: () => cubit.refresh(),
-                      onRetry: () => cubit.init(),
+                      viewType: state.viewType,
                       onSelected: (bucket) =>
                           cubit.selectBucket(bucket: bucket),
-                      onDelete: (bucket) => cubit.deleteBucket(bucket: bucket),
                       onViewTypeChanged: (type) {
                         cubit.changeViewType(type);
                         BrowserScreen.navigator.updateViewType(type);

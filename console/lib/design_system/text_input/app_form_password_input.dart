@@ -40,7 +40,9 @@ class _AppFormPasswordInputState extends State<AppFormPasswordInput> {
           });
         },
         icon: Icon(
-          _obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+          _obscureText
+              ? Icons.visibility_off_outlined
+              : Icons.visibility_outlined,
           color: app.colors.neutral.grey3,
           size: 20,
         ),

@@ -1,18 +1,124 @@
 {
   "@@locale": "es",
-  "es": "Español",
-  "en": "Inglés",
-  "section_table": "--------- TABLE ---------",
-  "rowsPerPage": "Filas por página:",
-  "pageXofY": "Página {x} de {y}",
-  "@pageXofY": {
+  "appName": "Feather IO",
+  "appNeedMoreSpace": "Se necesita más espacio",
+  "splashTitle": "Administración",
+  "splashFooter": "Con ♥ desde Maple",
+  "loading": "Cargando",
+  "error": "Error",
+  "tryAgain": "Reintentar",
+  "noData": "Sin datos",
+  "cancel": "Cancelar",
+  "close": "Cerrar",
+  "delete": "Eliminar",
+  "refresh": "Actualizar",
+  "required": "Requerido",
+  "preview": "Vista previa",
+  "download": "Descargar",
+  "upload": "Subir",
+  "filter": "Filtrar",
+  "name": "Nombre",
+  "type": "Tipo",
+  "size": "Tamaño",
+  "objects": "Objetos",
+  "createdAt": "Fecha de creación",
+  "lastModified": "Última modificación",
+  "errorRequestCancelled": "La petición al servidor fue cancelada",
+  "errorConnectionTimeout": "Tiempo de conexión agotado con el servidor. Revisa tu conexión a internet",
+  "errorNoConnection": "No se pudo conectar con el servidor. Revisa tu conexión a internet",
+  "errorReceiveTimeout": "Tiempo de espera agotado al recibir datos del servidor",
+  "errorSendTimeout": "Tiempo de espera agotado al enviar datos al servidor",
+  "errorBadCertificate": "Certificado inválido",
+  "errorConnection": "Error de conexión",
+  "errorValidation": "Error de validación",
+  "errorServer": "Error del servidor",
+  "errorUnknown": "Error desconocido",
+  "navBrowser": "Explorador",
+  "loginAccessKey": "Clave de acceso",
+  "loginAccessKeyHint": "Introduce tu clave de acceso",
+  "loginSecretKey": "Clave secreta",
+  "loginSecretKeyHint": "Introduce tu clave secreta",
+  "loginButton": "Iniciar sesión",
+  "loginInProgress": "Iniciando sesión...",
+  "bucketsTitle": "Buckets",
+  "bucketsSubtitle": "Gestiona tus buckets compatibles con S3 y tus recursos de almacenamiento.",
+  "bucketsCreate": "Crear bucket",
+  "bucketsTotalBuckets": "Total de buckets",
+  "bucketsTotalObjects": "Total de objetos",
+  "bucketsTotalStorage": "Almacenamiento total",
+  "bucketsSearchHint": "Buscar buckets...",
+  "bucketsEmpty": "No se encontraron buckets",
+  "bucketsNoMatch": "Ningún bucket coincide con \"{query}\"",
+  "@bucketsNoMatch": {
     "placeholders": {
-      "x": {
-        "type": "int"
-      },
-      "y": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "bucketsDeleteTitle": "Eliminar bucket",
+  "bucketsDeleteConfirm": "¿Seguro que quieres eliminar el bucket {name}?",
+  "@bucketsDeleteConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "bucketsReadWriteBadge": "L/E",
+  "bucketsReadWriteTooltip": "En este bucket tienes acceso de lectura y escritura",
+  "bucketsCreatedAt": "Creado {date}",
+  "@bucketsCreatedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "bucketCreateDescription": "Configura los parámetros del almacenamiento de objetos de alto rendimiento, la redundancia y las políticas de protección.",
+  "bucketCreateSectionGeneral": "01 Configuración general",
+  "bucketCreateSectionAdditional": "02 Información adicional",
+  "bucketCreateNameLabel": "Identificador del bucket",
+  "bucketCreateNameHint": "mi-bucket",
+  "bucketCreateDescriptionLabel": "Descripción (opcional)",
+  "bucketCreateDescriptionHint": "Breve descripción del uso del bucket",
+  "bucketNameRequired": "El nombre del bucket es obligatorio",
+  "bucketNameLength": "Entre 3 y 63 caracteres",
+  "bucketNameChars": "Solo minúsculas, números y guiones",
+  "bucketNameHyphenEdges": "No puede empezar ni terminar con guion",
+  "bucketRuleChars": "Solo minúsculas y números",
+  "bucketRuleHyphens": "Se permiten guiones",
+  "bucketRuleHyphenEdges": "Sin guion al inicio o al final",
+  "objectsSearchHint": "Buscar objetos...",
+  "objectsEmpty": "No se encontraron objetos",
+  "objectsNoMatch": "Ningún objeto coincide con \"{query}\"",
+  "@objectsNoMatch": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "objectsDragHint": "Arrastra ficheros aquí para subirlos",
+  "objectsDropHere": "Suelta aquí para subir",
+  "objectsDeleteTitle": "Eliminar objetos",
+  "objectsDeleteConfirm": "{count, plural, =1{¿Seguro que quieres eliminar 1 objeto?} other{¿Seguro que quieres eliminar {count} objetos?}}",
+  "@objectsDeleteConfirm": {
+    "placeholders": {
+      "count": {
         "type": "int"
       }
     }
-  }
+  },
+  "objectsUploadFiles": "Subir ficheros",
+  "objectsUploadDirectory": "Subir carpeta",
+  "fileTypeFolder": "Carpeta",
+  "fileTypeFile": "Fichero",
+  "fileTypeImage": "Imagen",
+  "fileTypeVideo": "Vídeo",
+  "fileTypeAudio": "Audio",
+  "fileTypeText": "Texto",
+  "fileTypeDocument": "Documento",
+  "fileTypeSpreadsheet": "Hoja de cálculo",
+  "fileTypeArchive": "Comprimido"
 }

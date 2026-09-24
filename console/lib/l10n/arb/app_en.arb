@@ -1,18 +1,124 @@
 {
   "@@locale": "en",
-  "es": "Spanish",
-  "en": "English",
-  "section_table": "--------- TABLE ---------",
-  "rowsPerPage": "Rows per page:",
-  "pageXofY": "Page {x} de {y}",
-  "@pageXofY": {
+  "appName": "Feather IO",
+  "appNeedMoreSpace": "Need more space",
+  "splashTitle": "Admin",
+  "splashFooter": "With ♥ from Maple",
+  "loading": "Loading",
+  "error": "Error",
+  "tryAgain": "Try again",
+  "noData": "No data",
+  "cancel": "Cancel",
+  "close": "Close",
+  "delete": "Delete",
+  "refresh": "Refresh",
+  "required": "Required",
+  "preview": "Preview",
+  "download": "Download",
+  "upload": "Upload",
+  "filter": "Filter",
+  "name": "Name",
+  "type": "Type",
+  "size": "Size",
+  "objects": "Objects",
+  "createdAt": "Created At",
+  "lastModified": "Last Modified",
+  "errorRequestCancelled": "Request to API server was cancelled",
+  "errorConnectionTimeout": "Connection timeout with API server. Check your internet connection",
+  "errorNoConnection": "Connection to API server failed due to internet connection",
+  "errorReceiveTimeout": "Receive timeout in connection with API server",
+  "errorSendTimeout": "Send timeout with API server",
+  "errorBadCertificate": "Bad certificate",
+  "errorConnection": "Connection error",
+  "errorValidation": "Validation error",
+  "errorServer": "Server error",
+  "errorUnknown": "Unknown error",
+  "navBrowser": "Browser",
+  "loginAccessKey": "Access Key",
+  "loginAccessKeyHint": "Enter your access key",
+  "loginSecretKey": "Secret Key",
+  "loginSecretKeyHint": "Enter your secret key",
+  "loginButton": "Login",
+  "loginInProgress": "Logging in...",
+  "bucketsTitle": "Buckets",
+  "bucketsSubtitle": "Manage your S3 compatible buckets and storage resources.",
+  "bucketsCreate": "Create Bucket",
+  "bucketsTotalBuckets": "Total Buckets",
+  "bucketsTotalObjects": "Total Objects",
+  "bucketsTotalStorage": "Total Storage",
+  "bucketsSearchHint": "Search buckets...",
+  "bucketsEmpty": "No buckets found",
+  "bucketsNoMatch": "No buckets matching \"{query}\"",
+  "@bucketsNoMatch": {
     "placeholders": {
-      "x": {
-        "type": "int"
-      },
-      "y": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "bucketsDeleteTitle": "Delete bucket",
+  "bucketsDeleteConfirm": "Are you sure you want to delete the {name} bucket?",
+  "@bucketsDeleteConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "bucketsReadWriteBadge": "R/W",
+  "bucketsReadWriteTooltip": "You have read and write access to this bucket",
+  "bucketsCreatedAt": "Created {date}",
+  "@bucketsCreatedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "bucketCreateDescription": "Configure high-performance object storage parameters, redundancy, and protection policies.",
+  "bucketCreateSectionGeneral": "01 General Configuration",
+  "bucketCreateSectionAdditional": "02 Additional Info",
+  "bucketCreateNameLabel": "Bucket Identifier",
+  "bucketCreateNameHint": "my-bucket-name",
+  "bucketCreateDescriptionLabel": "Description (Optional)",
+  "bucketCreateDescriptionHint": "Brief description of the bucket usage",
+  "bucketNameRequired": "Bucket name is required",
+  "bucketNameLength": "Between 3 and 63 characters",
+  "bucketNameChars": "Lowercase, numbers and hyphens only",
+  "bucketNameHyphenEdges": "Cannot start or end with a hyphen",
+  "bucketRuleChars": "Lowercase & numbers only",
+  "bucketRuleHyphens": "Hyphens allowed",
+  "bucketRuleHyphenEdges": "No hyphen at start/end",
+  "objectsSearchHint": "Search objects...",
+  "objectsEmpty": "No objects found",
+  "objectsNoMatch": "No objects matching \"{query}\"",
+  "@objectsNoMatch": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "objectsDragHint": "Drag files here to upload",
+  "objectsDropHere": "Drop here to upload",
+  "objectsDeleteTitle": "Delete objects",
+  "objectsDeleteConfirm": "{count, plural, =1{Are you sure you want to delete 1 object?} other{Are you sure you want to delete {count} objects?}}",
+  "@objectsDeleteConfirm": {
+    "placeholders": {
+      "count": {
         "type": "int"
       }
     }
-  }
+  },
+  "objectsUploadFiles": "Upload files",
+  "objectsUploadDirectory": "Upload directory",
+  "fileTypeFolder": "Folder",
+  "fileTypeFile": "File",
+  "fileTypeImage": "Image",
+  "fileTypeVideo": "Video",
+  "fileTypeAudio": "Audio",
+  "fileTypeText": "Text",
+  "fileTypeDocument": "Document",
+  "fileTypeSpreadsheet": "Spreadsheet",
+  "fileTypeArchive": "Archive"
 }

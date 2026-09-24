@@ -72,12 +72,12 @@ class BrowserBreadcrumbs extends StatelessWidget {
   }
 
   Widget _separator() => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: app.assets.icons.navigation.next.build(
-          size: 16,
-          color: app.colors.neutral.grey3,
-        ),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 4),
+    child: app.assets.icons.navigation.next.build(
+      size: 16,
+      color: app.colors.neutral.grey3,
+    ),
+  );
 
   Widget _breadcrumbItem({
     required VoidCallback? onTap,

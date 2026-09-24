@@ -10,7 +10,7 @@ class AuthCubit extends Cubit<AuthState> {
   AuthModel? get auth => _auth;
 
   void login({required String access, required String secret}) async {
-    emit(AuthProcessingInProgressState());
+    emit(AuthProcessInProgressState());
     try {
       _auth = await repo.login(access: access, secret: secret);
       emit(AuthProcessingOKState());
@@ -36,7 +36,7 @@ abstract class AuthState {}
 
 class AuthInitialState extends AuthState {}
 
-class AuthProcessingInProgressState extends AuthState {}
+class AuthProcessInProgressState extends AuthState {}
 
 class AuthProcessingOKState extends AuthState {}
 

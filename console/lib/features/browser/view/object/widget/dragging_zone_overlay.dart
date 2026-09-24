@@ -29,7 +29,7 @@ class DraggingZoneOverlay extends StatelessWidget {
               ),
               app.dimensions.padding.m.gap(),
               Text(
-                'Suelte aqui para subir',
+                app.intl.objectsDropHere,
                 style: app.textTheme.titleLarge?.copyWith(
                   color: app.colors.neutral.white,
                   fontWeight: FontWeight.bold,
