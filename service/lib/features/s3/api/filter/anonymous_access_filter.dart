@@ -4,10 +4,7 @@ class AnonymousAccessFilter extends Filter {
   final String bucketName;
   final List<AnonymousRuleModel> rules;
 
-  AnonymousAccessFilter({
-    required this.bucketName,
-    this.rules = const [],
-  });
+  AnonymousAccessFilter({required this.bucketName, this.rules = const []});
 
   static const _readKeys = {
     's3.anonymous.list-objects',
@@ -30,7 +27,8 @@ class AnonymousAccessFilter extends Filter {
 
     // Si es list-objects, el "key" a evaluar es el prefix del query param
     // Si es una operación sobre un objeto, es el key del path param
-    final key = request.pathParams['key'] ?? request.queryParams['prefix'] ?? '';
+    final key =
+        request.pathParams['key'] ?? request.queryParams['prefix'] ?? '';
 
     if (bucket == bucketName && routeKey != null) {
       final rule = _findMatchingRule(key);

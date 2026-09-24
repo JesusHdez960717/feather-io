@@ -73,7 +73,7 @@ class AdminController {
       DownloadObjectsRequest downloadRequest = (await request
           .body<DownloadObjectsRequest>());
 
-      final zipData = await fileManagement.zipObjects(
+      final zipFile = await fileManagement.zipObjects(
         bucketName: bucketName,
         keys: downloadRequest.keys,
       );
@@ -84,11 +84,11 @@ class AdminController {
       final fileName = 'download_$timestamp.zip';
 
       return ResponseEntity.ok(
-        body: Stream.fromIterable([zipData]),
+        body: fileManagement.openAndDeleteTemp(zipFile),
         headers: {
           'content-type': 'application/zip',
           'content-disposition': 'attachment; filename="$fileName"',
-          'content-length': zipData.length.toString(),
+          'content-length': (await zipFile.length()).toString(),
         },
       );
     } catch (e) {

@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:archive/archive.dart';
+import 'package:archive/archive_io.dart';
 import 'package:path/path.dart' as p;
 import 'package:service/feather.dart';
 
@@ -115,48 +115,6 @@ class FileManagementService {
     }
   }
 
-  Future<List<BucketModel>> listBuckets() async {
-    final storageDir = Directory(env.storageVolumePath);
-    if (!await storageDir.exists()) {
-      return [];
-    }
-
-    final List<BucketModel> buckets = [];
-    final List<FileSystemEntity> entities = await storageDir.list().toList();
-
-    for (var entity in entities) {
-      if (entity is Directory) {
-        final bucketName = p.basename(entity.path);
-        if (!S3Validator.isValidBucketName(bucketName)) continue;
-
-        final stat = await entity.stat();
-
-        // Calculamos stats del bucket
-        int totalSize = 0;
-        int objectCount = 0;
-
-        final bucketEntities = await entity.list(recursive: true).toList();
-        for (var bucketEntity in bucketEntities) {
-          if (bucketEntity is File) {
-            objectCount++;
-            totalSize += await bucketEntity.length();
-          }
-        }
-
-        buckets.add(
-          BucketModel(
-            name: bucketName,
-            objectCount: objectCount,
-            size: totalSize,
-            creationDate: stat.changed,
-          ),
-        );
-      }
-    }
-
-    return buckets;
-  }
-
   Future<ListObjectsResponse> listFiles({
     required String bucketName,
     String? prefix,
@@ -243,47 +201,73 @@ class FileManagementService {
     return file;
   }
 
-  Future<List<int>> zipObjects({
+  /// Genera el zip en un fichero temporal (sin cargar los objetos en memoria).
+  /// Usar [openAndDeleteTemp] para servirlo y borrarlo al terminar.
+  Future<File> zipObjects({
     required String bucketName,
     required List<String> keys,
   }) async {
     if (!S3Validator.isValidBucketName(bucketName)) {
       throw BadRequestException(body: 'El bucket $bucketName no es valido');
     }
-
-    final bucketPath = _getBucketPath(bucketName);
-    final archive = Archive();
-
     for (final key in keys) {
-      final fullPath = p.join(bucketPath, key);
-      final type = await FileSystemEntity.type(fullPath);
-
-      if (type == FileSystemEntityType.file) {
-        final file = File(fullPath);
-        final bytes = await file.readAsBytes();
-        archive.addFile(ArchiveFile(key, bytes.length, bytes));
-      } else if (type == FileSystemEntityType.directory) {
-        final dir = Directory(fullPath);
-        final entities = await dir.list(recursive: true).toList();
-        for (final entity in entities) {
-          if (entity is File) {
-            final relativeKey = p
-                .relative(entity.path, from: bucketPath)
-                .replaceAll('\\', '/');
-            final bytes = await entity.readAsBytes();
-            archive.addFile(ArchiveFile(relativeKey, bytes.length, bytes));
-          }
-        }
+      if (!S3Validator.isValidKey(key)) {
+        throw BadRequestException(body: 'El key $key no es valido');
       }
     }
 
-    if (archive.isEmpty) {
+    final bucketPath = _getBucketPath(bucketName);
+    final tempDir = await Directory.systemTemp.createTemp('feather-zip-');
+    final zipFile = File(p.join(tempDir.path, 'download.zip'));
+    final encoder = ZipFileEncoder()..create(zipFile.path);
+    int filesAdded = 0;
+
+    try {
+      for (final key in keys) {
+        final fullPath = p.join(bucketPath, key);
+        final type = await FileSystemEntity.type(fullPath);
+
+        if (type == FileSystemEntityType.file) {
+          await encoder.addFile(File(fullPath), key);
+          filesAdded++;
+        } else if (type == FileSystemEntityType.directory) {
+          final entities = await Directory(fullPath)
+              .list(recursive: true)
+              .toList();
+          for (final entity in entities) {
+            if (entity is File) {
+              final relativeKey = p
+                  .relative(entity.path, from: bucketPath)
+                  .replaceAll('\\', '/');
+              await encoder.addFile(entity, relativeKey);
+              filesAdded++;
+            }
+          }
+        }
+      }
+      await encoder.close();
+    } catch (_) {
+      await tempDir.delete(recursive: true);
+      rethrow;
+    }
+
+    if (filesAdded == 0) {
+      await tempDir.delete(recursive: true);
       throw NotFoundException(
         body: 'No se encontraron archivos para descargar.',
       );
     }
 
-    return ZipEncoder().encode(archive);
+    return zipFile;
+  }
+
+  /// Stream del fichero temporal que lo borra (junto a su carpeta) al terminar.
+  Stream<List<int>> openAndDeleteTemp(File file) async* {
+    try {
+      yield* file.openRead();
+    } finally {
+      await file.parent.delete(recursive: true);
+    }
   }
 
   Future<bool> deleteFile({

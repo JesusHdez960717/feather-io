@@ -28,9 +28,9 @@ class LoginResponse implements Serializable {
   @override
   Map<String, dynamic> toJson() {
     return {
-      'accessToken': accessToken,
-      'expiresIn': expiresIn,
-      'expireAt': expireAt.millisecondsSinceEpoch,
+      'access_token': accessToken,
+      'expires_in': expiresIn,
+      'expire_at': expireAt.millisecondsSinceEpoch,
     };
   }
 }

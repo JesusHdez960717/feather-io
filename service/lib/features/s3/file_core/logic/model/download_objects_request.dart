@@ -1,4 +1,4 @@
-import 'package:winter/winter.dart';
+import 'package:service/feather.dart';
 
 class DownloadObjectsRequest implements Serializable {
   final List<String> keys;

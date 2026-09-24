@@ -16,7 +16,7 @@ class JwtFilter extends Filter {
     RequestEntity request,
     FilterChain chain,
   ) async {
-    final authHeader = request.headers[HttpHeaders.authorization];
+    final authHeader = request.headers[HttpHeader.authorization];
 
     if (authHeader != null && authHeader.startsWith('Bearer ')) {
       final token = authHeader.substring(7);

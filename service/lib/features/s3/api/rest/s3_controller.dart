@@ -118,7 +118,7 @@ class S3Controller {
   Future<ResponseEntity> listBuckets(RequestEntity request) async {
     final buckets = await bucketService.listBuckets();
 
-    if (request.headers['accept']?.contains('application/json') == true) {
+    if (_acceptsJson(request)) {
       return ResponseEntity.ok(body: buckets);
     } else {
       final xmlBody = _mapBucketsToXml(buckets);
@@ -178,7 +178,7 @@ class S3Controller {
       delimiter: delimiter,
     );
 
-    if (request.headers['accept']?.contains('application/json') == true) {
+    if (_acceptsJson(request)) {
       return ResponseEntity.ok(body: result);
     } else {
       final xmlBody = _mapListObjectsToXml(result);
@@ -237,9 +237,13 @@ class S3Controller {
 
       return ResponseEntity.ok(body: result);
     } catch (e) {
+      if (e is ApiException) rethrow;
       throw BadRequestException(body: 'Invalid JSON for delete request: $e');
     }
   }
+
+  bool _acceptsJson(RequestEntity request) =>
+      request.headers['accept']?.contains('application/json') == true;
 
   String _mapBucketsToXml(List<BucketModel> buckets) {
     final buffer = StringBuffer();
