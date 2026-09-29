@@ -139,6 +139,7 @@ class S3Controller {
       // Usamos defaults si el body no es válido o está vacío
       createRequest = null;
     }
+    createRequest?.validate().throwOnFailure();
 
     await bucketService.createBucket(
       bucketName: bucketName,

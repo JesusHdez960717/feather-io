@@ -219,10 +219,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get bucketNameHyphenEdges => 'No puede empezar ni terminar con guion';
 
   @override
-  String get bucketRuleChars => 'Solo minúsculas y números';
-
-  @override
-  String get bucketRuleHyphens => 'Se permiten guiones';
+  String get bucketRuleChars => 'Solo minúsculas, números y guiones';
 
   @override
   String get bucketRuleHyphenEdges => 'Sin guion al inicio o al final';
@@ -290,4 +287,79 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get fileTypeArchive => 'Comprimido';
+
+  @override
+  String get colorNone => 'Sin color';
+
+  @override
+  String get colorCustom => 'Color personalizado';
+
+  @override
+  String get colorApply => 'Aplicar';
+
+  @override
+  String get colorSaturationBrightness => 'Saturación y brillo';
+
+  @override
+  String get colorHue => 'Tono';
+
+  @override
+  String colorContrast(String ratio) {
+    return 'Contraste con el icono: $ratio:1';
+  }
+
+  @override
+  String colorContrastLow(String ratio) {
+    return 'Poco contraste con el icono ($ratio:1)';
+  }
+
+  @override
+  String get colorHexInvalid =>
+      'Escribe un color HEX de 6 dígitos, por ejemplo #0E7490';
+
+  @override
+  String get colorViolet => 'Violeta';
+
+  @override
+  String get colorBlue => 'Azul';
+
+  @override
+  String get colorTeal => 'Verde azulado';
+
+  @override
+  String get colorGreen => 'Verde';
+
+  @override
+  String get colorAmber => 'Ámbar';
+
+  @override
+  String get colorRed => 'Rojo';
+
+  @override
+  String get colorPink => 'Rosa';
+
+  @override
+  String get colorSlate => 'Pizarra';
+
+  @override
+  String get bucketCreateColorLabel => 'Color';
+
+  @override
+  String get bucketNameExists => 'Ya existe un bucket con ese nombre';
+
+  @override
+  String get bucketCreateErrorTitle => 'No se pudo crear el bucket';
+
+  @override
+  String get bucketsCreating => 'Creando...';
+
+  @override
+  String bucketCreatedSuccess(String name) {
+    return 'Bucket «$name» creado';
+  }
+
+  @override
+  String bucketNamePathHint(String name) {
+    return 'Se usará en las rutas S3: /$name';
+  }
 }

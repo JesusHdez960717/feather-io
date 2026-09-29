@@ -56,7 +56,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
   @override
   void initState() {
     super.initState();
-    cubit = context.read<BrowserCubit>();
+    cubit = context.read<BrowserCubit>()..init();
   }
 
   @override
@@ -64,7 +64,6 @@ class _BrowserScreenState extends State<BrowserScreen> {
     return BlocBuilder<BrowserCubit, BrowserState>(
       builder: (context, state) {
         if (state is BrowserInitialState) {
-          cubit.init();
           return const LoadingPage();
         }
 

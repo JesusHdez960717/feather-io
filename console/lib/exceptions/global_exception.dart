@@ -1,4 +1,4 @@
-enum GlobalExceptionType { general, auth, validation }
+enum GlobalExceptionType { general, auth, validation, conflict }
 
 class GlobalException<T> implements Exception {
   final GlobalExceptionType type;

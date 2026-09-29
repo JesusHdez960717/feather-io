@@ -1,6 +1,8 @@
+///Una violacion de un 422, con el formato de Winter: `{fieldName, value, message}`
 class ValidationError {
+  ///Campo del request que no paso la validacion (p. ej. `description`)
   final String source;
-  final String invalidValue;
+  final Object? invalidValue;
   final String message;
 
   ValidationError({
@@ -11,9 +13,9 @@ class ValidationError {
 
   factory ValidationError.fromJson(Map<String, dynamic> json) =>
       ValidationError(
-        source: json['source'],
-        invalidValue: json['invalid_value'],
-        message: json['message'],
+        source: json['fieldName'] as String? ?? '',
+        invalidValue: json['value'],
+        message: json['message'] as String? ?? '',
       );
 
   @override

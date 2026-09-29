@@ -23,21 +23,6 @@ class BucketCubit extends Cubit<BucketState>
     }
   }
 
-  Future<void> createBucket({
-    required String name,
-    String? description,
-    int? color,
-  }) async {
-    await _process(
-      () => _repo.createBucket(
-        name: name,
-        description: description,
-        color: color,
-        token: _auth.auth?.accessToken,
-      ),
-    );
-  }
-
   Future<void> deleteBucket({required BucketModel bucket}) async {
     await _process(
       () =>

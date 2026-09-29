@@ -2,19 +2,33 @@ import 'package:console/app_exporter.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
+///Campo de formulario con etiqueta, contador, ayuda y error.
+///Estados: normal, hover, foco, error (de [validator] o de [errorText], p. ej. un
+///422 de la API; se ven igual) y desactivado. Se valida con el [Form] que lo contiene
 class AppFormInput extends StatefulWidget {
   final TextEditingController controller;
   final String? label;
   final String? hint;
+
+  ///Texto de ayuda bajo el campo; lo sustituye el error cuando lo hay
+  final String? helperText;
+
+  ///Error externo al [validator] (p. ej. de la API). Tiene prioridad sobre el del validator
+  final String? errorText;
   final int? maxLength;
   final bool showCounter;
   final FormFieldValidator<String>? validator;
   final List<TextInputFormatter>? inputFormatters;
   final TextInputType? keyboardType;
+  final TextInputAction? textInputAction;
   final int? minLines;
   final int? maxLines;
   final ValueChanged<String>? onChange;
+  final ValueChanged<String>? onSubmitted;
   final bool obscureText;
+  final bool enabled;
+  final bool autofocus;
+  final FocusNode? focusNode;
   final Widget? suffix;
   final Widget? prefix;
   final double? height;
@@ -28,15 +42,22 @@ class AppFormInput extends StatefulWidget {
     required this.controller,
     this.label,
     this.hint,
+    this.helperText,
+    this.errorText,
     this.maxLength,
     this.showCounter = false,
     this.validator,
     this.inputFormatters,
     this.keyboardType,
+    this.textInputAction,
     this.minLines,
     this.maxLines = 1,
     this.onChange,
+    this.onSubmitted,
     this.obscureText = false,
+    this.enabled = true,
+    this.autofocus = false,
+    this.focusNode,
     this.suffix,
     this.prefix,
     this.height,
@@ -53,15 +74,38 @@ class AppFormInput extends StatefulWidget {
 }
 
 class _AppFormInputState extends State<AppFormInput> {
+  FocusNode? _ownFocusNode;
+  bool _focused = false;
+  bool _hovered = false;
+
+  FocusNode get _focusNode =>
+      widget.focusNode ?? (_ownFocusNode ??= FocusNode());
+
   @override
   void initState() {
     super.initState();
     widget.controller.addListener(_update);
+    _focusNode.addListener(_onFocusChange);
+  }
+
+  @override
+  void didUpdateWidget(covariant AppFormInput oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_update);
+      widget.controller.addListener(_update);
+    }
+    if (oldWidget.focusNode != widget.focusNode) {
+      (oldWidget.focusNode ?? _ownFocusNode)?.removeListener(_onFocusChange);
+      _focusNode.addListener(_onFocusChange);
+    }
   }
 
   @override
   void dispose() {
     widget.controller.removeListener(_update);
+    _focusNode.removeListener(_onFocusChange);
+    _ownFocusNode?.dispose();
     super.dispose();
   }
 
@@ -69,94 +113,207 @@ class _AppFormInputState extends State<AppFormInput> {
     if (mounted) setState(() {});
   }
 
+  void _onFocusChange() {
+    if (mounted) setState(() => _focused = _focusNode.hasFocus);
+  }
+
+  bool get _hasHelpRow =>
+      widget.validator != null ||
+      widget.helperText != null ||
+      widget.errorText != null;
+
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: app.colors.neutral.transparent,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (widget.label != null || widget.showCounter)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return FormField<String>(
+      validator: widget.validator == null
+          ? null
+          : (_) => widget.validator!(widget.controller.text),
+      builder: (field) {
+        final error = widget.errorText ?? field.errorText;
+        return Opacity(
+          opacity: widget.enabled ? 1 : 0.55,
+          child: Material(
+            color: app.colors.neutral.transparent,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                if (widget.label != null)
-                  Text(
-                    widget.label!,
-                    style: app.textTheme.bodyMedium!.copyWith(
-                      color: app.colors.neutral.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                if (widget.showCounter)
-                  Text(
-                    _counterText,
-                    style: app.textTheme.labelMedium?.copyWith(
-                      color: app.colors.neutral.grey3,
-                    ),
-                  ),
-              ],
-            ),
-          if (widget.label != null || widget.showCounter)
-            app.dimensions.padding.s.gap(),
-          Container(
-            height: widget.height,
-            decoration: BoxDecoration(
-              color:
-                  widget.backgroundColor ?? app.colors.primary.backgroundForm,
-              borderRadius:
-                  widget.borderRadius ?? app.dimensions.border.borderRadius.s,
-              border: Border.all(
-                color: widget.borderColor ?? app.colors.neutral.grey3,
-                width: widget.borderWidth ?? app.dimensions.border.width.s,
-              ),
-            ),
-            child: Row(
-              children: [
-                if (widget.prefix != null) widget.prefix!,
-                Expanded(
-                  child: TextFormField(
-                    controller: widget.controller,
-                    validator: widget.validator,
-                    inputFormatters: widget.inputFormatters,
-                    keyboardType: widget.keyboardType,
-                    minLines: widget.minLines,
-                    maxLines: widget.maxLines,
-                    onChanged: widget.onChange,
-                    obscureText: widget.obscureText,
-                    style: app.textTheme.bodyLarge?.copyWith(
-                      color: app.colors.neutral.white,
-                    ),
-                    textAlignVertical: TextAlignVertical.center,
-                    maxLength: widget.maxLength,
-                    decoration: InputDecoration(
-                      hintText: widget.hint,
-                      hintStyle: app.textTheme.bodyMedium?.copyWith(
-                        color: app.colors.neutral.grey3,
-                      ),
-                      isDense: true,
-                      contentPadding:
-                          widget.contentPadding ??
-                          EdgeInsets.symmetric(
-                            horizontal: app.dimensions.padding.m,
-                            vertical: app.dimensions.padding.m,
-                          ),
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      errorBorder: InputBorder.none,
-                      focusedErrorBorder: InputBorder.none,
-                      counterText: '',
-                    ),
-                  ),
-                ),
-                if (widget.suffix != null) widget.suffix!,
+                if (widget.label != null || widget.showCounter) ...[
+                  _buildHeader(hasError: error != null),
+                  app.dimensions.padding.s.gap(),
+                ],
+                _buildBox(field, hasError: error != null),
+                if (_hasHelpRow) ...[
+                  app.dimensions.padding.s.gap(),
+                  _buildHelp(error),
+                ],
               ],
             ),
           ),
-        ],
+        );
+      },
+    );
+  }
+
+  Widget _buildHeader({required bool hasError}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        if (widget.label != null)
+          Flexible(
+            child: Text(
+              widget.label!,
+              style: app.textTheme.bodyMedium!.copyWith(
+                color: hasError
+                    ? app.colors.primary.error
+                    : app.colors.neutral.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        if (widget.showCounter)
+          Text(
+            _counterText,
+            style: app.textTheme.labelMedium?.copyWith(
+              color: app.colors.neutral.grey3,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildBox(FormFieldState<String> field, {required bool hasError}) {
+    final errorColor = app.colors.primary.error;
+    final focusColor = app.colors.primary.primaryFaded;
+
+    final Color borderColor;
+    final List<BoxShadow> shadows;
+    if (hasError) {
+      borderColor = errorColor;
+      shadows = [
+        BoxShadow(color: errorColor, spreadRadius: 1),
+        if (_focused)
+          BoxShadow(color: errorColor.withValues(alpha: 0.2), spreadRadius: 4),
+      ];
+    } else if (_focused) {
+      borderColor = focusColor;
+      shadows = [
+        BoxShadow(color: focusColor, spreadRadius: 1),
+        BoxShadow(color: focusColor.withValues(alpha: 0.25), spreadRadius: 4),
+      ];
+    } else {
+      borderColor = _hovered && widget.enabled
+          ? app.colors.neutral.grey2
+          : widget.borderColor ?? app.colors.neutral.grey3;
+      shadows = const [];
+    }
+
+    return MouseRegion(
+      cursor: widget.enabled
+          ? SystemMouseCursors.text
+          : SystemMouseCursors.forbidden,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: Container(
+        height: widget.height,
+        decoration: BoxDecoration(
+          color: widget.backgroundColor ?? app.colors.primary.backgroundForm,
+          borderRadius:
+              widget.borderRadius ?? app.dimensions.border.borderRadius.s,
+          border: Border.all(
+            color: borderColor,
+            width: widget.borderWidth ?? app.dimensions.border.width.s,
+          ),
+          boxShadow: shadows,
+        ),
+        child: Row(
+          children: [
+            if (widget.prefix != null) widget.prefix!,
+            Expanded(
+              child: TextField(
+                controller: widget.controller,
+                focusNode: _focusNode,
+                enabled: widget.enabled,
+                autofocus: widget.autofocus,
+                inputFormatters: widget.inputFormatters,
+                keyboardType: widget.keyboardType,
+                textInputAction: widget.textInputAction,
+                minLines: widget.minLines,
+                maxLines: widget.maxLines,
+                obscureText: widget.obscureText,
+                onChanged: (value) {
+                  field.didChange(value);
+                  widget.onChange?.call(value);
+                },
+                onSubmitted: widget.onSubmitted,
+                style: app.textTheme.bodyLarge?.copyWith(
+                  color: app.colors.neutral.white,
+                ),
+                textAlignVertical: TextAlignVertical.center,
+                maxLength: widget.maxLength,
+                decoration: InputDecoration(
+                  hintText: widget.hint,
+                  hintStyle: app.textTheme.bodyMedium?.copyWith(
+                    color: app.colors.neutral.grey3,
+                  ),
+                  isDense: true,
+                  contentPadding:
+                      widget.contentPadding ??
+                      EdgeInsets.symmetric(
+                        horizontal: app.dimensions.padding.m,
+                        vertical: app.dimensions.padding.m,
+                      ),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  disabledBorder: InputBorder.none,
+                  errorBorder: InputBorder.none,
+                  focusedErrorBorder: InputBorder.none,
+                  counterText: '',
+                ),
+              ),
+            ),
+            if (widget.suffix != null) widget.suffix!,
+          ],
+        ),
       ),
+    );
+  }
+
+  ///Linea fija bajo el campo: el error (con icono) o la ayuda. Ocupa siempre
+  ///su alto para que el formulario no salte al aparecer un error
+  Widget _buildHelp(String? error) {
+    final style = app.textTheme.bodySmall;
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 16),
+      child: error != null
+          ? Semantics(
+              liveRegion: true,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 1),
+                    child: Icon(
+                      Icons.error_outline,
+                      size: 14,
+                      color: app.colors.primary.error,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      error,
+                      style: style?.copyWith(color: app.colors.primary.error),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : Text(
+              widget.helperText ?? '',
+              style: style?.copyWith(color: app.colors.neutral.grey3),
+            ),
     );
   }
 

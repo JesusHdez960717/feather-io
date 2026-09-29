@@ -2,7 +2,9 @@ import 'package:console/app_exporter.dart';
 import 'package:flutter/material.dart';
 
 class FormDrawerTemplate extends StatelessWidget {
-  static void showAsDialog({
+  ///Se completa al cerrarse el cajon. Para impedir que se cierre (p. ej.
+  ///mientras se envia), el [child] puede envolverse en un [PopScope]
+  static Future<void> showAsDialog({
     required String title,
     required String description,
     required SvgAsset icon,
@@ -11,7 +13,7 @@ class FormDrawerTemplate extends StatelessWidget {
     BuildContext? context,
     double? width,
   }) {
-    showGeneralDialog(
+    return showGeneralDialog(
       context: context ?? app.context,
       barrierDismissible: true,
       barrierLabel: app.intl.close,
@@ -139,7 +141,8 @@ class FormDrawerTemplate extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
+                    tooltip: app.intl.close,
+                    onPressed: () => Navigator.of(context).maybePop(),
                     icon: Icon(Icons.close, color: app.colors.neutral.grey3),
                   ),
                 ],

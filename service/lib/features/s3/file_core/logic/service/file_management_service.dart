@@ -22,11 +22,14 @@ class FileManagementService {
       );
     }
 
-    //creo el bucket físicamente
+    //como S3 (BucketAlreadyOwnedByYou), crear un bucket que ya existe es un 409
     final bucketDir = Directory(_getBucketPath(bucketName));
-    if (!await bucketDir.exists()) {
-      await bucketDir.create(recursive: true);
+    if (await bucketDir.exists()) {
+      throw ConflictException(body: 'El bucket "$bucketName" ya existe.');
     }
+
+    //creo el bucket físicamente
+    await bucketDir.create(recursive: true);
 
     return true;
   }

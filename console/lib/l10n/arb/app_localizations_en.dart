@@ -218,10 +218,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bucketNameHyphenEdges => 'Cannot start or end with a hyphen';
 
   @override
-  String get bucketRuleChars => 'Lowercase & numbers only';
-
-  @override
-  String get bucketRuleHyphens => 'Hyphens allowed';
+  String get bucketRuleChars => 'Lowercase, numbers and hyphens only';
 
   @override
   String get bucketRuleHyphenEdges => 'No hyphen at start/end';
@@ -289,4 +286,79 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fileTypeArchive => 'Archive';
+
+  @override
+  String get colorNone => 'No color';
+
+  @override
+  String get colorCustom => 'Custom color';
+
+  @override
+  String get colorApply => 'Apply';
+
+  @override
+  String get colorSaturationBrightness => 'Saturation and brightness';
+
+  @override
+  String get colorHue => 'Hue';
+
+  @override
+  String colorContrast(String ratio) {
+    return 'Icon contrast: $ratio:1';
+  }
+
+  @override
+  String colorContrastLow(String ratio) {
+    return 'Low contrast with the icon ($ratio:1)';
+  }
+
+  @override
+  String get colorHexInvalid =>
+      'Enter a 6-digit HEX color, for example #0E7490';
+
+  @override
+  String get colorViolet => 'Violet';
+
+  @override
+  String get colorBlue => 'Blue';
+
+  @override
+  String get colorTeal => 'Teal';
+
+  @override
+  String get colorGreen => 'Green';
+
+  @override
+  String get colorAmber => 'Amber';
+
+  @override
+  String get colorRed => 'Red';
+
+  @override
+  String get colorPink => 'Pink';
+
+  @override
+  String get colorSlate => 'Slate';
+
+  @override
+  String get bucketCreateColorLabel => 'Color';
+
+  @override
+  String get bucketNameExists => 'A bucket with this name already exists';
+
+  @override
+  String get bucketCreateErrorTitle => 'Couldn\'t create the bucket';
+
+  @override
+  String get bucketsCreating => 'Creating...';
+
+  @override
+  String bucketCreatedSuccess(String name) {
+    return 'Bucket \"$name\" created';
+  }
+
+  @override
+  String bucketNamePathHint(String name) {
+    return 'Used in S3 paths: /$name';
+  }
 }

@@ -86,8 +86,7 @@
   "bucketNameLength": "Between 3 and 63 characters",
   "bucketNameChars": "Lowercase, numbers and hyphens only",
   "bucketNameHyphenEdges": "Cannot start or end with a hyphen",
-  "bucketRuleChars": "Lowercase & numbers only",
-  "bucketRuleHyphens": "Hyphens allowed",
+  "bucketRuleChars": "Lowercase, numbers and hyphens only",
   "bucketRuleHyphenEdges": "No hyphen at start/end",
   "objectsSearchHint": "Search objects...",
   "objectsEmpty": "No objects found",
@@ -120,5 +119,55 @@
   "fileTypeText": "Text",
   "fileTypeDocument": "Document",
   "fileTypeSpreadsheet": "Spreadsheet",
-  "fileTypeArchive": "Archive"
+  "fileTypeArchive": "Archive",
+  "colorNone": "No color",
+  "colorCustom": "Custom color",
+  "colorApply": "Apply",
+  "colorSaturationBrightness": "Saturation and brightness",
+  "colorHue": "Hue",
+  "colorContrast": "Icon contrast: {ratio}:1",
+  "@colorContrast": {
+    "placeholders": {
+      "ratio": {
+        "type": "String"
+      }
+    }
+  },
+  "colorContrastLow": "Low contrast with the icon ({ratio}:1)",
+  "@colorContrastLow": {
+    "placeholders": {
+      "ratio": {
+        "type": "String"
+      }
+    }
+  },
+  "colorHexInvalid": "Enter a 6-digit HEX color, for example #0E7490",
+  "colorViolet": "Violet",
+  "colorBlue": "Blue",
+  "colorTeal": "Teal",
+  "colorGreen": "Green",
+  "colorAmber": "Amber",
+  "colorRed": "Red",
+  "colorPink": "Pink",
+  "colorSlate": "Slate",
+  "bucketCreateColorLabel": "Color",
+  "bucketNameExists": "A bucket with this name already exists",
+  "bucketCreateErrorTitle": "Couldn't create the bucket",
+  "bucketsCreating": "Creating...",
+  "bucketCreatedSuccess": "Bucket \"{name}\" created",
+  "@bucketCreatedSuccess": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "bucketNamePathHint": "Used in S3 paths: /{name}",
+  "@bucketNamePathHint": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }

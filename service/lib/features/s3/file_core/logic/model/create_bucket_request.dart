@@ -1,6 +1,8 @@
 import 'package:service/feather.dart';
 
-class CreateBucketRequest implements Serializable {
+class CreateBucketRequest implements Serializable, Validatable {
+  static const int maxDescriptionLength = 1024;
+
   final String? description;
   final int? color;
 
@@ -14,6 +16,25 @@ class CreateBucketRequest implements Serializable {
       description: json['description'] as String?,
       color: json['color'] as int?,
     );
+  }
+
+  @override
+  ConstraintValidatorContext validate() {
+    final cvc = ConstraintValidatorContext();
+
+    cvc
+        .buildValidator('description')
+        .size(max: maxDescriptionLength)
+        .validate(description);
+
+    //color ARGB de 32 bits sin signo, como lo envia la consola (Color.toARGB32)
+    cvc
+        .buildValidator('color')
+        .min(0)
+        .max(0xFFFFFFFF)
+        .validate(color);
+
+    return cvc;
   }
 
   @override

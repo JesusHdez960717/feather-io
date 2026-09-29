@@ -10,6 +10,39 @@ class AppColors {
 
   PrimaryColor primary = PrimaryColor();
   NeutralColor neutral = NeutralColor();
+  PaletteColor palette = PaletteColor();
+}
+
+///Colores que el usuario puede elegir (p. ej. el color de un bucket). Todos
+///superan 5:1 con un icono blanco encima
+class PaletteColor {
+  Color get violet => const Color(0xFF5C4999);
+
+  Color get blue => const Color(0xFF2652E0);
+
+  Color get teal => const Color(0xFF0F766E);
+
+  Color get green => const Color(0xFF2E7D32);
+
+  Color get amber => const Color(0xFFA15C00);
+
+  Color get red => const Color(0xFFC62828);
+
+  Color get pink => const Color(0xFFC0156E);
+
+  Color get slate => const Color(0xFF475569);
+
+  ///Cuñas del circulo de color personalizado, en sentido horario desde arriba
+  List<Color> get wheel => const [
+    Color(0xFFEF4444),
+    Color(0xFFF97316),
+    Color(0xFFEAB308),
+    Color(0xFF22C55E),
+    Color(0xFF06B6D4),
+    Color(0xFF3B82F6),
+    Color(0xFF8B5CF6),
+    Color(0xFFEC4899),
+  ];
 }
 
 class PrimaryColor {

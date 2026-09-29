@@ -3,37 +3,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class BucketCreateForm extends StatefulWidget {
-  ///Usa el [BucketCubit] de la pantalla que lo abre, asi el listado se recarga
-  ///y la carga/errores los muestra esa pantalla
-  static void open(BuildContext context) {
+  ///Abre el cajon con su propio [BucketCreateCubit]: la carga y los errores se
+  ///muestran dentro del formulario. Al crear, recarga el [BucketCubit] de la pantalla
+  static Future<void> open(BuildContext context) async {
     final key = GlobalKey<BucketCreateFormState>();
-    final cubit = context.read<BucketCubit>();
-    FormDrawerTemplate.showAsDialog(
+    final bucketCubit = context.read<BucketCubit>();
+    final createCubit = BucketCreateCubit(app.di.find(), app.di.find());
+
+    await FormDrawerTemplate.showAsDialog(
       title: app.intl.bucketsCreate,
       description: app.intl.bucketCreateDescription,
       icon: app.assets.icons.storage.bucket,
       footerActions: [
-        PrimaryButton.secondary(
-          onPressed: () => Navigator.of(context).pop(),
-          title: app.intl.cancel,
-          h: 40,
-          w: 100,
-        ),
-        PrimaryButton.primary(
-          onPressed: () {
-            key.currentState?.submit();
-          },
-          title: app.intl.bucketsCreate,
-          h: 40,
-          w: 160,
-          icon: app.assets.icons.actions.add,
+        BlocProvider.value(
+          value: createCubit,
+          child: _BucketCreateFooter(
+            onSubmit: () => key.currentState?.submit(),
+          ),
         ),
       ],
-      child: BlocProvider.value(
-        value: cubit,
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: bucketCubit),
+          BlocProvider.value(value: createCubit),
+        ],
         child: BucketCreateForm(key: key),
       ),
     );
+    await createCubit.close();
   }
 
   const BucketCreateForm({super.key});
@@ -43,39 +40,55 @@ class BucketCreateForm extends StatefulWidget {
 }
 
 class BucketCreateFormState extends State<BucketCreateForm> {
+  static const int _nameMaxLength = 63;
+  static const int _descriptionMaxLength = 1024;
+
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _nameFocus = FocusNode();
+  final _descriptionFocus = FocusNode();
+  Color? _color;
 
-  late final BucketCubit cubit;
+  ///Tras el primer intento de envio se valida en cada cambio
+  bool _submitted = false;
+
+  ///Errores de la API por campo; se borran al editar ese campo
+  Map<String, String> _serverErrors = const {};
+
+  ///Error de la API que no es de un campo concreto
+  String? _formError;
+
+  late final BucketCreateCubit cubit;
 
   @override
   void initState() {
     super.initState();
-
-    cubit = context.read<BucketCubit>();
-
-    _nameController.addListener(() {
-      setState(() {});
-    });
+    cubit = context.read<BucketCreateCubit>();
+    _nameController.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
+    _nameFocus.dispose();
+    _descriptionFocus.dispose();
     super.dispose();
   }
+
+  bool get _busy => cubit.state is BucketCreateProcessInProgressState;
+
+  static final _nameChars = RegExp(r'^[a-z0-9-]*$');
 
   String? _validateName(String? value) {
     if (value == null || value.isEmpty) {
       return app.intl.bucketNameRequired;
     }
-    if (value.length < 3 || value.length > 63) {
+    if (value.length < 3 || value.length > _nameMaxLength) {
       return app.intl.bucketNameLength;
     }
-    final regex = RegExp(r'^[a-z0-9-]+$');
-    if (!regex.hasMatch(value)) {
+    if (!_nameChars.hasMatch(value)) {
       return app.intl.bucketNameChars;
     }
     if (value.startsWith('-') || value.endsWith('-')) {
@@ -84,51 +97,200 @@ class BucketCreateFormState extends State<BucketCreateForm> {
     return null;
   }
 
+  ///Lo que ya no se arregla escribiendo mas (caracteres, guion al inicio) falla
+  ///al momento; la longitud y el guion final solo tras intentar enviar
+  List<AppValidationRule> get _nameRules {
+    final name = _nameController.text;
+    final lengthOk = name.length >= 3 && name.length <= _nameMaxLength;
+
+    AppRuleState state({required bool ok, required bool failNow}) {
+      if (ok) return AppRuleState.ok;
+      return failNow || _submitted ? AppRuleState.fail : AppRuleState.pending;
+    }
+
+    return [
+      AppValidationRule(
+        label: app.intl.bucketNameLength,
+        state: state(ok: lengthOk, failNow: false),
+      ),
+      AppValidationRule(
+        label: app.intl.bucketRuleChars,
+        state: name.isEmpty
+            ? AppRuleState.pending
+            : state(ok: _nameChars.hasMatch(name), failNow: true),
+      ),
+      AppValidationRule(
+        label: app.intl.bucketRuleHyphenEdges,
+        state: name.isEmpty
+            ? AppRuleState.pending
+            : state(
+                ok: !name.startsWith('-') && !name.endsWith('-'),
+                failNow: name.startsWith('-'),
+              ),
+      ),
+    ];
+  }
+
+  void _clearServerError(String field) {
+    if (!_serverErrors.containsKey(field)) return;
+    setState(() => _serverErrors = {..._serverErrors}..remove(field));
+  }
+
+  void submit() {
+    if (_busy) return;
+    setState(() {
+      _submitted = true;
+      _formError = null;
+    });
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      _nameFocus.requestFocus();
+      return;
+    }
+    cubit.create(
+      name: _nameController.text,
+      description: _descriptionController.text.isEmpty
+          ? null
+          : _descriptionController.text,
+      color: _color?.toARGB32(),
+    );
+  }
+
+  void _onState(BuildContext context, BucketCreateState state) {
+    if (state is BucketCreateProcessingOKState) {
+      final bucketCubit = context.read<BucketCubit>();
+      Navigator.of(context).pop();
+      bucketCubit.load();
+      app.snack.showSuccess(
+        message: app.intl.bucketCreatedSuccess(state.name),
+        context: app.context,
+      );
+    } else if (state is BucketCreateProcessingErrorState) {
+      const fields = {BucketCreateField.name, BucketCreateField.description};
+      final unmatched = state.fieldErrors.entries
+          .where((e) => !fields.contains(e.key))
+          .map((e) => e.value);
+      setState(() {
+        _serverErrors = {
+          for (final e in state.fieldErrors.entries)
+            if (fields.contains(e.key)) e.key: e.value,
+        };
+        _formError = state.fieldErrors.isEmpty
+            ? state.exception.message
+            : unmatched.isEmpty
+            ? null
+            : unmatched.join('\n');
+      });
+      if (_serverErrors.containsKey(BucketCreateField.name)) {
+        _nameFocus.requestFocus();
+      } else if (_serverErrors.containsKey(BucketCreateField.description)) {
+        _descriptionFocus.requestFocus();
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return BlocListener<BucketCubit, BucketState>(
-      listenWhen: (previous, current) => current is BucketProcessingOKState,
-      listener: (context, state) => app.navigator.pop(),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSection(
-              title: app.intl.bucketCreateSectionGeneral,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AppFormInput(
-                    controller: _nameController,
-                    label: app.intl.bucketCreateNameLabel,
-                    hint: app.intl.bucketCreateNameHint,
-                    showCounter: true,
-                    maxLength: 63,
-                    validator: _validateName,
+    return BlocConsumer<BucketCreateCubit, BucketCreateState>(
+      listener: _onState,
+      builder: (context, state) {
+        final busy = state is BucketCreateProcessInProgressState;
+        return PopScope(
+          canPop: !busy,
+          child: Form(
+            key: _formKey,
+            autovalidateMode: _submitted
+                ? AutovalidateMode.always
+                : AutovalidateMode.disabled,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (_formError != null) ...[
+                  AppFormAlert(
+                    title: app.intl.bucketCreateErrorTitle,
+                    message: _formError!,
                   ),
-
-                  app.dimensions.padding.m.gap(),
-                  _buildValidationList(),
+                  app.dimensions.padding.xl.gap(),
                 ],
-              ),
+                _buildSection(
+                  title: app.intl.bucketCreateSectionGeneral,
+                  child: _buildGeneral(busy),
+                ),
+                app.dimensions.padding.xl.gap(),
+                _buildSection(
+                  title: app.intl.bucketCreateSectionAdditional,
+                  child: _buildAdditional(busy),
+                ),
+              ],
             ),
-            app.dimensions.padding.xl.gap(),
-            _buildSection(
-              title: app.intl.bucketCreateSectionAdditional,
-              child: AppFormInput(
-                label: app.intl.bucketCreateDescriptionLabel,
-                controller: _descriptionController,
-                hint: app.intl.bucketCreateDescriptionHint,
-                maxLines: 3,
-                showCounter: true,
-                maxLength: 1024,
-                height: 120,
-              ),
-            ),
-          ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildGeneral(bool busy) {
+    final name = _nameController.text;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppFormInput(
+          controller: _nameController,
+          focusNode: _nameFocus,
+          autofocus: true,
+          enabled: !busy,
+          label: app.intl.bucketCreateNameLabel,
+          hint: app.intl.bucketCreateNameHint,
+          helperText: app.intl.bucketNamePathHint(
+            name.isEmpty ? app.intl.bucketCreateNameHint : name,
+          ),
+          errorText: _serverErrors[BucketCreateField.name],
+          showCounter: true,
+          maxLength: _nameMaxLength,
+          validator: _validateName,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => submit(),
+          onChange: (_) => _clearServerError(BucketCreateField.name),
         ),
-      ),
+        app.dimensions.padding.m.gap(),
+        AppValidationRules(rules: _nameRules),
+      ],
+    );
+  }
+
+  Widget _buildAdditional(bool busy) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppFormInput(
+          controller: _descriptionController,
+          focusNode: _descriptionFocus,
+          enabled: !busy,
+          label: app.intl.bucketCreateDescriptionLabel,
+          hint: app.intl.bucketCreateDescriptionHint,
+          errorText: _serverErrors[BucketCreateField.description],
+          maxLines: 3,
+          showCounter: true,
+          maxLength: _descriptionMaxLength,
+          height: 120,
+          onChange: (_) => _clearServerError(BucketCreateField.description),
+        ),
+        app.dimensions.padding.l.gap(),
+        Text(
+          app.intl.bucketCreateColorLabel,
+          style: app.textTheme.bodyMedium!.copyWith(
+            color: app.colors.neutral.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        app.dimensions.padding.s.gap(),
+        AppColorPicker(
+          value: _color,
+          enabled: !busy,
+          onChanged: (color) => setState(() => _color = color),
+          contrastAgainst: app.colors.neutral.white,
+          previewIcon: app.assets.icons.storage.bucket,
+        ),
+      ],
     );
   }
 
@@ -159,56 +321,40 @@ class BucketCreateFormState extends State<BucketCreateForm> {
       ],
     );
   }
+}
 
-  Widget _buildValidationList() {
-    final name = _nameController.text;
-    final isLenOk = name.length >= 3 && name.length <= 63;
-    final isCharsOk = RegExp(r'^[a-z0-9-]+$').hasMatch(name) || name.isEmpty;
-    final noHyphenStartEnd = !name.startsWith('-') && !name.endsWith('-');
+///Pie del cajon: *Cancelar* y *Crear bucket*, que pasa a carga mientras se envia
+class _BucketCreateFooter extends StatelessWidget {
+  final VoidCallback onSubmit;
 
-    Widget buildItem(String text, bool ok) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            ok ? Icons.check_circle_outline : Icons.circle_outlined,
-            size: 14,
-            color: ok ? app.colors.primary.green : app.colors.neutral.grey4,
-          ),
-          app.dimensions.padding.xs.gap(),
-          Text(
-            text,
-            style: app.textTheme.bodySmall?.copyWith(
-              color: ok ? app.colors.neutral.grey2 : app.colors.neutral.grey4,
+  const _BucketCreateFooter({required this.onSubmit});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<BucketCreateCubit, BucketCreateState>(
+      builder: (context, state) {
+        final busy = state is BucketCreateProcessInProgressState;
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            PrimaryButton.secondary(
+              onPressed: busy ? null : () => Navigator.of(context).maybePop(),
+              title: app.intl.cancel,
+              h: 40,
+              w: 100,
             ),
-          ),
-        ],
-      );
-    }
-
-    return Wrap(
-      spacing: app.dimensions.padding.l,
-      runSpacing: app.dimensions.padding.s,
-      children: [
-        buildItem(app.intl.bucketNameLength, isLenOk),
-        buildItem(app.intl.bucketRuleChars, isCharsOk),
-        buildItem(app.intl.bucketRuleHyphens, true),
-        buildItem(
-          app.intl.bucketRuleHyphenEdges,
-          noHyphenStartEnd || name.isEmpty,
-        ),
-      ],
+            app.dimensions.padding.m.gap(),
+            PrimaryButton.primary(
+              onPressed: onSubmit,
+              isLoading: busy,
+              title: busy ? app.intl.bucketsCreating : app.intl.bucketsCreate,
+              h: 40,
+              w: 160,
+              icon: app.assets.icons.actions.add,
+            ),
+          ],
+        );
+      },
     );
-  }
-
-  void submit() {
-    if (_formKey.currentState?.validate() ?? false) {
-      cubit.createBucket(
-        name: _nameController.text,
-        description: _descriptionController.text.isEmpty
-            ? null
-            : _descriptionController.text,
-      );
-    }
   }
 }

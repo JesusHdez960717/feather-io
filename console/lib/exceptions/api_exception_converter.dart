@@ -71,6 +71,12 @@ class ApiExceptionConverter {
             )
             .toList(),
       );
+    } else if (error.response!.statusCode == 409) {
+      return GlobalException(
+        type: GlobalExceptionType.conflict,
+        message: error.response!.data.toString(),
+        data: error.response!.data,
+      );
     } else if (error.response!.statusCode! >= 500) {
       return GlobalException(
         type: GlobalExceptionType.general,

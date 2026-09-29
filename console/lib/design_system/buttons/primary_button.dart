@@ -11,10 +11,14 @@ class PrimaryButton extends StatelessWidget {
     BorderRadius? borderRadius,
     double? h,
     double? w,
+    bool isLoading = false,
   }) {
+    final background = color ?? app.colors.primary.purple.brighten(0.15);
     return PrimaryButton(
       onPressed: onPressed,
-      color: color ?? app.colors.primary.purple.brighten(0.15),
+      isLoading: isLoading,
+      color: background,
+      disabledColor: background.withValues(alpha: 0.55),
       title: title,
       icon: icon?.build(size: 16, color: iconColor ?? app.colors.neutral.white),
       titleStyle: app.textTheme.titleMedium?.copyWith(
@@ -35,10 +39,14 @@ class PrimaryButton extends StatelessWidget {
     BorderRadius? borderRadius,
     double? h,
     double? w,
+    bool isLoading = false,
   }) {
+    final background = color ?? app.colors.primary.background3;
     return PrimaryButton(
       onPressed: onPressed,
-      color: color ?? app.colors.primary.background3,
+      isLoading: isLoading,
+      color: background,
+      disabledColor: background.withValues(alpha: 0.55),
       title: title,
       titleStyle: app.textTheme.bodyMedium?.copyWith(
         color: app.colors.neutral.white,
@@ -97,6 +105,10 @@ class PrimaryButton extends StatelessWidget {
   final double? h;
   final BorderRadius? borderRadius;
 
+  ///Mientras carga, conserva tamaño y color, cambia el icono por un spinner e
+  ///ignora las pulsaciones. Quien lo usa pasa el texto en gerundio (*Creando...*)
+  final bool isLoading;
+
   const PrimaryButton({
     required this.color,
     required this.title,
@@ -107,16 +119,28 @@ class PrimaryButton extends StatelessWidget {
     this.w,
     this.h,
     this.borderRadius,
+    this.isLoading = false,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
+    final leading = isLoading
+        ? SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: app.colors.neutral.white,
+              backgroundColor: app.colors.neutral.white.withValues(alpha: 0.35),
+            ),
+          )
+        : icon;
     return SizedBox(
       width: w,
       height: h,
       child: FilledButton(
-        onPressed: onPressed,
+        onPressed: isLoading ? () {} : onPressed,
         style: FilledButton.styleFrom(
           padding: EdgeInsets.zero,
           backgroundColor: color,
@@ -130,8 +154,8 @@ class PrimaryButton extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (icon != null) ...[icon!],
-              if (icon != null && title.isNotEmpty) ...[
+              if (leading != null) ...[leading],
+              if (leading != null && title.isNotEmpty) ...[
                 app.dimensions.padding.s.gap(),
               ],
               if (title.isNotEmpty) ...[Text(title, style: titleStyle)],

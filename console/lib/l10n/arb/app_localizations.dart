@@ -491,14 +491,8 @@ abstract class AppLocalizations {
   /// No description provided for @bucketRuleChars.
   ///
   /// In en, this message translates to:
-  /// **'Lowercase & numbers only'**
+  /// **'Lowercase, numbers and hyphens only'**
   String get bucketRuleChars;
-
-  /// No description provided for @bucketRuleHyphens.
-  ///
-  /// In en, this message translates to:
-  /// **'Hyphens allowed'**
-  String get bucketRuleHyphens;
 
   /// No description provided for @bucketRuleHyphenEdges.
   ///
@@ -613,6 +607,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Archive'**
   String get fileTypeArchive;
+
+  /// No description provided for @colorNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No color'**
+  String get colorNone;
+
+  /// No description provided for @colorCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom color'**
+  String get colorCustom;
+
+  /// No description provided for @colorApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get colorApply;
+
+  /// No description provided for @colorSaturationBrightness.
+  ///
+  /// In en, this message translates to:
+  /// **'Saturation and brightness'**
+  String get colorSaturationBrightness;
+
+  /// No description provided for @colorHue.
+  ///
+  /// In en, this message translates to:
+  /// **'Hue'**
+  String get colorHue;
+
+  /// No description provided for @colorContrast.
+  ///
+  /// In en, this message translates to:
+  /// **'Icon contrast: {ratio}:1'**
+  String colorContrast(String ratio);
+
+  /// No description provided for @colorContrastLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low contrast with the icon ({ratio}:1)'**
+  String colorContrastLow(String ratio);
+
+  /// No description provided for @colorHexInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a 6-digit HEX color, for example #0E7490'**
+  String get colorHexInvalid;
+
+  /// No description provided for @colorViolet.
+  ///
+  /// In en, this message translates to:
+  /// **'Violet'**
+  String get colorViolet;
+
+  /// No description provided for @colorBlue.
+  ///
+  /// In en, this message translates to:
+  /// **'Blue'**
+  String get colorBlue;
+
+  /// No description provided for @colorTeal.
+  ///
+  /// In en, this message translates to:
+  /// **'Teal'**
+  String get colorTeal;
+
+  /// No description provided for @colorGreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Green'**
+  String get colorGreen;
+
+  /// No description provided for @colorAmber.
+  ///
+  /// In en, this message translates to:
+  /// **'Amber'**
+  String get colorAmber;
+
+  /// No description provided for @colorRed.
+  ///
+  /// In en, this message translates to:
+  /// **'Red'**
+  String get colorRed;
+
+  /// No description provided for @colorPink.
+  ///
+  /// In en, this message translates to:
+  /// **'Pink'**
+  String get colorPink;
+
+  /// No description provided for @colorSlate.
+  ///
+  /// In en, this message translates to:
+  /// **'Slate'**
+  String get colorSlate;
+
+  /// No description provided for @bucketCreateColorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get bucketCreateColorLabel;
+
+  /// No description provided for @bucketNameExists.
+  ///
+  /// In en, this message translates to:
+  /// **'A bucket with this name already exists'**
+  String get bucketNameExists;
+
+  /// No description provided for @bucketCreateErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t create the bucket'**
+  String get bucketCreateErrorTitle;
+
+  /// No description provided for @bucketsCreating.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating...'**
+  String get bucketsCreating;
+
+  /// No description provided for @bucketCreatedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Bucket \"{name}\" created'**
+  String bucketCreatedSuccess(String name);
+
+  /// No description provided for @bucketNamePathHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Used in S3 paths: /{name}'**
+  String bucketNamePathHint(String name);
 }
 
 class _AppLocalizationsDelegate
