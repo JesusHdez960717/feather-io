@@ -1,11 +1,11 @@
 {
-    "name": "expenses_management_admin",
-    "short_name": "expenses_management_admin",
+    "name": "Feather IO Console",
+    "short_name": "Feather IO",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#00000000",
-    "theme_color": "#00000000",
-    "description": "Maple admin panel",
+    "background_color": "#13111c",
+    "theme_color": "#13111c",
+    "description": "S3-compatible storage management console",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

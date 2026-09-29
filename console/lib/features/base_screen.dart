@@ -36,13 +36,20 @@ class _BaseScreenState extends State<BaseScreen> {
               onDestinationSelected: _onTap,
               //leading: const SizedBox.shrink(),
               leading: IconButton(
-                icon: Icon(_isRailExpanded ? Icons.arrow_back_ios : Icons.menu),
+                icon:
+                    (_isRailExpanded
+                            ? app.assets.icons.navigation.left
+                            : app.assets.icons.navigation.menu)
+                        .build(size: 22, color: app.colors.neutral.grey2),
                 onPressed: _toggleRail,
               ),
               destinations: [
                 NavigationRailDestination(
-                  icon: app.assets.icons.actions.search.build(
-                    color: app.colors.neutral.white,
+                  icon: app.assets.icons.storage.bucket.build(
+                    color: app.colors.neutral.grey3,
+                  ),
+                  selectedIcon: app.assets.icons.storage.bucket.build(
+                    color: app.colors.primary.secondary,
                   ),
                   label: Text(app.intl.navBrowser),
                 ),
@@ -67,7 +74,11 @@ class _BaseScreenState extends State<BaseScreen> {
               ),
             ),
           ),
-          const VerticalDivider(thickness: 1, width: 1),
+          VerticalDivider(
+            thickness: 1,
+            width: 1,
+            color: app.colors.neutral.grey5,
+          ),
           Expanded(child: widget.navigationShell),
         ],
       ),

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <base href="$FLUTTER_BASE_HREF">
 
@@ -21,7 +21,7 @@
     <meta name="apple-mobile-web-app-title" content="Feather Console">
 
     <!-- Theme color -->
-    <meta name="theme-color" content="#111827">
+    <meta name="theme-color" content="#13111c">
 
     <!-- Icons -->
     <link rel="apple-touch-icon" href="icons/Icon-192.png">
@@ -31,6 +31,22 @@
     <link rel="manifest" href="manifest.json">
 
     <style>
+        /* Misma fuente y paleta que la app (AppColors), para que no haya salto
+           visual al cargar Flutter */
+        @font-face {
+          font-family: "DM Sans";
+          src: url("assets/assets/fonts/DMSans/DMSans-Regular.ttf") format("truetype");
+          font-weight: 400;
+          font-display: swap;
+        }
+
+        @font-face {
+          font-family: "DM Sans";
+          src: url("assets/assets/fonts/DMSans/DMSans-Bold.ttf") format("truetype");
+          font-weight: 700;
+          font-display: swap;
+        }
+
         * {
           box-sizing: border-box;
         }
@@ -42,8 +58,8 @@
           margin: 0;
           padding: 0;
           overflow: hidden;
-          background: #111827;
-          font-family: Arial, Helvetica, sans-serif;
+          background: #13111c; /* background1 */
+          font-family: "DM Sans", system-ui, sans-serif;
         }
 
         body {
@@ -52,7 +68,6 @@
           align-items: center;
         }
 
-        /* Splash Screen */
         #splash {
           position: fixed;
           inset: 0;
@@ -60,38 +75,36 @@
           flex-direction: column;
           justify-content: center;
           align-items: center;
-          background: linear-gradient(
-            135deg,
-            #111827 0%,
-            #1f2937 100%
-          );
+          background: #13111c; /* background1 */
           z-index: 9999;
           transition: opacity 0.35s ease;
         }
 
-        /* Logo */
-        #splash img {
-          width: 120px;
-          height: 120px;
-          margin-bottom: 24px;
-          animation: pulse 1.8s infinite ease-in-out;
+        /* Wordmark: igual que AppWordmark */
+        #splash-wordmark {
+          color: #ffffff;
+          font-size: 56px;
+          font-weight: 700;
+          letter-spacing: -1.12px;
+          line-height: 1;
+          margin-bottom: 16px;
         }
 
-        /* Text */
+        #splash-wordmark span {
+          color: #fdca3c; /* secondary */
+        }
+
         #splash-text {
-          color: white;
-          font-size: 18px;
-          font-weight: 500;
+          color: #afafaf; /* grey3 */
+          font-size: 16px;
+          font-weight: 400;
           margin-bottom: 28px;
-          opacity: 0.92;
-          letter-spacing: 0.4px;
         }
 
-        /* Loader */
         .loader {
           width: 220px;
           height: 4px;
-          background: rgba(255, 255, 255, 0.12);
+          background: #2f2c3f; /* background3 */
           border-radius: 999px;
           overflow: hidden;
           position: relative;
@@ -103,7 +116,7 @@
           left: -40%;
           width: 40%;
           height: 100%;
-          background: #60a5fa;
+          background: #9484c5; /* primaryFaded */
           border-radius: 999px;
           animation: loading 1.2s infinite ease;
         }
@@ -118,24 +131,15 @@
           }
         }
 
-        @keyframes pulse {
-          0% {
-            transform: scale(1);
-            opacity: 1;
-          }
-
-          50% {
-            transform: scale(1.05);
-            opacity: 0.85;
-          }
-
-          100% {
-            transform: scale(1);
-            opacity: 1;
+        @media (prefers-reduced-motion: reduce) {
+          .loader::before {
+            animation: none;
+            left: 0;
+            width: 100%;
+            opacity: 0.5;
           }
         }
 
-        /* Fade out */
         .fade-out {
           opacity: 0;
           pointer-events: none;
@@ -146,16 +150,22 @@
 <body>
 
 <!-- Splash -->
-<div id="splash">
-    <!-- Logo de la consola de storage -->
-    <img src="icons/Icon-192.png" alt="Feather Storage Logo">
+<div id="splash" role="status" aria-live="polite">
+    <div id="splash-wordmark">Feather <span>IO</span></div>
 
-    <div id="splash-text">
-        Conectando al servicio de almacenamiento...
-    </div>
+    <div id="splash-text">Connecting to the storage service…</div>
 
     <div class="loader"></div>
 </div>
+
+<script>
+    // El texto sigue el idioma del navegador (es/en), como la app
+    if ((navigator.language || "").toLowerCase().startsWith("es")) {
+      document.documentElement.lang = "es";
+      document.getElementById("splash-text").textContent =
+        "Conectando al servicio de almacenamiento…";
+    }
+</script>
 
 <!-- ENV -->
 <script src="env.js"></script>

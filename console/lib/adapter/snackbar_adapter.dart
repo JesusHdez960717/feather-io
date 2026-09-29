@@ -1,6 +1,5 @@
 import 'package:console/app_exporter.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:top_snackbar_flutter/custom_snack_bar.dart';
 import 'package:top_snackbar_flutter/top_snack_bar.dart';
 
 class SnackBarAdapter {
@@ -11,27 +10,28 @@ class SnackBarAdapter {
   factory SnackBarAdapter() => _instance;
 
   void showSuccess({required String message, required BuildContext context}) {
-    showTopSnackBar(
-      Overlay.of(context),
-      snackBarPosition: SnackBarPosition.bottom,
-      padding: EdgeInsets.only(
-        right: app.dimensions.padding.l,
-        bottom: app.dimensions.padding.l,
-        left: MediaQuery.of(context).size.width * 0.75,
-      ),
-      CustomSnackBar.success(
-        borderRadius: app.dimensions.border.borderRadius.m,
-        textStyle: app.textTheme.titleMedium!.copyWith(
-          color: app.colors.neutral.white,
-        ),
-        iconRotationAngle: -15,
-        backgroundColor: app.colors.primary.green,
+    _show(
+      context: context,
+      child: _AppSnackBar(
         message: message,
+        icon: Icons.check_circle_outline,
+        backgroundColor: app.colors.primary.greenAction,
       ),
     );
   }
 
   void showError({required String message, required BuildContext context}) {
+    _show(
+      context: context,
+      child: _AppSnackBar(
+        message: message,
+        icon: Icons.error_outline,
+        backgroundColor: app.colors.primary.errorAction,
+      ),
+    );
+  }
+
+  void _show({required BuildContext context, required Widget child}) {
     showTopSnackBar(
       Overlay.of(context),
       snackBarPosition: SnackBarPosition.bottom,
@@ -40,14 +40,47 @@ class SnackBarAdapter {
         bottom: app.dimensions.padding.l,
         left: MediaQuery.of(context).size.width * 0.75,
       ),
-      CustomSnackBar.error(
-        borderRadius: app.dimensions.border.borderRadius.m,
-        textStyle: app.textTheme.titleMedium!.copyWith(
-          color: app.colors.neutral.white,
+      child,
+    );
+  }
+}
+
+///Exito y error se distinguen por el icono ademas de por el color
+class _AppSnackBar extends StatelessWidget {
+  final String message;
+  final IconData icon;
+  final Color backgroundColor;
+
+  const _AppSnackBar({
+    required this.message,
+    required this.icon,
+    required this.backgroundColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: backgroundColor,
+      borderRadius: app.dimensions.border.borderRadius.m,
+      elevation: 6,
+      child: Padding(
+        padding: EdgeInsets.all(app.dimensions.padding.l),
+        child: Row(
+          children: [
+            Icon(icon, size: 24, color: app.colors.neutral.white),
+            app.dimensions.padding.m.gap(),
+            Expanded(
+              child: Text(
+                message,
+                style: app.textTheme.titleMedium!.copyWith(
+                  color: app.colors.neutral.white,
+                ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
-        iconRotationAngle: -15,
-        backgroundColor: app.colors.primary.red,
-        message: message,
       ),
     );
   }

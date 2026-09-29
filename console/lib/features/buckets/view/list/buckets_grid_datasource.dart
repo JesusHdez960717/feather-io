@@ -136,15 +136,14 @@ class _BucketGridItemState extends State<_BucketGridItem> {
                                       horizontal: app.dimensions.padding.xs,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: app.colors.neutral.grey4,
-                                      borderRadius: const BorderRadius.all(
-                                        Radius.circular(2.5),
-                                      ),
+                                      color: app.colors.primary.background3,
+                                      borderRadius:
+                                          app.dimensions.border.borderRadius.xs,
                                     ),
                                     child: Text(
                                       app.intl.bucketsReadWriteBadge,
                                       style: app.textTheme.bodyMedium?.copyWith(
-                                        color: app.colors.neutral.white,
+                                        color: app.colors.neutral.grey2,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -206,11 +205,7 @@ class _BucketGridItemState extends State<_BucketGridItem> {
               child: Builder(
                 builder: (context) {
                   return IconButton(
-                    icon: Icon(
-                      Icons.more_vert,
-                      size: 18,
-                      color: app.colors.neutral.grey2,
-                    ),
+                    icon: app.assets.icons.actions.more.build(size: 18, color: app.colors.neutral.grey2),
                     onPressed: () {
                       final RenderBox box =
                           context.findRenderObject() as RenderBox;

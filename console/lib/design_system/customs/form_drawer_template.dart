@@ -143,7 +143,10 @@ class FormDrawerTemplate extends StatelessWidget {
                   IconButton(
                     tooltip: app.intl.close,
                     onPressed: () => Navigator.of(context).maybePop(),
-                    icon: Icon(Icons.close, color: app.colors.neutral.grey3),
+                    icon: app.assets.icons.actions.close.build(
+                      size: 20,
+                      color: app.colors.neutral.grey3,
+                    ),
                   ),
                 ],
               ),

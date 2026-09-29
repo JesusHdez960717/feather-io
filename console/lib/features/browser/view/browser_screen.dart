@@ -74,7 +74,10 @@ class _BrowserScreenState extends State<BrowserScreen> {
               title: app.intl.navBrowser,
               leading: isBucketSelected
                   ? IconButton(
-                      icon: const Icon(Icons.arrow_back),
+                      icon: app.assets.icons.navigation.left.build(
+                        size: 22,
+                        color: app.colors.neutral.white,
+                      ),
                       onPressed: () => cubit.reset(),
                     )
                   : null,
@@ -90,21 +93,9 @@ class _BrowserScreenState extends State<BrowserScreen> {
                       state: state,
                       onNavigate: (prefix) => cubit.listObjects(prefix: prefix),
                       onRefresh: () => cubit.listObjects(prefix: state.prefix),
-                      onBack: () {
-                        final parts = state.prefix
-                            .split('/')
-                            .where((s) => s.isNotEmpty)
-                            .toList();
-                        if (parts.isEmpty) {
-                          cubit.reset();
-                        } else {
-                          parts.removeLast();
-                          final newPrefix = parts.isEmpty
-                              ? ''
-                              : '${parts.join('/')}/';
-                          cubit.listObjects(prefix: newPrefix);
-                        }
-                      },
+                      onBack: () => cubit.goUp(),
+                      onForward: () => cubit.goForward(),
+                      canGoForward: cubit.canGoForward,
                       onSelected: (obj) {},
                       onExit: () => cubit.reset(),
                       onDelete: (keys) => cubit.deleteObjects(

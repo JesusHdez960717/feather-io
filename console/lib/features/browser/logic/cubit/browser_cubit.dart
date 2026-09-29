@@ -15,6 +15,12 @@ class BrowserCubit extends Cubit<BrowserState>
 
   final ViewType? initialViewType;
 
+  ///Prefijos de los que se ha subido con [goUp], el ultimo arriba.
+  ///[goForward] vuelve a bajar; cualquier otra navegacion lo vacia
+  final List<String> _forwardPrefixes = [];
+
+  bool get canGoForward => _forwardPrefixes.isNotEmpty;
+
   BrowserCubit({required this.auth, required this.repo, this.initialViewType})
     : super(BrowserInitialState(viewType: initialViewType));
 
@@ -31,7 +37,30 @@ class BrowserCubit extends Cubit<BrowserState>
   }
 
   ///Sale del bucket seleccionado
-  void reset() => init();
+  void reset() {
+    _forwardPrefixes.clear();
+    init();
+  }
+
+  ///Sube un nivel; en la raiz del bucket sale al listado de buckets
+  Future<void> goUp() async {
+    if (state is! BrowserSearchState) return;
+    final prefix = (state as BrowserSearchState).prefix;
+    final parts = prefix.split('/').where((s) => s.isNotEmpty).toList();
+    if (parts.isEmpty) {
+      reset();
+      return;
+    }
+    parts.removeLast();
+    _forwardPrefixes.add(prefix);
+    await _list(prefix: parts.isEmpty ? '' : '${parts.join('/')}/');
+  }
+
+  ///Deshace el ultimo [goUp]
+  Future<void> goForward() async {
+    if (_forwardPrefixes.isEmpty) return;
+    await _list(prefix: _forwardPrefixes.removeLast());
+  }
 
   void changeViewType(ViewType viewType) {
     if (state is BrowserSearchState) {
@@ -51,6 +80,17 @@ class BrowserCubit extends Cubit<BrowserState>
   }
 
   Future<void> listObjects({BucketModel? bucket, String? prefix}) async {
+    final current = state is BrowserSearchState
+        ? state as BrowserSearchState
+        : null;
+    final isSameBucket =
+        bucket == null || bucket.name == current?.selectedBucket?.name;
+    final isSamePrefix = (prefix ?? '') == current?.prefix;
+    if (!isSameBucket || !isSamePrefix) _forwardPrefixes.clear();
+    await _list(bucket: bucket, prefix: prefix);
+  }
+
+  Future<void> _list({BucketModel? bucket, String? prefix}) async {
     final targetBucket =
         bucket ??
         (state is BrowserSearchState
@@ -107,7 +147,7 @@ class BrowserCubit extends Cubit<BrowserState>
         keys: keys,
       );
 
-      await listObjects(bucket: bucket, prefix: currentState.prefix);
+      await _list(bucket: bucket, prefix: currentState.prefix);
     });
   }
 
@@ -129,7 +169,7 @@ class BrowserCubit extends Cubit<BrowserState>
         );
       }
 
-      await listObjects(bucket: bucket, prefix: currentState.prefix);
+      await _list(bucket: bucket, prefix: currentState.prefix);
     });
   }
 

@@ -26,7 +26,7 @@ class LanguageWidget extends CubitView<LanguageCubit> {
     return Container(
       decoration: BoxDecoration(
         color: app.colors.primary.background2,
-        borderRadius: app.dimensions.border.borderRadius.xs,
+        borderRadius: app.dimensions.border.borderRadius.s,
         border: Border.all(color: app.colors.neutral.grey5),
       ),
       child: Padding(

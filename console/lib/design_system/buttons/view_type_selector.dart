@@ -67,22 +67,24 @@ class _ViewTypeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onPressed,
-      borderRadius: app.dimensions.border.borderRadius.s,
-      child: Container(
-        width: 34,
-        height: 34,
-        decoration: BoxDecoration(
-          color: isSelected ? app.colors.primary.purple : Colors.transparent,
-          borderRadius: app.dimensions.border.borderRadius.s,
-        ),
-        alignment: Alignment.center,
-        child: icon.build(
-          size: 18,
-          color: isSelected
-              ? app.colors.neutral.white
-              : app.colors.neutral.grey3,
+    return AppFocusRing(
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: app.dimensions.border.borderRadius.s,
+        child: Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: isSelected ? app.colors.primary.purple : Colors.transparent,
+            borderRadius: app.dimensions.border.borderRadius.s,
+          ),
+          alignment: Alignment.center,
+          child: icon.build(
+            size: 18,
+            color: isSelected
+                ? app.colors.neutral.white
+                : app.colors.neutral.grey3,
+          ),
         ),
       ),
     );

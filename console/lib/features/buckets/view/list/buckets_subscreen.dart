@@ -129,7 +129,7 @@ class _BucketsViewState extends State<_BucketsView> {
       title: app.intl.bucketsDeleteTitle,
       description: app.intl.bucketsDeleteConfirm(selected.name),
       confirmTitle: app.intl.delete,
-      confirmColor: app.colors.primary.red,
+      confirmColor: app.colors.primary.errorAction,
       confirmAction: () => widget.onDelete(selected),
     );
   }
@@ -168,13 +168,13 @@ class _BucketsViewState extends State<_BucketsView> {
             children: [
               app.assets.icons.actions.delete.build(
                 size: 18,
-                color: app.colors.primary.red,
+                color: app.colors.primary.error,
               ),
               app.dimensions.padding.m.gap(),
               Text(
                 app.intl.delete,
                 style: app.textTheme.bodyMedium?.copyWith(
-                  color: app.colors.primary.red,
+                  color: app.colors.primary.error,
                 ),
               ),
             ],

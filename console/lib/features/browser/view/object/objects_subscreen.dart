@@ -13,6 +13,8 @@ class ObjectsSubscreen extends StatefulWidget {
   final Function(String prefix) onNavigate;
   final VoidCallback onRefresh;
   final VoidCallback onBack;
+  final VoidCallback onForward;
+  final bool canGoForward;
   final Function(BrowserObjectModel) onSelected;
   final Function(ViewType) onViewTypeChanged;
   final Function(List<String> keys) onDelete;
@@ -26,6 +28,8 @@ class ObjectsSubscreen extends StatefulWidget {
     required this.onNavigate,
     required this.onRefresh,
     required this.onBack,
+    required this.onForward,
+    required this.canGoForward,
     required this.onSelected,
     required this.onViewTypeChanged,
     required this.onDelete,
@@ -46,6 +50,10 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
   List<BrowserObjectWrapper> _allWrappers = [];
   List<BrowserObjectWrapper> _filteredWrappers = [];
   List<BrowserObjectWrapper> _selectedWrappers = [];
+
+  ///Filtros aplicados; el badge del boton solo se ve si hay alguno.
+  ///Siempre 0 hasta que exista el filtro de objetos
+  int get _activeFilterCount => 0;
   bool _isDragging = false;
 
   @override
@@ -146,7 +154,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
       title: app.intl.objectsDeleteTitle,
       description: app.intl.objectsDeleteConfirm(keys.length),
       confirmTitle: app.intl.delete,
-      confirmColor: app.colors.primary.red,
+      confirmColor: app.colors.primary.errorAction,
       confirmAction: () => widget.onDelete(keys),
     );
   }
@@ -223,13 +231,13 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
             children: [
               app.assets.icons.actions.delete.build(
                 size: 18,
-                color: app.colors.primary.red,
+                color: app.colors.primary.error,
               ),
               app.dimensions.padding.m.gap(),
               Text(
                 app.intl.delete,
                 style: app.textTheme.bodyMedium?.copyWith(
-                  color: app.colors.primary.red,
+                  color: app.colors.primary.error,
                 ),
               ),
             ],
@@ -354,9 +362,13 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                         ),
                         app.dimensions.padding.xs.gap(),
                         PrimaryButton.svgIcon(
-                          onPressed: null,
+                          onPressed: widget.canGoForward
+                              ? widget.onForward
+                              : null,
                           icon: app.assets.icons.navigation.right,
-                          iconColor: app.colors.neutral.grey5,
+                          iconColor: widget.canGoForward
+                              ? null
+                              : app.colors.neutral.grey5,
                           backgroundColor: app.colors.neutral.transparent,
                           buttonSize: 38,
                         ),
@@ -415,9 +427,10 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                     ),
                     app.dimensions.padding.l.gap(),
                     Badge.count(
-                      count: 1,
-                      backgroundColor: app.colors.primary.purple,
-                      textColor: app.colors.neutral.white,
+                      count: _activeFilterCount,
+                      isLabelVisible: _activeFilterCount > 0,
+                      backgroundColor: app.colors.primary.secondary,
+                      textColor: app.colors.primary.background1,
                       child: PrimaryButton.primary(
                         title: app.intl.filter,
                         color: app.colors.primary.background3.withValues(
@@ -469,7 +482,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                           iconSize: 18,
                           backgroundColor: app.colors.neutral.transparent,
                           iconColor: _selectedWrappers.isNotEmpty
-                              ? app.colors.primary.red
+                              ? app.colors.primary.error
                               : app.colors.neutral.grey5,
                         ),
                       ],

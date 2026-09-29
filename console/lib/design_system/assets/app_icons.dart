@@ -10,10 +10,6 @@ class AppIcons {
   final StorageIcons storage = const StorageIcons();
   final NavigationIcons navigation = const NavigationIcons();
 
-  SvgAsset get admin => const SvgAsset(
-    'assets/icons/actions/delete.svg',
-    defaultColor: Colors.white,
-  );
 }
 
 class NavigationIcons {
@@ -26,6 +22,8 @@ class NavigationIcons {
   SvgAsset get right => const SvgAsset('$_navigation/right.svg');
 
   SvgAsset get next => const SvgAsset('$_navigation/next.svg');
+
+  SvgAsset get menu => const SvgAsset('$_navigation/menu.svg');
 }
 
 class StorageIcons {
@@ -66,6 +64,8 @@ class ActionsIcons {
   SvgAsset get filter => const SvgAsset('$_actions/filter.svg');
 
   SvgAsset get logout => const SvgAsset('$_actions/logout.svg');
+
+  SvgAsset get more => const SvgAsset('$_actions/more.svg');
 
   SvgAsset get refresh => const SvgAsset('$_actions/refresh.svg');
 

@@ -1,12 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
-<svg height="800px" viewBox="0 0 512 512" width="800px" xmlns="http://www.w3.org/2000/svg">
-    <path class="ci-primary"
-        d="M16,48V464H496V48ZM464,432H48V336H464Zm0-128H48V208H464ZM48,176V80H464v96Z"
-        fill="var(--ci-primary-color, #000000)" />
-    <rect class="ci-primary" fill="var(--ci-primary-color, #000000)" height="32" width="32" x="80"
-        y="112" />
-    <rect class="ci-primary" fill="var(--ci-primary-color, #000000)" height="32" width="32" x="80"
-        y="240" />
-    <rect class="ci-primary" fill="var(--ci-primary-color, #000000)" height="32" width="32" x="80"
-        y="368" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+  <ellipse cx="12" cy="5.5" rx="7" ry="2.5"/>
+  <path d="M5 5.5v13c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-13"/>
+  <path d="M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5"/>
 </svg>

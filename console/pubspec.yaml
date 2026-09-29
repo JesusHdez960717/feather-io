@@ -60,7 +60,7 @@ dev_dependencies:
 
 #configuration of splash screen, if something change, run: `fvm flutter pub run flutter_native_splash:create`
 flutter_native_splash:
-  color: "#ffffff"
+  color: "#13111c"
   web: true
 
 #configuration of flutter_icons, if something change, run: `fvm flutter pub run flutter_launcher_icons`

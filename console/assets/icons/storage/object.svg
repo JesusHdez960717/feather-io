@@ -1,12 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
-<svg fill="#000000" height="800px" preserveAspectRatio="xMidYMid meet" version="1.1"
-    viewBox="0 0 36 36" width="800px" xmlns="http://www.w3.org/2000/svg">
-    <title>objects-line</title>
-    <path class="clr-i-outline clr-i-outline-path-1"
-        d="M16.08,14.9a10.41,10.41,0,0,1,1.87-.71l-4-10.77a2,2,0,0,0-3.75,0L2,25.26A2,2,0,0,0,3.92,28h6.94a10,10,0,0,1-.52-2H3.92L12.06,4.12Z"></path>
-    <path class="clr-i-outline clr-i-outline-path-2"
-        d="M32,9H22a2,2,0,0,0-2,2v2.85c.23,0,.46,0,.69,0A10.51,10.51,0,0,1,22,13.9V11H32V21H30.65a10.42,10.42,0,0,1,.45,2H32a2,2,0,0,0,2-2V11A2,2,0,0,0,32,9Z"></path>
-    <path class="clr-i-outline clr-i-outline-path-3"
-        d="M20.69,15.81a8.5,8.5,0,1,0,8.5,8.5A8.51,8.51,0,0,0,20.69,15.81Zm0,15a6.5,6.5,0,1,1,6.5-6.5A6.51,6.51,0,0,1,20.69,30.81Z"></path>
-    <rect fill-opacity="0" height="36" width="36" x="0" y="0" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/>
+  <path d="M4 7.5l8 4.5 8-4.5M12 12v9"/>
 </svg>

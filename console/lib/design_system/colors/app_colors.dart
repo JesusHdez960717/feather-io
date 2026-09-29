@@ -60,28 +60,36 @@ class PrimaryColor {
   ///light blue / purple: 9484C5
   Color get primaryFaded => const Color(0xFF9484C5);
 
-  ///brand color, ~orange: FDCA3C
+  ///Anillo de foco de teclado: 5.4:1 sobre background2
+  Color get focusRing => primaryFaded;
+
+  ///Casillas marcadas y borde de lo seleccionado: 5.4:1 sobre background2
+  Color get selection => primaryFaded;
+
+  ///Amarillo de marca: acento para destacar (badges, destino activo, avisos).
+  ///Encima va texto en background1 (12:1)
   Color get secondary => const Color(0xFFFDCA3C);
 
-  ///blue: 2652E0
-  Color get tertiary => const Color(0xFF2652E0);
-
-  ///red: E95450
+  ///Texto, iconos y bordes de error sobre fondos oscuros: 4.7:1 sobre
+  ///backgroundForm
   Color get error => const Color(0xFFE95450);
 
-  ///red: EB3326
-  Color get red => const Color(0xFFEB3326);
+  ///Relleno de acciones destructivas y del snackbar de error: blanco encima
+  ///da 5.6:1
+  Color get errorAction => const Color(0xFFC62828);
 
-  ///red: 2CAA4A
+  ///Texto e iconos de exito sobre fondos oscuros: 5.9:1 sobre background2
   Color get green => const Color(0xFF2CAA4A);
+
+  ///Relleno del snackbar de exito: blanco encima da 5.1:1
+  Color get greenAction => const Color(0xFF2E7D32);
 }
 
 class NeutralColor {
-  Color get grey6 => const Color(0xff4b4b4b);
-
   Color get grey5 => const Color(0xff575562);
 
-  Color get grey4 => const Color(0xff757481);
+  ///Texto desactivado: 5.2:1 sobre background2
+  Color get grey4 => const Color(0xff8a8996);
 
   Color get grey3 => const Color(0xffafafaf);
 
@@ -91,7 +99,7 @@ class NeutralColor {
 
   Color get white => const Color(0xffffffff);
 
-  Color get black => const Color(0x00000000);
+  Color get black => const Color(0xff000000);
 
   Color get transparent => Colors.transparent;
 }

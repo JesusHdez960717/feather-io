@@ -24,14 +24,12 @@ class SplashScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    app.assets.icons.admin.build(
-                      color: app.colors.neutral.white,
-                      size: 148,
-                    ),
-                    app.dimensions.padding.xxl.gap(),
+                    AppWordmark(name: context.intl.appName, fontSize: 56),
+                    app.dimensions.padding.l.gap(),
                     Text(
                       context.intl.splashTitle,
-                      style: TextTheme.of(context).headlineLarge,
+                      style: TextTheme.of(context).titleLarge
+                          ?.copyWith(color: app.colors.neutral.grey3),
                     ),
                   ],
                 ),
@@ -43,7 +41,8 @@ class SplashScreen extends StatelessWidget {
                 child: Center(
                   child: Text(
                     context.intl.splashFooter,
-                    style: TextTheme.of(context).titleSmall,
+                    style: TextTheme.of(context).titleSmall
+                        ?.copyWith(color: app.colors.neutral.grey3),
                   ),
                 ),
               ),

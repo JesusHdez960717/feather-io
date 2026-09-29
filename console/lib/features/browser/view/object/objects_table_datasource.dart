@@ -171,7 +171,7 @@ class _ObjectsTableDatasourceState extends State<ObjectsTableDatasource> {
                   fillColor: WidgetStateProperty.resolveWith((states) {
                     //para configurar el color del checkbox
                     if (states.contains(WidgetState.selected)) {
-                      return app.colors.primary.tertiary;
+                      return app.colors.primary.selection;
                     }
                     return Colors.transparent;
                   }),
@@ -300,8 +300,7 @@ class _ObjectsDataSource extends DataGridSource {
                   child: Builder(
                     builder: (context) {
                       return IconButton(
-                        icon: Icon(
-                          Icons.more_vert,
+                        icon: app.assets.icons.actions.more.build(
                           size: 18,
                           color: app.colors.neutral.grey2,
                         ),

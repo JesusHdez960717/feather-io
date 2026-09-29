@@ -192,11 +192,7 @@ class _BucketsDataSource extends DataGridSource {
                   child: Builder(
                     builder: (context) {
                       return IconButton(
-                        icon: Icon(
-                          Icons.more_vert,
-                          size: 18,
-                          color: app.colors.neutral.grey2,
-                        ),
+                        icon: app.assets.icons.actions.more.build(size: 18, color: app.colors.neutral.grey2),
                         onPressed: isHovered
                             ? () {
                                 final RenderBox box =

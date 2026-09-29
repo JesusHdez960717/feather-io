@@ -57,7 +57,7 @@ class BrowserBreadcrumbs extends StatelessWidget {
         alignment: Alignment.centerLeft,
         decoration: BoxDecoration(
           color: app.colors.primary.background3,
-          borderRadius: app.dimensions.border.borderRadius.xs,
+          borderRadius: app.dimensions.border.borderRadius.s,
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 3.5),

@@ -23,20 +23,17 @@ class AppBorder {
   }
 }
 
+///Escala de 3 pasos. Un radio interior es el exterior menos el relleno que
+///los separa (p. ej. pista `m` con 4px de relleno → segmentos `s`)
 class AppRadius {
-  Radius get xs => const Radius.circular(7.5);
+  ///4.0: casillas, badges y chips dentro de una barra
+  Radius get xs => const Radius.circular(4);
 
-  Radius get s => const Radius.circular(10);
+  ///8.0: controles (botones, inputs, buscador, menus, dialogos, segmentos)
+  Radius get s => const Radius.circular(8);
 
-  Radius get sm => const Radius.circular(12.5);
-
-  Radius get m => const Radius.circular(15);
-
-  Radius get xm => const Radius.circular(17.5);
-
-  Radius get l => const Radius.circular(20);
-
-  Radius get xl => const Radius.circular(22.5);
+  ///12.0: tarjetas, paneles, snackbars y la pista del selector
+  Radius get m => const Radius.circular(12);
 
   Radius get def => m;
 }
@@ -50,15 +47,7 @@ class AppBorderRadius {
 
   BorderRadius get s => BorderRadius.all(radius.s);
 
-  BorderRadius get sm => BorderRadius.all(radius.sm);
-
   BorderRadius get m => BorderRadius.all(radius.m);
-
-  BorderRadius get xm => BorderRadius.all(radius.xm);
-
-  BorderRadius get l => BorderRadius.all(radius.l);
-
-  BorderRadius get xl => BorderRadius.all(radius.xl);
 
   BorderRadius get def => m;
 }

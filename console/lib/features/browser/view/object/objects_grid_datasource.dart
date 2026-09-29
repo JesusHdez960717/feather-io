@@ -148,7 +148,7 @@ class _ObjectGridItemState extends State<_ObjectGridItem> {
                 borderRadius: app.dimensions.border.borderRadius.s,
                 border: Border.all(
                   color: widget.isSelected
-                      ? app.colors.primary.tertiary
+                      ? app.colors.primary.selection
                       : app.colors.neutral.grey3,
                 ),
                 boxShadow: _isHovered
@@ -229,7 +229,7 @@ class _ObjectGridItemState extends State<_ObjectGridItem> {
               child: Checkbox(
                 value: widget.isSelected,
                 onChanged: (_) => widget.onToggleSelection(),
-                activeColor: app.colors.primary.tertiary,
+                activeColor: app.colors.primary.selection,
                 side: BorderSide(color: app.colors.neutral.grey2),
                 shape: RoundedRectangleBorder(
                   borderRadius: app.dimensions.border.borderRadius.xs,
@@ -243,8 +243,7 @@ class _ObjectGridItemState extends State<_ObjectGridItem> {
               child: Builder(
                 builder: (context) {
                   return IconButton(
-                    icon: Icon(
-                      Icons.more_vert,
+                    icon: app.assets.icons.actions.more.build(
                       size: 18,
                       color: app.colors.neutral.grey2,
                     ),

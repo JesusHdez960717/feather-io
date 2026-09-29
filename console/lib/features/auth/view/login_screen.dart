@@ -76,15 +76,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    app.intl.appName,
-                    style: app.textTheme.headlineMedium?.copyWith(
-                      color: app.colors.neutral.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  app.dimensions.padding.l.gap(),
+                  AppWordmark(name: app.intl.appName, fontSize: 32),
+                  app.dimensions.padding.xl.gap(),
                   AppFormInput(
                     controller: _accessController,
                     label: app.intl.loginAccessKey,

@@ -136,30 +136,32 @@ class PrimaryButton extends StatelessWidget {
             ),
           )
         : icon;
-    return SizedBox(
-      width: w,
-      height: h,
-      child: FilledButton(
-        onPressed: isLoading ? () {} : onPressed,
-        style: FilledButton.styleFrom(
-          padding: EdgeInsets.zero,
-          backgroundColor: color,
-          disabledBackgroundColor: disabledColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: borderRadius ?? app.dimensions.border.borderRadius.xs,
+    final radius = borderRadius ?? app.dimensions.border.borderRadius.s;
+    return AppFocusRing(
+      borderRadius: radius,
+      child: SizedBox(
+        width: w,
+        height: h,
+        child: FilledButton(
+          onPressed: isLoading ? () {} : onPressed,
+          style: FilledButton.styleFrom(
+            padding: EdgeInsets.zero,
+            backgroundColor: color,
+            disabledBackgroundColor: disabledColor,
+            shape: RoundedRectangleBorder(borderRadius: radius),
           ),
-        ),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: app.dimensions.padding.s),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (leading != null) ...[leading],
-              if (leading != null && title.isNotEmpty) ...[
-                app.dimensions.padding.s.gap(),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: app.dimensions.padding.s),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (leading != null) ...[leading],
+                if (leading != null && title.isNotEmpty) ...[
+                  app.dimensions.padding.s.gap(),
+                ],
+                if (title.isNotEmpty) ...[Text(title, style: titleStyle)],
               ],
-              if (title.isNotEmpty) ...[Text(title, style: titleStyle)],
-            ],
+            ),
           ),
         ),
       ),
