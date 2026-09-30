@@ -124,10 +124,12 @@ XML is S3-compliant and the default. The console always asks for JSON. `multiDel
 
 **Storage & performance.** Buckets are directories under `STORAGE_VOLUME_PATH`. Bucket metadata (description, color, timestamps) and anonymous rules live in SQLite via Drift. Object payloads must always flow as `Stream<List<int>>` (`request.read()`, `file.openRead()`): **never** `readAsBytes()` or `Uint8List` for object data. Multi-object downloads build the zip in a temp file (`FileManagementService.zipObjects`) and stream it with `openAndDeleteTemp`. Every bucket name goes through `S3Validator.isValidBucketName` and every key through `S3Validator.isValidKey` (path traversal protection) before touching the filesystem.
 
+**Folders and listing.** A key ending in `/` is a folder: `PUT /{bucket}/fotos/` creates the directory with a hidden `S3Validator.folderMarker` file (`.feather-folder`), so empty folders survive the cleanup of empty parents. Listings show the marker as the key `fotos/` (size 0), stats and zips skip it, no key may use that name, and a bucket holding only empty folders counts as empty. Winter drops the trailing `/` from the `{key}` path param; `S3Controller._objectKey` restores it from the URL. `listFiles` sorts objects and common prefixes together and pages over them like ListObjectsV2 (`max-keys` up to 1000, `continuation-token` = base64url of the last key returned). `PUT` with `x-amz-copy-source` is CopyObject and needs the plain `s3.get-object` permission, so an anonymous rule can never copy. `HEAD` object is served by the `GET` route (Winter sends the headers only), which includes `Last-Modified`.
+
 **Tests.** Rules for new tests:
 - Every new feature gets tests. `s3_controller_test.dart` holds the happy path (upload → list → get → delete); each endpoint gets its own file (`put_object_test.dart`, `list_buckets_test.dart`…).
 - Use `TestServer` (`test/support/test_server.dart`): `TestServer(port: …, name: …)`, then `setUpAll(server.start)` / `tearDownAll(server.stop)`. It sets the env, starts the real server with an in-memory SQLite (`FeatherIO.start(database: …)`), logs in to get `server.token`, and creates and deletes `./uploads_test/<name>` (gitignored). Helpers: `server.url(path)`, `server.auth(json: …)`, `server.putObject(…)`.
-- Use one distinct port per file so files run in parallel. Ports in use: 8082–8096.
+- Use one distinct port per file so files run in parallel. Ports in use: 8082–8098.
 - Cover auth (missing or invalid token → 401, wrong login credentials → 403), validation (bad bucket names, path traversal, forbidden chars → 400), content negotiation (JSON vs XML, including the S3 error code) and edge cases (404, empty lists).
 - To send a path traversal that reaches the server, encode the slashes (`..%2F..%2Ffile`). The HTTP client normalizes `%2e%2e` segments away.
 
@@ -152,6 +154,8 @@ XML is S3-compliant and the default. The console always asks for JSON. `multiDel
 - `{F}InitialState`
 - `{F}LoadingInProgressState`, `{F}LoadingSuccessState`, `{F}LoadingErrorState` (fetching data)
 - `{F}ProcessInProgressState`, `{F}ProcessingOKState`, `{F}ProcessingErrorState` (actions)
+
+The browser pages objects: `BrowserSearchState` keeps the loaded `pages` of the folder (contiguous from the first, each with its `nextContinuationToken`), the `pageIndex` shown and the `pageSize` (`BrowserPagination`). `objects` is the current page; search and filters run over all loaded pages (`loadedObjects`). Dialogs and drawers that act on objects (`ObjectNameDialog`, `MoveObjectsDialog`, `ObjectDetailsDrawer`) own their cubit (`ObjectActionCubit`, `MoveTargetCubit`, `ObjectDetailsCubit`) and announce changes with `BucketChangedEvent`, so the browser reloads by itself.
 
 Views only call cubit methods to run actions; everything a view needs to know comes in the state. A cubit never exposes public getters for views (e.g. `canGoForward` is a field of `BrowserSearchState`, filled on every emit, not `cubit.canGoForward`).
 

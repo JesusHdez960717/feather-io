@@ -49,14 +49,23 @@ terminarla.
 
 - [x] La URL del explorador guarda el bucket, la carpeta y la vista
   (`/browser?bucket=&folder=&view_type=`), con aviso si el bucket o la carpeta no existen.
-- [ ] Crear carpeta (prefijo vacío).
-- [ ] Renombrar o mover objetos
-    - [ ] Servicio: `CopyObject` (`x-amz-copy-source`).
-    - [ ] Consola: acciones de renombrar y mover.
-- [ ] Detalle de objeto
-    - [ ] Servicio: `HEAD` object.
-    - [ ] Consola: panel de metadatos.
-- [ ] Paginación en list-objects (`max-keys`, `continuation-token`) y pasar los filtros al servicio.
+- [x] Crear carpeta
+    - [x] Servicio: `PUT /{bucket}/{carpeta}/` crea una carpeta vacía (directorio con el marcador
+      `.feather-folder`), listada como la key `carpeta/`.
+    - [x] Consola: botón *Nueva carpeta* con diálogo.
+- [x] Renombrar o mover objetos
+    - [x] Servicio: `CopyObject` (`x-amz-copy-source`).
+    - [x] Consola: renombrar y mover (uno o varios) con copiar y borrar.
+    - [ ] Renombrar y mover carpetas (hay que copiar y borrar todo su contenido).
+- [x] Detalle de objeto
+    - [x] Servicio: `HEAD` object (lo resuelve la ruta `GET`) con `Last-Modified`.
+    - [x] Consola: cajón de detalles con miniatura, key, tipo, tamaño, fecha y URL.
+- [ ] Paginación en list-objects
+    - [x] Servicio: `max-keys` (máx. 1000) y `continuation-token`, con `IsTruncated`,
+      `NextContinuationToken` y `KeyCount`.
+    - [x] Consola: paginador (25, 50, 75 o 100 por página; *Página X de N* con `total_keys`).
+      La búsqueda y los filtros miran las páginas ya cargadas.
+    - [ ] Pasar los filtros de objetos al servicio.
 
 ## Fase 4: Compatibilidad S3
 

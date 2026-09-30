@@ -256,6 +256,10 @@ class _BrowserScreenState extends State<BrowserScreen> {
                 folder: state.prefix,
                 viewType: type,
               ),
+              onNextPage: cubit.nextPage,
+              onPreviousPage: cubit.previousPage,
+              onPageSizeChanged: cubit.changePageSize,
+              bucketNames: [for (final b in bucketCubit.state.buckets) b.name],
             );
           },
         );

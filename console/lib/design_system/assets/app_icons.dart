@@ -69,6 +69,8 @@ class ActionsIcons {
 
   SvgAsset get filter => const SvgAsset('$_actions/filter.svg');
 
+  SvgAsset get info => const SvgAsset('$_actions/info.svg');
+
   SvgAsset get lock => const SvgAsset('$_actions/lock.svg');
 
   SvgAsset get logout => const SvgAsset('$_actions/logout.svg');

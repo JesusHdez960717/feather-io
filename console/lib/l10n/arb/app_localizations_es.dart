@@ -692,4 +692,172 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get browserGoToBucketRoot => 'Ir a la raíz del bucket';
+
+  @override
+  String get objectsNewFolder => 'Nueva carpeta';
+
+  @override
+  String get objectsNewFolderCreate => 'Crear carpeta';
+
+  @override
+  String get objectsFolderNameLabel => 'Nombre de la carpeta';
+
+  @override
+  String get objectsFolderNameHint => 'facturas-2026';
+
+  @override
+  String objectsFolderPathHelper(String path) {
+    return 'Se creará en $path';
+  }
+
+  @override
+  String objectsFolderCreated(String name) {
+    return 'Carpeta «$name» creada';
+  }
+
+  @override
+  String get objectsFolderExists =>
+      'Ya hay una carpeta u objeto con ese nombre aquí.';
+
+  @override
+  String get objectsRename => 'Renombrar';
+
+  @override
+  String get objectsRenameLabel => 'Nuevo nombre';
+
+  @override
+  String objectsRenamePathHelper(String path) {
+    return 'Queda en $path';
+  }
+
+  @override
+  String objectsRenamed(String name) {
+    return 'Renombrado a «$name»';
+  }
+
+  @override
+  String get objectsNameExists =>
+      'Ya hay un objeto o carpeta con ese nombre en esta carpeta.';
+
+  @override
+  String get objectsNameRequired => 'El nombre es obligatorio';
+
+  @override
+  String get objectsNameInvalid => 'No uses / \\ ni ninguno de < > : \" | ? *';
+
+  @override
+  String get objectsNameUnchanged => 'Es el nombre actual';
+
+  @override
+  String get objectsActionErrorTitle => 'No se pudo completar la acción';
+
+  @override
+  String get objectsDetails => 'Detalles';
+
+  @override
+  String get objectsMove => 'Mover';
+
+  @override
+  String get objectsMoveSelection => 'Mover selección';
+
+  @override
+  String objectsMoveTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count objetos',
+      one: '1 objeto',
+    );
+    return 'Mover $_temp0';
+  }
+
+  @override
+  String get objectsMoveBucket => 'Bucket de destino';
+
+  @override
+  String get objectsMoveFolder => 'Carpeta de destino';
+
+  @override
+  String get objectsMoveNoFolders => 'No hay subcarpetas';
+
+  @override
+  String get objectsMoveHere => 'Mover aquí';
+
+  @override
+  String objectsMoveHelper(String path) {
+    return 'Se moverán a $path. Si ya hay objetos con esos nombres, se sustituyen.';
+  }
+
+  @override
+  String get objectsMoveSameFolder => 'Ya están en esta carpeta. Elige otra.';
+
+  @override
+  String objectsMoved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count objetos movidos',
+      one: '1 objeto movido',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String objectsMovePartial(int moved, int total) {
+    return 'Solo se movieron $moved de $total objetos.';
+  }
+
+  @override
+  String objectDetailsSubtitle(String type, String size) {
+    return '$type · $size';
+  }
+
+  @override
+  String get objectDetailsKey => 'Key';
+
+  @override
+  String get objectDetailsType => 'Tipo';
+
+  @override
+  String get objectDetailsSize => 'Tamaño';
+
+  @override
+  String objectDetailsSizeBytes(int bytes) {
+    return '($bytes bytes)';
+  }
+
+  @override
+  String get objectDetailsModified => 'Modificado';
+
+  @override
+  String get objectDetailsUrl => 'URL';
+
+  @override
+  String get objectDetailsCopyUrl => 'Copiar URL';
+
+  @override
+  String get objectDetailsUrlCopied => 'URL copiada';
+
+  @override
+  String get objectsPageSize => 'Filas por página:';
+
+  @override
+  String objectsPageOf(int page, int total) {
+    return 'Página $page de $total';
+  }
+
+  @override
+  String get objectsPreviousPage => 'Página anterior';
+
+  @override
+  String get objectsNextPage => 'Página siguiente';
+
+  @override
+  String get objectsPagerHint =>
+      'La búsqueda y los filtros solo se aplican a las páginas ya cargadas.';
+
+  @override
+  String objectsPagerHintPages(int loaded, int total) {
+    return 'La búsqueda y los filtros solo se aplican a las páginas ya cargadas ($loaded de $total).';
+  }
 }

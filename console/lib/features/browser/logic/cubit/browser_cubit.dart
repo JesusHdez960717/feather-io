@@ -1,4 +1,5 @@
 import 'dart:js_interop';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:console/app_exporter.dart';
@@ -27,6 +28,9 @@ class BrowserCubit extends Cubit<BrowserState>
 
   bool get _canGoForward => _forwardPrefixes.isNotEmpty;
 
+  ///Elementos por pagina; se mantiene al cambiar de carpeta
+  int _pageSize = BrowserPagination.defaultPageSize;
+
   BrowserCubit({required this.auth, required this.repo, this.initialViewType})
     : super(BrowserInitialState(viewType: initialViewType)) {
     onBus<BucketChangedEvent>(_onBucketChanged);
@@ -45,7 +49,7 @@ class BrowserCubit extends Cubit<BrowserState>
     switch (event.change) {
       case BucketChange.emptied:
       case BucketChange.objectsChanged:
-        _list(prefix: current.prefix);
+        _list(prefix: current.prefix, pageIndex: current.pageIndex);
       case BucketChange.updated:
         final bucket = event.bucket;
         if (bucket != null) emit(current.copyWith(selectedBucket: bucket));
@@ -116,44 +120,119 @@ class BrowserCubit extends Cubit<BrowserState>
     await _list(bucket: bucket, prefix: prefix);
   }
 
-  ///Vuelve a pedir la carpeta que se muestra
+  ///Vuelve a pedir la carpeta que se muestra, hasta la pagina actual
   Future<void> refresh() async {
     if (state is! BrowserSearchState) return;
+    final current = state as BrowserSearchState;
+    await _list(prefix: current.prefix, pageIndex: current.pageIndex);
+  }
+
+  ///Pagina siguiente: la guardada si ya se cargo, si no se pide al servicio
+  Future<void> nextPage() async {
+    if (state is! BrowserSearchState) return;
+    final current = state as BrowserSearchState;
+    if (!current.canGoNext) return;
+    final next = current.pageIndex + 1;
+    if (next < current.pages.length) {
+      emit(_loadingSuccessFrom(current, pageIndex: next));
+      return;
+    }
+    final bucket = current.selectedBucket;
+    if (bucket == null) return;
+    try {
+      emit(_loadingInProgressFrom(current));
+      final page = await repo.listObjects(
+        token: auth.auth?.accessToken,
+        bucket: bucket.name,
+        prefix: current.prefix,
+        delimiter: current.delimiter,
+        maxKeys: current.pageSize,
+        continuationToken: current.objects?.nextContinuationToken,
+      );
+      emit(
+        _loadingSuccessFrom(
+          current,
+          pages: [...current.pages, page],
+          pageIndex: next,
+        ),
+      );
+    } catch (exc) {
+      emit(_loadingErrorFrom(current, exc));
+    }
+  }
+
+  ///Pagina anterior, que siempre esta ya cargada
+  void previousPage() {
+    if (state is! BrowserSearchState) return;
+    final current = state as BrowserSearchState;
+    if (!current.canGoPrevious) return;
+    emit(_loadingSuccessFrom(current, pageIndex: current.pageIndex - 1));
+  }
+
+  ///Cambia los elementos por pagina y vuelve a la primera
+  Future<void> changePageSize(int pageSize) async {
+    if (state is! BrowserSearchState || pageSize == _pageSize) return;
+    _pageSize = pageSize;
     await _list(prefix: (state as BrowserSearchState).prefix);
   }
 
-  Future<void> _list({BucketModel? bucket, String? prefix}) async {
-    final targetBucket =
-        bucket ??
-        (state is BrowserSearchState
-            ? (state as BrowserSearchState).selectedBucket
-            : null);
+  ///Carga las paginas de [prefix] desde la primera hasta [pageIndex] (o hasta
+  ///la ultima que haya) y muestra [pageIndex]. Mientras carga sigue viendose
+  ///lo anterior si es la misma carpeta
+  Future<void> _list({
+    BucketModel? bucket,
+    String? prefix,
+    int pageIndex = 0,
+  }) async {
+    final current = state is BrowserSearchState
+        ? state as BrowserSearchState
+        : null;
+    final targetBucket = bucket ?? current?.selectedBucket;
     if (targetBucket == null) return;
+    final targetPrefix = prefix ?? '';
 
+    final samePlace =
+        current?.selectedBucket?.name == targetBucket.name &&
+        current?.prefix == targetPrefix;
+    final previousPages = samePlace ? current!.pages : <ListObjectsModel>[];
+    final previousIndex = samePlace ? current!.pageIndex : 0;
     final viewType = _viewType;
 
     try {
       emit(
         BrowserLoadingInProgressState(
           selectedBucket: targetBucket,
-          prefix: prefix ?? '',
+          prefix: targetPrefix,
+          pages: previousPages,
+          pageIndex: previousIndex,
+          pageSize: _pageSize,
           viewType: viewType,
           canGoForward: _canGoForward,
         ),
       );
 
-      final objects = await repo.listObjects(
-        token: auth.auth?.accessToken,
-        bucket: targetBucket.name,
-        prefix: prefix,
-        delimiter: '/',
-      );
+      final pages = <ListObjectsModel>[];
+      String? continuationToken;
+      do {
+        final page = await repo.listObjects(
+          token: auth.auth?.accessToken,
+          bucket: targetBucket.name,
+          prefix: targetPrefix,
+          delimiter: '/',
+          maxKeys: _pageSize,
+          continuationToken: continuationToken,
+        );
+        pages.add(page);
+        continuationToken = page.nextContinuationToken;
+      } while (pages.length <= pageIndex && continuationToken != null);
 
       emit(
         BrowserLoadingSuccessState(
           selectedBucket: targetBucket,
-          prefix: prefix ?? '',
-          objects: objects,
+          prefix: targetPrefix,
+          pages: pages,
+          pageIndex: min(pageIndex, pages.length - 1),
+          pageSize: _pageSize,
           viewType: viewType,
           canGoForward: _canGoForward,
         ),
@@ -163,7 +242,10 @@ class BrowserCubit extends Cubit<BrowserState>
         BrowserLoadingErrorState(
           ExceptionConverter.parse(exc),
           selectedBucket: targetBucket,
-          prefix: prefix ?? '',
+          prefix: targetPrefix,
+          pages: previousPages,
+          pageIndex: previousIndex,
+          pageSize: _pageSize,
           viewType: viewType,
           canGoForward: _canGoForward,
         ),
@@ -182,7 +264,11 @@ class BrowserCubit extends Cubit<BrowserState>
         keys: keys,
       );
 
-      await _list(bucket: bucket, prefix: currentState.prefix);
+      await _list(
+        bucket: bucket,
+        prefix: currentState.prefix,
+        pageIndex: currentState.pageIndex,
+      );
     });
   }
 
@@ -207,7 +293,11 @@ class BrowserCubit extends Cubit<BrowserState>
         );
       }
 
-      await _list(bucket: bucket, prefix: currentState.prefix);
+      await _list(
+        bucket: bucket,
+        prefix: currentState.prefix,
+        pageIndex: currentState.pageIndex,
+      );
     });
   }
 
@@ -287,23 +377,16 @@ class BrowserCubit extends Cubit<BrowserState>
         BrowserProcessInProgressState(
           selectedBucket: currentState.selectedBucket,
           prefix: currentState.prefix,
-          objects: currentState.objects,
+          pages: currentState.pages,
+          pageIndex: currentState.pageIndex,
+          pageSize: currentState.pageSize,
           viewType: currentState.viewType,
           canGoForward: _canGoForward,
         ),
       );
       await action(currentState);
     } catch (exc) {
-      emit(
-        BrowserLoadingErrorState(
-          ExceptionConverter.parse(exc),
-          selectedBucket: currentState.selectedBucket,
-          prefix: currentState.prefix,
-          objects: currentState.objects,
-          viewType: currentState.viewType,
-          canGoForward: _canGoForward,
-        ),
-      );
+      emit(_loadingErrorFrom(currentState, exc));
     } finally {
       if (changedBucket != null) {
         GlobalEventBus().fire(
@@ -317,14 +400,45 @@ class BrowserCubit extends Cubit<BrowserState>
     }
   }
 
-  BrowserLoadingSuccessState _loadingSuccessFrom(BrowserSearchState state) =>
-      BrowserLoadingSuccessState(
-        selectedBucket: state.selectedBucket,
-        prefix: state.prefix,
-        objects: state.objects,
-        viewType: state.viewType,
-        canGoForward: state.canGoForward,
-      );
+  BrowserLoadingSuccessState _loadingSuccessFrom(
+    BrowserSearchState state, {
+    List<ListObjectsModel>? pages,
+    int? pageIndex,
+  }) => BrowserLoadingSuccessState(
+    selectedBucket: state.selectedBucket,
+    prefix: state.prefix,
+    pages: pages ?? state.pages,
+    pageIndex: pageIndex ?? state.pageIndex,
+    pageSize: state.pageSize,
+    viewType: state.viewType,
+    canGoForward: state.canGoForward,
+  );
+
+  BrowserLoadingInProgressState _loadingInProgressFrom(
+    BrowserSearchState state,
+  ) => BrowserLoadingInProgressState(
+    selectedBucket: state.selectedBucket,
+    prefix: state.prefix,
+    pages: state.pages,
+    pageIndex: state.pageIndex,
+    pageSize: state.pageSize,
+    viewType: state.viewType,
+    canGoForward: state.canGoForward,
+  );
+
+  BrowserLoadingErrorState _loadingErrorFrom(
+    BrowserSearchState state,
+    Object exc,
+  ) => BrowserLoadingErrorState(
+    ExceptionConverter.parse(exc),
+    selectedBucket: state.selectedBucket,
+    prefix: state.prefix,
+    pages: state.pages,
+    pageIndex: state.pageIndex,
+    pageSize: state.pageSize,
+    viewType: state.viewType,
+    canGoForward: _canGoForward,
+  );
 }
 
 abstract class BrowserState {
@@ -342,7 +456,15 @@ abstract class BrowserSearchState extends BrowserState {
   final BucketModel? selectedBucket;
   final String prefix;
   final String delimiter = '/';
-  final ListObjectsModel? objects;
+
+  ///Paginas de la carpeta ya cargadas, seguidas desde la primera
+  final List<ListObjectsModel> pages;
+
+  ///Pagina que se muestra, dentro de [pages]
+  final int pageIndex;
+
+  ///Elementos por pagina
+  final int pageSize;
   final ViewType viewType;
 
   ///Hay un *subir un nivel* que *adelante* puede deshacer
@@ -351,15 +473,44 @@ abstract class BrowserSearchState extends BrowserState {
   BrowserSearchState({
     this.selectedBucket,
     this.prefix = '',
-    this.objects,
+    this.pages = const [],
+    this.pageIndex = 0,
+    this.pageSize = BrowserPagination.defaultPageSize,
     this.viewType = ViewType.list,
     this.canGoForward = false,
   });
 
+  ///La pagina que se muestra
+  ListObjectsModel? get objects =>
+      pageIndex < pages.length ? pages[pageIndex] : null;
+
+  ///Paginas de la carpeta segun el total que da el servicio
+  int get totalPages {
+    final total = objects?.totalKeys ?? 0;
+    return max(1, (total / pageSize).ceil());
+  }
+
+  bool get canGoPrevious => pageIndex > 0;
+
+  bool get canGoNext =>
+      pageIndex + 1 < pages.length || (objects?.isTruncated ?? false);
+
+  ///Objetos de todas las paginas cargadas (para buscar y filtrar en ellas)
+  List<BrowserObjectModel> get loadedObjects => [
+    for (final page in pages) ...page.objects,
+  ];
+
+  ///Carpetas de todas las paginas cargadas
+  List<String> get loadedPrefixes => [
+    for (final page in pages) ...page.commonPrefixes,
+  ];
+
   BrowserSearchState copyWith({
     BucketModel? selectedBucket,
     String? prefix,
-    ListObjectsModel? objects,
+    List<ListObjectsModel>? pages,
+    int? pageIndex,
+    int? pageSize,
     ViewType? viewType,
     bool? canGoForward,
   });
@@ -369,7 +520,9 @@ class BrowserLoadingInProgressState extends BrowserSearchState {
   BrowserLoadingInProgressState({
     super.selectedBucket,
     super.prefix = '',
-    super.objects,
+    super.pages,
+    super.pageIndex,
+    super.pageSize,
     super.viewType,
     super.canGoForward,
   });
@@ -378,14 +531,18 @@ class BrowserLoadingInProgressState extends BrowserSearchState {
   BrowserLoadingInProgressState copyWith({
     BucketModel? selectedBucket,
     String? prefix,
-    ListObjectsModel? objects,
+    List<ListObjectsModel>? pages,
+    int? pageIndex,
+    int? pageSize,
     ViewType? viewType,
     bool? canGoForward,
   }) {
     return BrowserLoadingInProgressState(
       selectedBucket: selectedBucket ?? this.selectedBucket,
       prefix: prefix ?? this.prefix,
-      objects: objects ?? this.objects,
+      pages: pages ?? this.pages,
+      pageIndex: pageIndex ?? this.pageIndex,
+      pageSize: pageSize ?? this.pageSize,
       viewType: viewType ?? this.viewType,
       canGoForward: canGoForward ?? this.canGoForward,
     );
@@ -396,7 +553,9 @@ class BrowserLoadingSuccessState extends BrowserSearchState {
   BrowserLoadingSuccessState({
     super.selectedBucket,
     super.prefix = '',
-    super.objects,
+    super.pages,
+    super.pageIndex,
+    super.pageSize,
     super.viewType,
     super.canGoForward,
   });
@@ -405,14 +564,18 @@ class BrowserLoadingSuccessState extends BrowserSearchState {
   BrowserLoadingSuccessState copyWith({
     BucketModel? selectedBucket,
     String? prefix,
-    ListObjectsModel? objects,
+    List<ListObjectsModel>? pages,
+    int? pageIndex,
+    int? pageSize,
     ViewType? viewType,
     bool? canGoForward,
   }) {
     return BrowserLoadingSuccessState(
       selectedBucket: selectedBucket ?? this.selectedBucket,
       prefix: prefix ?? this.prefix,
-      objects: objects ?? this.objects,
+      pages: pages ?? this.pages,
+      pageIndex: pageIndex ?? this.pageIndex,
+      pageSize: pageSize ?? this.pageSize,
       viewType: viewType ?? this.viewType,
       canGoForward: canGoForward ?? this.canGoForward,
     );
@@ -423,7 +586,9 @@ class BrowserProcessInProgressState extends BrowserSearchState {
   BrowserProcessInProgressState({
     super.selectedBucket,
     super.prefix = '',
-    super.objects,
+    super.pages,
+    super.pageIndex,
+    super.pageSize,
     super.viewType,
     super.canGoForward,
   });
@@ -432,14 +597,18 @@ class BrowserProcessInProgressState extends BrowserSearchState {
   BrowserProcessInProgressState copyWith({
     BucketModel? selectedBucket,
     String? prefix,
-    ListObjectsModel? objects,
+    List<ListObjectsModel>? pages,
+    int? pageIndex,
+    int? pageSize,
     ViewType? viewType,
     bool? canGoForward,
   }) {
     return BrowserProcessInProgressState(
       selectedBucket: selectedBucket ?? this.selectedBucket,
       prefix: prefix ?? this.prefix,
-      objects: objects ?? this.objects,
+      pages: pages ?? this.pages,
+      pageIndex: pageIndex ?? this.pageIndex,
+      pageSize: pageSize ?? this.pageSize,
       viewType: viewType ?? this.viewType,
       canGoForward: canGoForward ?? this.canGoForward,
     );
@@ -453,7 +622,9 @@ class BrowserLoadingErrorState extends BrowserSearchState {
     this.exception, {
     super.selectedBucket,
     super.prefix = '',
-    super.objects,
+    super.pages,
+    super.pageIndex,
+    super.pageSize,
     super.viewType,
     super.canGoForward,
   });
@@ -462,7 +633,9 @@ class BrowserLoadingErrorState extends BrowserSearchState {
   BrowserLoadingErrorState copyWith({
     BucketModel? selectedBucket,
     String? prefix,
-    ListObjectsModel? objects,
+    List<ListObjectsModel>? pages,
+    int? pageIndex,
+    int? pageSize,
     ViewType? viewType,
     bool? canGoForward,
     GlobalException? exception,
@@ -471,7 +644,9 @@ class BrowserLoadingErrorState extends BrowserSearchState {
       exception ?? this.exception,
       selectedBucket: selectedBucket ?? this.selectedBucket,
       prefix: prefix ?? this.prefix,
-      objects: objects ?? this.objects,
+      pages: pages ?? this.pages,
+      pageIndex: pageIndex ?? this.pageIndex,
+      pageSize: pageSize ?? this.pageSize,
       viewType: viewType ?? this.viewType,
       canGoForward: canGoForward ?? this.canGoForward,
     );

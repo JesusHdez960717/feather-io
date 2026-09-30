@@ -3,6 +3,9 @@ import 'package:cross_file/cross_file.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'form/move_objects_dialog.dart';
+import 'form/object_details_drawer.dart';
+import 'form/object_name_dialog.dart';
 import 'objects_grid_datasource.dart';
 import 'objects_table_datasource.dart';
 
@@ -19,6 +22,12 @@ class ObjectsSubscreen extends StatefulWidget {
   final Function(List<String> keys, {String? zipName}) onDownload;
   final Function(String key) onView;
   final void Function() onExit;
+  final VoidCallback onNextPage;
+  final VoidCallback onPreviousPage;
+  final ValueChanged<int> onPageSizeChanged;
+
+  ///Buckets a los que se pueden mover objetos
+  final List<String> bucketNames;
 
   const ObjectsSubscreen({
     required this.state,
@@ -33,6 +42,10 @@ class ObjectsSubscreen extends StatefulWidget {
     required this.onDownload,
     required this.onView,
     required this.onExit,
+    required this.onNextPage,
+    required this.onPreviousPage,
+    required this.onPageSizeChanged,
+    required this.bucketNames,
     super.key,
   });
 
@@ -43,7 +56,13 @@ class ObjectsSubscreen extends StatefulWidget {
 class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _breadcrumbScrollController = ScrollController();
-  List<BrowserObjectWrapper> _allWrappers = [];
+
+  ///Carpetas y objetos de la pagina que se muestra
+  List<BrowserObjectWrapper> _pageWrappers = [];
+
+  ///Carpetas y objetos de todas las paginas cargadas: la busqueda y los
+  ///filtros miran aqui
+  List<BrowserObjectWrapper> _loadedWrappers = [];
   List<BrowserObjectWrapper> _filteredWrappers = [];
   List<BrowserObjectWrapper> _selectedWrappers = [];
 
@@ -73,7 +92,8 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
   @override
   void didUpdateWidget(covariant ObjectsSubscreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.state.objects != widget.state.objects ||
+    if (oldWidget.state.pages != widget.state.pages ||
+        oldWidget.state.pageIndex != widget.state.pageIndex ||
         oldWidget.state.prefix != widget.state.prefix) {
       _initializeWrappers();
       if (oldWidget.state.prefix != widget.state.prefix) {
@@ -102,33 +122,44 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
   }
 
   void _initializeWrappers() {
-    final ListObjectsModel? objectsModel = widget.state.objects;
-    _allWrappers = [];
+    final page = widget.state.objects;
+    _pageWrappers = page == null
+        ? []
+        : _wrappersOf(page.commonPrefixes, page.objects);
+    _loadedWrappers = _wrappersOf(
+      widget.state.loadedPrefixes,
+      widget.state.loadedObjects,
+    );
     _selectedWrappers = [];
+    _applyFilters();
+  }
 
-    if (objectsModel != null) {
-      for (final cp in objectsModel.commonPrefixes) {
-        final name = cp.split('/').where((s) => s.isNotEmpty).last;
-        _allWrappers.add(
-          BrowserObjectWrapper(name: name, isFolder: true, fullPath: cp),
-        );
-      }
-      for (final obj in objectsModel.objects) {
-        final name = obj.key.split('/').last;
-        if (name.isEmpty) continue;
-        _allWrappers.add(
+  List<BrowserObjectWrapper> _wrappersOf(
+    List<String> prefixes,
+    List<BrowserObjectModel> objects,
+  ) {
+    return [
+      for (final cp in prefixes)
+        BrowserObjectWrapper(
+          name: cp.split('/').where((s) => s.isNotEmpty).last,
+          isFolder: true,
+          fullPath: cp,
+        ),
+      for (final obj in objects)
+        //la propia carpeta ("fotos/") llega como un objeto sin nombre
+        if (obj.key.split('/').last.isNotEmpty)
           BrowserObjectWrapper(
-            name: name,
+            name: obj.key.split('/').last,
             isFolder: false,
             size: obj.sizeBytes,
             lastModified: obj.lastModified,
             fullPath: obj.key,
           ),
-        );
-      }
-    }
-    _applyFilters();
+    ];
   }
+
+  ///Nombres ya usados en la carpeta (segun lo cargado), para no repetirlos
+  Set<String> get _usedNames => {for (final w in _loadedWrappers) w.name};
 
   void _onSelectionChanged(List<BrowserObjectWrapper> selected) {
     setState(() {
@@ -147,7 +178,8 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
     final query = _searchController.text.toLowerCase();
     final now = DateTime.now();
     setState(() {
-      _filteredWrappers = _allWrappers
+      final searching = query.isNotEmpty || _filter.isActive;
+      _filteredWrappers = (searching ? _loadedWrappers : _pageWrappers)
           .where((w) => query.isEmpty || w.name.toLowerCase().contains(query))
           .where((w) => _filter.matches(w, now: now))
           .toList();
@@ -169,6 +201,80 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
       confirmTitle: app.intl.delete,
       confirmColor: app.colors.primary.errorAction,
       confirmAction: () => widget.onDelete(keys),
+    );
+  }
+
+  void _onRename(BrowserObjectWrapper wrapper) {
+    final bucket = widget.state.selectedBucket;
+    if (bucket == null) return;
+    ObjectNameDialog.rename(
+      bucket: bucket.name,
+      key: wrapper.fullPath,
+      existingNames: _usedNames,
+    );
+  }
+
+  void _onMove(List<BrowserObjectWrapper> wrappers) {
+    final bucket = widget.state.selectedBucket;
+    if (bucket == null) return;
+    MoveObjectsDialog.show(
+      bucket: bucket.name,
+      prefix: widget.state.prefix,
+      keys: wrappers.map((w) => w.fullPath).toList(),
+      buckets: widget.bucketNames,
+    );
+  }
+
+  void _onCreateFolder() {
+    final bucket = widget.state.selectedBucket;
+    if (bucket == null) return;
+    ObjectNameDialog.createFolder(
+      bucket: bucket.name,
+      prefix: widget.state.prefix,
+      existingNames: _usedNames,
+    );
+  }
+
+  void _onDetails(BrowserObjectWrapper wrapper) {
+    final bucket = widget.state.selectedBucket;
+    if (bucket == null) return;
+    ObjectDetailsDrawer.show(
+      bucket: bucket.name,
+      object: wrapper,
+      onDelete: () => _onDeleteSelected([wrapper]),
+      onRename: () => _onRename(wrapper),
+      onMove: () => _onMove([wrapper]),
+      onDownload: () =>
+          widget.onDownload([wrapper.fullPath], zipName: wrapper.name),
+    );
+  }
+
+  ///Solo los objetos se pueden mover (las carpetas todavia no)
+  bool get _canMoveSelection =>
+      _selectedWrappers.isNotEmpty &&
+      _selectedWrappers.every((w) => !w.isFolder);
+
+  PopupMenuItem<String> _menuItem({
+    required String value,
+    required SvgAsset icon,
+    required String label,
+    required VoidCallback onTap,
+    Color? color,
+  }) {
+    final itemColor = color ?? app.colors.neutral.white;
+    return PopupMenuItem(
+      value: value,
+      onTap: onTap,
+      child: Row(
+        children: [
+          icon.build(size: 18, color: itemColor),
+          app.dimensions.padding.m.gap(),
+          Text(
+            label,
+            style: app.textTheme.bodyMedium?.copyWith(color: itemColor),
+          ),
+        ],
+      ),
     );
   }
 
@@ -196,7 +302,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
         borderRadius: app.dimensions.border.borderRadius.s,
         side: BorderSide(color: app.colors.neutral.grey5),
       ),
-      items: [
+      items: <PopupMenuEntry<String>>[
         if (!wrapper.isFolder)
           PopupMenuItem(
             value: 'view',
@@ -237,6 +343,27 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
             ],
           ),
         ),
+        if (!wrapper.isFolder) ...[
+          _menuItem(
+            value: 'details',
+            icon: app.assets.icons.actions.info,
+            label: app.intl.objectsDetails,
+            onTap: () => _onDetails(wrapper),
+          ),
+          _menuItem(
+            value: 'rename',
+            icon: app.assets.icons.actions.edit,
+            label: app.intl.objectsRename,
+            onTap: () => _onRename(wrapper),
+          ),
+          _menuItem(
+            value: 'move',
+            icon: app.assets.icons.storage.folder,
+            label: app.intl.objectsMove,
+            onTap: () => _onMove([wrapper]),
+          ),
+        ],
+        const PopupMenuDivider(),
         PopupMenuItem(
           value: 'delete',
           onTap: () => _onDeleteSelected([wrapper]),
@@ -404,6 +531,14 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                     app.dimensions.padding.xl.gap(),
                     Row(
                       children: [
+                        PrimaryButton.secondary(
+                          title: app.intl.objectsNewFolder,
+                          icon: app.assets.icons.storage.folder,
+                          onPressed: _onCreateFolder,
+                          w: 170,
+                          h: 38,
+                        ),
+                        app.dimensions.padding.m.gap(),
                         Builder(
                           builder: (context) {
                             return PrimaryButton.primary(
@@ -474,6 +609,22 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                           iconColor: _selectedWrappers.isNotEmpty
                               ? app.colors.neutral.white
                               : app.colors.neutral.grey5,
+                        ),
+                        app.dimensions.padding.xs.gap(),
+                        Tooltip(
+                          message: app.intl.objectsMoveSelection,
+                          child: PrimaryButton.svgIcon(
+                            icon: app.assets.icons.storage.folder,
+                            onPressed: _canMoveSelection
+                                ? () => _onMove(_selectedWrappers)
+                                : null,
+                            buttonSize: 42,
+                            iconSize: 18,
+                            backgroundColor: app.colors.neutral.transparent,
+                            iconColor: _canMoveSelection
+                                ? app.colors.neutral.white
+                                : app.colors.neutral.grey5,
+                          ),
                         ),
                         app.dimensions.padding.xs.gap(),
                         PrimaryButton.svgIcon(
@@ -574,6 +725,12 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
               ),
             ),
           ),
+        ),
+        ObjectsPager(
+          state: widget.state,
+          onPrevious: widget.onPreviousPage,
+          onNext: widget.onNextPage,
+          onPageSizeChanged: widget.onPageSizeChanged,
         ),
       ],
     );

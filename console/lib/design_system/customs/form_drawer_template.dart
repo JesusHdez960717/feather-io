@@ -31,6 +31,7 @@ class FormDrawerTemplate extends StatelessWidget {
                 icon: icon,
                 footerActions: footerActions,
                 loadingId: loadingId,
+                width: width,
                 child: child,
               );
             },

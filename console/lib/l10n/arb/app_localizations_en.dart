@@ -690,4 +690,173 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get browserGoToBucketRoot => 'Go to the bucket root';
+
+  @override
+  String get objectsNewFolder => 'New folder';
+
+  @override
+  String get objectsNewFolderCreate => 'Create folder';
+
+  @override
+  String get objectsFolderNameLabel => 'Folder name';
+
+  @override
+  String get objectsFolderNameHint => 'invoices-2026';
+
+  @override
+  String objectsFolderPathHelper(String path) {
+    return 'It will be created in $path';
+  }
+
+  @override
+  String objectsFolderCreated(String name) {
+    return 'Folder \"$name\" created';
+  }
+
+  @override
+  String get objectsFolderExists =>
+      'There\'s already a folder or object with that name here.';
+
+  @override
+  String get objectsRename => 'Rename';
+
+  @override
+  String get objectsRenameLabel => 'New name';
+
+  @override
+  String objectsRenamePathHelper(String path) {
+    return 'It stays at $path';
+  }
+
+  @override
+  String objectsRenamed(String name) {
+    return 'Renamed to \"$name\"';
+  }
+
+  @override
+  String get objectsNameExists =>
+      'There\'s already an object or folder with that name in this folder.';
+
+  @override
+  String get objectsNameRequired => 'The name is required';
+
+  @override
+  String get objectsNameInvalid => 'Don\'t use / \\ or any of < > : \" | ? *';
+
+  @override
+  String get objectsNameUnchanged => 'It\'s the current name';
+
+  @override
+  String get objectsActionErrorTitle => 'The action couldn\'t be completed';
+
+  @override
+  String get objectsDetails => 'Details';
+
+  @override
+  String get objectsMove => 'Move';
+
+  @override
+  String get objectsMoveSelection => 'Move selection';
+
+  @override
+  String objectsMoveTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count objects',
+      one: '1 object',
+    );
+    return 'Move $_temp0';
+  }
+
+  @override
+  String get objectsMoveBucket => 'Target bucket';
+
+  @override
+  String get objectsMoveFolder => 'Target folder';
+
+  @override
+  String get objectsMoveNoFolders => 'No subfolders';
+
+  @override
+  String get objectsMoveHere => 'Move here';
+
+  @override
+  String objectsMoveHelper(String path) {
+    return 'They\'ll be moved to $path. Objects with the same name there are replaced.';
+  }
+
+  @override
+  String get objectsMoveSameFolder =>
+      'They\'re already in this folder. Choose another one.';
+
+  @override
+  String objectsMoved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count objects moved',
+      one: '1 object moved',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String objectsMovePartial(int moved, int total) {
+    return 'Only $moved of $total objects were moved.';
+  }
+
+  @override
+  String objectDetailsSubtitle(String type, String size) {
+    return '$type · $size';
+  }
+
+  @override
+  String get objectDetailsKey => 'Key';
+
+  @override
+  String get objectDetailsType => 'Type';
+
+  @override
+  String get objectDetailsSize => 'Size';
+
+  @override
+  String objectDetailsSizeBytes(int bytes) {
+    return '($bytes bytes)';
+  }
+
+  @override
+  String get objectDetailsModified => 'Modified';
+
+  @override
+  String get objectDetailsUrl => 'URL';
+
+  @override
+  String get objectDetailsCopyUrl => 'Copy URL';
+
+  @override
+  String get objectDetailsUrlCopied => 'URL copied';
+
+  @override
+  String get objectsPageSize => 'Rows per page:';
+
+  @override
+  String objectsPageOf(int page, int total) {
+    return 'Page $page of $total';
+  }
+
+  @override
+  String get objectsPreviousPage => 'Previous page';
+
+  @override
+  String get objectsNextPage => 'Next page';
+
+  @override
+  String get objectsPagerHint =>
+      'Search and filters only apply to the pages already loaded.';
+
+  @override
+  String objectsPagerHintPages(int loaded, int total) {
+    return 'Search and filters only apply to the pages already loaded ($loaded of $total).';
+  }
 }

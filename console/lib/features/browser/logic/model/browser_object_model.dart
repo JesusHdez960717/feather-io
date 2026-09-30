@@ -17,13 +17,34 @@ class ListObjectsModel {
   final List<BrowserObjectModel> objects;
   final List<String> commonPrefixes;
 
+  ///Hay mas elementos despues de esta pagina
+  final bool isTruncated;
+
+  ///Token para pedir la pagina siguiente
+  final String? nextContinuationToken;
+
+  ///Elementos de la carpeta en todas las paginas
+  final int totalKeys;
+
   ListObjectsModel({
     required this.bucketName,
     required this.objects,
     required this.commonPrefixes,
     this.prefix,
     this.delimiter,
+    this.isTruncated = false,
+    this.nextContinuationToken,
+    this.totalKeys = 0,
   });
+}
+
+///Cabeceras de un objeto (`HEAD`), para su panel de detalles
+class ObjectInfoModel {
+  final String? contentType;
+  final int? sizeBytes;
+  final DateTime? lastModified;
+
+  ObjectInfoModel({this.contentType, this.sizeBytes, this.lastModified});
 }
 
 class ObjectDataModel {

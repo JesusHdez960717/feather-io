@@ -1,5 +1,6 @@
 import 'package:console/app_exporter.dart';
 import 'package:dio/dio.dart';
+import 'package:intl/intl.dart';
 
 class BrowserClient extends BaseClient {
   @override
@@ -12,10 +13,17 @@ class BrowserClient extends BaseClient {
     String? token,
     String? prefix,
     String? delimiter,
+    int? maxKeys,
+    String? continuationToken,
   }) async {
     Response rawResponse = await dio.get(
       '$baseUrl/$bucket',
-      queryParameters: {'prefix': prefix, 'delimiter': delimiter},
+      queryParameters: {
+        'prefix': prefix,
+        'delimiter': delimiter,
+        'max-keys': ?maxKeys,
+        'continuation-token': ?continuationToken,
+      },
       options: options(token: token),
     );
 
@@ -46,6 +54,42 @@ class BrowserClient extends BaseClient {
     requestOptions.headers!['content-length'] = length.toString();
 
     await dio.put('$baseUrl/$bucket/$key', data: data, options: requestOptions);
+  }
+
+  ///Crea una carpeta vacia: un `PUT` de la key terminada en `/` sin cuerpo
+  Future<void> createFolder({
+    required String bucket,
+    required String key,
+    String? token,
+  }) async {
+    await dio.put('$baseUrl/$bucket/$key', options: options(token: token));
+  }
+
+  ///CopyObject: copia `sourceBucket/sourceKey` en `bucket/key`
+  Future<void> copyObject({
+    required String sourceBucket,
+    required String sourceKey,
+    required String bucket,
+    required String key,
+    String? token,
+  }) async {
+    final requestOptions = options(token: token);
+    requestOptions.headers!['x-amz-copy-source'] =
+        '/$sourceBucket/${Uri.encodeComponent(sourceKey)}';
+    await dio.put('$baseUrl/$bucket/$key', options: requestOptions);
+  }
+
+  ///Cabeceras del objeto sin descargarlo (`HEAD`)
+  Future<ObjectInfoResponse> headObject({
+    required String bucket,
+    required String key,
+    String? token,
+  }) async {
+    Response response = await dio.head(
+      '$baseUrl/$bucket/$key',
+      options: options(token: token),
+    );
+    return ObjectInfoResponse.fromHeaders(response.headers);
   }
 
   Future<ObjectDataResponse> getObject({
@@ -111,13 +155,19 @@ class ListObjectsResponse {
   final String? delimiter;
   final List<ObjectResponse> contents;
   final List<String> commonPrefixes;
+  final bool isTruncated;
+  final String? nextContinuationToken;
+  final int totalKeys;
 
   ListObjectsResponse({
     required this.bucketName,
     required this.contents,
     required this.commonPrefixes,
+    required this.isTruncated,
+    required this.totalKeys,
     this.prefix,
     this.delimiter,
+    this.nextContinuationToken,
   });
 
   factory ListObjectsResponse.fromJson(Map<String, dynamic> json) {
@@ -129,6 +179,9 @@ class ListObjectsResponse {
           .map((e) => ObjectResponse.fromJson(e))
           .toList(),
       commonPrefixes: List<String>.from(json['common_prefixes'] ?? []),
+      isTruncated: json['is_truncated'] ?? false,
+      nextContinuationToken: json['next_continuation_token'],
+      totalKeys: json['total_keys'] ?? 0,
     );
   }
 }
@@ -150,6 +203,37 @@ class ObjectResponse {
       key: json['key'],
       sizeBytes: json['size_bytes'],
       lastModified: DateTime.parse(json['last_modified']),
+    );
+  }
+}
+
+//---------- OBJECT INFO RESPONSE ----------
+class ObjectInfoResponse {
+  final String? contentType;
+  final int? sizeBytes;
+  final DateTime? lastModified;
+
+  ObjectInfoResponse({this.contentType, this.sizeBytes, this.lastModified});
+
+  factory ObjectInfoResponse.fromHeaders(Headers headers) {
+    final length = headers.value('content-length');
+    final modified = headers.value('last-modified');
+    DateTime? lastModified;
+    try {
+      //fecha HTTP (RFC 7231): "Tue, 29 Sep 2026 18:04:51 GMT"
+      lastModified = modified == null
+          ? null
+          : DateFormat(
+              'EEE, dd MMM yyyy HH:mm:ss',
+              'en_US',
+            ).parseUtc(modified.replaceAll(' GMT', '')).toLocal();
+    } catch (_) {
+      lastModified = null;
+    }
+    return ObjectInfoResponse(
+      contentType: headers.value('content-type'),
+      sizeBytes: length == null ? null : int.tryParse(length),
+      lastModified: lastModified,
     );
   }
 }

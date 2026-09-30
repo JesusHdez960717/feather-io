@@ -1255,6 +1255,264 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Go to the bucket root'**
   String get browserGoToBucketRoot;
+
+  /// No description provided for @objectsNewFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'New folder'**
+  String get objectsNewFolder;
+
+  /// No description provided for @objectsNewFolderCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create folder'**
+  String get objectsNewFolderCreate;
+
+  /// No description provided for @objectsFolderNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder name'**
+  String get objectsFolderNameLabel;
+
+  /// No description provided for @objectsFolderNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'invoices-2026'**
+  String get objectsFolderNameHint;
+
+  /// No description provided for @objectsFolderPathHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'It will be created in {path}'**
+  String objectsFolderPathHelper(String path);
+
+  /// No description provided for @objectsFolderCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder \"{name}\" created'**
+  String objectsFolderCreated(String name);
+
+  /// No description provided for @objectsFolderExists.
+  ///
+  /// In en, this message translates to:
+  /// **'There\'s already a folder or object with that name here.'**
+  String get objectsFolderExists;
+
+  /// No description provided for @objectsRename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get objectsRename;
+
+  /// No description provided for @objectsRenameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'New name'**
+  String get objectsRenameLabel;
+
+  /// No description provided for @objectsRenamePathHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'It stays at {path}'**
+  String objectsRenamePathHelper(String path);
+
+  /// No description provided for @objectsRenamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Renamed to \"{name}\"'**
+  String objectsRenamed(String name);
+
+  /// No description provided for @objectsNameExists.
+  ///
+  /// In en, this message translates to:
+  /// **'There\'s already an object or folder with that name in this folder.'**
+  String get objectsNameExists;
+
+  /// No description provided for @objectsNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'The name is required'**
+  String get objectsNameRequired;
+
+  /// No description provided for @objectsNameInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t use / \\ or any of < > : \" | ? *'**
+  String get objectsNameInvalid;
+
+  /// No description provided for @objectsNameUnchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'It\'s the current name'**
+  String get objectsNameUnchanged;
+
+  /// No description provided for @objectsActionErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The action couldn\'t be completed'**
+  String get objectsActionErrorTitle;
+
+  /// No description provided for @objectsDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get objectsDetails;
+
+  /// No description provided for @objectsMove.
+  ///
+  /// In en, this message translates to:
+  /// **'Move'**
+  String get objectsMove;
+
+  /// No description provided for @objectsMoveSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Move selection'**
+  String get objectsMoveSelection;
+
+  /// No description provided for @objectsMoveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Move {count, plural, =1{1 object} other{{count} objects}}'**
+  String objectsMoveTitle(int count);
+
+  /// No description provided for @objectsMoveBucket.
+  ///
+  /// In en, this message translates to:
+  /// **'Target bucket'**
+  String get objectsMoveBucket;
+
+  /// No description provided for @objectsMoveFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Target folder'**
+  String get objectsMoveFolder;
+
+  /// No description provided for @objectsMoveNoFolders.
+  ///
+  /// In en, this message translates to:
+  /// **'No subfolders'**
+  String get objectsMoveNoFolders;
+
+  /// No description provided for @objectsMoveHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Move here'**
+  String get objectsMoveHere;
+
+  /// No description provided for @objectsMoveHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'They\'ll be moved to {path}. Objects with the same name there are replaced.'**
+  String objectsMoveHelper(String path);
+
+  /// No description provided for @objectsMoveSameFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'They\'re already in this folder. Choose another one.'**
+  String get objectsMoveSameFolder;
+
+  /// No description provided for @objectsMoved.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 object moved} other{{count} objects moved}}'**
+  String objectsMoved(int count);
+
+  /// No description provided for @objectsMovePartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Only {moved} of {total} objects were moved.'**
+  String objectsMovePartial(int moved, int total);
+
+  /// No description provided for @objectDetailsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{type} · {size}'**
+  String objectDetailsSubtitle(String type, String size);
+
+  /// No description provided for @objectDetailsKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Key'**
+  String get objectDetailsKey;
+
+  /// No description provided for @objectDetailsType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get objectDetailsType;
+
+  /// No description provided for @objectDetailsSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get objectDetailsSize;
+
+  /// No description provided for @objectDetailsSizeBytes.
+  ///
+  /// In en, this message translates to:
+  /// **'({bytes} bytes)'**
+  String objectDetailsSizeBytes(int bytes);
+
+  /// No description provided for @objectDetailsModified.
+  ///
+  /// In en, this message translates to:
+  /// **'Modified'**
+  String get objectDetailsModified;
+
+  /// No description provided for @objectDetailsUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'URL'**
+  String get objectDetailsUrl;
+
+  /// No description provided for @objectDetailsCopyUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy URL'**
+  String get objectDetailsCopyUrl;
+
+  /// No description provided for @objectDetailsUrlCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'URL copied'**
+  String get objectDetailsUrlCopied;
+
+  /// No description provided for @objectsPageSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Rows per page:'**
+  String get objectsPageSize;
+
+  /// No description provided for @objectsPageOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {page} of {total}'**
+  String objectsPageOf(int page, int total);
+
+  /// No description provided for @objectsPreviousPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous page'**
+  String get objectsPreviousPage;
+
+  /// No description provided for @objectsNextPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Next page'**
+  String get objectsNextPage;
+
+  /// No description provided for @objectsPagerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search and filters only apply to the pages already loaded.'**
+  String get objectsPagerHint;
+
+  /// No description provided for @objectsPagerHintPages.
+  ///
+  /// In en, this message translates to:
+  /// **'Search and filters only apply to the pages already loaded ({loaded} of {total}).'**
+  String objectsPagerHintPages(int loaded, int total);
 }
 
 class _AppLocalizationsDelegate
