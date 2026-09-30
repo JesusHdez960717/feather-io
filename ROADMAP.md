@@ -56,21 +56,19 @@ terminarla.
 - [x] Renombrar o mover objetos
     - [x] Servicio: `CopyObject` (`x-amz-copy-source`).
     - [x] Consola: renombrar y mover (uno o varios) con copiar y borrar.
-    - [ ] Renombrar y mover carpetas (hay que copiar y borrar todo su contenido).
 - [x] Detalle de objeto
     - [x] Servicio: `HEAD` object (lo resuelve la ruta `GET`) con `Last-Modified`.
     - [x] Consola: cajón de detalles con miniatura, key, tipo, tamaño, fecha y URL.
-- [ ] Paginación en list-objects
+- [x] Paginación en list-objects
     - [x] Servicio: `max-keys` (máx. 1000) y `continuation-token`, con `IsTruncated`,
       `NextContinuationToken` y `KeyCount`.
     - [x] Consola: paginador (25, 50, 75 o 100 por página; *Página X de N* con `total_keys`).
       La búsqueda y los filtros miran las páginas ya cargadas.
-    - [ ] Pasar los filtros de objetos al servicio.
 
 ## Fase 4: Compatibilidad S3
 
-- [ ] Multipart upload.
 - [ ] URLs prefirmadas, con un botón "compartir enlace" en la consola.
+- [ ] Multipart upload.
 - [ ] Pruebas contra clientes reales (aws cli, rclone, SDKs).
 
 ## Fase 5: Operación y producción
@@ -80,6 +78,15 @@ terminarla.
 - [ ] Dockerfile: versión de Dart `^3.13` y `libsqlite3` en la imagen final.
 - [ ] i18n de los mensajes de error del servicio.
 - [ ] Tests de la consola (cubits y repos).
+
+## Después de la 1.0 (mejoras futuras)
+
+No entran en la 1.0; se harán más adelante.
+
+- [ ] Renombrar y mover carpetas (hay que copiar y borrar todo su contenido y decidir qué pasa si
+  falla a medias).
+- [ ] Pasar la búsqueda y los filtros de objetos al servicio, para buscar en toda la carpeta y no
+  solo en las páginas ya cargadas.
 
 ## Aparcado
 
