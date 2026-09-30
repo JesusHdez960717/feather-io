@@ -32,6 +32,7 @@ class AuthController {
           //admin stuff
           'admin.bucket.get',
           'admin.bucket.update',
+          'admin.bucket.presign',
           'admin.bucket.empty',
           'admin.bucket.download',
           'admin.bucket.anonymous-access.get-rules',

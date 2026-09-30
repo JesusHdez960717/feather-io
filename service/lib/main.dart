@@ -43,6 +43,9 @@ class FeatherIO {
       ),
     );
     om.addDeserializer(
+      Deserializer<PresignRequest>((data) => PresignRequest.fromJson(data)),
+    );
+    om.addDeserializer(
       Deserializer<UpdateBucketRequest>(
         (data) => UpdateBucketRequest.fromJson(data),
       ),

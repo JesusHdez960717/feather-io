@@ -6,94 +6,118 @@ class AdminController {
   final AuthController authController;
   final AnonymousAccessController anonymousAccessController;
 
-  Route get routing =>
-      Route.parent(
-        path: '/$adminPrefix',
-        filterConfig: [S3BucketNameFilter(), JwtFilter()].toFilterConfig(),
-        routes: [
-          Route.post(
-            key: 'admin.auth.login',
-            path: '/login',
-            handler: authController.login,
+  Route get routing => Route.parent(
+    path: '/$adminPrefix',
+    filterConfig: [S3BucketNameFilter(), JwtFilter()].toFilterConfig(),
+    routes: [
+      Route.post(
+        key: 'admin.auth.login',
+        path: '/login',
+        handler: authController.login,
+      ),
+      Route.get(
+        key: 'admin.bucket.get',
+        path: '/bucket/{bucket}',
+        handler: getBucket,
+        filterConfig: FilterConfig([
+          AuthFilter(rules: hasPermission('admin.bucket.get')),
+          ReservedBucketFilter(),
+        ]),
+      ),
+      Route.delete(
+        key: 'admin.bucket.empty',
+        path: '/bucket/{bucket}/objects',
+        handler: emptyBucket,
+        filterConfig: FilterConfig([
+          AuthFilter(rules: hasPermission('admin.bucket.empty')),
+          ReservedBucketFilter(),
+        ]),
+      ),
+      Route.post(
+        key: 'admin.bucket.presign',
+        path: '/bucket/{bucket}/presign',
+        handler: presignObject,
+        filterConfig: FilterConfig([
+          AuthFilter(rules: hasPermission('admin.bucket.presign')),
+          ReservedBucketFilter(),
+        ]),
+      ),
+      Route.put(
+        key: 'admin.bucket.update',
+        path: '/bucket/{bucket}',
+        handler: updateBucket,
+        filterConfig: FilterConfig([
+          AuthFilter(rules: hasPermission('admin.bucket.update')),
+          ReservedBucketFilter(),
+        ]),
+      ),
+      Route.get(
+        key: 'admin.bucket.anonymous-access.get-rules',
+        path: '/bucket/{bucket}/anonymous-access',
+        handler: anonymousAccessController.getRules,
+        filterConfig: FilterConfig([
+          AuthFilter(
+            rules: hasPermission('admin.bucket.anonymous-access.get-rules'),
           ),
-          Route.get(
-            key: 'admin.bucket.get',
-            path: '/bucket/{bucket}',
-            handler: getBucket,
-            filterConfig: FilterConfig([
-              AuthFilter(rules: hasPermission('admin.bucket.get')),
-              ReservedBucketFilter(),
-            ]),
+        ]),
+      ),
+      Route.post(
+        key: 'admin.bucket.anonymous-access.write-rule',
+        path: '/bucket/{bucket}/anonymous-access',
+        handler: anonymousAccessController.createRule,
+        filterConfig: FilterConfig([
+          AuthFilter(
+            rules: hasPermission('admin.bucket.anonymous-access.write-rule'),
           ),
-          Route.delete(
-            key: 'admin.bucket.empty',
-            path: '/bucket/{bucket}/objects',
-            handler: emptyBucket,
-            filterConfig: FilterConfig([
-              AuthFilter(rules: hasPermission('admin.bucket.empty')),
-              ReservedBucketFilter(),
-            ]),
+        ]),
+      ),
+      Route.delete(
+        key: 'admin.bucket.anonymous-access.delete-rule',
+        path: '/bucket/{bucket}/anonymous-access',
+        handler: anonymousAccessController.deleteRule,
+        filterConfig: FilterConfig([
+          AuthFilter(
+            rules: hasPermission('admin.bucket.anonymous-access.delete-rule'),
           ),
-          Route.put(
-            key: 'admin.bucket.update',
-            path: '/bucket/{bucket}',
-            handler: updateBucket,
-            filterConfig: FilterConfig([
-              AuthFilter(rules: hasPermission('admin.bucket.update')),
-              ReservedBucketFilter(),
-            ]),
-          ),
-          Route.get(
-            key: 'admin.bucket.anonymous-access.get-rules',
-            path: '/bucket/{bucket}/anonymous-access',
-            handler: anonymousAccessController.getRules,
-            filterConfig: FilterConfig([
-              AuthFilter(
-                rules: hasPermission('admin.bucket.anonymous-access.get-rules'),
-              ),
-            ]),
-          ),
-          Route.post(
-            key: 'admin.bucket.anonymous-access.write-rule',
-            path: '/bucket/{bucket}/anonymous-access',
-            handler: anonymousAccessController.createRule,
-            filterConfig: FilterConfig([
-              AuthFilter(
-                rules: hasPermission(
-                    'admin.bucket.anonymous-access.write-rule'),
-              ),
-            ]),
-          ),
-          Route.delete(
-            key: 'admin.bucket.anonymous-access.delete-rule',
-            path: '/bucket/{bucket}/anonymous-access',
-            handler: anonymousAccessController.deleteRule,
-            filterConfig: FilterConfig([
-              AuthFilter(
-                rules: hasPermission(
-                    'admin.bucket.anonymous-access.delete-rule'),
-              ),
-            ]),
-          ),
-          Route.post(
-            key: 'admin.bucket.download',
-            path: '/bucket/{bucket}/download',
-            handler: downloadObjects,
-            filterConfig: FilterConfig([
-              AuthFilter(rules: hasPermission('admin.bucket.download')),
-            ]),
-          ),
-        ],
-      );
+        ]),
+      ),
+      Route.post(
+        key: 'admin.bucket.download',
+        path: '/bucket/{bucket}/download',
+        handler: downloadObjects,
+        filterConfig: FilterConfig([
+          AuthFilter(rules: hasPermission('admin.bucket.download')),
+        ]),
+      ),
+    ],
+  );
 
   AdminController()
-      : fileManagement = di.find(),
-        bucketService = BucketService(),
-        authController = AuthController(),
-        anonymousAccessController = AnonymousAccessController();
+    : fileManagement = di.find(),
+      bucketService = BucketService(),
+      presignService = PresignService(),
+      authController = AuthController(),
+      anonymousAccessController = AnonymousAccessController();
 
   final FileManagementService fileManagement;
   final BucketService bucketService;
+  final PresignService presignService;
+
+  /// URL prefirmada para descargar un objeto. Apunta al mismo host al que
+  /// llego esta peticion, que es el que entra en la firma
+  Future<ResponseEntity> presignObject(RequestEntity request) async {
+    final presign = await request.body<PresignRequest>();
+    presign.validate().throwOnFailure();
+
+    final url = await presignService.presignGet(
+      scheme: request.requestedUri.scheme,
+      host: request.headers['host'] ?? request.requestedUri.authority,
+      bucketName: request.pathParams['bucket']!,
+      key: presign.key!,
+      expiresIn: Duration(seconds: presign.expiresIn!),
+    );
+    return ResponseEntity.ok(body: url);
+  }
 
   Future<ResponseEntity> getBucket(RequestEntity request) async {
     final bucket = await bucketService.getBucket(
@@ -134,9 +158,7 @@ class AdminController {
         keys: downloadRequest.keys,
       );
 
-      final timestamp = DateTime
-          .now()
-          .millisecondsSinceEpoch;
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
       final fileName = 'download_$timestamp.zip';
 
       return ResponseEntity.ok(
