@@ -157,6 +157,7 @@ Error states carry the `GlobalException` or its `message`; cubits get it via `Ex
 - Use the design system (`design_system/`): `CustomAppBar.build(title: …)`, `PrimaryButton.*`, `AppFormInput`, `AppTextSearchField`, `ConfirmDialog`, `FormDrawerTemplate`, colors/dimensions from `app.*`. Spacing with `.gap()`.
 - Shared states: `LoadingPage()`, `ErrorPage(message: …, onRetry: …)`, `NoDataPage(title: …)`.
 - Access cubits with `context.read<T>()` or `app.di.find<T>()`. Keep widgets small.
+- Write `BlocListener`/`BlocConsumer` listeners inline in `build` (`listener: (context, state) { … }`), never extracted to a separate method such as `_onState`.
 
 **Localization (mandatory).** No user-visible string is hardcoded: every label, hint, tooltip, dialog text, error message and validation message comes from `app.intl.<key>` (or `context.intl.<key>` inside a `MaterialApp` builder before the navigator exists, e.g. splash). Rules:
 - Add each key to **both** `lib/l10n/arb/app_en.arb` (template) and `app_es.arb`, use placeholders/plurals instead of concatenation, then run `fvm flutter gen-l10n`. `l10n_errors.txt` must stay `{}`.
