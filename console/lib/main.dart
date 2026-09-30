@@ -9,6 +9,16 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 final String loadingOverlayGlobalId = 'app-global-loading';
 
+///Los textos de la app y los de `material_ui`. Los que genera gen-l10n
+///(`AppLocalizations.localizationsDelegates`) traen los Material de
+///`flutter_localizations`, que los widgets de `material_ui` no ven: fuera del
+///ingles (que `material_ui` trae por defecto) fallarian con "No
+///MaterialLocalizations found"
+const List<LocalizationsDelegate<dynamic>> _localizationsDelegates = [
+  AppLocalizations.delegate,
+  ...GlobalMaterialLocalizations.delegates,
+];
+
 //generate code
 //fvm flutter pub run build_runner build --delete-conflicting-outputs
 //fvm flutter gen-l10n
@@ -83,7 +93,7 @@ class App extends StatelessWidget {
             debugShowCheckedModeBanner: false,
             theme: ThemeConfig.theme,
             locale: locale,
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: _localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             builder: (context, child) => Scaffold(
               body: Center(child: Text(context.intl.appNeedMoreSpace)),
@@ -108,7 +118,7 @@ class App extends StatelessWidget {
             theme: ThemeConfig.theme,
             locale: locale,
             routerConfig: RouteConfig.router,
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: _localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
           );
         }
