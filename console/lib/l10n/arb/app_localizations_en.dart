@@ -859,4 +859,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String objectsPagerHintPages(int loaded, int total) {
     return 'Search and filters only apply to the pages already loaded ($loaded of $total).';
   }
+
+  @override
+  String get objectsShareLink => 'Share link';
+
+  @override
+  String shareLinkDescription(String name) {
+    return 'Anyone with the link can download $name until it expires, without signing in.';
+  }
+
+  @override
+  String get shareLinkExpiresIn => 'Expires in';
+
+  @override
+  String get shareLinkHour => '1 hour';
+
+  @override
+  String get shareLinkDay => '1 day';
+
+  @override
+  String get shareLinkWeek => '7 days';
+
+  @override
+  String shareLinkValidUntil(String date) {
+    return 'Valid until $date';
+  }
+
+  @override
+  String get shareLinkCopy => 'Copy link';
+
+  @override
+  String get shareLinkCopied => 'Link copied';
 }

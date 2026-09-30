@@ -126,6 +126,25 @@ class BrowserRepo {
     }
   }
 
+  Future<SharedLinkModel> presign({
+    required String bucket,
+    required String key,
+    required Duration expiresIn,
+    String? token,
+  }) async {
+    try {
+      final response = await client.presign(
+        bucket: bucket,
+        key: key,
+        expiresIn: expiresIn,
+        token: token,
+      );
+      return response.toModel();
+    } catch (e) {
+      throw ExceptionConverter.parse(e);
+    }
+  }
+
   Future<List<int>> download({
     required String bucket,
     required List<String> keys,
@@ -161,6 +180,12 @@ extension ObjectResponseMapping on ObjectResponse {
       sizeBytes: sizeBytes,
       lastModified: lastModified,
     );
+  }
+}
+
+extension PresignResponseMapping on PresignResponse {
+  SharedLinkModel toModel() {
+    return SharedLinkModel(url: url, expiresAt: expiresAt.toLocal());
   }
 }
 

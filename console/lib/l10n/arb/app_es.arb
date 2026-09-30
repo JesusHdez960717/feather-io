@@ -270,5 +270,14 @@
   "objectsPreviousPage": "Página anterior",
   "objectsNextPage": "Página siguiente",
   "objectsPagerHint": "La búsqueda y los filtros solo se aplican a las páginas ya cargadas.",
-  "objectsPagerHintPages": "La búsqueda y los filtros solo se aplican a las páginas ya cargadas ({loaded} de {total})."
+  "objectsPagerHintPages": "La búsqueda y los filtros solo se aplican a las páginas ya cargadas ({loaded} de {total}).",
+  "objectsShareLink": "Compartir enlace",
+  "shareLinkDescription": "Cualquiera con el enlace podrá descargar {name} hasta que caduque, sin iniciar sesión.",
+  "shareLinkExpiresIn": "Caduca en",
+  "shareLinkHour": "1 hora",
+  "shareLinkDay": "1 día",
+  "shareLinkWeek": "7 días",
+  "shareLinkValidUntil": "Válido hasta el {date}",
+  "shareLinkCopy": "Copiar enlace",
+  "shareLinkCopied": "Enlace copiado"
 }

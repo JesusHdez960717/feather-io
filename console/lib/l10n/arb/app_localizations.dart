@@ -1513,6 +1513,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Search and filters only apply to the pages already loaded ({loaded} of {total}).'**
   String objectsPagerHintPages(int loaded, int total);
+
+  /// No description provided for @objectsShareLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Share link'**
+  String get objectsShareLink;
+
+  /// No description provided for @shareLinkDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone with the link can download {name} until it expires, without signing in.'**
+  String shareLinkDescription(String name);
+
+  /// No description provided for @shareLinkExpiresIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires in'**
+  String get shareLinkExpiresIn;
+
+  /// No description provided for @shareLinkHour.
+  ///
+  /// In en, this message translates to:
+  /// **'1 hour'**
+  String get shareLinkHour;
+
+  /// No description provided for @shareLinkDay.
+  ///
+  /// In en, this message translates to:
+  /// **'1 day'**
+  String get shareLinkDay;
+
+  /// No description provided for @shareLinkWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'7 days'**
+  String get shareLinkWeek;
+
+  /// No description provided for @shareLinkValidUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid until {date}'**
+  String shareLinkValidUntil(String date);
+
+  /// No description provided for @shareLinkCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy link'**
+  String get shareLinkCopy;
+
+  /// No description provided for @shareLinkCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied'**
+  String get shareLinkCopied;
 }
 
 class _AppLocalizationsDelegate

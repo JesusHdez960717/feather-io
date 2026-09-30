@@ -11,6 +11,7 @@ class PrimaryButton extends StatelessWidget {
     BorderRadius? borderRadius,
     double? h,
     double? w,
+    double? horizontalPadding,
     bool isLoading = false,
   }) {
     final background = color ?? app.colors.primary.purple.brighten(0.15);
@@ -26,6 +27,7 @@ class PrimaryButton extends StatelessWidget {
       ),
       h: h ?? 50,
       w: w ?? double.infinity,
+      horizontalPadding: horizontalPadding,
       borderRadius: borderRadius,
     );
   }
@@ -39,6 +41,7 @@ class PrimaryButton extends StatelessWidget {
     BorderRadius? borderRadius,
     double? h,
     double? w,
+    double? horizontalPadding,
     bool isLoading = false,
   }) {
     final background = color ?? app.colors.primary.background3;
@@ -54,6 +57,7 @@ class PrimaryButton extends StatelessWidget {
       icon: icon?.build(size: 16, color: iconColor ?? app.colors.neutral.white),
       h: h,
       w: w,
+      horizontalPadding: horizontalPadding,
       borderRadius: borderRadius,
     );
   }
@@ -103,6 +107,10 @@ class PrimaryButton extends StatelessWidget {
   final TextStyle? titleStyle;
   final double? w;
   final double? h;
+
+  ///Margen a cada lado del contenido; sin ancho fijo, el boton mide su
+  ///contenido mas este margen
+  final double? horizontalPadding;
   final BorderRadius? borderRadius;
 
   ///Mientras carga, conserva tamaño y color, cambia el icono por un spinner e
@@ -118,6 +126,7 @@ class PrimaryButton extends StatelessWidget {
     this.icon,
     this.w,
     this.h,
+    this.horizontalPadding,
     this.borderRadius,
     this.isLoading = false,
     super.key,
@@ -151,7 +160,9 @@ class PrimaryButton extends StatelessWidget {
             shape: RoundedRectangleBorder(borderRadius: radius),
           ),
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: app.dimensions.padding.s),
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding ?? app.dimensions.padding.s,
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

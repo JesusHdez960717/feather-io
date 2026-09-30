@@ -335,5 +335,16 @@
   "objectsNextPage": "Next page",
   "objectsPagerHint": "Search and filters only apply to the pages already loaded.",
   "objectsPagerHintPages": "Search and filters only apply to the pages already loaded ({loaded} of {total}).",
-  "@objectsPagerHintPages": {"placeholders": {"loaded": {"type": "int"}, "total": {"type": "int"}}}
+  "@objectsPagerHintPages": {"placeholders": {"loaded": {"type": "int"}, "total": {"type": "int"}}},
+  "objectsShareLink": "Share link",
+  "shareLinkDescription": "Anyone with the link can download {name} until it expires, without signing in.",
+  "@shareLinkDescription": {"placeholders": {"name": {"type": "String"}}},
+  "shareLinkExpiresIn": "Expires in",
+  "shareLinkHour": "1 hour",
+  "shareLinkDay": "1 day",
+  "shareLinkWeek": "7 days",
+  "shareLinkValidUntil": "Valid until {date}",
+  "@shareLinkValidUntil": {"placeholders": {"date": {"type": "String"}}},
+  "shareLinkCopy": "Copy link",
+  "shareLinkCopied": "Link copied"
 }

@@ -10,6 +10,7 @@ class FormDrawerTemplate extends StatelessWidget {
     required SvgAsset icon,
     required List<Widget> footerActions,
     required Widget child,
+    Widget? footerLeading,
     BuildContext? context,
     double? width,
     Object? loadingId,
@@ -30,6 +31,7 @@ class FormDrawerTemplate extends StatelessWidget {
                 description: description,
                 icon: icon,
                 footerActions: footerActions,
+                footerLeading: footerLeading,
                 loadingId: loadingId,
                 width: width,
                 child: child,
@@ -54,6 +56,9 @@ class FormDrawerTemplate extends StatelessWidget {
   final String description;
   final SvgAsset icon;
   final List<Widget> footerActions;
+
+  ///Accion separada de las demas, a la izquierda del pie (p. ej. *Eliminar*)
+  final Widget? footerLeading;
   final Widget child;
   final double? width;
 
@@ -68,6 +73,7 @@ class FormDrawerTemplate extends StatelessWidget {
     required this.footerActions,
     required this.child,
     super.key,
+    this.footerLeading,
     this.width,
     this.loadingId,
   });
@@ -130,7 +136,7 @@ class FormDrawerTemplate extends StatelessWidget {
                       ),
                     ),
                     app.dimensions.padding.m.gap(),
-                    Flexible(
+                    Expanded(
                       child: Column(
                         mainAxisAlignment: .start,
                         crossAxisAlignment: .start,
@@ -184,15 +190,21 @@ class FormDrawerTemplate extends StatelessWidget {
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
-                  children: footerActions.map((action) {
-                    final isLast = footerActions.last == action;
-                    return Padding(
-                      padding: EdgeInsets.only(
-                        right: isLast ? 0 : app.dimensions.padding.m,
-                      ),
-                      child: action,
-                    );
-                  }).toList(),
+                  children: [
+                    if (footerLeading != null) ...[
+                      footerLeading!,
+                      const Spacer(),
+                    ],
+                    ...footerActions.map((action) {
+                      final isLast = footerActions.last == action;
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          right: isLast ? 0 : app.dimensions.padding.m,
+                        ),
+                        child: action,
+                      );
+                    }),
+                  ],
                 ),
               ),
             ],

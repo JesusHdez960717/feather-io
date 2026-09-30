@@ -29,48 +29,36 @@ class ObjectDetailsDrawer extends StatefulWidget {
         app.storageFormatter.formatSize(object.size ?? 0),
       ),
       icon: app.assets.icons.storage.object,
-      width: 560,
+      width: 600,
+      footerLeading: PrimaryButton.secondary(
+        onPressed: () => closeThen(onDelete),
+        title: app.intl.delete,
+        icon: app.assets.icons.actions.delete,
+        iconColor: app.colors.primary.error,
+        h: 40,
+        horizontalPadding: app.dimensions.padding.l,
+      ),
       footerActions: [
-        //el pie envuelve cada accion en un Padding: ancho fijo (cajon menos
-        //su padding) para dejar Eliminar a la izquierda
-        SizedBox(
-          width: 560 - 1 - 2 * 20,
-          child: Row(
-            children: [
-              PrimaryButton.secondary(
-                onPressed: () => closeThen(onDelete),
-                title: app.intl.delete,
-                icon: app.assets.icons.actions.delete,
-                iconColor: app.colors.primary.error,
-                h: 40,
-                w: 130,
-              ),
-              const Spacer(),
-              PrimaryButton.secondary(
-                onPressed: () => closeThen(onRename),
-                title: app.intl.objectsRename,
-                icon: app.assets.icons.actions.edit,
-                h: 40,
-                w: 140,
-              ),
-              app.dimensions.padding.s.gap(),
-              PrimaryButton.secondary(
-                onPressed: () => closeThen(onMove),
-                title: app.intl.objectsMove,
-                icon: app.assets.icons.storage.folder,
-                h: 40,
-                w: 120,
-              ),
-              app.dimensions.padding.s.gap(),
-              PrimaryButton.primary(
-                onPressed: () => closeThen(onDownload),
-                title: app.intl.download,
-                icon: app.assets.icons.actions.download,
-                h: 40,
-                w: 140,
-              ),
-            ],
-          ),
+        PrimaryButton.secondary(
+          onPressed: () => closeThen(onRename),
+          title: app.intl.objectsRename,
+          icon: app.assets.icons.actions.edit,
+          h: 40,
+          horizontalPadding: app.dimensions.padding.l,
+        ),
+        PrimaryButton.secondary(
+          onPressed: () => closeThen(onMove),
+          title: app.intl.objectsMove,
+          icon: app.assets.icons.storage.folder,
+          h: 40,
+          horizontalPadding: app.dimensions.padding.l,
+        ),
+        PrimaryButton.primary(
+          onPressed: () => closeThen(onDownload),
+          title: app.intl.download,
+          icon: app.assets.icons.actions.download,
+          h: 40,
+          w: 140,
         ),
       ],
       child: ObjectDetailsDrawer._(bucket: bucket, object: object),

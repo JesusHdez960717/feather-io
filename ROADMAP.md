@@ -67,7 +67,8 @@ terminarla.
 
 ## Fase 4: Compatibilidad S3
 
-- [ ] URLs prefirmadas, con un botón "compartir enlace" en la consola.
+- [x] URLs prefirmadas, con un botón "compartir enlace" en la consola (el servicio firma en
+  `POST /{admin}/bucket/{bucket}/presign`; caducidad de 1 hora, 1 día o 7 días).
 - [ ] Multipart upload.
 - [ ] Pruebas contra clientes reales (aws cli, rclone, SDKs).
 

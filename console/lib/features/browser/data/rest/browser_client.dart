@@ -107,6 +107,22 @@ class BrowserClient extends BaseClient {
     );
   }
 
+  ///URL prefirmada para descargar [key] sin credenciales durante [expiresIn]
+  Future<PresignResponse> presign({
+    required String bucket,
+    required String key,
+    required Duration expiresIn,
+    String? token,
+  }) async {
+    final admin = Environment.adminPrefix;
+    Response rawResponse = await dio.post(
+      '$baseUrl/$admin/bucket/$bucket/presign',
+      data: PresignRequest(key: key, expiresIn: expiresIn).toJson(),
+      options: options(token: token),
+    );
+    return PresignResponse.fromJson(rawResponse.data);
+  }
+
   Future<List<int>> download({
     required String bucket,
     required List<String> keys,
@@ -145,6 +161,33 @@ class DownloadObjectsRequest {
 
   Map<String, dynamic> toJson() {
     return {'keys': keys};
+  }
+}
+
+//---------- PRESIGN REQUEST ----------
+class PresignRequest {
+  final String key;
+  final Duration expiresIn;
+
+  PresignRequest({required this.key, required this.expiresIn});
+
+  Map<String, dynamic> toJson() {
+    return {'key': key, 'expires_in': expiresIn.inSeconds};
+  }
+}
+
+//---------- PRESIGN RESPONSE ----------
+class PresignResponse {
+  final String url;
+  final DateTime expiresAt;
+
+  PresignResponse({required this.url, required this.expiresAt});
+
+  factory PresignResponse.fromJson(Map<String, dynamic> json) {
+    return PresignResponse(
+      url: json['url'],
+      expiresAt: DateTime.parse(json['expires_at']),
+    );
   }
 }
 

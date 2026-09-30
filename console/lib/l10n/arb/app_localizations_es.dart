@@ -860,4 +860,35 @@ class AppLocalizationsEs extends AppLocalizations {
   String objectsPagerHintPages(int loaded, int total) {
     return 'La búsqueda y los filtros solo se aplican a las páginas ya cargadas ($loaded de $total).';
   }
+
+  @override
+  String get objectsShareLink => 'Compartir enlace';
+
+  @override
+  String shareLinkDescription(String name) {
+    return 'Cualquiera con el enlace podrá descargar $name hasta que caduque, sin iniciar sesión.';
+  }
+
+  @override
+  String get shareLinkExpiresIn => 'Caduca en';
+
+  @override
+  String get shareLinkHour => '1 hora';
+
+  @override
+  String get shareLinkDay => '1 día';
+
+  @override
+  String get shareLinkWeek => '7 días';
+
+  @override
+  String shareLinkValidUntil(String date) {
+    return 'Válido hasta el $date';
+  }
+
+  @override
+  String get shareLinkCopy => 'Copiar enlace';
+
+  @override
+  String get shareLinkCopied => 'Enlace copiado';
 }

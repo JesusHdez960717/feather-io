@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import 'form/move_objects_dialog.dart';
 import 'form/object_details_drawer.dart';
 import 'form/object_name_dialog.dart';
+import 'form/share_link_dialog.dart';
 import 'objects_grid_datasource.dart';
 import 'objects_table_datasource.dart';
 
@@ -349,6 +350,20 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
             icon: app.assets.icons.actions.info,
             label: app.intl.objectsDetails,
             onTap: () => _onDetails(wrapper),
+          ),
+          _menuItem(
+            value: 'share',
+            icon: app.assets.icons.actions.link,
+            label: app.intl.objectsShareLink,
+            onTap: () {
+              final bucket = widget.state.selectedBucket;
+              if (bucket != null) {
+                ShareLinkDialog.show(
+                  bucket: bucket.name,
+                  key: wrapper.fullPath,
+                );
+              }
+            },
           ),
           _menuItem(
             value: 'rename',
