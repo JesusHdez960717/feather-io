@@ -45,13 +45,22 @@ class _BaseScreenState extends State<BaseScreen> {
               ),
               destinations: [
                 NavigationRailDestination(
+                  icon: app.assets.icons.storage.folder.build(
+                    color: app.colors.neutral.grey3,
+                  ),
+                  selectedIcon: app.assets.icons.storage.folder.build(
+                    color: app.colors.neutral.white,
+                  ),
+                  label: Text(app.intl.navBrowser),
+                ),
+                NavigationRailDestination(
                   icon: app.assets.icons.storage.bucket.build(
                     color: app.colors.neutral.grey3,
                   ),
                   selectedIcon: app.assets.icons.storage.bucket.build(
                     color: app.colors.neutral.white,
                   ),
-                  label: Text(app.intl.navBrowser),
+                  label: Text(app.intl.navBuckets),
                 ),
               ],
               trailing: Expanded(

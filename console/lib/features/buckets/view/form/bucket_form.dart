@@ -196,7 +196,11 @@ class _BucketFormState extends State<BucketForm> {
         if (state is BucketFormProcessingOKState) {
           final bucketCubit = context.read<BucketCubit>();
           Navigator.of(context).pop();
-          bucketCubit.load();
+          bucketCubit.reloadAfterChange(
+            change: state.change,
+            bucketName: state.name,
+            bucket: state.bucket,
+          );
           app.snack.showSuccess(
             message: _isEdit
                 ? app.intl.bucketUpdatedSuccess(state.name)

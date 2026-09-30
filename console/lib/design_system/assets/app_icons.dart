@@ -33,6 +33,8 @@ class StorageIcons {
 
   SvgAsset get bucket => const SvgAsset('$_storage/bucket.svg');
 
+  SvgAsset get folder => const SvgAsset('$_storage/folder.svg');
+
   SvgAsset get object => const SvgAsset('$_storage/object.svg');
 
   SvgAsset get storage => const SvgAsset('$_storage/storage.svg');
@@ -57,6 +59,8 @@ class ActionsIcons {
 
   SvgAsset get close => const SvgAsset('$_actions/close.svg');
 
+  SvgAsset get copy => const SvgAsset('$_actions/copy.svg');
+
   SvgAsset get delete => const SvgAsset('$_actions/delete.svg');
 
   SvgAsset get download => const SvgAsset('$_actions/download.svg');
@@ -64,6 +68,8 @@ class ActionsIcons {
   SvgAsset get edit => const SvgAsset('$_actions/edit.svg');
 
   SvgAsset get filter => const SvgAsset('$_actions/filter.svg');
+
+  SvgAsset get lock => const SvgAsset('$_actions/lock.svg');
 
   SvgAsset get logout => const SvgAsset('$_actions/logout.svg');
 

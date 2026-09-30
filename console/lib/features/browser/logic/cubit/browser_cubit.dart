@@ -22,7 +22,35 @@ class BrowserCubit extends Cubit<BrowserState>
   bool get canGoForward => _forwardPrefixes.isNotEmpty;
 
   BrowserCubit({required this.auth, required this.repo, this.initialViewType})
-    : super(BrowserInitialState(viewType: initialViewType));
+    : super(BrowserInitialState(viewType: initialViewType)) {
+    onBus<BucketChangedEvent>(_onBucketChanged);
+  }
+
+  ///Mantiene al dia el bucket abierto si otra seccion lo cambia
+  void _onBucketChanged(BucketChangedEvent event) {
+    if (identical(event.source, this)) return;
+    final current = state is BrowserSearchState
+        ? state as BrowserSearchState
+        : null;
+    final selected = current?.selectedBucket;
+    if (current == null || selected?.name != event.bucketName) return;
+
+    switch (event.change) {
+      case BucketChange.deleted:
+        reset();
+      case BucketChange.emptied:
+        //sus carpetas ya no existen: vuelve a la raiz del bucket
+        _forwardPrefixes.clear();
+        _list(prefix: '');
+      case BucketChange.objectsChanged:
+        _list(prefix: current.prefix);
+      case BucketChange.updated:
+        final bucket = event.bucket;
+        if (bucket != null) emit(current.copyWith(selectedBucket: bucket));
+      case BucketChange.created:
+        break;
+    }
+  }
 
   ViewType get _viewType => switch (state) {
     BrowserSearchState(:final viewType) => viewType,
@@ -140,7 +168,7 @@ class BrowserCubit extends Cubit<BrowserState>
     required BucketModel bucket,
     required List<String> keys,
   }) async {
-    await _process((currentState) async {
+    await _process(changedBucket: bucket, (currentState) async {
       await repo.deleteObjects(
         token: auth.auth?.accessToken,
         bucket: bucket.name,
@@ -156,10 +184,13 @@ class BrowserCubit extends Cubit<BrowserState>
     required String prefix,
     required List<XFile> files,
   }) async {
-    await _process((currentState) async {
+    await _process(changedBucket: bucket, (currentState) async {
       for (final file in files) {
         final length = await file.length();
-        final key = prefix.isNotEmpty ? '$prefix/${file.name}' : file.name;
+        //el prefijo de una carpeta ya termina en '/' (p. ej. 'fotos/')
+        final key = prefix.isEmpty || prefix.endsWith('/')
+            ? '$prefix${file.name}'
+            : '$prefix/${file.name}';
         await repo.uploadObject(
           token: auth.auth?.accessToken,
           bucket: bucket.name,
@@ -235,9 +266,12 @@ class BrowserCubit extends Cubit<BrowserState>
 
   ///Emite [BrowserProcessInProgressState], ejecuta la accion y, si falla,
   ///emite [BrowserLoadingErrorState] conservando el contexto actual.
+  ///Si la accion sube o borra objetos de [changedBucket], avisa al resto al
+  ///terminar, aunque falle: una subida de varios ficheros puede fallar a medias
   Future<void> _process(
-    Future<void> Function(BrowserSearchState currentState) action,
-  ) async {
+    Future<void> Function(BrowserSearchState currentState) action, {
+    BucketModel? changedBucket,
+  }) async {
     if (state is! BrowserSearchState) return;
     final currentState = state as BrowserSearchState;
 
@@ -261,6 +295,16 @@ class BrowserCubit extends Cubit<BrowserState>
           viewType: currentState.viewType,
         ),
       );
+    } finally {
+      if (changedBucket != null) {
+        GlobalEventBus().fire(
+          BucketChangedEvent(
+            source: this,
+            change: BucketChange.objectsChanged,
+            bucketName: changedBucket.name,
+          ),
+        );
+      }
     }
   }
 

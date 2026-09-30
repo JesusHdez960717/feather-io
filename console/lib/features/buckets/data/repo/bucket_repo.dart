@@ -49,6 +49,14 @@ class BucketRepo {
     }
   }
 
+  Future<void> emptyBucket({required String name, String? token}) async {
+    try {
+      await _client.emptyBucket(name: name, token: token);
+    } catch (e) {
+      throw ExceptionConverter.parse(e);
+    }
+  }
+
   Future<void> deleteBucket({required String name, String? token}) async {
     try {
       await _client.deleteBucket(name: name, token: token);
@@ -67,6 +75,7 @@ extension BucketResponseMapping on BucketResponse {
       objectCount: objectCount,
       sizeBytes: sizeBytes,
       creationDate: creationDate,
+      lastModified: lastModified,
     );
   }
 }

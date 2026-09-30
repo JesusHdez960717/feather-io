@@ -423,4 +423,244 @@ class AppLocalizationsEn extends AppLocalizations {
   String bucketNamePathHint(String name) {
     return 'Used in S3 paths: /$name';
   }
+
+  @override
+  String get navBuckets => 'Buckets';
+
+  @override
+  String bucketAdminCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count buckets',
+      one: '1 bucket',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String bucketAdminStats(int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count objects',
+      one: '1 object',
+    );
+    return '$_temp0 · $size';
+  }
+
+  @override
+  String get bucketAdminEmptyDescription =>
+      'Create a bucket to configure it here.';
+
+  @override
+  String get bucketAdminOpenInBrowser => 'Open in browser';
+
+  @override
+  String get bucketAdminTabGeneral => 'General';
+
+  @override
+  String get bucketAdminTabAccess => 'Anonymous access';
+
+  @override
+  String get bucketAdminTabDanger => 'Danger zone';
+
+  @override
+  String get bucketDetailObjects => 'Objects';
+
+  @override
+  String get bucketDetailSize => 'Size';
+
+  @override
+  String get bucketDetailCreated => 'Created';
+
+  @override
+  String get bucketDetailLastModified => 'Last modified';
+
+  @override
+  String get bucketDetailNeverModified => 'No objects';
+
+  @override
+  String get bucketDetailName => 'Name';
+
+  @override
+  String get bucketDetailS3Path => 'S3 path';
+
+  @override
+  String get bucketDetailCopyPath => 'Copy path';
+
+  @override
+  String get bucketDetailPathCopied => 'Path copied';
+
+  @override
+  String get bucketDetailDescription => 'Description';
+
+  @override
+  String get bucketDetailNoDescription => 'No description';
+
+  @override
+  String get bucketDetailColor => 'Color';
+
+  @override
+  String get bucketEmptyTitle => 'Empty bucket';
+
+  @override
+  String get bucketEmptyAlreadyEmpty => 'The bucket has no objects.';
+
+  @override
+  String bucketEmptyDescription(int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'its $count objects',
+      one: 'its only object',
+    );
+    return 'Deletes $_temp0 ($size). The bucket, its settings and its access rules are kept. This can\'t be undone.';
+  }
+
+  @override
+  String bucketEmptyConfirm(int count, String size, String name) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count objects',
+      one: '1 object',
+    );
+    return '$_temp0 ($size) will be deleted from $name. This can\'t be undone.';
+  }
+
+  @override
+  String bucketEmptyTypeName(String name) {
+    return 'Type $name to confirm';
+  }
+
+  @override
+  String get bucketEmptyTypeNameHelper =>
+      'The button turns on when the name matches.';
+
+  @override
+  String get bucketDeleteDescription =>
+      'Deletes the bucket with its description, color and access rules. As in S3, only an empty bucket can be deleted.';
+
+  @override
+  String bucketDeleteNotEmpty(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count objects',
+      one: '1 object',
+    );
+    return 'The bucket has $_temp0. Empty it first.';
+  }
+
+  @override
+  String get anonymousAccessDescription =>
+      'Each rule makes a prefix reachable without credentials. Anything no rule covers still needs authentication.';
+
+  @override
+  String get anonymousAccessPrivateTitle => 'Private bucket';
+
+  @override
+  String get anonymousAccessPrivateDescription =>
+      'Every request needs credentials. Add a rule to serve a prefix without authentication, for example a website\'s images.';
+
+  @override
+  String get anonymousAccessReadOnly => 'Read only';
+
+  @override
+  String get anonymousAccessWriteOnly => 'Write only';
+
+  @override
+  String get anonymousAccessReadWrite => 'Read and write';
+
+  @override
+  String get anonymousAccessReadOnlyOps => 'List and download objects';
+
+  @override
+  String get anonymousAccessWriteOnlyOps => 'Upload and delete objects';
+
+  @override
+  String get anonymousAccessReadWriteOps => 'List, download, upload and delete';
+
+  @override
+  String get anonymousAccessReadOnlyDescription =>
+      'Anyone can list and download.';
+
+  @override
+  String get anonymousAccessWriteOnlyDescription =>
+      'Anyone can upload and delete, but not see.';
+
+  @override
+  String get anonymousAccessReadWriteDescription =>
+      'Full access without credentials.';
+
+  @override
+  String get anonymousAccessReadOnlyUseCase =>
+      'Websites, catalogs, public downloads.';
+
+  @override
+  String get anonymousAccessWriteOnlyUseCase => 'Upload inboxes, forms.';
+
+  @override
+  String get anonymousAccessReadWriteUseCase =>
+      'Use it only on temporary prefixes.';
+
+  @override
+  String get anonymousRuleAdd => 'Add rule';
+
+  @override
+  String get anonymousRulePrefix => 'Prefix';
+
+  @override
+  String get anonymousRuleAccess => 'Access';
+
+  @override
+  String get anonymousRuleOps => 'Allowed without credentials';
+
+  @override
+  String get anonymousRuleHint =>
+      'Prefixes are relative to the bucket and accept * as a wildcard. When several rules match, the first one applies.';
+
+  @override
+  String get anonymousRuleDeleteTitle => 'Delete rule';
+
+  @override
+  String anonymousRuleDeleteConfirm(String prefix) {
+    return 'Delete the rule $prefix? Objects under that prefix will need credentials again.';
+  }
+
+  @override
+  String get anonymousRuleFormTitle => 'Add access rule';
+
+  @override
+  String anonymousRuleFormDescription(String bucket) {
+    return 'Make a prefix of $bucket reachable without credentials.';
+  }
+
+  @override
+  String get anonymousRuleFormSectionPrefix => '01 Prefix';
+
+  @override
+  String get anonymousRuleFormSectionAccess => '02 Access type';
+
+  @override
+  String get anonymousRulePrefixLabel => 'Prefix or pattern';
+
+  @override
+  String get anonymousRulePrefixHint => 'public/';
+
+  @override
+  String get anonymousRulePrefixHelper =>
+      'End it with / for a folder, or use * as a wildcard (for example, *.jpg).';
+
+  @override
+  String get anonymousRulePrefixRequired => 'The prefix is required';
+
+  @override
+  String get anonymousRuleFormErrorTitle => 'Couldn\'t add the rule';
+
+  @override
+  String anonymousRuleCreatedSuccess(String prefix) {
+    return 'Rule $prefix added';
+  }
 }

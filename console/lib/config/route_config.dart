@@ -42,6 +42,16 @@ class RouteConfig {
               ),
             ],
           ),
+          StatefulShellBranch(
+            routes: <RouteBase>[
+              ///   /buckets
+              GoRoute(
+                name: BucketAdminScreen.navigator.name,
+                path: BucketAdminScreen.navigator.path,
+                builder: BucketAdminScreen.navigator.builder,
+              ),
+            ],
+          ),
         ],
       ),
     ],

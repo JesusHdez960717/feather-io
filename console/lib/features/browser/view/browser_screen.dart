@@ -26,8 +26,13 @@ class BrowserScreenNavigator {
           create: (context) => BucketCubit(app.di.find(), app.di.find()),
         ),
       ],
-      child: const BrowserScreen(),
+      child: BrowserScreen(initialBucket: state.extra as BucketModel?),
     );
+  }
+
+  ///Abre el explorador dentro de [bucket]
+  void openBucket(BucketModel bucket) {
+    app.navigator.go(name, extra: bucket);
   }
 
   void updateViewType(ViewType viewType) {
@@ -44,7 +49,10 @@ class BrowserScreenNavigator {
 class BrowserScreen extends StatefulWidget {
   static final BrowserScreenNavigator navigator = BrowserScreenNavigator();
 
-  const BrowserScreen({super.key});
+  ///Bucket que se abre al entrar (p. ej. desde la seccion *Buckets*)
+  final BucketModel? initialBucket;
+
+  const BrowserScreen({this.initialBucket, super.key});
 
   @override
   State<BrowserScreen> createState() => _BrowserScreenState();
@@ -56,7 +64,22 @@ class _BrowserScreenState extends State<BrowserScreen> {
   @override
   void initState() {
     super.initState();
-    cubit = context.read<BrowserCubit>()..init();
+    cubit = context.read<BrowserCubit>();
+    final bucket = widget.initialBucket;
+    if (bucket != null) {
+      cubit.selectBucket(bucket: bucket);
+    } else {
+      cubit.init();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant BrowserScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final bucket = widget.initialBucket;
+    if (bucket != null && bucket != oldWidget.initialBucket) {
+      cubit.selectBucket(bucket: bucket);
+    }
   }
 
   @override

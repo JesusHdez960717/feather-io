@@ -30,13 +30,20 @@ terminarla.
 
 ## Fase 2: Detalle de bucket
 
-- [ ] Servicio: `GET /{admin}/bucket/{bucket}` con metadatos, estadísticas y reglas.
-- [ ] Servicio: registrar `AnonymousAccessFilter` en las rutas S3, con tests de acceso anónimo.
-- [ ] Consola: pantalla de lista de buckets con su detalle
-    - [ ] General: nombre, descripción, color, fechas, tamaño y número de objetos.
-    - [ ] Reglas de acceso: CRUD sobre la API existente (feature `anonymous_access` que depende de
-      `buckets`).
-    - [ ] Zona de peligro: vaciar y borrar el bucket.
+- [x] Servicio: `GET /{admin}/bucket/{bucket}` con metadatos y estadísticas (`last_modified`
+  incluido). Las reglas se piden aparte, con su endpoint.
+- [x] Servicio: `DELETE /{admin}/bucket/{bucket}/objects` para vaciar el bucket; al borrar un
+  bucket se borran también sus reglas.
+- [x] Servicio: registrar `AnonymousAccessFilter` en las rutas S3, con tests de acceso anónimo.
+- [x] Consola: sección *Buckets* con la lista y el detalle (feature `bucket_admin`)
+    - [x] General: nombre, descripción, color, fechas, tamaño y número de objetos.
+    - [x] Reglas de acceso: crear y borrar (feature `anonymous_access`).
+    - [x] Zona de peligro: vaciar y borrar el bucket.
+- [ ] Consola: entrada *Configuración* desde el explorador (menú del bucket y cabecera). Necesita
+  que `browser` navegue a `bucket_admin` sin depender de él (p. ej. por el bus de eventos).
+- [x] Consola: mantener sincronizadas la sección *Buckets* y el explorador (cada una tiene sus
+  propios cubits; se avisan con `BucketChangedEvent` al crear, editar, vaciar o borrar un bucket y
+  al subir o borrar objetos).
 
 ## Fase 3: Browser completo
 

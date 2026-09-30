@@ -8,11 +8,15 @@ class BucketModel {
   final int sizeBytes;
   final DateTime creationDate;
 
+  ///Fecha del objeto modificado mas recientemente; null si esta vacio
+  final DateTime? lastModified;
+
   BucketModel({
     required this.name,
     required this.objectCount,
     required this.sizeBytes,
     required this.creationDate,
+    this.lastModified,
     this.description,
     this.color,
   });

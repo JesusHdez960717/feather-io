@@ -853,6 +853,366 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Used in S3 paths: /{name}'**
   String bucketNamePathHint(String name);
+
+  /// No description provided for @navBuckets.
+  ///
+  /// In en, this message translates to:
+  /// **'Buckets'**
+  String get navBuckets;
+
+  /// No description provided for @bucketAdminCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 bucket} other{{count} buckets}}'**
+  String bucketAdminCount(int count);
+
+  /// No description provided for @bucketAdminStats.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 object} other{{count} objects}} · {size}'**
+  String bucketAdminStats(int count, String size);
+
+  /// No description provided for @bucketAdminEmptyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a bucket to configure it here.'**
+  String get bucketAdminEmptyDescription;
+
+  /// No description provided for @bucketAdminOpenInBrowser.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in browser'**
+  String get bucketAdminOpenInBrowser;
+
+  /// No description provided for @bucketAdminTabGeneral.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get bucketAdminTabGeneral;
+
+  /// No description provided for @bucketAdminTabAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Anonymous access'**
+  String get bucketAdminTabAccess;
+
+  /// No description provided for @bucketAdminTabDanger.
+  ///
+  /// In en, this message translates to:
+  /// **'Danger zone'**
+  String get bucketAdminTabDanger;
+
+  /// No description provided for @bucketDetailObjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Objects'**
+  String get bucketDetailObjects;
+
+  /// No description provided for @bucketDetailSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get bucketDetailSize;
+
+  /// No description provided for @bucketDetailCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Created'**
+  String get bucketDetailCreated;
+
+  /// No description provided for @bucketDetailLastModified.
+  ///
+  /// In en, this message translates to:
+  /// **'Last modified'**
+  String get bucketDetailLastModified;
+
+  /// No description provided for @bucketDetailNeverModified.
+  ///
+  /// In en, this message translates to:
+  /// **'No objects'**
+  String get bucketDetailNeverModified;
+
+  /// No description provided for @bucketDetailName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get bucketDetailName;
+
+  /// No description provided for @bucketDetailS3Path.
+  ///
+  /// In en, this message translates to:
+  /// **'S3 path'**
+  String get bucketDetailS3Path;
+
+  /// No description provided for @bucketDetailCopyPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy path'**
+  String get bucketDetailCopyPath;
+
+  /// No description provided for @bucketDetailPathCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Path copied'**
+  String get bucketDetailPathCopied;
+
+  /// No description provided for @bucketDetailDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get bucketDetailDescription;
+
+  /// No description provided for @bucketDetailNoDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'No description'**
+  String get bucketDetailNoDescription;
+
+  /// No description provided for @bucketDetailColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get bucketDetailColor;
+
+  /// No description provided for @bucketEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty bucket'**
+  String get bucketEmptyTitle;
+
+  /// No description provided for @bucketEmptyAlreadyEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'The bucket has no objects.'**
+  String get bucketEmptyAlreadyEmpty;
+
+  /// No description provided for @bucketEmptyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletes {count, plural, =1{its only object} other{its {count} objects}} ({size}). The bucket, its settings and its access rules are kept. This can\'t be undone.'**
+  String bucketEmptyDescription(int count, String size);
+
+  /// No description provided for @bucketEmptyConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 object} other{{count} objects}} ({size}) will be deleted from {name}. This can\'t be undone.'**
+  String bucketEmptyConfirm(int count, String size, String name);
+
+  /// No description provided for @bucketEmptyTypeName.
+  ///
+  /// In en, this message translates to:
+  /// **'Type {name} to confirm'**
+  String bucketEmptyTypeName(String name);
+
+  /// No description provided for @bucketEmptyTypeNameHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'The button turns on when the name matches.'**
+  String get bucketEmptyTypeNameHelper;
+
+  /// No description provided for @bucketDeleteDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletes the bucket with its description, color and access rules. As in S3, only an empty bucket can be deleted.'**
+  String get bucketDeleteDescription;
+
+  /// No description provided for @bucketDeleteNotEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'The bucket has {count, plural, =1{1 object} other{{count} objects}}. Empty it first.'**
+  String bucketDeleteNotEmpty(int count);
+
+  /// No description provided for @anonymousAccessDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Each rule makes a prefix reachable without credentials. Anything no rule covers still needs authentication.'**
+  String get anonymousAccessDescription;
+
+  /// No description provided for @anonymousAccessPrivateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Private bucket'**
+  String get anonymousAccessPrivateTitle;
+
+  /// No description provided for @anonymousAccessPrivateDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Every request needs credentials. Add a rule to serve a prefix without authentication, for example a website\'s images.'**
+  String get anonymousAccessPrivateDescription;
+
+  /// No description provided for @anonymousAccessReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Read only'**
+  String get anonymousAccessReadOnly;
+
+  /// No description provided for @anonymousAccessWriteOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Write only'**
+  String get anonymousAccessWriteOnly;
+
+  /// No description provided for @anonymousAccessReadWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Read and write'**
+  String get anonymousAccessReadWrite;
+
+  /// No description provided for @anonymousAccessReadOnlyOps.
+  ///
+  /// In en, this message translates to:
+  /// **'List and download objects'**
+  String get anonymousAccessReadOnlyOps;
+
+  /// No description provided for @anonymousAccessWriteOnlyOps.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload and delete objects'**
+  String get anonymousAccessWriteOnlyOps;
+
+  /// No description provided for @anonymousAccessReadWriteOps.
+  ///
+  /// In en, this message translates to:
+  /// **'List, download, upload and delete'**
+  String get anonymousAccessReadWriteOps;
+
+  /// No description provided for @anonymousAccessReadOnlyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone can list and download.'**
+  String get anonymousAccessReadOnlyDescription;
+
+  /// No description provided for @anonymousAccessWriteOnlyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone can upload and delete, but not see.'**
+  String get anonymousAccessWriteOnlyDescription;
+
+  /// No description provided for @anonymousAccessReadWriteDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Full access without credentials.'**
+  String get anonymousAccessReadWriteDescription;
+
+  /// No description provided for @anonymousAccessReadOnlyUseCase.
+  ///
+  /// In en, this message translates to:
+  /// **'Websites, catalogs, public downloads.'**
+  String get anonymousAccessReadOnlyUseCase;
+
+  /// No description provided for @anonymousAccessWriteOnlyUseCase.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload inboxes, forms.'**
+  String get anonymousAccessWriteOnlyUseCase;
+
+  /// No description provided for @anonymousAccessReadWriteUseCase.
+  ///
+  /// In en, this message translates to:
+  /// **'Use it only on temporary prefixes.'**
+  String get anonymousAccessReadWriteUseCase;
+
+  /// No description provided for @anonymousRuleAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add rule'**
+  String get anonymousRuleAdd;
+
+  /// No description provided for @anonymousRulePrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Prefix'**
+  String get anonymousRulePrefix;
+
+  /// No description provided for @anonymousRuleAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Access'**
+  String get anonymousRuleAccess;
+
+  /// No description provided for @anonymousRuleOps.
+  ///
+  /// In en, this message translates to:
+  /// **'Allowed without credentials'**
+  String get anonymousRuleOps;
+
+  /// No description provided for @anonymousRuleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Prefixes are relative to the bucket and accept * as a wildcard. When several rules match, the first one applies.'**
+  String get anonymousRuleHint;
+
+  /// No description provided for @anonymousRuleDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete rule'**
+  String get anonymousRuleDeleteTitle;
+
+  /// No description provided for @anonymousRuleDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the rule {prefix}? Objects under that prefix will need credentials again.'**
+  String anonymousRuleDeleteConfirm(String prefix);
+
+  /// No description provided for @anonymousRuleFormTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add access rule'**
+  String get anonymousRuleFormTitle;
+
+  /// No description provided for @anonymousRuleFormDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Make a prefix of {bucket} reachable without credentials.'**
+  String anonymousRuleFormDescription(String bucket);
+
+  /// No description provided for @anonymousRuleFormSectionPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'01 Prefix'**
+  String get anonymousRuleFormSectionPrefix;
+
+  /// No description provided for @anonymousRuleFormSectionAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'02 Access type'**
+  String get anonymousRuleFormSectionAccess;
+
+  /// No description provided for @anonymousRulePrefixLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Prefix or pattern'**
+  String get anonymousRulePrefixLabel;
+
+  /// No description provided for @anonymousRulePrefixHint.
+  ///
+  /// In en, this message translates to:
+  /// **'public/'**
+  String get anonymousRulePrefixHint;
+
+  /// No description provided for @anonymousRulePrefixHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'End it with / for a folder, or use * as a wildcard (for example, *.jpg).'**
+  String get anonymousRulePrefixHelper;
+
+  /// No description provided for @anonymousRulePrefixRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'The prefix is required'**
+  String get anonymousRulePrefixRequired;
+
+  /// No description provided for @anonymousRuleFormErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t add the rule'**
+  String get anonymousRuleFormErrorTitle;
+
+  /// No description provided for @anonymousRuleCreatedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Rule {prefix} added'**
+  String anonymousRuleCreatedSuccess(String prefix);
 }
 
 class _AppLocalizationsDelegate

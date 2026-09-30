@@ -35,7 +35,11 @@ class FeaturesInit {
     await AuthInit.init();
     await LanguageInit.init();
 
-    await Future.wait([BrowserInit.init(), BucketsInit.init()]);
+    await Future.wait([
+      BrowserInit.init(),
+      BucketsInit.init(),
+      AnonymousAccessInit.init(),
+    ]);
 
     // Listen for logout to reset other cubits
     app.di.find<AuthCubit>().stream.listen((state) async {

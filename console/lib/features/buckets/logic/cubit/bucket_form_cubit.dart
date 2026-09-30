@@ -17,12 +17,16 @@ class BucketFormCubit extends Cubit<BucketFormState> {
   }) async {
     await _process(
       name: name,
-      action: () => _repo.createBucket(
-        name: name,
-        description: description,
-        color: color,
-        token: _auth.auth?.accessToken,
-      ),
+      change: BucketChange.created,
+      action: () async {
+        await _repo.createBucket(
+          name: name,
+          description: description,
+          color: color,
+          token: _auth.auth?.accessToken,
+        );
+        return null;
+      },
     );
   }
 
@@ -33,6 +37,7 @@ class BucketFormCubit extends Cubit<BucketFormState> {
   }) async {
     await _process(
       name: name,
+      change: BucketChange.updated,
       action: () => _repo.updateBucket(
         name: name,
         description: description,
@@ -42,14 +47,18 @@ class BucketFormCubit extends Cubit<BucketFormState> {
     );
   }
 
+  ///[action] devuelve el bucket actualizado cuando la API lo devuelve (editar)
   Future<void> _process({
     required String name,
-    required Future<void> Function() action,
+    required BucketChange change,
+    required Future<BucketModel?> Function() action,
   }) async {
     emit(const BucketFormProcessInProgressState());
     try {
-      await action();
-      emit(BucketFormProcessingOKState(name: name));
+      final bucket = await action();
+      emit(
+        BucketFormProcessingOKState(name: name, change: change, bucket: bucket),
+      );
     } catch (e) {
       final exception = ExceptionConverter.parse(e);
       emit(
@@ -99,8 +108,16 @@ class BucketFormProcessInProgressState extends BucketFormState {
 
 class BucketFormProcessingOKState extends BucketFormState {
   final String name;
+  final BucketChange change;
 
-  const BucketFormProcessingOKState({required this.name});
+  ///El bucket ya actualizado, al editar
+  final BucketModel? bucket;
+
+  const BucketFormProcessingOKState({
+    required this.name,
+    required this.change,
+    this.bucket,
+  });
 }
 
 class BucketFormProcessingErrorState extends BucketFormState {

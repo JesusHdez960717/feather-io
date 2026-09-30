@@ -424,4 +424,245 @@ class AppLocalizationsEs extends AppLocalizations {
   String bucketNamePathHint(String name) {
     return 'Se usará en las rutas S3: /$name';
   }
+
+  @override
+  String get navBuckets => 'Buckets';
+
+  @override
+  String bucketAdminCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count buckets',
+      one: '1 bucket',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String bucketAdminStats(int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count objetos',
+      one: '1 objeto',
+    );
+    return '$_temp0 · $size';
+  }
+
+  @override
+  String get bucketAdminEmptyDescription =>
+      'Crea un bucket para configurarlo aquí.';
+
+  @override
+  String get bucketAdminOpenInBrowser => 'Abrir en el explorador';
+
+  @override
+  String get bucketAdminTabGeneral => 'General';
+
+  @override
+  String get bucketAdminTabAccess => 'Acceso anónimo';
+
+  @override
+  String get bucketAdminTabDanger => 'Zona de peligro';
+
+  @override
+  String get bucketDetailObjects => 'Objetos';
+
+  @override
+  String get bucketDetailSize => 'Tamaño';
+
+  @override
+  String get bucketDetailCreated => 'Creado';
+
+  @override
+  String get bucketDetailLastModified => 'Última modificación';
+
+  @override
+  String get bucketDetailNeverModified => 'Sin objetos';
+
+  @override
+  String get bucketDetailName => 'Nombre';
+
+  @override
+  String get bucketDetailS3Path => 'Ruta S3';
+
+  @override
+  String get bucketDetailCopyPath => 'Copiar ruta';
+
+  @override
+  String get bucketDetailPathCopied => 'Ruta copiada';
+
+  @override
+  String get bucketDetailDescription => 'Descripción';
+
+  @override
+  String get bucketDetailNoDescription => 'Sin descripción';
+
+  @override
+  String get bucketDetailColor => 'Color';
+
+  @override
+  String get bucketEmptyTitle => 'Vaciar bucket';
+
+  @override
+  String get bucketEmptyAlreadyEmpty => 'El bucket no tiene objetos.';
+
+  @override
+  String bucketEmptyDescription(int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'sus $count objetos',
+      one: 'su único objeto',
+    );
+    return 'Elimina $_temp0 ($size). El bucket, su configuración y sus reglas de acceso se mantienen. No se puede deshacer.';
+  }
+
+  @override
+  String bucketEmptyConfirm(int count, String size, String name) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'eliminarán $count objetos',
+      one: 'eliminará 1 objeto',
+    );
+    return 'Se $_temp0 ($size) de $name. No se puede deshacer.';
+  }
+
+  @override
+  String bucketEmptyTypeName(String name) {
+    return 'Escribe $name para confirmar';
+  }
+
+  @override
+  String get bucketEmptyTypeNameHelper =>
+      'El botón se activa cuando el nombre coincide.';
+
+  @override
+  String get bucketDeleteDescription =>
+      'Borra el bucket con su descripción, color y reglas de acceso. Como en S3, solo se puede eliminar si está vacío.';
+
+  @override
+  String bucketDeleteNotEmpty(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count objetos',
+      one: '1 objeto',
+    );
+    return 'El bucket tiene $_temp0. Vacíalo primero.';
+  }
+
+  @override
+  String get anonymousAccessDescription =>
+      'Cada regla deja un prefijo accesible sin credenciales. Lo que no cubre ninguna regla sigue necesitando autenticación.';
+
+  @override
+  String get anonymousAccessPrivateTitle => 'Bucket privado';
+
+  @override
+  String get anonymousAccessPrivateDescription =>
+      'Todas las peticiones necesitan credenciales. Añade una regla para servir un prefijo sin autenticación, por ejemplo las imágenes de una web.';
+
+  @override
+  String get anonymousAccessReadOnly => 'Solo lectura';
+
+  @override
+  String get anonymousAccessWriteOnly => 'Solo escritura';
+
+  @override
+  String get anonymousAccessReadWrite => 'Lectura y escritura';
+
+  @override
+  String get anonymousAccessReadOnlyOps => 'Listar y descargar objetos';
+
+  @override
+  String get anonymousAccessWriteOnlyOps => 'Subir y borrar objetos';
+
+  @override
+  String get anonymousAccessReadWriteOps => 'Listar, descargar, subir y borrar';
+
+  @override
+  String get anonymousAccessReadOnlyDescription =>
+      'Cualquiera puede listar y descargar.';
+
+  @override
+  String get anonymousAccessWriteOnlyDescription =>
+      'Cualquiera puede subir y borrar, pero no ver.';
+
+  @override
+  String get anonymousAccessReadWriteDescription =>
+      'Acceso completo sin credenciales.';
+
+  @override
+  String get anonymousAccessReadOnlyUseCase =>
+      'Webs, catálogos, descargas públicas.';
+
+  @override
+  String get anonymousAccessWriteOnlyUseCase =>
+      'Buzones de subida, formularios.';
+
+  @override
+  String get anonymousAccessReadWriteUseCase =>
+      'Úsalo solo en prefijos temporales.';
+
+  @override
+  String get anonymousRuleAdd => 'Añadir regla';
+
+  @override
+  String get anonymousRulePrefix => 'Prefijo';
+
+  @override
+  String get anonymousRuleAccess => 'Acceso';
+
+  @override
+  String get anonymousRuleOps => 'Operaciones sin credenciales';
+
+  @override
+  String get anonymousRuleHint =>
+      'Los prefijos son relativos al bucket y admiten * como comodín. Si varias reglas coinciden, se aplica la primera.';
+
+  @override
+  String get anonymousRuleDeleteTitle => 'Eliminar regla';
+
+  @override
+  String anonymousRuleDeleteConfirm(String prefix) {
+    return '¿Seguro que quieres eliminar la regla $prefix? Los objetos de ese prefijo volverán a necesitar credenciales.';
+  }
+
+  @override
+  String get anonymousRuleFormTitle => 'Añadir regla de acceso';
+
+  @override
+  String anonymousRuleFormDescription(String bucket) {
+    return 'Deja un prefijo de $bucket accesible sin credenciales.';
+  }
+
+  @override
+  String get anonymousRuleFormSectionPrefix => '01 Prefijo';
+
+  @override
+  String get anonymousRuleFormSectionAccess => '02 Tipo de acceso';
+
+  @override
+  String get anonymousRulePrefixLabel => 'Prefijo o patrón';
+
+  @override
+  String get anonymousRulePrefixHint => 'public/';
+
+  @override
+  String get anonymousRulePrefixHelper =>
+      'Termina en / para una carpeta, o usa * como comodín (por ejemplo, *.jpg).';
+
+  @override
+  String get anonymousRulePrefixRequired => 'El prefijo es obligatorio';
+
+  @override
+  String get anonymousRuleFormErrorTitle => 'No se pudo añadir la regla';
+
+  @override
+  String anonymousRuleCreatedSuccess(String prefix) {
+    return 'Regla $prefix añadida';
+  }
 }

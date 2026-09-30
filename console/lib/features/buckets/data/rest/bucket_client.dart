@@ -45,6 +45,15 @@ class BucketClient extends BaseClient {
     return BucketResponse.fromJson(rawResponse.data);
   }
 
+  ///Borra todos los objetos del bucket; el bucket y su configuracion se mantienen
+  Future<void> emptyBucket({required String name, String? token}) async {
+    final admin = Environment.adminPrefix;
+    await dio.delete(
+      '$baseUrl/$admin/bucket/$name/objects',
+      options: options(token: token),
+    );
+  }
+
   Future<void> deleteBucket({required String name, String? token}) async {
     await dio.delete('$baseUrl/$name', options: options(token: token));
   }
@@ -84,6 +93,7 @@ class BucketResponse {
   final int objectCount;
   final int sizeBytes;
   final DateTime creationDate;
+  final DateTime? lastModified;
 
   final String? description;
   final int? color;
@@ -93,6 +103,7 @@ class BucketResponse {
     required this.objectCount,
     required this.sizeBytes,
     required this.creationDate,
+    this.lastModified,
     this.description,
     this.color,
   });
@@ -105,6 +116,9 @@ class BucketResponse {
       objectCount: json['object_count'],
       sizeBytes: json['size_bytes'],
       creationDate: DateTime.parse(json['creation_date']),
+      lastModified: json['last_modified'] == null
+          ? null
+          : DateTime.parse(json['last_modified']),
     );
   }
 }
