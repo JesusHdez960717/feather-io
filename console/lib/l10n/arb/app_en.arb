@@ -39,7 +39,6 @@
   "loginSecretKey": "Secret Key",
   "loginSecretKeyHint": "Enter your secret key",
   "loginButton": "Login",
-  "loginInProgress": "Logging in...",
   "bucketsTitle": "Buckets",
   "bucketsSubtitle": "Manage your S3 compatible buckets and storage resources.",
   "bucketsCreate": "Create Bucket",

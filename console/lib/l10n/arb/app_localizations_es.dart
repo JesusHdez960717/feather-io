@@ -131,9 +131,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get loginButton => 'Iniciar sesión';
 
   @override
-  String get loginInProgress => 'Iniciando sesión...';
-
-  @override
   String get bucketsTitle => 'Buckets';
 
   @override

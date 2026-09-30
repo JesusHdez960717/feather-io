@@ -332,12 +332,6 @@ abstract class AppLocalizations {
   /// **'Login'**
   String get loginButton;
 
-  /// No description provided for @loginInProgress.
-  ///
-  /// In en, this message translates to:
-  /// **'Logging in...'**
-  String get loginInProgress;
-
   /// No description provided for @bucketsTitle.
   ///
   /// In en, this message translates to:

@@ -49,7 +49,7 @@ class _BaseScreenState extends State<BaseScreen> {
                     color: app.colors.neutral.grey3,
                   ),
                   selectedIcon: app.assets.icons.storage.bucket.build(
-                    color: app.colors.primary.secondary,
+                    color: app.colors.neutral.white,
                   ),
                   label: Text(app.intl.navBrowser),
                 ),

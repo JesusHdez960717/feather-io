@@ -62,53 +62,59 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Scaffold(
         backgroundColor: app.colors.primary.background1,
         body: Center(
-          child: Container(
+          child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
-            padding: EdgeInsets.all(app.dimensions.padding.l),
-            decoration: BoxDecoration(
-              color: app.colors.primary.background2,
+            child: ClipRRect(
               borderRadius: app.dimensions.border.borderRadius.m,
-              border: Border.all(color: app.colors.primary.background3),
-            ),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  AppWordmark(name: app.intl.appName, fontSize: 32),
-                  app.dimensions.padding.xl.gap(),
-                  AppFormInput(
-                    controller: _accessController,
-                    label: app.intl.loginAccessKey,
-                    hint: app.intl.loginAccessKeyHint,
-                    validator: (v) =>
-                        v?.isEmpty == true ? app.intl.required : null,
-                  ),
-                  app.dimensions.padding.m.gap(),
-                  AppFormPasswordInput(
-                    controller: _secretController,
-                    label: app.intl.loginSecretKey,
-                    hint: app.intl.loginSecretKeyHint,
-                    validator: (v) =>
-                        v?.isEmpty == true ? app.intl.required : null,
-                  ),
-                  app.dimensions.padding.xl.gap(),
-                  BlocBuilder<AuthCubit, AuthState>(
-                    builder: (context, state) {
-                      final isLoading = state is AuthProcessInProgressState;
-                      return PrimaryButton.primary(
-                        onPressed: isLoading ? () {} : _onLogin,
-                        title: isLoading
-                            ? app.intl.loginInProgress
-                            : app.intl.loginButton,
-                      );
-                    },
-                  ),
-                ],
+              child: BlocBuilder<AuthCubit, AuthState>(
+                builder: (context, state) => LoadingOverlay(
+                  visible: state is AuthProcessInProgressState,
+                  overlayWidgetBuilder: LoadingOverlayStyles.form,
+                  child: _buildPanel(),
+                ),
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPanel() {
+    return Container(
+      padding: EdgeInsets.all(app.dimensions.padding.l),
+      decoration: BoxDecoration(
+        color: app.colors.primary.background2,
+        borderRadius: app.dimensions.border.borderRadius.m,
+        border: Border.all(color: app.colors.primary.background3),
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppWordmark(name: app.intl.appName, fontSize: 32),
+            app.dimensions.padding.xl.gap(),
+            AppFormInput(
+              controller: _accessController,
+              label: app.intl.loginAccessKey,
+              hint: app.intl.loginAccessKeyHint,
+              validator: (v) => v?.isEmpty == true ? app.intl.required : null,
+            ),
+            app.dimensions.padding.m.gap(),
+            AppFormPasswordInput(
+              controller: _secretController,
+              label: app.intl.loginSecretKey,
+              hint: app.intl.loginSecretKeyHint,
+              validator: (v) => v?.isEmpty == true ? app.intl.required : null,
+            ),
+            app.dimensions.padding.xl.gap(),
+            PrimaryButton.primary(
+              onPressed: _onLogin,
+              title: app.intl.loginButton,
+            ),
+          ],
         ),
       ),
     );

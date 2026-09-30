@@ -130,9 +130,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loginButton => 'Login';
 
   @override
-  String get loginInProgress => 'Logging in...';
-
-  @override
   String get bucketsTitle => 'Buckets';
 
   @override

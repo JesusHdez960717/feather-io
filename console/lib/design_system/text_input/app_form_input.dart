@@ -190,17 +190,10 @@ class _AppFormInputState extends State<AppFormInput> {
     final List<BoxShadow> shadows;
     if (hasError) {
       borderColor = errorColor;
-      shadows = [
-        BoxShadow(color: errorColor, spreadRadius: 1),
-        if (_focused)
-          BoxShadow(color: errorColor.withValues(alpha: 0.2), spreadRadius: 4),
-      ];
+      shadows = [BoxShadow(color: errorColor, spreadRadius: 1)];
     } else if (_focused) {
       borderColor = focusColor;
-      shadows = [
-        BoxShadow(color: focusColor, spreadRadius: 1),
-        BoxShadow(color: focusColor.withValues(alpha: 0.25), spreadRadius: 4),
-      ];
+      shadows = [BoxShadow(color: focusColor, spreadRadius: 1)];
     } else {
       borderColor = _hovered && widget.enabled
           ? app.colors.neutral.grey2
