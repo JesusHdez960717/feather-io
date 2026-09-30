@@ -166,4 +166,10 @@ Error states carry the `GlobalException` or its `message`; cubits get it via `Ex
 
 **Assets.** SVG icons live in `assets/icons/<group>/` and are only reached through getters in `design_system/assets/app_icons.dart` (`app.assets.icons.actions.delete.build(...)`). Adding an icon = file + getter + folder in `pubspec.yaml`; when a getter loses its last use, delete the getter and the file. `assets/app/app_icon.png` is only used by `flutter_launcher_icons`.
 
+**Claude Design.** The console has two Claude Design artifacts, both named "Feather IO Console" (content in Spanish):
+- Design system: https://claude.ai/artifact/1dJk7nhzEP7Y2CcgnTMyuB. Tokens, components and icons from `design_system/`.
+- Canvas: https://claude.ai/artifact/XJpCx88PuduoWDgbdcBowC. A faithful replica of the current screens at 1536×720 (125% Windows scaling), used as the base for the redesign.
+
+In canvas artboards, draw coloured icons as inline `<svg>` with `currentColor`. CSS `mask-image: url(/_blob/…)` renders blank because the artboard iframe is sandboxed; `<img>` works.
+
 **Other.** `s3_sig_v4_signer.dart` exists in `features/` but the console uses JWT today.
