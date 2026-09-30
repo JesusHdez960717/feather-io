@@ -13,6 +13,8 @@ The two packages are strictly decoupled: they share nothing but the HTTP contrac
 
 Scope relaxations still in force: focus on core S3 CRUD. Ignore bucket policies, MD5/checksum validation and advanced multipart edge cases for now.
 
+`ROADMAP.md` lists the pending work in order, as checkboxes. When a change completes a roadmap task, mark it `[x]` in the same change; add new pending work to the right phase.
+
 ## Commands
 
 The project pins Flutter via FVM (`.fvmrc` in both packages, Flutter 3.47.1 / Dart 3.13). Both packages need Dart SDK ^3.13.0. The system `dart` on PATH may be older, so prefix commands with `fvm` (`fvm dart …`, `fvm flutter …`).
