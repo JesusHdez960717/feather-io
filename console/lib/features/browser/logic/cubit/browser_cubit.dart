@@ -8,6 +8,9 @@ import 'package:web/web.dart' as web;
 
 ///Navegacion por los objetos de un bucket.
 ///El listado/creacion/borrado de buckets es responsabilidad de [BucketCubit].
+///
+///El bucket y la carpeta abiertos vienen de la URL: la pantalla llama a [open]
+///cuando cambia, y [goUp]/[goForward] solo calculan a donde navegar
 class BrowserCubit extends Cubit<BrowserState>
     with GlobalEventBusCommunication<BrowserState> {
   final AuthCubit auth;
@@ -19,14 +22,18 @@ class BrowserCubit extends Cubit<BrowserState>
   ///[goForward] vuelve a bajar; cualquier otra navegacion lo vacia
   final List<String> _forwardPrefixes = [];
 
-  bool get canGoForward => _forwardPrefixes.isNotEmpty;
+  ///El proximo [open] viene de [goUp]/[goForward] y no debe vaciar [_forwardPrefixes]
+  bool _historyNavigation = false;
+
+  bool get _canGoForward => _forwardPrefixes.isNotEmpty;
 
   BrowserCubit({required this.auth, required this.repo, this.initialViewType})
     : super(BrowserInitialState(viewType: initialViewType)) {
     onBus<BucketChangedEvent>(_onBucketChanged);
   }
 
-  ///Mantiene al dia el bucket abierto si otra seccion lo cambia
+  ///Mantiene al dia el bucket abierto si otra seccion lo cambia. Si lo borran,
+  ///la pantalla ve que ya no esta en la lista de buckets y lo dice
   void _onBucketChanged(BucketChangedEvent event) {
     if (identical(event.source, this)) return;
     final current = state is BrowserSearchState
@@ -36,18 +43,14 @@ class BrowserCubit extends Cubit<BrowserState>
     if (current == null || selected?.name != event.bucketName) return;
 
     switch (event.change) {
-      case BucketChange.deleted:
-        reset();
       case BucketChange.emptied:
-        //sus carpetas ya no existen: vuelve a la raiz del bucket
-        _forwardPrefixes.clear();
-        _list(prefix: '');
       case BucketChange.objectsChanged:
         _list(prefix: current.prefix);
       case BucketChange.updated:
         final bucket = event.bucket;
         if (bucket != null) emit(current.copyWith(selectedBucket: bucket));
       case BucketChange.created:
+      case BucketChange.deleted:
         break;
     }
   }
@@ -61,33 +64,28 @@ class BrowserCubit extends Cubit<BrowserState>
 
   ///Estado sin bucket seleccionado (se muestra el listado de buckets)
   void init() {
+    _forwardPrefixes.clear();
     emit(BrowserLoadingSuccessState(viewType: _viewType));
   }
 
-  ///Sale del bucket seleccionado
-  void reset() {
-    _forwardPrefixes.clear();
-    init();
-  }
-
-  ///Sube un nivel; en la raiz del bucket sale al listado de buckets
-  Future<void> goUp() async {
-    if (state is! BrowserSearchState) return;
+  ///Carpeta a la que lleva *subir un nivel*, o null en la raiz del bucket
+  ///(se sale al listado de buckets). La recuerda para que [goForward] vuelva
+  String? goUp() {
+    if (state is! BrowserSearchState) return null;
     final prefix = (state as BrowserSearchState).prefix;
     final parts = prefix.split('/').where((s) => s.isNotEmpty).toList();
-    if (parts.isEmpty) {
-      reset();
-      return;
-    }
+    if (parts.isEmpty) return null;
     parts.removeLast();
     _forwardPrefixes.add(prefix);
-    await _list(prefix: parts.isEmpty ? '' : '${parts.join('/')}/');
+    _historyNavigation = true;
+    return parts.isEmpty ? '' : '${parts.join('/')}/';
   }
 
-  ///Deshace el ultimo [goUp]
-  Future<void> goForward() async {
-    if (_forwardPrefixes.isEmpty) return;
-    await _list(prefix: _forwardPrefixes.removeLast());
+  ///Carpeta del ultimo [goUp], o null si no hay a donde volver
+  String? goForward() {
+    if (_forwardPrefixes.isEmpty) return null;
+    _historyNavigation = true;
+    return _forwardPrefixes.removeLast();
   }
 
   void changeViewType(ViewType viewType) {
@@ -100,22 +98,28 @@ class BrowserCubit extends Cubit<BrowserState>
     }
   }
 
-  Future<void> selectBucket({
+  ///Abre [prefix] de [bucket]; no hace nada si ya es lo que se muestra
+  Future<void> open({
     required BucketModel bucket,
-    String? prefix,
+    required String prefix,
   }) async {
-    await listObjects(bucket: bucket, prefix: prefix);
-  }
-
-  Future<void> listObjects({BucketModel? bucket, String? prefix}) async {
     final current = state is BrowserSearchState
         ? state as BrowserSearchState
         : null;
-    final isSameBucket =
-        bucket == null || bucket.name == current?.selectedBucket?.name;
-    final isSamePrefix = (prefix ?? '') == current?.prefix;
-    if (!isSameBucket || !isSamePrefix) _forwardPrefixes.clear();
+    final isShown =
+        current?.selectedBucket?.name == bucket.name &&
+        current?.prefix == prefix;
+    final fromHistory = _historyNavigation;
+    _historyNavigation = false;
+    if (isShown) return;
+    if (!fromHistory) _forwardPrefixes.clear();
     await _list(bucket: bucket, prefix: prefix);
+  }
+
+  ///Vuelve a pedir la carpeta que se muestra
+  Future<void> refresh() async {
+    if (state is! BrowserSearchState) return;
+    await _list(prefix: (state as BrowserSearchState).prefix);
   }
 
   Future<void> _list({BucketModel? bucket, String? prefix}) async {
@@ -134,6 +138,7 @@ class BrowserCubit extends Cubit<BrowserState>
           selectedBucket: targetBucket,
           prefix: prefix ?? '',
           viewType: viewType,
+          canGoForward: _canGoForward,
         ),
       );
 
@@ -150,6 +155,7 @@ class BrowserCubit extends Cubit<BrowserState>
           prefix: prefix ?? '',
           objects: objects,
           viewType: viewType,
+          canGoForward: _canGoForward,
         ),
       );
     } catch (exc) {
@@ -159,6 +165,7 @@ class BrowserCubit extends Cubit<BrowserState>
           selectedBucket: targetBucket,
           prefix: prefix ?? '',
           viewType: viewType,
+          canGoForward: _canGoForward,
         ),
       );
     }
@@ -282,6 +289,7 @@ class BrowserCubit extends Cubit<BrowserState>
           prefix: currentState.prefix,
           objects: currentState.objects,
           viewType: currentState.viewType,
+          canGoForward: _canGoForward,
         ),
       );
       await action(currentState);
@@ -293,6 +301,7 @@ class BrowserCubit extends Cubit<BrowserState>
           prefix: currentState.prefix,
           objects: currentState.objects,
           viewType: currentState.viewType,
+          canGoForward: _canGoForward,
         ),
       );
     } finally {
@@ -314,6 +323,7 @@ class BrowserCubit extends Cubit<BrowserState>
         prefix: state.prefix,
         objects: state.objects,
         viewType: state.viewType,
+        canGoForward: state.canGoForward,
       );
 }
 
@@ -335,11 +345,15 @@ abstract class BrowserSearchState extends BrowserState {
   final ListObjectsModel? objects;
   final ViewType viewType;
 
+  ///Hay un *subir un nivel* que *adelante* puede deshacer
+  final bool canGoForward;
+
   BrowserSearchState({
     this.selectedBucket,
     this.prefix = '',
     this.objects,
     this.viewType = ViewType.list,
+    this.canGoForward = false,
   });
 
   BrowserSearchState copyWith({
@@ -347,6 +361,7 @@ abstract class BrowserSearchState extends BrowserState {
     String? prefix,
     ListObjectsModel? objects,
     ViewType? viewType,
+    bool? canGoForward,
   });
 }
 
@@ -356,6 +371,7 @@ class BrowserLoadingInProgressState extends BrowserSearchState {
     super.prefix = '',
     super.objects,
     super.viewType,
+    super.canGoForward,
   });
 
   @override
@@ -364,12 +380,14 @@ class BrowserLoadingInProgressState extends BrowserSearchState {
     String? prefix,
     ListObjectsModel? objects,
     ViewType? viewType,
+    bool? canGoForward,
   }) {
     return BrowserLoadingInProgressState(
       selectedBucket: selectedBucket ?? this.selectedBucket,
       prefix: prefix ?? this.prefix,
       objects: objects ?? this.objects,
       viewType: viewType ?? this.viewType,
+      canGoForward: canGoForward ?? this.canGoForward,
     );
   }
 }
@@ -380,6 +398,7 @@ class BrowserLoadingSuccessState extends BrowserSearchState {
     super.prefix = '',
     super.objects,
     super.viewType,
+    super.canGoForward,
   });
 
   @override
@@ -388,12 +407,14 @@ class BrowserLoadingSuccessState extends BrowserSearchState {
     String? prefix,
     ListObjectsModel? objects,
     ViewType? viewType,
+    bool? canGoForward,
   }) {
     return BrowserLoadingSuccessState(
       selectedBucket: selectedBucket ?? this.selectedBucket,
       prefix: prefix ?? this.prefix,
       objects: objects ?? this.objects,
       viewType: viewType ?? this.viewType,
+      canGoForward: canGoForward ?? this.canGoForward,
     );
   }
 }
@@ -404,6 +425,7 @@ class BrowserProcessInProgressState extends BrowserSearchState {
     super.prefix = '',
     super.objects,
     super.viewType,
+    super.canGoForward,
   });
 
   @override
@@ -412,12 +434,14 @@ class BrowserProcessInProgressState extends BrowserSearchState {
     String? prefix,
     ListObjectsModel? objects,
     ViewType? viewType,
+    bool? canGoForward,
   }) {
     return BrowserProcessInProgressState(
       selectedBucket: selectedBucket ?? this.selectedBucket,
       prefix: prefix ?? this.prefix,
       objects: objects ?? this.objects,
       viewType: viewType ?? this.viewType,
+      canGoForward: canGoForward ?? this.canGoForward,
     );
   }
 }
@@ -431,6 +455,7 @@ class BrowserLoadingErrorState extends BrowserSearchState {
     super.prefix = '',
     super.objects,
     super.viewType,
+    super.canGoForward,
   });
 
   @override
@@ -439,6 +464,7 @@ class BrowserLoadingErrorState extends BrowserSearchState {
     String? prefix,
     ListObjectsModel? objects,
     ViewType? viewType,
+    bool? canGoForward,
     GlobalException? exception,
   }) {
     return BrowserLoadingErrorState(
@@ -447,6 +473,7 @@ class BrowserLoadingErrorState extends BrowserSearchState {
       prefix: prefix ?? this.prefix,
       objects: objects ?? this.objects,
       viewType: viewType ?? this.viewType,
+      canGoForward: canGoForward ?? this.canGoForward,
     );
   }
 }

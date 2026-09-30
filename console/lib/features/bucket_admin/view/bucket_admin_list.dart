@@ -8,13 +8,11 @@ class BucketAdminList extends StatefulWidget {
   final BucketState state;
   final BucketModel? selected;
   final ValueChanged<BucketModel> onSelected;
-  final VoidCallback onRetry;
 
   const BucketAdminList({
     required this.state,
     required this.selected,
     required this.onSelected,
-    required this.onRetry,
     super.key,
   });
 
@@ -25,11 +23,8 @@ class BucketAdminList extends StatefulWidget {
 class _BucketAdminListState extends State<BucketAdminList> {
   final _searchController = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    _searchController.addListener(() => setState(() {}));
-  }
+  ///Texto buscado, en minusculas
+  String _query = '';
 
   @override
   void dispose() {
@@ -38,10 +33,9 @@ class _BucketAdminListState extends State<BucketAdminList> {
   }
 
   List<BucketModel> get _filtered {
-    final query = _searchController.text.toLowerCase();
-    if (query.isEmpty) return widget.state.buckets;
+    if (_query.isEmpty) return widget.state.buckets;
     return widget.state.buckets
-        .where((b) => b.name.toLowerCase().contains(query))
+        .where((b) => b.name.toLowerCase().contains(_query))
         .toList();
   }
 
@@ -60,7 +54,10 @@ class _BucketAdminListState extends State<BucketAdminList> {
               Expanded(
                 child: AppTextSearchField(
                   controller: _searchController,
-                  onSearch: (_) {},
+                  //filtra la lista ya cargada: sin espera
+                  delay: 0,
+                  onSearch: (value) =>
+                      setState(() => _query = value.toLowerCase()),
                   hint: app.intl.bucketsSearchHint,
                 ),
               ),
@@ -93,7 +90,7 @@ class _BucketAdminListState extends State<BucketAdminList> {
               visible: widget.state is BucketLoadingInProgressState,
               overlayWidgetBuilder: LoadingOverlayStyles.table,
               disableBackButton: false,
-              child: buckets.isEmpty && _searchController.text.isNotEmpty
+              child: buckets.isEmpty && _query.isNotEmpty
                   ? Center(
                       child: Text(
                         app.intl.bucketsNoMatch(_searchController.text),

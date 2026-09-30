@@ -665,4 +665,31 @@ class AppLocalizationsEs extends AppLocalizations {
   String anonymousRuleCreatedSuccess(String prefix) {
     return 'Regla $prefix añadida';
   }
+
+  @override
+  String get bucketSettings => 'Configuración';
+
+  @override
+  String browserBucketNotFound(String name) {
+    return 'El bucket «$name» no existe';
+  }
+
+  @override
+  String get browserBucketNotFoundDescription =>
+      'Puede que lo hayan borrado o que el enlace esté mal escrito.';
+
+  @override
+  String get browserBackToBuckets => 'Ver buckets';
+
+  @override
+  String browserFolderNotFound(String folder) {
+    return 'La carpeta «$folder» no existe en este bucket';
+  }
+
+  @override
+  String get browserFolderNotFoundDescription =>
+      'Puede que la hayan borrado o que la ruta esté mal escrita. En S3 una carpeta solo existe mientras tiene objetos.';
+
+  @override
+  String get browserGoToBucketRoot => 'Ir a la raíz del bucket';
 }

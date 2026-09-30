@@ -4,11 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 class BucketAdminScreenNavigator {
-  String get name => 'buckets';
+  String get name => RouteNames.buckets;
 
   String get path => '/buckets';
 
   Widget builder(BuildContext context, GoRouterState state) {
+    final params = state.uri.queryParameters;
     return MultiBlocProvider(
       providers: [
         BlocProvider(
@@ -20,22 +21,39 @@ class BucketAdminScreenNavigator {
         ),
       ],
       child: BucketAdminScreen(
-        initialBucket: state.uri.queryParameters['bucket'],
+        bucket: params[RouteNames.bucketsBucketParam],
+        tab:
+            BucketAdminTab.values
+                .asNameMap()[params[RouteNames.bucketsTabParam]] ??
+            BucketAdminTab.general,
       ),
+    );
+  }
+
+  ///Cambia el bucket o la pestaña mostrados; la URL es la fuente de verdad
+  void show({required String bucket, required BucketAdminTab tab}) {
+    app.navigator.go(
+      name,
+      queryParameters: {
+        RouteNames.bucketsBucketParam: bucket,
+        RouteNames.bucketsTabParam: tab.name,
+      },
     );
   }
 }
 
 ///Seccion *Buckets*: a la izquierda la lista de buckets y a la derecha el
-///detalle del seleccionado, con sus pestañas
+///detalle del seleccionado, con sus pestañas. El bucket y la pestaña vienen de
+///la URL (`?bucket=&tab=`): seleccionar otro o cambiar de pestaña navega
 class BucketAdminScreen extends StatefulWidget {
   static final BucketAdminScreenNavigator navigator =
       BucketAdminScreenNavigator();
 
-  ///Nombre del bucket a seleccionar al entrar (`?bucket=`)
-  final String? initialBucket;
+  ///Bucket seleccionado; si es null o ya no existe, se muestra el primero
+  final String? bucket;
+  final BucketAdminTab tab;
 
-  const BucketAdminScreen({this.initialBucket, super.key});
+  const BucketAdminScreen({required this.tab, this.bucket, super.key});
 
   @override
   State<BucketAdminScreen> createState() => _BucketAdminScreenState();
@@ -45,30 +63,26 @@ class _BucketAdminScreenState extends State<BucketAdminScreen> {
   late final BucketCubit cubit;
   late final AnonymousAccessCubit accessCubit;
 
-  String? _selectedName;
-  BucketAdminTab _tab = BucketAdminTab.general;
-
   @override
   void initState() {
     super.initState();
-    _selectedName = widget.initialBucket;
     cubit = context.read<BucketCubit>()..load();
     accessCubit = context.read<AnonymousAccessCubit>();
   }
 
-  ///El seleccionado o, si ya no existe (p. ej. se acaba de borrar), el primero
+  @override
+  void didUpdateWidget(covariant BucketAdminScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.bucket != oldWidget.bucket) _syncRules(cubit.state.buckets);
+  }
+
+  ///El de la URL o, si no hay o ya no existe (p. ej. se acaba de borrar), el primero
   BucketModel? _selected(List<BucketModel> buckets) {
     if (buckets.isEmpty) return null;
     return buckets.firstWhere(
-      (b) => b.name == _selectedName,
+      (b) => b.name == widget.bucket,
       orElse: () => buckets.first,
     );
-  }
-
-  void _select(BucketModel bucket) {
-    if (bucket.name == _selectedName) return;
-    setState(() => _selectedName = bucket.name);
-    accessCubit.load(bucket: bucket.name);
   }
 
   ///Carga las reglas del bucket mostrado (para el contador de su pestaña)
@@ -103,17 +117,17 @@ class _BucketAdminScreenState extends State<BucketAdminScreen> {
               BucketAdminList(
                 state: state,
                 selected: selected,
-                onSelected: _select,
-                onRetry: cubit.load,
+                onSelected: (bucket) => BucketAdminScreen.navigator.show(
+                  bucket: bucket.name,
+                  tab: widget.tab,
+                ),
               ),
               VerticalDivider(
                 thickness: 1,
                 width: 1,
                 color: app.colors.neutral.grey5,
               ),
-              Expanded(
-                child: _buildDetail(state, selected),
-              ),
+              Expanded(child: _buildDetail(state, selected)),
             ],
           );
         },
@@ -125,8 +139,9 @@ class _BucketAdminScreenState extends State<BucketAdminScreen> {
     if (selected != null) {
       return BucketAdminDetail(
         bucket: selected,
-        tab: _tab,
-        onTabChanged: (tab) => setState(() => _tab = tab),
+        tab: widget.tab,
+        onTabChanged: (tab) =>
+            BucketAdminScreen.navigator.show(bucket: selected.name, tab: tab),
       );
     }
     if (state is BucketLoadingErrorState) {

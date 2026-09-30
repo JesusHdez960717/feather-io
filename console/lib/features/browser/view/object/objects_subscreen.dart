@@ -12,7 +12,6 @@ class ObjectsSubscreen extends StatefulWidget {
   final VoidCallback onRefresh;
   final VoidCallback onBack;
   final VoidCallback onForward;
-  final bool canGoForward;
   final Function(BrowserObjectModel) onSelected;
   final Function(ViewType) onViewTypeChanged;
   final Function(List<String> keys) onDelete;
@@ -27,7 +26,6 @@ class ObjectsSubscreen extends StatefulWidget {
     required this.onRefresh,
     required this.onBack,
     required this.onForward,
-    required this.canGoForward,
     required this.onSelected,
     required this.onViewTypeChanged,
     required this.onDelete,
@@ -53,11 +51,22 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
   ObjectFilter _filter = ObjectFilter.none;
   bool _isDragging = false;
 
+  ///La URL pide una carpeta sin nada dentro. En S3 una carpeta solo existe
+  ///mientras tiene objetos, asi que para el usuario no existe
+  bool get _isMissingFolder {
+    final state = widget.state;
+    final objects = state.objects;
+    return state is BrowserLoadingSuccessState &&
+        state.prefix.endsWith('/') &&
+        objects != null &&
+        objects.objects.isEmpty &&
+        objects.commonPrefixes.isEmpty;
+  }
+
   @override
   void initState() {
     super.initState();
     _initializeWrappers();
-    _searchController.addListener(_applyFilters);
     _scrollBreadcrumbsToEnd();
   }
 
@@ -87,7 +96,6 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
 
   @override
   void dispose() {
-    _searchController.removeListener(_applyFilters);
     _searchController.dispose();
     _breadcrumbScrollController.dispose();
     super.dispose();
@@ -367,11 +375,11 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                         ),
                         app.dimensions.padding.xs.gap(),
                         PrimaryButton.svgIcon(
-                          onPressed: widget.canGoForward
+                          onPressed: widget.state.canGoForward
                               ? widget.onForward
                               : null,
                           icon: app.assets.icons.navigation.right,
-                          iconColor: widget.canGoForward
+                          iconColor: widget.state.canGoForward
                               ? null
                               : app.colors.neutral.grey5,
                           backgroundColor: app.colors.neutral.transparent,
@@ -424,7 +432,9 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                         children: [
                           AppTextSearchField(
                             controller: _searchController,
-                            onSearch: (value) {},
+                            //filtra la carpeta ya cargada: sin espera
+                            delay: 0,
+                            onSearch: (_) => _applyFilters(),
                             hint: app.intl.objectsSearchHint,
                           ),
                         ],
@@ -531,6 +541,24 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                             ),
                     ),
                   ),
+                  if (_isMissingFolder)
+                    Positioned.fill(
+                      child: ColoredBox(
+                        color: app.colors.primary.background1,
+                        child: BrowserNotFoundPage(
+                          title: app.intl.browserFolderNotFound(
+                            widget.state.prefix.substring(
+                              0,
+                              widget.state.prefix.length - 1,
+                            ),
+                          ),
+                          description:
+                              app.intl.browserFolderNotFoundDescription,
+                          action: app.intl.browserGoToBucketRoot,
+                          onAction: () => widget.onNavigate(''),
+                        ),
+                      ),
+                    ),
                   if (_isDragging)
                     const Positioned.fill(child: DraggingZoneOverlay()),
                   if (widget.state is BrowserLoadingErrorState)
@@ -610,6 +638,15 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                 ),
               ),
             ),
+          ),
+          app.dimensions.padding.l.gap(),
+          PrimaryButton.primary(
+            title: app.intl.bucketSettings,
+            icon: app.assets.icons.actions.settings,
+            color: app.colors.primary.background3,
+            onPressed: () => RouteNames.openBucketSettings(bucket.name),
+            h: 42,
+            w: 170,
           ),
         ],
       ),

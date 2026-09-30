@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 class LoginScreenNavigator {
-  String get name => 'login';
+  String get name => RouteNames.login;
 
   String get path => '/login';
 

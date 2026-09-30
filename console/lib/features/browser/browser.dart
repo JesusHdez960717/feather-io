@@ -10,3 +10,4 @@ export 'view/object/widget/browser_breadcrumbs.dart';
 export 'view/object/widget/dragging_zone_overlay.dart';
 export 'view/object/widget/objects_empty_page.dart';
 export 'view/object/widget/objects_filter_button.dart';
+export 'view/widget/browser_not_found_page.dart';

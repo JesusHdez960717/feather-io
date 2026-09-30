@@ -91,7 +91,6 @@ class _BucketsViewState extends State<_BucketsView> {
   void initState() {
     super.initState();
     _filteredBuckets = widget.state.buckets;
-    _searchController.addListener(_onSearchChanged);
   }
 
   @override
@@ -104,7 +103,6 @@ class _BucketsViewState extends State<_BucketsView> {
 
   @override
   void dispose() {
-    _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
   }
@@ -157,6 +155,25 @@ class _BucketsViewState extends State<_BucketsView> {
         side: BorderSide(color: app.colors.neutral.grey5),
       ),
       items: [
+        PopupMenuItem(
+          value: 'settings',
+          onTap: () => RouteNames.openBucketSettings(bucket.name),
+          child: Row(
+            children: [
+              app.assets.icons.actions.settings.build(
+                size: 18,
+                color: app.colors.neutral.white,
+              ),
+              app.dimensions.padding.m.gap(),
+              Text(
+                app.intl.bucketSettings,
+                style: app.textTheme.bodyMedium?.copyWith(
+                  color: app.colors.neutral.white,
+                ),
+              ),
+            ],
+          ),
+        ),
         PopupMenuItem(
           value: 'edit',
           onTap: () => BucketForm.open(context, bucket: bucket),
@@ -412,9 +429,9 @@ class _BucketsViewState extends State<_BucketsView> {
             Expanded(
               child: AppTextSearchField(
                 controller: _searchController,
-                onSearch: (value) {
-                  // Handled by listener
-                },
+                //filtra la lista ya cargada: sin espera
+                delay: 0,
+                onSearch: (_) => _onSearchChanged(),
                 hint: app.intl.bucketsSearchHint,
               ),
             ),

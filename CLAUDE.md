@@ -153,9 +153,15 @@ XML is S3-compliant and the default. The console always asks for JSON. `multiDel
 - `{F}LoadingInProgressState`, `{F}LoadingSuccessState`, `{F}LoadingErrorState` (fetching data)
 - `{F}ProcessInProgressState`, `{F}ProcessingOKState`, `{F}ProcessingErrorState` (actions)
 
+Views only call cubit methods to run actions; everything a view needs to know comes in the state. A cubit never exposes public getters for views (e.g. `canGoForward` is a field of `BrowserSearchState`, filled on every emit, not `cubit.canGoForward`).
+
 Error states carry the `GlobalException` or its `message`; cubits get it via `ExceptionConverter.parse(e)`, never `e.toString()`. Cubits read the token from `AuthCubit` (`auth.auth?.accessToken`) and pass it as `token:` to the repo.
 
-**Globals.** The `app` singleton in `main.dart` exposes DI (`app.di.find<T>()`, backed by GetX — only `adapter/di.dart` may import `get`), `app.navigator`, `app.dialog`, `app.snack`, `app.loading`, `app.dateFormatter`, `app.storageFormatter`, `app.colors`, `app.dimensions`, `app.assets` and `app.intl`. Routing is `go_router` in `config/route_config.dart`, and it redirects to login when `AuthCubit.auth` is null. Cross-cubit events go through `GlobalEventBusCommunication` (`onBus<State>`).
+**Globals.** The `app` singleton in `main.dart` exposes DI (`app.di.find<T>()`, backed by GetX — only `adapter/di.dart` may import `get`), `app.navigator`, `app.dialog`, `app.snack`, `app.loading`, `app.dateFormatter`, `app.storageFormatter`, `app.colors`, `app.dimensions`, `app.assets` and `app.intl`. Routing is `go_router` in `config/route_config.dart`, and it redirects to login when `AuthCubit.auth` is null. Route names and their query params live in `config/route_names.dart` (`RouteNames`); every screen navigator's `name` uses them, and a feature opens another feature's screen through them (e.g. `RouteNames.openBucketSettings(bucket)`), never by importing that screen.
+
+Screens whose state is worth linking keep it in the URL, which is the source of truth: the browser (`/browser?bucket=&folder=&view_type=`) and the *Buckets* section (`/buckets?bucket=&tab=`). Selecting something navigates to the new URL (the screen's navigator has a `show(...)` method), and the screen reacts to its new params in `didUpdateWidget`; it never keeps its own copy of the selection. A bucket or folder in the URL that doesn't exist shows a not-found page with a way back.
+
+Cross-cubit events go through `GlobalEventBusCommunication` (`onBus<State>`) and `GlobalEventBus().fire(…)`. The bus only announces changes that other cubits may or may not be listening to (e.g. `BucketChangedEvent` keeps the browser and the *Buckets* section in sync). Never use it for navigation or any action a user triggers and expects to happen: if nobody listens, nothing happens.
 
 **View rules.**
 - Each screen exposes a static navigator object (`static final XScreenNavigator navigator`) with `name`, `path` and `builder`; routes in `route_config.dart` use it.
@@ -167,6 +173,7 @@ Error states carry the `GlobalException` or its `message`; cubits get it via `Ex
 **Localization (mandatory).** No user-visible string is hardcoded: every label, hint, tooltip, dialog text, error message and validation message comes from `app.intl.<key>` (or `context.intl.<key>` inside a `MaterialApp` builder before the navigator exists, e.g. splash). Rules:
 - Add each key to **both** `lib/l10n/arb/app_en.arb` (template) and `app_es.arb`, use placeholders/plurals instead of concatenation, then run `fvm flutter gen-l10n`. `l10n_errors.txt` must stay `{}`.
 - Delete keys that are no longer referenced. Don't add "section" pseudo-keys.
+- `MaterialApp` gets `AppLocalizations.delegate` plus `material_ui`'s `GlobalMaterialLocalizations.delegates` (`_localizationsDelegates` in `main.dart`), never the generated `AppLocalizations.localizationsDelegates`: those register `flutter_localizations`' Material strings, which `material_ui` widgets can't see, so any locale but English fails with "No MaterialLocalizations found".
 - Exempt: brand-neutral technical tokens (`PDF`, `JSON`, units like `KB`), JSON/header keys, file names, log/`toString` output.
 
 **Assets.** SVG icons live in `assets/icons/<group>/` and are only reached through getters in `design_system/assets/app_icons.dart` (`app.assets.icons.actions.delete.build(...)`). Adding an icon = file + getter + folder in `pubspec.yaml`; when a getter loses its last use, delete the getter and the file. `assets/app/app_icon.png` is only used by `flutter_launcher_icons`.

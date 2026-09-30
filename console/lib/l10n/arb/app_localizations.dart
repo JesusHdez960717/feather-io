@@ -1213,6 +1213,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rule {prefix} added'**
   String anonymousRuleCreatedSuccess(String prefix);
+
+  /// No description provided for @bucketSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get bucketSettings;
+
+  /// No description provided for @browserBucketNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Bucket \"{name}\" doesn\'t exist'**
+  String browserBucketNotFound(String name);
+
+  /// No description provided for @browserBucketNotFoundDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'It may have been deleted, or the link is misspelled.'**
+  String get browserBucketNotFoundDescription;
+
+  /// No description provided for @browserBackToBuckets.
+  ///
+  /// In en, this message translates to:
+  /// **'View buckets'**
+  String get browserBackToBuckets;
+
+  /// No description provided for @browserFolderNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder \"{folder}\" doesn\'t exist in this bucket'**
+  String browserFolderNotFound(String folder);
+
+  /// No description provided for @browserFolderNotFoundDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'It may have been deleted, or the path is misspelled. In S3 a folder only exists while it has objects.'**
+  String get browserFolderNotFoundDescription;
+
+  /// No description provided for @browserGoToBucketRoot.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to the bucket root'**
+  String get browserGoToBucketRoot;
 }
 
 class _AppLocalizationsDelegate

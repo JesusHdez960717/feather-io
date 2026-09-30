@@ -39,14 +39,16 @@ terminarla.
     - [x] General: nombre, descripción, color, fechas, tamaño y número de objetos.
     - [x] Reglas de acceso: crear y borrar (feature `anonymous_access`).
     - [x] Zona de peligro: vaciar y borrar el bucket.
-- [ ] Consola: entrada *Configuración* desde el explorador (menú del bucket y cabecera). Necesita
-  que `browser` navegue a `bucket_admin` sin depender de él (p. ej. por el bus de eventos).
+- [x] Consola: entrada *Configuración* desde el explorador (menú del bucket y cabecera), por
+  ruta con `RouteNames.openBucketSettings`.
 - [x] Consola: mantener sincronizadas la sección *Buckets* y el explorador (cada una tiene sus
   propios cubits; se avisan con `BucketChangedEvent` al crear, editar, vaciar o borrar un bucket y
   al subir o borrar objetos).
 
 ## Fase 3: Browser completo
 
+- [x] La URL del explorador guarda el bucket, la carpeta y la vista
+  (`/browser?bucket=&folder=&view_type=`), con aviso si el bucket o la carpeta no existen.
 - [ ] Crear carpeta (prefijo vacío).
 - [ ] Renombrar o mover objetos
     - [ ] Servicio: `CopyObject` (`x-amz-copy-source`).

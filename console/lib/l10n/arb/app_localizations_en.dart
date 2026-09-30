@@ -663,4 +663,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String anonymousRuleCreatedSuccess(String prefix) {
     return 'Rule $prefix added';
   }
+
+  @override
+  String get bucketSettings => 'Settings';
+
+  @override
+  String browserBucketNotFound(String name) {
+    return 'Bucket \"$name\" doesn\'t exist';
+  }
+
+  @override
+  String get browserBucketNotFoundDescription =>
+      'It may have been deleted, or the link is misspelled.';
+
+  @override
+  String get browserBackToBuckets => 'View buckets';
+
+  @override
+  String browserFolderNotFound(String folder) {
+    return 'Folder \"$folder\" doesn\'t exist in this bucket';
+  }
+
+  @override
+  String get browserFolderNotFoundDescription =>
+      'It may have been deleted, or the path is misspelled. In S3 a folder only exists while it has objects.';
+
+  @override
+  String get browserGoToBucketRoot => 'Go to the bucket root';
 }

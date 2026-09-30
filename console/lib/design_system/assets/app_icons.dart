@@ -79,6 +79,8 @@ class ActionsIcons {
 
   SvgAsset get search => const SvgAsset('$_actions/search.svg');
 
+  SvgAsset get settings => const SvgAsset('$_actions/settings.svg');
+
   SvgAsset get upload => const SvgAsset('$_actions/upload.svg');
 
   SvgAsset get uploadFile => const SvgAsset('$_actions/upload-file.svg');

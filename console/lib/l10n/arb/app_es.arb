@@ -220,5 +220,12 @@
   "anonymousRulePrefixHelper": "Termina en / para una carpeta, o usa * como comodín (por ejemplo, *.jpg).",
   "anonymousRulePrefixRequired": "El prefijo es obligatorio",
   "anonymousRuleFormErrorTitle": "No se pudo añadir la regla",
-  "anonymousRuleCreatedSuccess": "Regla {prefix} añadida"
+  "anonymousRuleCreatedSuccess": "Regla {prefix} añadida",
+  "bucketSettings": "Configuración",
+  "browserBucketNotFound": "El bucket «{name}» no existe",
+  "browserBucketNotFoundDescription": "Puede que lo hayan borrado o que el enlace esté mal escrito.",
+  "browserBackToBuckets": "Ver buckets",
+  "browserFolderNotFound": "La carpeta «{folder}» no existe en este bucket",
+  "browserFolderNotFoundDescription": "Puede que la hayan borrado o que la ruta esté mal escrita. En S3 una carpeta solo existe mientras tiene objetos.",
+  "browserGoToBucketRoot": "Ir a la raíz del bucket"
 }

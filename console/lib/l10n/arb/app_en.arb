@@ -271,5 +271,14 @@
   "anonymousRulePrefixRequired": "The prefix is required",
   "anonymousRuleFormErrorTitle": "Couldn't add the rule",
   "anonymousRuleCreatedSuccess": "Rule {prefix} added",
-  "@anonymousRuleCreatedSuccess": {"placeholders": {"prefix": {"type": "String"}}}
+  "@anonymousRuleCreatedSuccess": {"placeholders": {"prefix": {"type": "String"}}},
+  "bucketSettings": "Settings",
+  "browserBucketNotFound": "Bucket \"{name}\" doesn't exist",
+  "@browserBucketNotFound": {"placeholders": {"name": {"type": "String"}}},
+  "browserBucketNotFoundDescription": "It may have been deleted, or the link is misspelled.",
+  "browserBackToBuckets": "View buckets",
+  "browserFolderNotFound": "Folder \"{folder}\" doesn't exist in this bucket",
+  "@browserFolderNotFound": {"placeholders": {"folder": {"type": "String"}}},
+  "browserFolderNotFoundDescription": "It may have been deleted, or the path is misspelled. In S3 a folder only exists while it has objects.",
+  "browserGoToBucketRoot": "Go to the bucket root"
 }
