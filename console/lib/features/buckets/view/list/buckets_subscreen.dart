@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:console/app_exporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
@@ -38,9 +36,9 @@ class _BucketsSubScreenState extends State<BucketsSubScreen> {
     return BlocConsumer<BucketCubit, BucketState>(
       listener: (context, state) {
         if (state is BucketProcessInProgressState) {
-          app.loading.show();
+          app.loading.show(id: loadingOverlayGlobalId);
         } else {
-          app.loading.hide();
+          app.loading.hide(id: loadingOverlayGlobalId);
         }
 
         if (state is BucketProcessingErrorState) {
@@ -197,45 +195,36 @@ class _BucketsViewState extends State<_BucketsView> {
           child: ClipRect(
             child: Stack(
               children: [
-                IgnorePointer(
-                  ignoring: widget.state is! BucketLoadingSuccessState,
-                  child: Column(
-                    children: [
-                      _buildSearchSection(),
-                      Expanded(
-                        child: widget.viewType == ViewType.list
-                            ? BucketsTableDatasource(
-                                state: widget.state,
-                                filteredBuckets: _filteredBuckets,
-                                searchController: _searchController,
-                                onSelected: widget.onSelected,
-                                onShowOptions: _onShowBucketOptions,
-                              )
-                            : BucketsGridDatasource(
-                                state: widget.state,
-                                filteredBuckets: _filteredBuckets,
-                                searchController: _searchController,
-                                onSelected: widget.onSelected,
-                                onShowOptions: _onShowBucketOptions,
-                              ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (widget.state is BucketLoadingInProgressState)
-                  Positioned.fill(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 0.5, sigmaY: 0.5),
-                      child: Container(
-                        color: app.colors.neutral.black.withValues(alpha: 0.08),
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: app.colors.primary.purple,
-                          ),
+                LoadingOverlay(
+                  visible: widget.state is BucketLoadingInProgressState,
+                  overlayWidgetBuilder: LoadingOverlayStyles.table,
+                  disableBackButton: false,
+                  child: IgnorePointer(
+                    ignoring: widget.state is! BucketLoadingSuccessState,
+                    child: Column(
+                      children: [
+                        _buildSearchSection(),
+                        Expanded(
+                          child: widget.viewType == ViewType.list
+                              ? BucketsTableDatasource(
+                                  state: widget.state,
+                                  filteredBuckets: _filteredBuckets,
+                                  searchController: _searchController,
+                                  onSelected: widget.onSelected,
+                                  onShowOptions: _onShowBucketOptions,
+                                )
+                              : BucketsGridDatasource(
+                                  state: widget.state,
+                                  filteredBuckets: _filteredBuckets,
+                                  searchController: _searchController,
+                                  onSelected: widget.onSelected,
+                                  onShowOptions: _onShowBucketOptions,
+                                ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
+                ),
                 if (widget.state is BucketLoadingErrorState)
                   Positioned.fill(
                     child: ErrorPage(

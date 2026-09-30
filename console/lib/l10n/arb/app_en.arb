@@ -153,7 +153,6 @@
   "bucketCreateColorLabel": "Color",
   "bucketNameExists": "A bucket with this name already exists",
   "bucketCreateErrorTitle": "Couldn't create the bucket",
-  "bucketsCreating": "Creating...",
   "bucketCreatedSuccess": "Bucket \"{name}\" created",
   "@bucketCreatedSuccess": {
     "placeholders": {

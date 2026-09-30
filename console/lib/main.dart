@@ -7,6 +7,8 @@ import 'package:material_ui/material_ui.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
+final String loadingOverlayGlobalId = 'app-global-loading';
+
 //generate code
 //fvm flutter pub run build_runner build --delete-conflicting-outputs
 //fvm flutter gen-l10n
@@ -73,42 +75,44 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LoadingOverlay.buildGlobal(
-      child: LanguageListener(
-        onLanguageChangeBuilder: (locale) {
-          Size size = MediaQuery.of(context).size;
-          if (size.width < 800 || size.height < 400) {
-            return MaterialApp(
-              debugShowCheckedModeBanner: false,
-              theme: ThemeConfig.theme,
-              locale: locale,
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
-              supportedLocales: AppLocalizations.supportedLocales,
-              builder: (context, child) => Scaffold(
-                body: Center(child: Text(context.intl.appNeedMoreSpace)),
-              ),
-            );
-          } else {
-            return MaterialApp.router(
-              builder: (BuildContext context, Widget? child) {
-                return MaterialUiCompatibilityBridge(
+    return LanguageListener(
+      onLanguageChangeBuilder: (locale) {
+        Size size = MediaQuery.of(context).size;
+        if (size.width < 800 || size.height < 400) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: ThemeConfig.theme,
+            locale: locale,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            builder: (context, child) => Scaffold(
+              body: Center(child: Text(context.intl.appNeedMoreSpace)),
+            ),
+          );
+        } else {
+          return MaterialApp.router(
+            builder: (BuildContext context, Widget? child) {
+              return LoadingOverlay(
+                id: loadingOverlayGlobalId,
+                overlayWidgetBuilder: LoadingOverlayStyles.global,
+                child: MaterialUiCompatibilityBridge(
                   child: old.Material(
                     type: old.MaterialType.transparency,
                     child: child!,
                   ),
-                );
-              },
-              debugShowCheckedModeBanner: false,
-              onGenerateTitle: (context) => context.intl.appName,
-              theme: ThemeConfig.theme,
-              locale: locale,
-              routerConfig: RouteConfig.router,
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
-              supportedLocales: AppLocalizations.supportedLocales,
-            );
-          }
-        },
-      ),
+                ),
+              );
+            },
+            debugShowCheckedModeBanner: false,
+            onGenerateTitle: (context) => context.intl.appName,
+            theme: ThemeConfig.theme,
+            locale: locale,
+            routerConfig: RouteConfig.router,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+          );
+        }
+      },
     );
   }
 }
@@ -132,7 +136,7 @@ class AppGlobal {
 
   Logger logger = Logger();
 
-  LoadingOverlay loading = LoadingOverlay();
+  LoadingOverlayController loading = LoadingOverlayController();
 
   DI di = DI();
 

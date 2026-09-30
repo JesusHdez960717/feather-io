@@ -26,7 +26,6 @@ dependencies:
 
   #view
   flutter_animate: 4.5.2
-  loader_overlay: 5.0.0   #loading
   flutter_svg: 2.3.0    #to show icons in svg format
   top_snackbar_flutter: 3.4.0     #snackbars
   flutter_secure_storage: 11.0.0       #for the remember-me in login

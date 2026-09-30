@@ -139,7 +139,6 @@
   "bucketCreateColorLabel": "Color",
   "bucketNameExists": "Ya existe un bucket con ese nombre",
   "bucketCreateErrorTitle": "No se pudo crear el bucket",
-  "bucketsCreating": "Creando...",
   "bucketCreatedSuccess": "Bucket «{name}» creado",
   "bucketNamePathHint": "Se usará en las rutas S3: /{name}"
 }

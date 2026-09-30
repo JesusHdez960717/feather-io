@@ -351,9 +351,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get bucketCreateErrorTitle => 'No se pudo crear el bucket';
 
   @override
-  String get bucketsCreating => 'Creando...';
-
-  @override
   String bucketCreatedSuccess(String name) {
     return 'Bucket «$name» creado';
   }

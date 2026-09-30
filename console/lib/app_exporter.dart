@@ -6,3 +6,4 @@ export 'features/features.dart';
 export 'l10n/l10n_exporter.dart';
 export 'main.dart';
 export 'shared/shared.dart';
+export 'loading_overlay.dart';

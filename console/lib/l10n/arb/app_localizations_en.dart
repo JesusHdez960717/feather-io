@@ -350,9 +350,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bucketCreateErrorTitle => 'Couldn\'t create the bucket';
 
   @override
-  String get bucketsCreating => 'Creating...';
-
-  @override
   String bucketCreatedSuccess(String name) {
     return 'Bucket \"$name\" created';
   }

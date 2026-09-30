@@ -722,12 +722,6 @@ abstract class AppLocalizations {
   /// **'Couldn\'t create the bucket'**
   String get bucketCreateErrorTitle;
 
-  /// No description provided for @bucketsCreating.
-  ///
-  /// In en, this message translates to:
-  /// **'Creating...'**
-  String get bucketsCreating;
-
   /// No description provided for @bucketCreatedSuccess.
   ///
   /// In en, this message translates to:

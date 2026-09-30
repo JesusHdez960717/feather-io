@@ -1,10 +1,10 @@
 import 'package:console/app_exporter.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:material_ui/material_ui.dart';
 
 class BucketCreateForm extends StatefulWidget {
-  ///Abre el cajon con su propio [BucketCreateCubit]: la carga y los errores se
-  ///muestran dentro del formulario. Al crear, recarga el [BucketCubit] de la pantalla
+  ///Abre el cajon con su propio [BucketCreateCubit]: mientras se envia, el cajon
+  ///muestra su velo de carga y los errores se muestran dentro del formulario. Al crear, recarga el [BucketCubit] de la pantalla
   static Future<void> open(BuildContext context) async {
     final key = GlobalKey<BucketCreateFormState>();
     final bucketCubit = context.read<BucketCubit>();
@@ -14,13 +14,9 @@ class BucketCreateForm extends StatefulWidget {
       title: app.intl.bucketsCreate,
       description: app.intl.bucketCreateDescription,
       icon: app.assets.icons.storage.bucket,
+      loadingId: loadingId,
       footerActions: [
-        BlocProvider.value(
-          value: createCubit,
-          child: _BucketCreateFooter(
-            onSubmit: () => key.currentState?.submit(),
-          ),
-        ),
+        _BucketCreateFooter(onSubmit: () => key.currentState?.submit()),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -32,6 +28,9 @@ class BucketCreateForm extends StatefulWidget {
     );
     await createCubit.close();
   }
+
+  ///Id del [LoadingOverlay] del cajon
+  static const String loadingId = 'bucket-create-form';
 
   const BucketCreateForm({super.key});
 
@@ -155,80 +154,80 @@ class BucketCreateFormState extends State<BucketCreateForm> {
     );
   }
 
-  void _onState(BuildContext context, BucketCreateState state) {
-    if (state is BucketCreateProcessingOKState) {
-      final bucketCubit = context.read<BucketCubit>();
-      Navigator.of(context).pop();
-      bucketCubit.load();
-      app.snack.showSuccess(
-        message: app.intl.bucketCreatedSuccess(state.name),
-        context: app.context,
-      );
-    } else if (state is BucketCreateProcessingErrorState) {
-      const fields = {BucketCreateField.name, BucketCreateField.description};
-      final unmatched = state.fieldErrors.entries
-          .where((e) => !fields.contains(e.key))
-          .map((e) => e.value);
-      setState(() {
-        _serverErrors = {
-          for (final e in state.fieldErrors.entries)
-            if (fields.contains(e.key)) e.key: e.value,
-        };
-        _formError = state.fieldErrors.isEmpty
-            ? state.exception.message
-            : unmatched.isEmpty
-            ? null
-            : unmatched.join('\n');
-      });
-      if (_serverErrors.containsKey(BucketCreateField.name)) {
-        _nameFocus.requestFocus();
-      } else if (_serverErrors.containsKey(BucketCreateField.description)) {
-        _descriptionFocus.requestFocus();
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<BucketCreateCubit, BucketCreateState>(
-      listener: _onState,
-      builder: (context, state) {
-        final busy = state is BucketCreateProcessInProgressState;
-        return PopScope(
-          canPop: !busy,
-          child: Form(
-            key: _formKey,
-            autovalidateMode: _submitted
-                ? AutovalidateMode.always
-                : AutovalidateMode.disabled,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (_formError != null) ...[
-                  AppFormAlert(
-                    title: app.intl.bucketCreateErrorTitle,
-                    message: _formError!,
-                  ),
-                  app.dimensions.padding.xl.gap(),
-                ],
-                _buildSection(
-                  title: app.intl.bucketCreateSectionGeneral,
-                  child: _buildGeneral(busy),
-                ),
-                app.dimensions.padding.xl.gap(),
-                _buildSection(
-                  title: app.intl.bucketCreateSectionAdditional,
-                  child: _buildAdditional(busy),
-                ),
-              ],
-            ),
-          ),
-        );
+    return BlocListener<BucketCreateCubit, BucketCreateState>(
+      listener: (BuildContext context, BucketCreateState state) {
+        if (state is BucketCreateProcessInProgressState) {
+          app.loading.show(id: BucketCreateForm.loadingId);
+          return;
+        }
+        app.loading.hide(id: BucketCreateForm.loadingId);
+        if (state is BucketCreateProcessingOKState) {
+          final bucketCubit = context.read<BucketCubit>();
+          Navigator.of(context).pop();
+          bucketCubit.load();
+          app.snack.showSuccess(
+            message: app.intl.bucketCreatedSuccess(state.name),
+            context: app.context,
+          );
+        } else if (state is BucketCreateProcessingErrorState) {
+          const fields = {
+            BucketCreateField.name,
+            BucketCreateField.description,
+          };
+          final unmatched = state.fieldErrors.entries
+              .where((e) => !fields.contains(e.key))
+              .map((e) => e.value);
+          setState(() {
+            _serverErrors = {
+              for (final e in state.fieldErrors.entries)
+                if (fields.contains(e.key)) e.key: e.value,
+            };
+            _formError = state.fieldErrors.isEmpty
+                ? state.exception.message
+                : unmatched.isEmpty
+                ? null
+                : unmatched.join('\n');
+          });
+          if (_serverErrors.containsKey(BucketCreateField.name)) {
+            _nameFocus.requestFocus();
+          } else if (_serverErrors.containsKey(BucketCreateField.description)) {
+            _descriptionFocus.requestFocus();
+          }
+        }
       },
+      child: Form(
+        key: _formKey,
+        autovalidateMode: _submitted
+            ? AutovalidateMode.always
+            : AutovalidateMode.disabled,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (_formError != null) ...[
+              AppFormAlert(
+                title: app.intl.bucketCreateErrorTitle,
+                message: _formError!,
+              ),
+              app.dimensions.padding.xl.gap(),
+            ],
+            _buildSection(
+              title: app.intl.bucketCreateSectionGeneral,
+              child: _buildGeneral(),
+            ),
+            app.dimensions.padding.xl.gap(),
+            _buildSection(
+              title: app.intl.bucketCreateSectionAdditional,
+              child: _buildAdditional(),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildGeneral(bool busy) {
+  Widget _buildGeneral() {
     final name = _nameController.text;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -237,7 +236,6 @@ class BucketCreateFormState extends State<BucketCreateForm> {
           controller: _nameController,
           focusNode: _nameFocus,
           autofocus: true,
-          enabled: !busy,
           label: app.intl.bucketCreateNameLabel,
           hint: app.intl.bucketCreateNameHint,
           helperText: app.intl.bucketNamePathHint(
@@ -257,14 +255,13 @@ class BucketCreateFormState extends State<BucketCreateForm> {
     );
   }
 
-  Widget _buildAdditional(bool busy) {
+  Widget _buildAdditional() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AppFormInput(
           controller: _descriptionController,
           focusNode: _descriptionFocus,
-          enabled: !busy,
           label: app.intl.bucketCreateDescriptionLabel,
           hint: app.intl.bucketCreateDescriptionHint,
           errorText: _serverErrors[BucketCreateField.description],
@@ -285,7 +282,6 @@ class BucketCreateFormState extends State<BucketCreateForm> {
         app.dimensions.padding.s.gap(),
         AppColorPicker(
           value: _color,
-          enabled: !busy,
           onChanged: (color) => setState(() => _color = color),
           contrastAgainst: app.colors.neutral.white,
           previewIcon: app.assets.icons.storage.bucket,
@@ -323,7 +319,8 @@ class BucketCreateFormState extends State<BucketCreateForm> {
   }
 }
 
-///Pie del cajon: *Cancelar* y *Crear bucket*, que pasa a carga mientras se envia
+///Pie del cajon: *Cancelar* y *Crear bucket*. Mientras se envia, el velo de
+///carga del cajon los cubre
 class _BucketCreateFooter extends StatelessWidget {
   final VoidCallback onSubmit;
 
@@ -331,30 +328,24 @@ class _BucketCreateFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<BucketCreateCubit, BucketCreateState>(
-      builder: (context, state) {
-        final busy = state is BucketCreateProcessInProgressState;
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            PrimaryButton.secondary(
-              onPressed: busy ? null : () => Navigator.of(context).maybePop(),
-              title: app.intl.cancel,
-              h: 40,
-              w: 100,
-            ),
-            app.dimensions.padding.m.gap(),
-            PrimaryButton.primary(
-              onPressed: onSubmit,
-              isLoading: busy,
-              title: busy ? app.intl.bucketsCreating : app.intl.bucketsCreate,
-              h: 40,
-              w: 160,
-              icon: app.assets.icons.actions.add,
-            ),
-          ],
-        );
-      },
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        PrimaryButton.secondary(
+          onPressed: () => Navigator.of(context).maybePop(),
+          title: app.intl.cancel,
+          h: 40,
+          w: 100,
+        ),
+        app.dimensions.padding.m.gap(),
+        PrimaryButton.primary(
+          onPressed: onSubmit,
+          title: app.intl.bucketsCreate,
+          h: 40,
+          w: 160,
+          icon: app.assets.icons.actions.add,
+        ),
+      ],
     );
   }
 }

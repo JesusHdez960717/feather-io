@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:console/app_exporter.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:desktop_drop/desktop_drop.dart';
@@ -505,49 +503,39 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
             child: ClipRect(
               child: Stack(
                 children: [
-                  IgnorePointer(
-                    ignoring: widget.state is! BrowserLoadingSuccessState,
-                    child: widget.state.viewType == ViewType.list
-                        ? ObjectsTableDatasource(
-                            state: widget.state,
-                            filteredWrappers: _filteredWrappers,
-                            selectedWrappers: _selectedWrappers,
-                            searchController: _searchController,
-                            onNavigate: widget.onNavigate,
-                            onSelected: widget.onSelected,
-                            onSelectionChanged: _onSelectionChanged,
-                            onShowOptions: _onShowObjectOptions,
-                          )
-                        : ObjectsGridDatasource(
-                            state: widget.state,
-                            filteredWrappers: _filteredWrappers,
-                            selectedWrappers: _selectedWrappers,
-                            searchController: _searchController,
-                            onNavigate: widget.onNavigate,
-                            onSelected: widget.onSelected,
-                            onSelectionChanged: _onSelectionChanged,
-                            onShowOptions: _onShowObjectOptions,
-                          ),
+                  LoadingOverlay(
+                    visible:
+                        widget.state is BrowserLoadingInProgressState ||
+                        widget.state is BrowserProcessInProgressState,
+                    overlayWidgetBuilder: LoadingOverlayStyles.table,
+                    disableBackButton: false,
+                    child: IgnorePointer(
+                      ignoring: widget.state is! BrowserLoadingSuccessState,
+                      child: widget.state.viewType == ViewType.list
+                          ? ObjectsTableDatasource(
+                              state: widget.state,
+                              filteredWrappers: _filteredWrappers,
+                              selectedWrappers: _selectedWrappers,
+                              searchController: _searchController,
+                              onNavigate: widget.onNavigate,
+                              onSelected: widget.onSelected,
+                              onSelectionChanged: _onSelectionChanged,
+                              onShowOptions: _onShowObjectOptions,
+                            )
+                          : ObjectsGridDatasource(
+                              state: widget.state,
+                              filteredWrappers: _filteredWrappers,
+                              selectedWrappers: _selectedWrappers,
+                              searchController: _searchController,
+                              onNavigate: widget.onNavigate,
+                              onSelected: widget.onSelected,
+                              onSelectionChanged: _onSelectionChanged,
+                              onShowOptions: _onShowObjectOptions,
+                            ),
+                    ),
                   ),
                   if (_isDragging)
                     const Positioned.fill(child: DraggingZoneOverlay()),
-                  if (widget.state is BrowserLoadingInProgressState ||
-                      widget.state is BrowserProcessInProgressState)
-                    Positioned.fill(
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 0.5, sigmaY: 0.5),
-                        child: Container(
-                          color: app.colors.neutral.black.withValues(
-                            alpha: 0.08,
-                          ),
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              color: app.colors.primary.purple,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
                   if (widget.state is BrowserLoadingErrorState)
                     Positioned.fill(
                       child: ErrorPage(
