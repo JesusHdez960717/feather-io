@@ -1,70 +1,78 @@
 @TestOn('vm')
 library;
 
-import 'dart:io';
-import 'package:service/feather.dart';
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 
+import 'support/test_server.dart';
+
 void main() {
-  int port = 8083;
-  String localUrl = 'http://localhost:$port';
-  const String secret = 'test_secret';
-  const String access = 'test_access';
-  const String storagePath = './uploads_test/get_test';
+  final server = TestServer(port: 8083, name: 'get_test');
+  const bucket = 'get-bucket';
 
   setUpAll(() async {
-    env.put('FEATHER_SECRET', secret);
-    env.put('FEATHER_ACCESS', access);
-    env.put('STORAGE_PATH', storagePath);
-
-    final dir = Directory(storagePath);
-    if (await dir.exists()) await dir.delete(recursive: true);
-
-    await FeatherIO.start(port: port);
-    
-    // Pre-upload a file for testing
-    await http.put(
-      Uri.parse('http://localhost:$port/get-bucket/test.txt'),
-      headers: {'FEATHER_SECRET': secret, 'FEATHER_ACCESS': access},
-      body: 'content',
-    );
+    await server.start();
+    await server.putObject(bucket, 'test.txt', 'content');
+    await server.putObject(bucket, 'image.png', 'png');
   });
-
-  tearDownAll(() async {
-    await Winter.close(force: true);
-    final dir = Directory(storagePath);
-    if (await dir.exists()) await dir.delete(recursive: true);
-  });
-
-  Uri url(String path) => Uri.parse(localUrl + path);
+  tearDownAll(server.stop);
 
   group('S3Controller - GET Object', () {
-    const bucket = 'get-bucket';
-
-    test('Should download successfully WITHOUT auth (Public)', () async {
-      final response = await http.get(url('/$bucket/test.txt'));
+    test('Should download successfully with auth', () async {
+      final response = await http.get(
+        server.url('/$bucket/test.txt'),
+        headers: server.auth(),
+      );
       expect(response.statusCode, 200);
       expect(response.body, 'content');
+      expect(response.headers['content-type'], contains('text/plain'));
+      expect(response.headers['content-length'], '7');
+    });
+
+    test('Should send the content type of the file', () async {
+      final response = await http.get(
+        server.url('/$bucket/image.png'),
+        headers: server.auth(),
+      );
+      expect(response.statusCode, 200);
+      expect(response.headers['content-type'], 'image/png');
+    });
+
+    test('Should fail without auth (401)', () async {
+      final response = await http.get(server.url('/$bucket/test.txt'));
+      expect(response.statusCode, 401);
     });
 
     test('Should return 404 for non-existent file', () async {
-      final response = await http.get(url('/$bucket/notfound.txt'));
+      final response = await http.get(
+        server.url('/$bucket/notfound.txt'),
+        headers: server.auth(),
+      );
       expect(response.statusCode, 404);
+      expect(response.body, contains('<Code>NoSuchKey</Code>'));
     });
 
     test('Should return 404 for non-existent bucket', () async {
-      final response = await http.get(url('/other-bucket/test.txt'));
+      final response = await http.get(
+        server.url('/other-bucket/test.txt'),
+        headers: server.auth(),
+      );
       expect(response.statusCode, 404);
     });
 
     test('Should return 400 for invalid bucket name', () async {
-      final response = await http.get(url('/INVALID_BUCKET/test.txt'));
+      final response = await http.get(
+        server.url('/INVALID_BUCKET/test.txt'),
+        headers: server.auth(),
+      );
       expect(response.statusCode, 400);
     });
 
     test('Should return 400 for invalid key', () async {
-      final response = await http.get(url('/$bucket/invalid:name'));
+      final response = await http.get(
+        server.url('/$bucket/invalid:name'),
+        headers: server.auth(),
+      );
       expect(response.statusCode, 400);
     });
   });

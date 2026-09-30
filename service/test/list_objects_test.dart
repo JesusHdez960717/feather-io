@@ -2,65 +2,60 @@
 library;
 
 import 'dart:convert';
-import 'dart:io';
-import 'package:service/feather.dart';
+
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 
+import 'support/test_server.dart';
+
 void main() {
-  int port = 8085;
-  String localUrl = 'http://localhost:$port';
-  const String secret = 'test_secret';
-  const String access = 'test_access';
-  const String storagePath = './uploads_test/list_objects';
+  final server = TestServer(port: 8085, name: 'list_objects');
+  const bucket = 'list-bucket';
 
   setUpAll(() async {
-    env.put('FEATHER_SECRET', secret);
-    env.put('FEATHER_ACCESS', access);
-    env.put('STORAGE_PATH', storagePath);
-
-    final dir = Directory(storagePath);
-    if (await dir.exists()) await dir.delete(recursive: true);
-
-    await FeatherIO.start(port: port);
-
-    // Pre-upload files
-    final headers = {'FEATHER_SECRET': secret, 'FEATHER_ACCESS': access};
-    await http.put(Uri.parse('http://localhost:$port/list-bucket/f1.txt'), headers: headers, body: '1');
-    await http.put(Uri.parse('http://localhost:$port/list-bucket/folder/f2.txt'), headers: headers, body: '22');
+    await server.start();
+    await server.putObject(bucket, 'f1.txt', '1');
+    await server.putObject(bucket, 'folder/f2.txt', '22');
   });
-
-  tearDownAll(() async {
-    await Winter.close(force: true);
-    final dir = Directory(storagePath);
-    if (await dir.exists()) await dir.delete(recursive: true);
-  });
-
-  Uri url(String path) => Uri.parse(localUrl + path);
-  Map<String, String> authHeaders = {
-    'FEATHER_SECRET': secret,
-    'FEATHER_ACCESS': access,
-  };
+  tearDownAll(server.stop);
 
   group('S3Controller - LIST Objects', () {
-    const bucket = 'list-bucket';
-
     test('Should list objects in JSON', () async {
       final response = await http.get(
-        url('/$bucket/list'),
-        headers: {...authHeaders, 'Accept': 'application/json'},
+        server.url('/$bucket'),
+        headers: server.auth(json: true),
       );
       expect(response.statusCode, 200);
-      final List body = jsonDecode(response.body);
-      expect(body.length, 2);
-      expect(body.any((e) => e['key'] == 'f1.txt'), isTrue);
-      expect(body.any((e) => e['key'] == 'folder/f2.txt'), isTrue);
+      final body = jsonDecode(response.body);
+      expect(body['name'], bucket);
+      final contents = body['contents'] as List;
+      expect(contents.map((e) => e['key']), unorderedEquals(['f1.txt', 'folder/f2.txt']));
+      final f2 = contents.firstWhere((e) => e['key'] == 'folder/f2.txt');
+      expect(f2['size_bytes'], 2);
+    });
+
+    test('Should group folders with prefix and delimiter', () async {
+      final root = await http.get(
+        server.url('/$bucket?delimiter=/'),
+        headers: server.auth(json: true),
+      );
+      final rootBody = jsonDecode(root.body);
+      expect((rootBody['contents'] as List).map((e) => e['key']), ['f1.txt']);
+      expect(rootBody['common_prefixes'], ['folder/']);
+
+      final folder = await http.get(
+        server.url('/$bucket?prefix=folder/&delimiter=/'),
+        headers: server.auth(json: true),
+      );
+      final folderBody = jsonDecode(folder.body);
+      expect((folderBody['contents'] as List).map((e) => e['key']), ['folder/f2.txt']);
+      expect(folderBody['common_prefixes'], isEmpty);
     });
 
     test('Should list objects in XML by default', () async {
       final response = await http.get(
-        url('/$bucket/list'),
-        headers: authHeaders,
+        server.url('/$bucket'),
+        headers: server.auth(),
       );
       expect(response.statusCode, 200);
       expect(response.headers['content-type'], contains('application/xml'));
@@ -69,25 +64,35 @@ void main() {
       expect(response.body, contains('<Key>folder/f2.txt</Key>'));
     });
 
+    test('Should return an empty list for an empty prefix', () async {
+      final response = await http.get(
+        server.url('/$bucket?prefix=nothing/'),
+        headers: server.auth(json: true),
+      );
+      expect(response.statusCode, 200);
+      expect(jsonDecode(response.body)['contents'], isEmpty);
+    });
+
     test('Should fail without auth (401)', () async {
-      final response = await http.get(url('/$bucket/list'));
+      final response = await http.get(server.url('/$bucket'));
       expect(response.statusCode, 401);
     });
 
-    test('Should fail with wrong auth (403)', () async {
+    test('Should fail with an invalid token (401)', () async {
       final response = await http.get(
-        url('/$bucket/list'),
-        headers: {'FEATHER_SECRET': 'w', 'FEATHER_ACCESS': 'w'},
+        server.url('/$bucket'),
+        headers: {'authorization': 'Bearer not-a-jwt'},
       );
-      expect(response.statusCode, 403);
+      expect(response.statusCode, 401);
     });
 
     test('Should return 404 if bucket does not exist', () async {
       final response = await http.get(
-        url('/no-bucket/list'),
-        headers: authHeaders,
+        server.url('/no-bucket'),
+        headers: server.auth(),
       );
       expect(response.statusCode, 404);
+      expect(response.body, contains('<Code>NoSuchBucket</Code>'));
     });
   });
 }

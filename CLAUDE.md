@@ -76,7 +76,7 @@ fvm flutter analyze
 
 **Auth and authorization.**
 - The global filter is `JwtFilter`. It populates the `securityContext` from a `Bearer` token issued by `POST /{admin}/login`. That endpoint checks `FEATHER_ACCESS`/`FEATHER_SECRET` and issues a token with a fixed permission list.
-- `S3SigV4Filter` handles native S3 clients and is registered only on the S3 parent route, so the admin API accepts JWT only. `JwtFilter` is registered globally and again on both parents. `JwtFilter` and `S3SigV4Filter` both skip themselves (`shouldFilter`) once the request is authenticated.
+- `S3SigV4Filter` handles native S3 clients and is registered only on the S3 parent route, so the admin API accepts JWT only. `JwtFilter` is registered globally and again on both parents. `JwtFilter` and `S3SigV4Filter` both skip themselves (`shouldFilter`) once the request is authenticated. `S3SigV4Filter` also passes through requests without an `AWS4-HMAC-SHA256` header, so an unauthenticated request gets a 401 from the route's `AuthFilter`.
 - Each route declares its own permission with `AuthFilter(rules: hasPermission('s3.put-object') | hasPermission('s3.anonymous.put-object'))`. Route keys and permission names match (`s3.*`, `admin.*`).
 - New endpoints need the route key, an `AuthFilter`, **and** the permission added to the list in `admin/auth/rest/auth_controller.dart` (and to `S3SigV4Filter` if native S3 clients should reach it).
 - `AnonymousAccessFilter` maps per-bucket prefix rules (stored in the `anonymous_rule` table) to `s3.anonymous.*` permissions. It is defined but not yet registered on any route.
@@ -116,17 +116,20 @@ return ResponseEntity.ok(
 
 XML is S3-compliant and the default. The console always asks for JSON. `multiDelete` and the create/put endpoints still answer JSON/plain text only.
 
-**Errors.** Services throw Winter `ApiException` subclasses (`BadRequestException`, `NotFoundException`, `ConflictException`, `ForbiddenException`). A controller that wraps a block in `try/catch` must `if (e is ApiException) rethrow;` before converting unknown errors to `BadRequestException`. The target design is an `S3Exception` mapped to AWS error codes (`NoSuchBucket`, `BucketNotEmpty`, `EntityTooLarge`…) that also respects content negotiation; it does not exist yet, and error bodies are plain strings (currently a mix of Spanish and English).
+**Errors.**
+- S3 errors (from services and S3 filters) throw `S3Exception(S3ErrorCode.x, message: …, resource: …)` (`s3/file_core/logic/s3_exception.dart`), or one of its named constructors (`invalidBucketName`, `invalidKey`, `noSuchBucket`, `noSuchKey`). Each `S3ErrorCode` carries the AWS code and its HTTP status; add new codes there.
+- `S3ExceptionHandler` (registered in `main.dart` with `Winter.context.setUp`) renders them as the S3 `<Error>` XML by default, or as JSON `{code, message, resource}` when the client accepts JSON or the path is under the admin prefix. Winter sends JSON error bodies as `application/problem+json`.
+- Other errors (login, admin request parsing) still throw Winter `ApiException` subclasses with plain-string bodies. Messages are currently a mix of Spanish and English.
+- A controller that wraps a block in `try/catch` must `if (e is ApiException) rethrow;` before converting unknown errors.
 
 **Storage & performance.** Buckets are directories under `STORAGE_VOLUME_PATH`. Bucket metadata (description, color, timestamps) and anonymous rules live in SQLite via Drift. Object payloads must always flow as `Stream<List<int>>` (`request.read()`, `file.openRead()`): **never** `readAsBytes()` or `Uint8List` for object data. Multi-object downloads build the zip in a temp file (`FileManagementService.zipObjects`) and stream it with `openAndDeleteTemp`. Every bucket name goes through `S3Validator.isValidBucketName` and every key through `S3Validator.isValidKey` (path traversal protection) before touching the filesystem.
 
 **Tests.** Rules for new tests:
 - Every new feature gets tests. `s3_controller_test.dart` holds the happy path (upload → list → get → delete); each endpoint gets its own file (`put_object_test.dart`, `list_buckets_test.dart`…).
-- Tests start the real server with `FeatherIO.start(port: …)`, one distinct port per file so files run in parallel.
-- Each file uses its own storage folder under `./uploads_test/<name>` (gitignored) and deletes it in `setUpAll` and `tearDownAll`.
-- Cover auth (missing token → 401, wrong credentials → 403), validation (bad bucket names, path traversal, forbidden chars → 400), content negotiation (JSON vs XML) and edge cases (404, empty lists).
-
-The existing `service/test/*` files are **stale**: they still use the old header auth and a `STORAGE_PATH` env key, and do not set `JWT_SECRET`/`STORAGE_VOLUME_PATH`. Expect failures until they are migrated to JWT.
+- Use `TestServer` (`test/support/test_server.dart`): `TestServer(port: …, name: …)`, then `setUpAll(server.start)` / `tearDownAll(server.stop)`. It sets the env, starts the real server with an in-memory SQLite (`FeatherIO.start(database: …)`), logs in to get `server.token`, and creates and deletes `./uploads_test/<name>` (gitignored). Helpers: `server.url(path)`, `server.auth(json: …)`, `server.putObject(…)`.
+- Use one distinct port per file so files run in parallel. Ports in use: 8082–8092.
+- Cover auth (missing or invalid token → 401, wrong login credentials → 403), validation (bad bucket names, path traversal, forbidden chars → 400), content negotiation (JSON vs XML, including the S3 error code) and edge cases (404, empty lists).
+- To send a path traversal that reaches the server, encode the slashes (`..%2F..%2Ffile`). The HTTP client normalizes `%2e%2e` segments away.
 
 ## Console architecture
 

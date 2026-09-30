@@ -19,8 +19,10 @@ class ReservedBucketFilter extends Filter {
     final bucketName = request.pathParams['bucket'];
 
     if (bucketName != null && reservedBucketNames.contains(bucketName)) {
-      return ResponseEntity.forbidden(
-        body: 'Bucket name "$bucketName" is reserved.',
+      throw S3Exception(
+        S3ErrorCode.accessDenied,
+        message: 'Bucket name "$bucketName" is reserved.',
+        resource: bucketName,
       );
     }
 

@@ -21,10 +21,9 @@ class S3SigV4Filter extends Filter {
     final authHeader = request.headers['authorization'];
     final xAmzDate = request.headers['x-amz-date'] ?? request.headers['date'];
 
+    //sin firma SigV4 no hay nada que validar: el AuthFilter de cada ruta decide (401)
     if (authHeader == null || !authHeader.startsWith('AWS4-HMAC-SHA256')) {
-      return ResponseEntity.forbidden(
-        body: 'Missing or invalid Authorization header',
-      );
+      return await chain.doFilter(request);
     }
 
     try {
@@ -46,14 +45,18 @@ class S3SigV4Filter extends Filter {
       }
 
       if (credential == null || signedHeaders == null || signature == null) {
-        return ResponseEntity.forbidden(
-          body: 'Invalid Authorization header format',
+        throw S3Exception(
+          S3ErrorCode.accessDenied,
+          message: 'Invalid Authorization header format',
         );
       }
 
       final credentialParts = credential.split('/');
       if (credentialParts.length < 5) {
-        return ResponseEntity.forbidden(body: 'Invalid Credential format');
+        throw S3Exception(
+          S3ErrorCode.accessDenied,
+          message: 'Invalid Credential format',
+        );
       }
       final accessKey = credentialParts[0];
       final dateStamp = credentialParts[1];
@@ -62,7 +65,10 @@ class S3SigV4Filter extends Filter {
 
       // Validate access key
       if (accessKey != env.access) {
-        return ResponseEntity.forbidden(body: 'Invalid Access Key');
+        throw S3Exception(
+          S3ErrorCode.invalidAccessKeyId,
+          message: 'Invalid Access Key',
+        );
       }
 
       // 2. Canonical Request
@@ -90,7 +96,10 @@ class S3SigV4Filter extends Filter {
       ).map((b) => b.toRadixString(16).padLeft(2, '0')).join();
 
       if (calculatedSignature != signature.toLowerCase()) {
-        return ResponseEntity.forbidden(body: 'Signature mismatch');
+        throw S3Exception(
+          S3ErrorCode.signatureDoesNotMatch,
+          message: 'Signature mismatch',
+        );
       }
 
       // Authenticate the request
@@ -108,11 +117,15 @@ class S3SigV4Filter extends Filter {
           },
         ),
       );
-
-      return await chain.doFilter(request);
     } catch (e) {
-      return ResponseEntity.forbidden(body: 'Authentication error: $e');
+      if (e is S3Exception) rethrow;
+      throw S3Exception(
+        S3ErrorCode.accessDenied,
+        message: 'Authentication error: $e',
+      );
     }
+
+    return await chain.doFilter(request);
   }
 
   String _createCanonicalRequest(RequestEntity request, String signedHeaders) {

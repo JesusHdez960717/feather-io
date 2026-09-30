@@ -30,6 +30,7 @@ class S3Controller {
           handler: createBucket,
           filterConfig: FilterConfig([
             AuthFilter(rules: hasPermission('s3.create-bucket')),
+            ReservedBucketFilter(),
           ]),
         ),
         Route.delete(
@@ -38,6 +39,7 @@ class S3Controller {
           handler: deleteBucket,
           filterConfig: FilterConfig([
             AuthFilter(rules: hasPermission('s3.delete-bucket')),
+            ReservedBucketFilter(),
           ]),
         ),
         Route.get(
@@ -221,8 +223,10 @@ class S3Controller {
     final bucketName = request.pathParams['bucket']!;
 
     if (!request.queryParams.containsKey('delete')) {
-      throw BadRequestException(
-        body: 'Multi-object delete requires ?delete parameter',
+      throw S3Exception(
+        S3ErrorCode.invalidRequest,
+        message: 'Multi-object delete requires ?delete parameter',
+        resource: bucketName,
       );
     }
 
@@ -239,7 +243,11 @@ class S3Controller {
       return ResponseEntity.ok(body: result);
     } catch (e) {
       if (e is ApiException) rethrow;
-      throw BadRequestException(body: 'Invalid JSON for delete request: $e');
+      throw S3Exception(
+        S3ErrorCode.invalidRequest,
+        message: 'Invalid JSON for delete request: $e',
+        resource: bucketName,
+      );
     }
   }
 

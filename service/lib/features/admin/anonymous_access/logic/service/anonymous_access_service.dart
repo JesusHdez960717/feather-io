@@ -7,7 +7,7 @@ class AnonymousAccessService {
 
   Future<List<AnonymousRuleModel>> getRules({required String bucket}) async {
     if (!S3Validator.isValidBucketName(bucket)) {
-      throw BadRequestException(body: 'El nombre del bucket "$bucket" no es válido.');
+      throw S3Exception.invalidBucketName(bucket);
     }
     final rules = await accessRuleRepo.getRulesByBucket(bucket: bucket);
     return rules.map((e) => AnonymousRuleModel(e.prefix, e.access)).toList();
@@ -18,7 +18,7 @@ class AnonymousAccessService {
     required AnonymousRuleModel model,
   }) async {
     if (!S3Validator.isValidBucketName(bucket)) {
-      throw BadRequestException(body: 'El nombre del bucket "$bucket" no es válido.');
+      throw S3Exception.invalidBucketName(bucket);
     }
 
     await accessRuleRepo.save(bucketName: bucket, model: model);
@@ -29,7 +29,7 @@ class AnonymousAccessService {
     required String prefix,
   }) async {
     if (!S3Validator.isValidBucketName(bucket)) {
-      throw BadRequestException(body: 'El nombre del bucket "$bucket" no es válido.');
+      throw S3Exception.invalidBucketName(bucket);
     }
     await accessRuleRepo.deleteRule(bucketName: bucket, prefix: prefix);
   }

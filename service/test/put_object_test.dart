@@ -4,99 +4,92 @@ library;
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
-import 'package:service/feather.dart';
 import 'package:test/test.dart';
 
+import 'support/test_server.dart';
+
 void main() {
-  int port = 8086;
-  String localUrl = 'http://localhost:$port';
-  const String secret = 'test_secret';
-  const String access = 'test_access';
-  const String storagePath = './uploads_test/put_test';
+  final server = TestServer(port: 8086, name: 'put_test');
 
-  setUpAll(() async {
-    env.put('FEATHER_SECRET', secret);
-    env.put('FEATHER_ACCESS', access);
-    env.put('STORAGE_PATH', storagePath);
-
-    final dir = Directory(storagePath);
-    if (await dir.exists()) await dir.delete(recursive: true);
-
-    await FeatherIO.start(port: port);
-  });
-
-  tearDownAll(() async {
-    await Winter.close(force: true);
-    final dir = Directory(storagePath);
-    if (await dir.exists()) await dir.delete(recursive: true);
-  });
-
-  Uri url(String path) => Uri.parse(localUrl + path);
-  Map<String, String> authHeaders = {
-    'FEATHER_SECRET': secret,
-    'FEATHER_ACCESS': access,
-  };
+  setUpAll(server.start);
+  tearDownAll(server.stop);
 
   group('S3Controller - PUT Object', () {
     const bucket = 'put-bucket';
 
     test('Should upload successfully in root', () async {
       final response = await http.put(
-        url('/$bucket/file.txt'),
-        headers: authHeaders,
+        server.url('/$bucket/file.txt'),
+        headers: server.auth(),
         body: 'data',
       );
       expect(response.statusCode, 200);
+      expect(
+        await File('${server.storagePath}/$bucket/file.txt').readAsString(),
+        'data',
+      );
     });
 
     test('Should upload successfully in deep folders', () async {
       final response = await http.put(
-        url('/$bucket/a/b/c/d/file.txt'),
-        headers: authHeaders,
+        server.url('/$bucket/a/b/c/d/file.txt'),
+        headers: server.auth(),
         body: 'data',
       );
       expect(response.statusCode, 200);
+      expect(
+        await File('${server.storagePath}/$bucket/a/b/c/d/file.txt').exists(),
+        isTrue,
+      );
     });
 
     test('Should fail without auth (401)', () async {
-      final response = await http.put(url('/$bucket/nopass.txt'), body: 'data');
+      final response = await http.put(
+        server.url('/$bucket/nopass.txt'),
+        body: 'data',
+      );
       expect(response.statusCode, 401);
     });
 
-    test('Should fail with wrong auth (403)', () async {
+    test('Should fail with an invalid token (401)', () async {
       final response = await http.put(
-        url('/$bucket/wrong.txt'),
-        headers: {'FEATHER_SECRET': 'wrong', 'FEATHER_ACCESS': 'wrong'},
+        server.url('/$bucket/wrong.txt'),
+        headers: {'authorization': 'Bearer not-a-jwt'},
         body: 'data',
       );
-      expect(response.statusCode, 403);
+      expect(response.statusCode, 401);
     });
 
     test('Should fail with invalid bucket name (400)', () async {
       final response = await http.put(
-        url('/INVALID_BUCKET/file.txt'),
-        headers: authHeaders,
+        server.url('/INVALID_BUCKET/file.txt'),
+        headers: server.auth(),
         body: 'data',
       );
       expect(response.statusCode, 400);
+      expect(response.body, contains('<Code>InvalidBucketName</Code>'));
     });
 
     test('Should fail with path traversal in key (400)', () async {
+      //con %2F el cliente no normaliza los '..' y el key llega tal cual al servidor
       final response = await http.put(
-        url('/$bucket/%2e%2e/%2e%2e/etc/password'),
-        headers: authHeaders,
+        server.url('/$bucket/..%2F..%2Fescape.txt'),
+        headers: server.auth(),
         body: 'data',
       );
-      expect(response.statusCode, 200); //200 xq se ignoran los %2e%2e
+      expect(response.statusCode, 400);
+      expect(await File('${server.storagePath}/escape.txt').exists(), isFalse);
+      expect(await File('./uploads_test/escape.txt').exists(), isFalse);
     });
 
     test('Should fail with invalid characters in key (400)', () async {
       final response = await http.put(
-        url('/$bucket/invalid:file.txt'),
-        headers: authHeaders,
+        server.url('/$bucket/invalid:file.txt'),
+        headers: server.auth(),
         body: 'data',
       );
       expect(response.statusCode, 400);
+      expect(response.body, contains('<Code>InvalidArgument</Code>'));
     });
   });
 }

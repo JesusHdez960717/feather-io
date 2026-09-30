@@ -9,9 +9,7 @@ class S3BucketNameFilter extends Filter {
     final bucketName = request.pathParams['bucket'];
 
     if (bucketName != null && !S3Validator.isValidBucketName(bucketName)) {
-      return ResponseEntity.badRequest(
-        body: 'El nombre del bucket "$bucketName" no es válido.',
-      );
+      throw S3Exception.invalidBucketName(bucketName);
     }
 
     return await chain.doFilter(request);

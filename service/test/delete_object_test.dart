@@ -1,92 +1,136 @@
 @TestOn('vm')
 library;
 
+import 'dart:convert';
 import 'dart:io';
-import 'package:service/feather.dart';
+
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 
+import 'support/test_server.dart';
+
 void main() {
-  int port = 8082;
-  String localUrl = 'http://localhost:$port';
-  const String secret = 'test_secret';
-  const String access = 'test_access';
-  const String storagePath = './uploads_test/delete_test';
+  final server = TestServer(port: 8082, name: 'delete_test');
 
-  setUpAll(() async {
-    env.put('FEATHER_SECRET', secret);
-    env.put('FEATHER_ACCESS', access);
-    env.put('STORAGE_PATH', storagePath);
-
-    final dir = Directory(storagePath);
-    if (await dir.exists()) await dir.delete(recursive: true);
-
-    await FeatherIO.start(port: port);
-  });
-
-  tearDownAll(() async {
-    await Winter.close(force: true);
-    final dir = Directory(storagePath);
-    if (await dir.exists()) await dir.delete(recursive: true);
-  });
-
-  Uri url(String path) => Uri.parse(localUrl + path);
-  Map<String, String> authHeaders = {
-    'FEATHER_SECRET': secret,
-    'FEATHER_ACCESS': access,
-  };
+  setUpAll(server.start);
+  tearDownAll(server.stop);
 
   group('S3Controller - DELETE Object', () {
     const bucket = 'delete-bucket';
 
     test('Should delete file successfully', () async {
-      final key = 'todelete.txt';
-      // 1. Upload
-      await http.put(url('/$bucket/$key'), headers: authHeaders, body: 'data');
-      
-      // 2. Delete
-      final response = await http.delete(url('/$bucket/$key'), headers: authHeaders);
-      expect(response.statusCode, 200);
+      const key = 'todelete.txt';
+      await server.putObject(bucket, key, 'data');
 
-      // 3. Verify
-      final getResponse = await http.get(url('/$bucket/$key'));
+      final response = await http.delete(
+        server.url('/$bucket/$key'),
+        headers: server.auth(),
+      );
+      expect(response.statusCode, 204);
+
+      final getResponse = await http.get(
+        server.url('/$bucket/$key'),
+        headers: server.auth(),
+      );
       expect(getResponse.statusCode, 404);
     });
 
     test('Should clean up empty parent folders after delete', () async {
-      final key = 'a/b/c/file.txt';
-      await http.put(url('/$bucket/$key'), headers: authHeaders, body: 'data');
-      
-      await http.delete(url('/$bucket/$key'), headers: authHeaders);
+      const key = 'a/b/c/file.txt';
+      await server.putObject(bucket, key, 'data');
+      await server.putObject(bucket, 'keep.txt', 'data');
 
-      // We can verify this by checking if the folder exists on disk if we had access, 
-      // but through API, a list should not show it.
+      await http.delete(server.url('/$bucket/$key'), headers: server.auth());
+
+      expect(await Directory('${server.storagePath}/$bucket/a').exists(), isFalse);
       final listResponse = await http.get(
-        url('/$bucket/list'),
-        headers: {...authHeaders, 'Accept': 'application/json'},
+        server.url('/$bucket'),
+        headers: server.auth(json: true),
       );
-      expect(listResponse.body, '[]');
+      final contents = jsonDecode(listResponse.body)['contents'] as List;
+      expect(contents.map((e) => e['key']), ['keep.txt']);
+    });
+
+    test('Should succeed if file does not exist (204, idempotent)', () async {
+      final response = await http.delete(
+        server.url('/$bucket/non-existent.txt'),
+        headers: server.auth(),
+      );
+      expect(response.statusCode, 204);
     });
 
     test('Should fail without auth (401)', () async {
-      final response = await http.delete(url('/$bucket/file.txt'));
+      final response = await http.delete(server.url('/$bucket/keep.txt'));
       expect(response.statusCode, 401);
+      expect(await File('${server.storagePath}/$bucket/keep.txt').exists(), isTrue);
     });
 
-    test('Should fail with wrong auth (403)', () async {
+    test('Should fail with invalid key (400)', () async {
       final response = await http.delete(
-        url('/$bucket/file.txt'),
-        headers: {'FEATHER_SECRET': 'w', 'FEATHER_ACCESS': 'w'},
+        server.url('/$bucket/invalid:name'),
+        headers: server.auth(),
       );
-      expect(response.statusCode, 403);
+      expect(response.statusCode, 400);
+    });
+  });
+
+  group('S3Controller - Multi-delete Objects', () {
+    const bucket = 'multi-delete-bucket';
+
+    test('Should delete several objects', () async {
+      await server.putObject(bucket, 'one.txt', '1');
+      await server.putObject(bucket, 'two.txt', '2');
+
+      final response = await http.post(
+        server.url('/$bucket?delete'),
+        headers: server.auth(json: true),
+        body: jsonEncode({
+          'objects': [
+            {'key': 'one.txt'},
+            {'key': 'two.txt'},
+          ],
+        }),
+      );
+      expect(response.statusCode, 200);
+      final body = jsonDecode(response.body);
+      expect((body['deleted'] as List).map((e) => e['key']), ['one.txt', 'two.txt']);
+      expect(body['errors'], isEmpty);
     });
 
-    test('Should return 404 if file does not exist', () async {
-      final response = await http.delete(
-        url('/$bucket/non-existent.txt'),
-        headers: authHeaders,
+    test('Should report invalid keys with their S3 code', () async {
+      final response = await http.post(
+        server.url('/$bucket?delete'),
+        headers: server.auth(json: true),
+        body: jsonEncode({
+          'objects': [
+            {'key': 'invalid:name'},
+          ],
+        }),
       );
-      expect(response.statusCode, 404);
+      expect(response.statusCode, 200);
+      final error = (jsonDecode(response.body)['errors'] as List).single;
+      expect(error['key'], 'invalid:name');
+      expect(error['code'], 'InvalidArgument');
+    });
+
+    test('Should require the ?delete parameter (400)', () async {
+      final response = await http.post(
+        server.url('/$bucket'),
+        headers: server.auth(json: true),
+        body: jsonEncode({'objects': []}),
+      );
+      expect(response.statusCode, 400);
+      expect(jsonDecode(response.body)['code'], 'InvalidRequest');
+    });
+
+    test('Should reject an invalid body (400)', () async {
+      final response = await http.post(
+        server.url('/$bucket?delete'),
+        headers: server.auth(json: true),
+        body: 'not json',
+      );
+      expect(response.statusCode, 400);
+      expect(jsonDecode(response.body)['code'], 'InvalidRequest');
     });
   });
 }

@@ -16,16 +16,22 @@ class FileManagementService {
   Future<bool> createBucket({required String bucketName}) async {
     // Valido el nombre del bucket con reglas S3
     if (!S3Validator.isValidBucketName(bucketName)) {
-      throw BadRequestException(
-        body:
+      throw S3Exception(
+        S3ErrorCode.invalidBucketName,
+        message:
             'El nombre del bucket "$bucketName" no es válido. Debe tener entre 3 y 63 caracteres, usar solo minúsculas, números, puntos o guiones, y empezar/terminar con letra o número.',
+        resource: bucketName,
       );
     }
 
-    //como S3 (BucketAlreadyOwnedByYou), crear un bucket que ya existe es un 409
+    //como S3, crear un bucket que ya existe es un 409
     final bucketDir = Directory(_getBucketPath(bucketName));
     if (await bucketDir.exists()) {
-      throw ConflictException(body: 'El bucket "$bucketName" ya existe.');
+      throw S3Exception(
+        S3ErrorCode.bucketAlreadyOwnedByYou,
+        message: 'El bucket "$bucketName" ya existe.',
+        resource: bucketName,
+      );
     }
 
     //creo el bucket físicamente
@@ -37,22 +43,23 @@ class FileManagementService {
   Future<bool> deleteBucketPhysical(String bucketName) async {
     // Valido el nombre del bucket
     if (!S3Validator.isValidBucketName(bucketName)) {
-      throw BadRequestException(body: 'El bucket $bucketName no es valido');
+      throw S3Exception.invalidBucketName(bucketName);
     }
 
     final bucketPath = _getBucketPath(bucketName);
     final dir = Directory(bucketPath);
 
     if (!await dir.exists()) {
-      throw NotFoundException(body: 'El bucket "$bucketName" no existe.');
+      throw S3Exception.noSuchBucket(bucketName);
     }
 
     // S3 requiere que el bucket esté vacío para ser borrado
     final entities = await dir.list().toList();
     if (entities.isNotEmpty) {
-      // Usamos una excepción que el controlador mapeará a BucketNotEmpty (409)
-      throw ConflictException(
-        body: 'El bucket "$bucketName" no está vacío y no puede ser borrado.',
+      throw S3Exception(
+        S3ErrorCode.bucketNotEmpty,
+        message: 'El bucket "$bucketName" no está vacío y no puede ser borrado.',
+        resource: bucketName,
       );
     }
 
@@ -68,20 +75,20 @@ class FileManagementService {
   }) async {
     // Valido el nombre del bucket
     if (!S3Validator.isValidBucketName(bucketName)) {
-      throw BadRequestException(body: 'El bucket $bucketName no es valido');
+      throw S3Exception.invalidBucketName(bucketName);
     }
     // Valido el key con reglas S3
     if (!S3Validator.isValidKey(key)) {
-      throw BadRequestException(
-        body: 'El key $key no es valido o contiene caracteres prohibidos.',
-      );
+      throw S3Exception.invalidKey(key);
     }
 
     // Validar tamaño máximo si se proporciona el content-length
     if (contentLength != null && contentLength > maxFileSize) {
-      throw BadRequestException(
-        body:
+      throw S3Exception(
+        S3ErrorCode.entityTooLarge,
+        message:
             'El archivo excede el tamaño máximo permitido de ${maxFileSize / (1024 * 1024)} MB',
+        resource: key,
       );
     }
 
@@ -100,8 +107,10 @@ class FileManagementService {
       final monitoredStream = binary.map((chunk) {
         bytesRead += chunk.length;
         if (bytesRead > maxFileSize) {
-          throw BadRequestException(
-            body: 'El archivo excede el tamaño máximo permitido.',
+          throw S3Exception(
+            S3ErrorCode.entityTooLarge,
+            message: 'El archivo excede el tamaño máximo permitido.',
+            resource: key,
           );
         }
         return chunk;
@@ -124,13 +133,13 @@ class FileManagementService {
     String? delimiter,
   }) async {
     if (!S3Validator.isValidBucketName(bucketName)) {
-      throw BadRequestException(body: 'El bucket $bucketName no es valido');
+      throw S3Exception.invalidBucketName(bucketName);
     }
     final bucketPath = _getBucketPath(bucketName);
     final dir = Directory(bucketPath);
 
     if (!await dir.exists()) {
-      throw NotFoundException(body: 'El bucket "$bucketName" no existe.');
+      throw S3Exception.noSuchBucket(bucketName);
     }
 
     // Listamos los archivos del directorio recursivamente para soportar subcarpetas
@@ -189,16 +198,16 @@ class FileManagementService {
     required String key,
   }) async {
     if (!S3Validator.isValidBucketName(bucketName)) {
-      throw BadRequestException(body: 'El bucket $bucketName no es valido');
+      throw S3Exception.invalidBucketName(bucketName);
     }
     if (!S3Validator.isValidKey(key)) {
-      throw BadRequestException(body: 'El key $key no es valido');
+      throw S3Exception.invalidKey(key);
     }
 
     final file = _getFile(bucketName, key);
 
     if (!await file.exists()) {
-      throw NotFoundException(body: 'El archivo "$key" no existe.');
+      throw S3Exception.noSuchKey(key);
     }
 
     return file;
@@ -211,11 +220,11 @@ class FileManagementService {
     required List<String> keys,
   }) async {
     if (!S3Validator.isValidBucketName(bucketName)) {
-      throw BadRequestException(body: 'El bucket $bucketName no es valido');
+      throw S3Exception.invalidBucketName(bucketName);
     }
     for (final key in keys) {
       if (!S3Validator.isValidKey(key)) {
-        throw BadRequestException(body: 'El key $key no es valido');
+        throw S3Exception.invalidKey(key);
       }
     }
 
@@ -256,8 +265,10 @@ class FileManagementService {
 
     if (filesAdded == 0) {
       await tempDir.delete(recursive: true);
-      throw NotFoundException(
-        body: 'No se encontraron archivos para descargar.',
+      throw S3Exception(
+        S3ErrorCode.noSuchKey,
+        message: 'No se encontraron archivos para descargar.',
+        resource: bucketName,
       );
     }
 
@@ -278,10 +289,10 @@ class FileManagementService {
     required String key,
   }) async {
     if (!S3Validator.isValidBucketName(bucketName)) {
-      throw BadRequestException(body: 'El bucket $bucketName no es valido');
+      throw S3Exception.invalidBucketName(bucketName);
     }
     if (!S3Validator.isValidKey(key)) {
-      throw BadRequestException(body: 'El key $key no es valido');
+      throw S3Exception.invalidKey(key);
     }
 
     final fullPath = p.join(_getBucketPath(bucketName), key);
@@ -320,9 +331,15 @@ class FileManagementService {
       try {
         await deleteFile(bucketName: bucketName, key: key);
         deleted.add(key);
+      } on S3Exception catch (e) {
+        errors.add(DeleteError(key: key, code: e.code.code, message: e.message));
       } catch (e) {
         errors.add(
-          DeleteError(key: key, code: 'InternalError', message: e.toString()),
+          DeleteError(
+            key: key,
+            code: S3ErrorCode.internalError.code,
+            message: e.toString(),
+          ),
         );
       }
     }

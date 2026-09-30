@@ -16,7 +16,8 @@ void main() async {
 }
 
 class FeatherIO {
-  static Future start({int port = 8080}) async {
+  ///[database] permite a los tests usar una BD en memoria en vez del fichero SQLite
+  static Future start({int port = 8080, AppDatabase? database}) async {
     //--------------- OM ---------------\\
     om.addDeserializer(
       Deserializer<DownloadObjectsRequest>(
@@ -42,9 +43,11 @@ class FeatherIO {
       ),
     );
 
+    //--------------- Errors ---------------\\
+    Winter.context.setUp(exceptionHandler: S3ExceptionHandler());
+
     //--------------- DB ---------------\\
-    final database = AppDatabase();
-    di.put(database);
+    di.put(database ?? AppDatabase());
 
     //--------------- File ---------------\\
     FileManagementService fileManagement = FileManagementService();
