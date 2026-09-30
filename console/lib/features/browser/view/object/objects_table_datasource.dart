@@ -10,6 +10,9 @@ class ObjectsTableDatasource extends StatefulWidget {
   final List<BrowserObjectWrapper> filteredWrappers;
   final List<BrowserObjectWrapper> selectedWrappers;
   final TextEditingController searchController;
+
+  ///Hay un filtro de tipo/tamaño/fecha activo (cambia el mensaje de lista vacia)
+  final bool hasActiveFilter;
   final Function(String prefix) onNavigate;
   final Function(BrowserObjectModel) onSelected;
   final Function(List<BrowserObjectWrapper> selected) onSelectionChanged;
@@ -20,6 +23,7 @@ class ObjectsTableDatasource extends StatefulWidget {
     required this.filteredWrappers,
     required this.selectedWrappers,
     required this.searchController,
+    required this.hasActiveFilter,
     required this.onNavigate,
     required this.onSelected,
     required this.onSelectionChanged,
@@ -137,13 +141,9 @@ class _ObjectsTableDatasourceState extends State<ObjectsTableDatasource> {
 
         if (widget.filteredWrappers.isEmpty &&
             widget.state is BrowserLoadingSuccessState) {
-          return NoDataPage(
-            title: widget.searchController.text.isEmpty
-                ? app.intl.objectsEmpty
-                : app.intl.objectsNoMatch(widget.searchController.text),
-            description: widget.searchController.text.isEmpty
-                ? app.intl.objectsDragHint
-                : null,
+          return ObjectsEmptyPage(
+            query: widget.searchController.text,
+            hasActiveFilter: widget.hasActiveFilter,
           );
         }
 

@@ -164,6 +164,12 @@ abstract class AppLocalizations {
   /// **'Delete'**
   String get delete;
 
+  /// No description provided for @edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get edit;
+
   /// No description provided for @refresh.
   ///
   /// In en, this message translates to:
@@ -350,6 +356,12 @@ abstract class AppLocalizations {
   /// **'Create Bucket'**
   String get bucketsCreate;
 
+  /// No description provided for @bucketsEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Bucket'**
+  String get bucketsEdit;
+
   /// No description provided for @bucketsTotalBuckets.
   ///
   /// In en, this message translates to:
@@ -505,6 +517,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No objects found'**
   String get objectsEmpty;
+
+  /// No description provided for @objectsNoMatchFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'No objects match the filters'**
+  String get objectsNoMatchFilter;
+
+  /// No description provided for @objectsFilterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get objectsFilterTitle;
+
+  /// No description provided for @objectsFilterClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get objectsFilterClear;
+
+  /// No description provided for @objectsFilterType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get objectsFilterType;
+
+  /// No description provided for @objectsFilterTypeOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get objectsFilterTypeOther;
+
+  /// No description provided for @objectsFilterSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get objectsFilterSize;
+
+  /// No description provided for @objectsFilterSizeSmall.
+  ///
+  /// In en, this message translates to:
+  /// **'Under 1 MB'**
+  String get objectsFilterSizeSmall;
+
+  /// No description provided for @objectsFilterSizeMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'1 MB – 100 MB'**
+  String get objectsFilterSizeMedium;
+
+  /// No description provided for @objectsFilterSizeLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Over 100 MB'**
+  String get objectsFilterSizeLarge;
+
+  /// No description provided for @objectsFilterModified.
+  ///
+  /// In en, this message translates to:
+  /// **'Modified'**
+  String get objectsFilterModified;
+
+  /// No description provided for @objectsFilterDate24h.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 24 hours'**
+  String get objectsFilterDate24h;
+
+  /// No description provided for @objectsFilterDate7d.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 7 days'**
+  String get objectsFilterDate7d;
+
+  /// No description provided for @objectsFilterDate30d.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 30 days'**
+  String get objectsFilterDate30d;
+
+  /// No description provided for @objectsFilterDateOlder.
+  ///
+  /// In en, this message translates to:
+  /// **'Older than 30 days'**
+  String get objectsFilterDateOlder;
+
+  /// No description provided for @objectsFilterFoldersHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Folders are hidden while a filter is active.'**
+  String get objectsFilterFoldersHidden;
 
   /// No description provided for @objectsNoMatch.
   ///
@@ -715,6 +817,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t create the bucket'**
   String get bucketCreateErrorTitle;
+
+  /// No description provided for @bucketEditDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Change the description and color of the {name} bucket. The name can\'t be changed.'**
+  String bucketEditDescription(String name);
+
+  /// No description provided for @bucketEditSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get bucketEditSave;
+
+  /// No description provided for @bucketEditErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save the bucket'**
+  String get bucketEditErrorTitle;
+
+  /// No description provided for @bucketUpdatedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Bucket \"{name}\" updated'**
+  String bucketUpdatedSuccess(String name);
 
   /// No description provided for @bucketCreatedSuccess.
   ///

@@ -158,6 +158,25 @@ class _BucketsViewState extends State<_BucketsView> {
       ),
       items: [
         PopupMenuItem(
+          value: 'edit',
+          onTap: () => BucketForm.open(context, bucket: bucket),
+          child: Row(
+            children: [
+              app.assets.icons.actions.edit.build(
+                size: 18,
+                color: app.colors.neutral.white,
+              ),
+              app.dimensions.padding.m.gap(),
+              Text(
+                app.intl.edit,
+                style: app.textTheme.bodyMedium?.copyWith(
+                  color: app.colors.neutral.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem(
           value: 'delete',
           onTap: () {
             _onDeleteSelected(bucket);
@@ -277,7 +296,7 @@ class _BucketsViewState extends State<_BucketsView> {
             app.dimensions.padding.m.gap(),
             PrimaryButton.primary(
               onPressed: () {
-                BucketCreateForm.open(context);
+                BucketForm.open(context);
               },
               title: app.intl.bucketsCreate,
               h: 42,

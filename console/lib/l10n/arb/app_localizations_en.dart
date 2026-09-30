@@ -43,6 +43,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get delete => 'Delete';
 
   @override
+  String get edit => 'Edit';
+
+  @override
   String get refresh => 'Refresh';
 
   @override
@@ -140,6 +143,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bucketsCreate => 'Create Bucket';
 
   @override
+  String get bucketsEdit => 'Edit Bucket';
+
+  @override
   String get bucketsTotalBuckets => 'Total Buckets';
 
   @override
@@ -225,6 +231,52 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get objectsEmpty => 'No objects found';
+
+  @override
+  String get objectsNoMatchFilter => 'No objects match the filters';
+
+  @override
+  String get objectsFilterTitle => 'Filters';
+
+  @override
+  String get objectsFilterClear => 'Clear';
+
+  @override
+  String get objectsFilterType => 'Type';
+
+  @override
+  String get objectsFilterTypeOther => 'Other';
+
+  @override
+  String get objectsFilterSize => 'Size';
+
+  @override
+  String get objectsFilterSizeSmall => 'Under 1 MB';
+
+  @override
+  String get objectsFilterSizeMedium => '1 MB – 100 MB';
+
+  @override
+  String get objectsFilterSizeLarge => 'Over 100 MB';
+
+  @override
+  String get objectsFilterModified => 'Modified';
+
+  @override
+  String get objectsFilterDate24h => 'Last 24 hours';
+
+  @override
+  String get objectsFilterDate7d => 'Last 7 days';
+
+  @override
+  String get objectsFilterDate30d => 'Last 30 days';
+
+  @override
+  String get objectsFilterDateOlder => 'Older than 30 days';
+
+  @override
+  String get objectsFilterFoldersHidden =>
+      'Folders are hidden while a filter is active.';
 
   @override
   String objectsNoMatch(String query) {
@@ -345,6 +397,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bucketCreateErrorTitle => 'Couldn\'t create the bucket';
+
+  @override
+  String bucketEditDescription(String name) {
+    return 'Change the description and color of the $name bucket. The name can\'t be changed.';
+  }
+
+  @override
+  String get bucketEditSave => 'Save changes';
+
+  @override
+  String get bucketEditErrorTitle => 'Couldn\'t save the bucket';
+
+  @override
+  String bucketUpdatedSuccess(String name) {
+    return 'Bucket \"$name\" updated';
+  }
 
   @override
   String bucketCreatedSuccess(String name) {

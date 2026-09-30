@@ -22,11 +22,11 @@ terminarla.
 
 ## Fase 1: Resultados rápidos en la consola
 
-- [ ] **Filtros en el browser** (consola): por tipo, tamaño, fecha y texto, en cliente sobre la
+- [x] **Filtros en el browser** (consola): por tipo, tamaño, fecha y texto, en cliente sobre la
   lista ya cargada.
-- [ ] **Editar bucket**
-    - [ ] Servicio: `PUT /{admin}/bucket/{bucket}` para descripción y color.
-    - [ ] Consola: form de edición reutilizando `bucket_create_form`.
+- [x] **Editar bucket**
+    - [x] Servicio: `PUT /{admin}/bucket/{bucket}` para descripción y color.
+    - [x] Consola: form de edición reutilizando `bucket_create_form`.
 
 ## Fase 2: Detalle de bucket
 

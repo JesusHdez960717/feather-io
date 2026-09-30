@@ -8,6 +8,9 @@ class ObjectsGridDatasource extends StatelessWidget {
   final List<BrowserObjectWrapper> filteredWrappers;
   final List<BrowserObjectWrapper> selectedWrappers;
   final TextEditingController searchController;
+
+  ///Hay un filtro de tipo/tamaño/fecha activo (cambia el mensaje de lista vacia)
+  final bool hasActiveFilter;
   final Function(String prefix) onNavigate;
   final Function(BrowserObjectModel) onSelected;
   final Function(List<BrowserObjectWrapper> selected) onSelectionChanged;
@@ -18,6 +21,7 @@ class ObjectsGridDatasource extends StatelessWidget {
     required this.filteredWrappers,
     required this.selectedWrappers,
     required this.searchController,
+    required this.hasActiveFilter,
     required this.onNavigate,
     required this.onSelected,
     required this.onSelectionChanged,
@@ -28,13 +32,9 @@ class ObjectsGridDatasource extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (filteredWrappers.isEmpty && state is BrowserLoadingSuccessState) {
-      return NoDataPage(
-        title: searchController.text.isEmpty
-            ? app.intl.objectsEmpty
-            : app.intl.objectsNoMatch(searchController.text),
-        description: searchController.text.isEmpty
-            ? app.intl.objectsDragHint
-            : null,
+      return ObjectsEmptyPage(
+        query: searchController.text,
+        hasActiveFilter: hasActiveFilter,
       );
     }
 

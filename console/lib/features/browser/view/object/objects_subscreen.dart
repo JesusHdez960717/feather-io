@@ -49,16 +49,15 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
   List<BrowserObjectWrapper> _filteredWrappers = [];
   List<BrowserObjectWrapper> _selectedWrappers = [];
 
-  ///Filtros aplicados; el badge del boton solo se ve si hay alguno.
-  ///Siempre 0 hasta que exista el filtro de objetos
-  int get _activeFilterCount => 0;
+  ///Filtro de tipo/tamaño/fecha; se mantiene al navegar por el bucket
+  ObjectFilter _filter = ObjectFilter.none;
   bool _isDragging = false;
 
   @override
   void initState() {
     super.initState();
     _initializeWrappers();
-    _searchController.addListener(_onSearchChanged);
+    _searchController.addListener(_applyFilters);
     _scrollBreadcrumbsToEnd();
   }
 
@@ -88,7 +87,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
 
   @override
   void dispose() {
-    _searchController.removeListener(_onSearchChanged);
+    _searchController.removeListener(_applyFilters);
     _searchController.dispose();
     _breadcrumbScrollController.dispose();
     super.dispose();
@@ -120,7 +119,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
         );
       }
     }
-    _onSearchChanged();
+    _applyFilters();
   }
 
   void _onSelectionChanged(List<BrowserObjectWrapper> selected) {
@@ -129,16 +128,24 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
     });
   }
 
-  void _onSearchChanged() {
+  void _onFilterChanged(ObjectFilter filter) {
+    _filter = filter;
+    _applyFilters();
+  }
+
+  ///Aplica la busqueda y el filtro. La seleccion se queda solo con lo visible,
+  ///para no borrar ni descargar objetos que no se ven
+  void _applyFilters() {
     final query = _searchController.text.toLowerCase();
+    final now = DateTime.now();
     setState(() {
-      if (query.isEmpty) {
-        _filteredWrappers = _allWrappers;
-      } else {
-        _filteredWrappers = _allWrappers
-            .where((w) => w.name.toLowerCase().contains(query))
-            .toList();
-      }
+      _filteredWrappers = _allWrappers
+          .where((w) => query.isEmpty || w.name.toLowerCase().contains(query))
+          .where((w) => _filter.matches(w, now: now))
+          .toList();
+      _selectedWrappers = _selectedWrappers
+          .where(_filteredWrappers.contains)
+          .toList();
     });
   }
 
@@ -424,21 +431,9 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                       ),
                     ),
                     app.dimensions.padding.l.gap(),
-                    Badge.count(
-                      count: _activeFilterCount,
-                      isLabelVisible: _activeFilterCount > 0,
-                      backgroundColor: app.colors.primary.secondary,
-                      textColor: app.colors.primary.background1,
-                      child: PrimaryButton.primary(
-                        title: app.intl.filter,
-                        color: app.colors.primary.background3.withValues(
-                          alpha: 0.75,
-                        ),
-                        icon: app.assets.icons.actions.filter,
-                        onPressed: () {},
-                        h: 42,
-                        w: 100,
-                      ),
+                    ObjectsFilterButton(
+                      filter: _filter,
+                      onChanged: _onFilterChanged,
                     ),
                     app.dimensions.padding.l.gap(),
                     ViewTypeSelector(
@@ -517,6 +512,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                               filteredWrappers: _filteredWrappers,
                               selectedWrappers: _selectedWrappers,
                               searchController: _searchController,
+                              hasActiveFilter: _filter.isActive,
                               onNavigate: widget.onNavigate,
                               onSelected: widget.onSelected,
                               onSelectionChanged: _onSelectionChanged,
@@ -527,6 +523,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                               filteredWrappers: _filteredWrappers,
                               selectedWrappers: _selectedWrappers,
                               searchController: _searchController,
+                              hasActiveFilter: _filter.isActive,
                               onNavigate: widget.onNavigate,
                               onSelected: widget.onSelected,
                               onSelectionChanged: _onSelectionChanged,

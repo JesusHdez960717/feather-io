@@ -2,43 +2,54 @@ import 'package:console/app_exporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
 
-class BucketCreateForm extends StatefulWidget {
-  ///Abre el cajon con su propio [BucketCreateCubit]: mientras se envia, el cajon
-  ///muestra su velo de carga y los errores se muestran dentro del formulario. Al crear, recarga el [BucketCubit] de la pantalla
-  static Future<void> open(BuildContext context) async {
-    final key = GlobalKey<BucketCreateFormState>();
+///Cajon para crear un bucket o, con [bucket], editar su descripcion y color
+class BucketForm extends StatefulWidget {
+  ///Abre el cajon con su propio [BucketFormCubit]: mientras se envia, el cajon
+  ///muestra su velo de carga y los errores se muestran dentro del formulario.
+  ///Al guardar, recarga el [BucketCubit] de la pantalla
+  static Future<void> open(BuildContext context, {BucketModel? bucket}) async {
+    final key = GlobalKey<_BucketFormState>();
     final bucketCubit = context.read<BucketCubit>();
-    final createCubit = BucketCreateCubit(app.di.find(), app.di.find());
+    final formCubit = BucketFormCubit(app.di.find(), app.di.find());
+    final isEdit = bucket != null;
 
     await FormDrawerTemplate.showAsDialog(
-      title: app.intl.bucketsCreate,
-      description: app.intl.bucketCreateDescription,
+      title: isEdit ? app.intl.bucketsEdit : app.intl.bucketsCreate,
+      description: isEdit
+          ? app.intl.bucketEditDescription(bucket.name)
+          : app.intl.bucketCreateDescription,
       icon: app.assets.icons.storage.bucket,
       loadingId: loadingId,
       footerActions: [
-        _BucketCreateFooter(onSubmit: () => key.currentState?.submit()),
+        _BucketFormFooter(
+          isEdit: isEdit,
+          onSubmit: () => key.currentState?.submit(),
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
           BlocProvider.value(value: bucketCubit),
-          BlocProvider.value(value: createCubit),
+          BlocProvider.value(value: formCubit),
         ],
-        child: BucketCreateForm(key: key),
+        child: BucketForm(key: key, bucket: bucket),
       ),
     );
-    await createCubit.close();
+    await formCubit.close();
   }
 
   ///Id del [LoadingOverlay] del cajon
-  static const String loadingId = 'bucket-create-form';
+  static const String loadingId = 'bucket-form';
 
-  const BucketCreateForm({super.key});
+  ///Bucket a editar; si es null, el cajon crea uno nuevo
+  final BucketModel? bucket;
+
+  const BucketForm({super.key, this.bucket});
 
   @override
-  State<BucketCreateForm> createState() => BucketCreateFormState();
+  State<BucketForm> createState() => _BucketFormState();
 }
 
-class BucketCreateFormState extends State<BucketCreateForm> {
+class _BucketFormState extends State<BucketForm> {
   static const int _nameMaxLength = 63;
   static const int _descriptionMaxLength = 1024;
 
@@ -58,12 +69,21 @@ class BucketCreateFormState extends State<BucketCreateForm> {
   ///Error de la API que no es de un campo concreto
   String? _formError;
 
-  late final BucketCreateCubit cubit;
+  late final BucketFormCubit cubit;
+
+  ///Al editar, el nombre no se puede cambiar
+  bool get _isEdit => widget.bucket != null;
 
   @override
   void initState() {
     super.initState();
-    cubit = context.read<BucketCreateCubit>();
+    cubit = context.read<BucketFormCubit>();
+    final bucket = widget.bucket;
+    if (bucket != null) {
+      _nameController.text = bucket.name;
+      _descriptionController.text = bucket.description ?? '';
+      _color = bucket.uiColor;
+    }
     _nameController.addListener(() => setState(() {}));
   }
 
@@ -76,11 +96,12 @@ class BucketCreateFormState extends State<BucketCreateForm> {
     super.dispose();
   }
 
-  bool get _busy => cubit.state is BucketCreateProcessInProgressState;
+  bool get _busy => cubit.state is BucketFormProcessInProgressState;
 
   static final _nameChars = RegExp(r'^[a-z0-9-]*$');
 
   String? _validateName(String? value) {
+    if (_isEdit) return null;
     if (value == null || value.isEmpty) {
       return app.intl.bucketNameRequired;
     }
@@ -142,40 +163,48 @@ class BucketCreateFormState extends State<BucketCreateForm> {
       _formError = null;
     });
     if (!(_formKey.currentState?.validate() ?? false)) {
-      _nameFocus.requestFocus();
+      (_isEdit ? _descriptionFocus : _nameFocus).requestFocus();
       return;
     }
-    cubit.create(
-      name: _nameController.text,
-      description: _descriptionController.text.isEmpty
-          ? null
-          : _descriptionController.text,
-      color: _color?.toARGB32(),
-    );
+    final description = _descriptionController.text.isEmpty
+        ? null
+        : _descriptionController.text;
+    if (_isEdit) {
+      cubit.update(
+        name: widget.bucket!.name,
+        description: description,
+        color: _color?.toARGB32(),
+      );
+    } else {
+      cubit.create(
+        name: _nameController.text,
+        description: description,
+        color: _color?.toARGB32(),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<BucketCreateCubit, BucketCreateState>(
-      listener: (BuildContext context, BucketCreateState state) {
-        if (state is BucketCreateProcessInProgressState) {
-          app.loading.show(id: BucketCreateForm.loadingId);
+    return BlocListener<BucketFormCubit, BucketFormState>(
+      listener: (BuildContext context, BucketFormState state) {
+        if (state is BucketFormProcessInProgressState) {
+          app.loading.show(id: BucketForm.loadingId);
           return;
         }
-        app.loading.hide(id: BucketCreateForm.loadingId);
-        if (state is BucketCreateProcessingOKState) {
+        app.loading.hide(id: BucketForm.loadingId);
+        if (state is BucketFormProcessingOKState) {
           final bucketCubit = context.read<BucketCubit>();
           Navigator.of(context).pop();
           bucketCubit.load();
           app.snack.showSuccess(
-            message: app.intl.bucketCreatedSuccess(state.name),
+            message: _isEdit
+                ? app.intl.bucketUpdatedSuccess(state.name)
+                : app.intl.bucketCreatedSuccess(state.name),
             context: app.context,
           );
-        } else if (state is BucketCreateProcessingErrorState) {
-          const fields = {
-            BucketCreateField.name,
-            BucketCreateField.description,
-          };
+        } else if (state is BucketFormProcessingErrorState) {
+          const fields = {BucketFormField.name, BucketFormField.description};
           final unmatched = state.fieldErrors.entries
               .where((e) => !fields.contains(e.key))
               .map((e) => e.value);
@@ -190,9 +219,9 @@ class BucketCreateFormState extends State<BucketCreateForm> {
                 ? null
                 : unmatched.join('\n');
           });
-          if (_serverErrors.containsKey(BucketCreateField.name)) {
+          if (_serverErrors.containsKey(BucketFormField.name)) {
             _nameFocus.requestFocus();
-          } else if (_serverErrors.containsKey(BucketCreateField.description)) {
+          } else if (_serverErrors.containsKey(BucketFormField.description)) {
             _descriptionFocus.requestFocus();
           }
         }
@@ -207,7 +236,9 @@ class BucketCreateFormState extends State<BucketCreateForm> {
           children: [
             if (_formError != null) ...[
               AppFormAlert(
-                title: app.intl.bucketCreateErrorTitle,
+                title: _isEdit
+                    ? app.intl.bucketEditErrorTitle
+                    : app.intl.bucketCreateErrorTitle,
                 message: _formError!,
               ),
               app.dimensions.padding.xl.gap(),
@@ -235,22 +266,25 @@ class BucketCreateFormState extends State<BucketCreateForm> {
         AppFormInput(
           controller: _nameController,
           focusNode: _nameFocus,
-          autofocus: true,
+          autofocus: !_isEdit,
+          enabled: !_isEdit,
           label: app.intl.bucketCreateNameLabel,
           hint: app.intl.bucketCreateNameHint,
           helperText: app.intl.bucketNamePathHint(
             name.isEmpty ? app.intl.bucketCreateNameHint : name,
           ),
-          errorText: _serverErrors[BucketCreateField.name],
-          showCounter: true,
+          errorText: _serverErrors[BucketFormField.name],
+          showCounter: !_isEdit,
           maxLength: _nameMaxLength,
           validator: _validateName,
           textInputAction: TextInputAction.done,
           onSubmitted: (_) => submit(),
-          onChange: (_) => _clearServerError(BucketCreateField.name),
+          onChange: (_) => _clearServerError(BucketFormField.name),
         ),
-        app.dimensions.padding.m.gap(),
-        AppValidationRules(rules: _nameRules),
+        if (!_isEdit) ...[
+          app.dimensions.padding.m.gap(),
+          AppValidationRules(rules: _nameRules),
+        ],
       ],
     );
   }
@@ -262,14 +296,15 @@ class BucketCreateFormState extends State<BucketCreateForm> {
         AppFormInput(
           controller: _descriptionController,
           focusNode: _descriptionFocus,
+          autofocus: _isEdit,
           label: app.intl.bucketCreateDescriptionLabel,
           hint: app.intl.bucketCreateDescriptionHint,
-          errorText: _serverErrors[BucketCreateField.description],
+          errorText: _serverErrors[BucketFormField.description],
           maxLines: 3,
           showCounter: true,
           maxLength: _descriptionMaxLength,
           height: 120,
-          onChange: (_) => _clearServerError(BucketCreateField.description),
+          onChange: (_) => _clearServerError(BucketFormField.description),
         ),
         app.dimensions.padding.l.gap(),
         Text(
@@ -319,12 +354,13 @@ class BucketCreateFormState extends State<BucketCreateForm> {
   }
 }
 
-///Pie del cajon: *Cancelar* y *Crear bucket*. Mientras se envia, el velo de
-///carga del cajon los cubre
-class _BucketCreateFooter extends StatelessWidget {
+///Pie del cajon: *Cancelar* y *Crear bucket* (o *Guardar cambios* al editar).
+///Mientras se envia, el velo de carga del cajon los cubre
+class _BucketFormFooter extends StatelessWidget {
+  final bool isEdit;
   final VoidCallback onSubmit;
 
-  const _BucketCreateFooter({required this.onSubmit});
+  const _BucketFormFooter({required this.isEdit, required this.onSubmit});
 
   @override
   Widget build(BuildContext context) {
@@ -340,10 +376,10 @@ class _BucketCreateFooter extends StatelessWidget {
         app.dimensions.padding.m.gap(),
         PrimaryButton.primary(
           onPressed: onSubmit,
-          title: app.intl.bucketsCreate,
+          title: isEdit ? app.intl.bucketEditSave : app.intl.bucketsCreate,
           h: 40,
           w: 160,
-          icon: app.assets.icons.actions.add,
+          icon: isEdit ? null : app.assets.icons.actions.add,
         ),
       ],
     );

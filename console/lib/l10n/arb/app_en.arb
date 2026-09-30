@@ -11,6 +11,7 @@
   "cancel": "Cancel",
   "close": "Close",
   "delete": "Delete",
+  "edit": "Edit",
   "refresh": "Refresh",
   "required": "Required",
   "preview": "Preview",
@@ -42,6 +43,7 @@
   "bucketsTitle": "Buckets",
   "bucketsSubtitle": "Manage your S3 compatible buckets and storage resources.",
   "bucketsCreate": "Create Bucket",
+  "bucketsEdit": "Edit Bucket",
   "bucketsTotalBuckets": "Total Buckets",
   "bucketsTotalObjects": "Total Objects",
   "bucketsTotalStorage": "Total Storage",
@@ -89,6 +91,21 @@
   "bucketRuleHyphenEdges": "No hyphen at start/end",
   "objectsSearchHint": "Search objects...",
   "objectsEmpty": "No objects found",
+  "objectsNoMatchFilter": "No objects match the filters",
+  "objectsFilterTitle": "Filters",
+  "objectsFilterClear": "Clear",
+  "objectsFilterType": "Type",
+  "objectsFilterTypeOther": "Other",
+  "objectsFilterSize": "Size",
+  "objectsFilterSizeSmall": "Under 1 MB",
+  "objectsFilterSizeMedium": "1 MB – 100 MB",
+  "objectsFilterSizeLarge": "Over 100 MB",
+  "objectsFilterModified": "Modified",
+  "objectsFilterDate24h": "Last 24 hours",
+  "objectsFilterDate7d": "Last 7 days",
+  "objectsFilterDate30d": "Last 30 days",
+  "objectsFilterDateOlder": "Older than 30 days",
+  "objectsFilterFoldersHidden": "Folders are hidden while a filter is active.",
   "objectsNoMatch": "No objects matching \"{query}\"",
   "@objectsNoMatch": {
     "placeholders": {
@@ -152,6 +169,24 @@
   "bucketCreateColorLabel": "Color",
   "bucketNameExists": "A bucket with this name already exists",
   "bucketCreateErrorTitle": "Couldn't create the bucket",
+  "bucketEditDescription": "Change the description and color of the {name} bucket. The name can't be changed.",
+  "@bucketEditDescription": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "bucketEditSave": "Save changes",
+  "bucketEditErrorTitle": "Couldn't save the bucket",
+  "bucketUpdatedSuccess": "Bucket \"{name}\" updated",
+  "@bucketUpdatedSuccess": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "bucketCreatedSuccess": "Bucket \"{name}\" created",
   "@bucketCreatedSuccess": {
     "placeholders": {

@@ -43,6 +43,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get delete => 'Eliminar';
 
   @override
+  String get edit => 'Editar';
+
+  @override
   String get refresh => 'Actualizar';
 
   @override
@@ -141,6 +144,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get bucketsCreate => 'Crear bucket';
 
   @override
+  String get bucketsEdit => 'Editar bucket';
+
+  @override
   String get bucketsTotalBuckets => 'Total de buckets';
 
   @override
@@ -226,6 +232,52 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get objectsEmpty => 'No se encontraron objetos';
+
+  @override
+  String get objectsNoMatchFilter => 'Ningún objeto coincide con los filtros';
+
+  @override
+  String get objectsFilterTitle => 'Filtros';
+
+  @override
+  String get objectsFilterClear => 'Limpiar';
+
+  @override
+  String get objectsFilterType => 'Tipo';
+
+  @override
+  String get objectsFilterTypeOther => 'Otros';
+
+  @override
+  String get objectsFilterSize => 'Tamaño';
+
+  @override
+  String get objectsFilterSizeSmall => 'Menos de 1 MB';
+
+  @override
+  String get objectsFilterSizeMedium => 'De 1 MB a 100 MB';
+
+  @override
+  String get objectsFilterSizeLarge => 'Más de 100 MB';
+
+  @override
+  String get objectsFilterModified => 'Modificado';
+
+  @override
+  String get objectsFilterDate24h => 'Últimas 24 horas';
+
+  @override
+  String get objectsFilterDate7d => 'Últimos 7 días';
+
+  @override
+  String get objectsFilterDate30d => 'Últimos 30 días';
+
+  @override
+  String get objectsFilterDateOlder => 'Hace más de 30 días';
+
+  @override
+  String get objectsFilterFoldersHidden =>
+      'Las carpetas se ocultan mientras haya un filtro activo.';
 
   @override
   String objectsNoMatch(String query) {
@@ -346,6 +398,22 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get bucketCreateErrorTitle => 'No se pudo crear el bucket';
+
+  @override
+  String bucketEditDescription(String name) {
+    return 'Cambia la descripción y el color del bucket $name. El nombre no se puede cambiar.';
+  }
+
+  @override
+  String get bucketEditSave => 'Guardar cambios';
+
+  @override
+  String get bucketEditErrorTitle => 'No se pudo guardar el bucket';
+
+  @override
+  String bucketUpdatedSuccess(String name) {
+    return 'Bucket «$name» actualizado';
+  }
 
   @override
   String bucketCreatedSuccess(String name) {

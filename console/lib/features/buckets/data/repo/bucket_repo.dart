@@ -31,6 +31,24 @@ class BucketRepo {
     }
   }
 
+  Future<BucketModel> updateBucket({
+    required String name,
+    String? description,
+    int? color,
+    String? token,
+  }) async {
+    try {
+      final response = await _client.updateBucket(
+        name: name,
+        request: BucketUpdateRequest(description: description, color: color),
+        token: token,
+      );
+      return response.toModel();
+    } catch (e) {
+      throw ExceptionConverter.parse(e);
+    }
+  }
+
   Future<void> deleteBucket({required String name, String? token}) async {
     try {
       await _client.deleteBucket(name: name, token: token);

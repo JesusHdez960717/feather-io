@@ -30,6 +30,21 @@ class BucketClient extends BaseClient {
     );
   }
 
+  Future<BucketResponse> updateBucket({
+    required String name,
+    required BucketUpdateRequest request,
+    String? token,
+  }) async {
+    final admin = Environment.adminPrefix;
+    Response rawResponse = await dio.put(
+      '$baseUrl/$admin/bucket/$name',
+      data: request.toJson(),
+      options: options(token: token),
+    );
+
+    return BucketResponse.fromJson(rawResponse.data);
+  }
+
   Future<void> deleteBucket({required String name, String? token}) async {
     await dio.delete('$baseUrl/$name', options: options(token: token));
   }
@@ -47,6 +62,19 @@ class BucketCreateRequest {
       if (description != null) 'description': description,
       if (color != null) 'color': color,
     };
+  }
+}
+
+//---------- BUCKET UPDATE REQUEST ----------
+///Reemplaza los metadatos: un campo a null se borra en el servicio
+class BucketUpdateRequest {
+  final String? description;
+  final int? color;
+
+  BucketUpdateRequest({this.description, this.color});
+
+  Map<String, dynamic> toJson() {
+    return {'description': description, 'color': color};
   }
 }
 

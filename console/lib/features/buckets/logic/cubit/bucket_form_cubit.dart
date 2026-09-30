@@ -1,33 +1,59 @@
 import 'package:console/app_exporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-///Estado del cajon de crear bucket. Vive mientras el cajon esta abierto, asi la
+///Estado del cajon de crear/editar bucket. Vive mientras el cajon esta abierto, asi la
 ///carga y los errores se muestran dentro del formulario y no en la pantalla de fondo
-class BucketCreateCubit extends Cubit<BucketCreateState> {
+class BucketFormCubit extends Cubit<BucketFormState> {
   final BucketRepo _repo;
   final AuthCubit _auth;
 
-  BucketCreateCubit(this._repo, this._auth)
-    : super(const BucketCreateInitialState());
+  BucketFormCubit(this._repo, this._auth)
+    : super(const BucketFormInitialState());
 
   Future<void> create({
     required String name,
     String? description,
     int? color,
   }) async {
-    emit(const BucketCreateProcessInProgressState());
-    try {
-      await _repo.createBucket(
+    await _process(
+      name: name,
+      action: () => _repo.createBucket(
         name: name,
         description: description,
         color: color,
         token: _auth.auth?.accessToken,
-      );
-      emit(BucketCreateProcessingOKState(name: name));
+      ),
+    );
+  }
+
+  Future<void> update({
+    required String name,
+    String? description,
+    int? color,
+  }) async {
+    await _process(
+      name: name,
+      action: () => _repo.updateBucket(
+        name: name,
+        description: description,
+        color: color,
+        token: _auth.auth?.accessToken,
+      ),
+    );
+  }
+
+  Future<void> _process({
+    required String name,
+    required Future<void> Function() action,
+  }) async {
+    emit(const BucketFormProcessInProgressState());
+    try {
+      await action();
+      emit(BucketFormProcessingOKState(name: name));
     } catch (e) {
       final exception = ExceptionConverter.parse(e);
       emit(
-        BucketCreateProcessingErrorState(
+        BucketFormProcessingErrorState(
           exception,
           fieldErrors: _fieldErrors(exception),
         ),
@@ -44,7 +70,7 @@ class BucketCreateCubit extends Cubit<BucketCreateState> {
         _ => const {},
       },
       GlobalExceptionType.conflict => {
-        BucketCreateField.name: app.intl.bucketNameExists,
+        BucketFormField.name: app.intl.bucketNameExists,
       },
       _ => const {},
     };
@@ -52,38 +78,38 @@ class BucketCreateCubit extends Cubit<BucketCreateState> {
 }
 
 ///Nombres de campo del formulario, iguales a los `fieldName` que devuelve la API
-abstract class BucketCreateField {
+abstract class BucketFormField {
   static const String name = 'name';
   static const String description = 'description';
   static const String color = 'color';
 }
 
-abstract class BucketCreateState {
-  const BucketCreateState();
+abstract class BucketFormState {
+  const BucketFormState();
 }
 
-class BucketCreateInitialState extends BucketCreateState {
-  const BucketCreateInitialState();
+class BucketFormInitialState extends BucketFormState {
+  const BucketFormInitialState();
 }
 
 //------------------------- PROCESSING -------------------------\\
-class BucketCreateProcessInProgressState extends BucketCreateState {
-  const BucketCreateProcessInProgressState();
+class BucketFormProcessInProgressState extends BucketFormState {
+  const BucketFormProcessInProgressState();
 }
 
-class BucketCreateProcessingOKState extends BucketCreateState {
+class BucketFormProcessingOKState extends BucketFormState {
   final String name;
 
-  const BucketCreateProcessingOKState({required this.name});
+  const BucketFormProcessingOKState({required this.name});
 }
 
-class BucketCreateProcessingErrorState extends BucketCreateState {
+class BucketFormProcessingErrorState extends BucketFormState {
   final GlobalException exception;
 
   ///Errores por campo; si esta vacio, el error es de todo el formulario
   final Map<String, String> fieldErrors;
 
-  const BucketCreateProcessingErrorState(
+  const BucketFormProcessingErrorState(
     this.exception, {
     this.fieldErrors = const {},
   });
