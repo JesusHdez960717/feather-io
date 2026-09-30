@@ -74,7 +74,7 @@ class ApiExceptionConverter {
     } else if (error.response!.statusCode == 409) {
       return GlobalException(
         type: GlobalExceptionType.conflict,
-        message: error.response!.data.toString(),
+        message: _message(error.response!.data),
         data: error.response!.data,
       );
     } else if (error.response!.statusCode! >= 500) {
@@ -86,9 +86,17 @@ class ApiExceptionConverter {
     } else {
       return GlobalException(
         type: GlobalExceptionType.general,
-        message: error.response!.data,
+        message: _message(error.response!.data),
         data: error.response!.data,
       );
     }
+  }
+
+  ///Los errores S3 llegan como `{code, message, resource}`; el resto como texto plano
+  static String _message(dynamic data) {
+    if (data is Map && data['message'] is String) {
+      return data['message'] as String;
+    }
+    return data?.toString() ?? '';
   }
 }
