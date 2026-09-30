@@ -69,6 +69,12 @@ terminarla.
 
 - [x] URLs prefirmadas, con un botón "compartir enlace" en la consola (el servicio firma en
   `POST /{admin}/bucket/{bucket}/presign`; caducidad de 1 hora, 1 día o 7 días).
+- [ ] Subidas en segundo plano (consola): hoy `BrowserCubit.uploadFiles` sube los ficheros uno
+  tras otro dentro de `_process` y la pantalla queda bloqueada con el loading hasta que acaban
+  (10 MB a 1 MB/s son 10 s parados). La subida pasa a una cola propia (cubit de la app, no de la
+  pantalla) que sigue aunque se cambie de carpeta, de bucket o de sección, con un panel flotante
+  de progreso por fichero (`onSendProgress` de Dio), cancelar y reintentar, y avisa con
+  `BucketChangedEvent` al terminar cada fichero para que el explorador se recargue solo.
 - [ ] Multipart upload.
 - [ ] Pruebas contra clientes reales (aws cli, rclone, SDKs).
 
