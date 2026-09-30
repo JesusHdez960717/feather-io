@@ -42,7 +42,7 @@ class AppFormAlert extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  SelectableText(
+                  Text(
                     message,
                     style: app.textTheme.bodyMedium?.copyWith(
                       color: app.colors.neutral.grey2,

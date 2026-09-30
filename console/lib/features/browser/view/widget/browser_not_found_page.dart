@@ -27,12 +27,10 @@ class BrowserNotFoundPage extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SelectionArea(
-                child: Text(
-                  title,
-                  style: app.textTheme.titleLarge,
-                  textAlign: TextAlign.center,
-                ),
+              Text(
+                title,
+                style: app.textTheme.titleLarge,
+                textAlign: TextAlign.center,
               ),
               app.dimensions.padding.m.gap(),
               Text(

@@ -9,6 +9,7 @@ export 'colors/color_hex_extension.dart';
 export 'colors/darken_extension.dart';
 export 'colors/theme_adapter.dart';
 export 'customs/app_focus_ring.dart';
+export 'customs/app_selection_area.dart';
 export 'customs/app_wordmark.dart';
 export 'customs/custom_appbar.dart';
 export 'customs/form_drawer_template.dart';

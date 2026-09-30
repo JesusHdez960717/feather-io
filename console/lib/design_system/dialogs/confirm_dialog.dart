@@ -55,12 +55,10 @@ class ConfirmDialog extends StatelessWidget {
         mainAxisAlignment: .center,
         crossAxisAlignment: .center,
         children: [
-          SelectionArea(
-            child: Text(
-              description,
-              style: app.textTheme.titleMedium,
-              textAlign: TextAlign.center,
-            ),
+          Text(
+            description,
+            style: app.textTheme.titleMedium,
+            textAlign: TextAlign.center,
           ),
           app.dimensions.padding.xxl.gap(),
           Row(

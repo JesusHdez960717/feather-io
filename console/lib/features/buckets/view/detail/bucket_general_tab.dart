@@ -197,9 +197,10 @@ class _CodeChip extends StatelessWidget {
         color: app.colors.primary.background3,
         borderRadius: app.dimensions.border.borderRadius.s,
       ),
-      child: SelectableText(
+      child: Text(
         text,
         maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: app.textTheme.bodyMedium?.copyWith(fontFamily: 'monospace'),
       ),
     );

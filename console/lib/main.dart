@@ -108,7 +108,7 @@ class App extends StatelessWidget {
                 child: MaterialUiCompatibilityBridge(
                   child: old.Material(
                     type: old.MaterialType.transparency,
-                    child: child!,
+                    child: AppSelectionArea(child: child!),
                   ),
                 ),
               );

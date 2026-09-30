@@ -31,12 +31,10 @@ class ErrorPage extends StatelessWidget {
                 padding: EdgeInsets.symmetric(
                   horizontal: app.dimensions.padding.xxl,
                 ),
-                child: SelectionArea(
-                  child: Text(
-                    message ?? app.intl.error,
-                    style: app.textTheme.titleLarge,
-                    textAlign: TextAlign.center,
-                  ),
+                child: Text(
+                  message ?? app.intl.error,
+                  style: app.textTheme.titleLarge,
+                  textAlign: TextAlign.center,
                 ),
               ),
               if (onRetry != null) ...[
