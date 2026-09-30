@@ -14,6 +14,7 @@ class S3Controller {
         S3BucketNameFilter(),
         JwtFilter(),
         S3SigV4Filter(),
+        AnonymousAccessFilter(),
       ]),
       routes: [
         Route.get(
@@ -103,11 +104,7 @@ class S3Controller {
           path: '/{bucket}',
           handler: multiDelete,
           filterConfig: FilterConfig([
-            AuthFilter(
-              rules:
-                  hasPermission('s3.multi-delete-objects') |
-                  hasPermission('s3.anonymous.multi-delete-objects'),
-            ),
+            AuthFilter(rules: hasPermission('s3.multi-delete-objects')),
             ReservedBucketFilter(),
           ]),
         ),

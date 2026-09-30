@@ -1,21 +1,22 @@
 import 'package:service/feather.dart';
 
+/// Autentica como anonimo las peticiones sin credenciales que cubre una regla
+/// de acceso anonimo del bucket, con los permisos `s3.anonymous.*` de su tipo.
+/// El `AuthFilter` de cada ruta decide despues; sin regla, sigue siendo un 401.
+///
+/// El multi-delete no se abre nunca: sus keys van en el body y no en la ruta.
 class AnonymousAccessFilter extends Filter {
-  final String bucketName;
-  final List<AnonymousRuleModel> rules;
+  static final AnonymousAccessFilter _instance = AnonymousAccessFilter._();
 
-  AnonymousAccessFilter({required this.bucketName, this.rules = const []});
+  late final AnonymousAccessService _service = AnonymousAccessService();
 
-  static const _readKeys = {
-    's3.anonymous.list-objects',
-    's3.anonymous.get-object',
-  };
+  AnonymousAccessFilter._();
 
-  static const _writeKeys = {
-    's3.anonymous.put-object',
-    's3.anonymous.delete-object',
-    's3.anonymous.multi-delete-objects',
-  };
+  factory AnonymousAccessFilter() => _instance;
+
+  static const _readKeys = {'s3.list-objects', 's3.get-object'};
+
+  static const _writeKeys = {'s3.put-object', 's3.delete-object'};
 
   @override
   Future<ResponseEntity> doFilter(
@@ -25,19 +26,22 @@ class AnonymousAccessFilter extends Filter {
     final bucket = request.pathParams['bucket'];
     final routeKey = request.routingContext?.key;
 
-    // Si es list-objects, el "key" a evaluar es el prefix del query param
-    // Si es una operación sobre un objeto, es el key del path param
-    final key =
-        request.pathParams['key'] ?? request.queryParams['prefix'] ?? '';
+    if (bucket != null && routeKey != null && _isAnonymousRoute(routeKey)) {
+      // En list-objects se evalua el prefix del query; en un objeto, su key
+      final key = routeKey == 's3.list-objects'
+          ? request.queryParams['prefix'] ?? ''
+          : request.pathParams['key'] ?? '';
 
-    if (bucket == bucketName && routeKey != null) {
-      final rule = _findMatchingRule(key);
-      if (rule != null && _isActionAllowed(rule.access, routeKey)) {
+      final rule = await _service.findMatchingRule(bucket: bucket, key: key);
+      if (rule != null && _allowedKeys(rule.access).contains(routeKey)) {
         request.securityContext.setAuthentication(
           Authentication(
-            principal: 'Anonymous',
+            principal: 'anonymous',
             roles: {'anonymous'},
-            permissions: _getPermissionsForAccess(rule.access),
+            permissions: {
+              for (final allowed in _allowedKeys(rule.access))
+                allowed.replaceFirst('s3.', 's3.anonymous.'),
+            },
             authenticated: true,
           ),
         );
@@ -46,59 +50,25 @@ class AnonymousAccessFilter extends Filter {
     return await chain.doFilter(request);
   }
 
-  Set<String> _getPermissionsForAccess(AnonymousAccessType access) {
-    switch (access) {
-      case AnonymousAccessType.readOnly:
-        return _readKeys;
-      case AnonymousAccessType.writeOnly:
-        return _writeKeys;
-      case AnonymousAccessType.readWrite:
-        return {..._readKeys, ..._writeKeys};
-    }
+  bool _isAnonymousRoute(String routeKey) =>
+      _readKeys.contains(routeKey) || _writeKeys.contains(routeKey);
+
+  Set<String> _allowedKeys(AnonymousAccessType access) {
+    return switch (access) {
+      AnonymousAccessType.readOnly => _readKeys,
+      AnonymousAccessType.writeOnly => _writeKeys,
+      AnonymousAccessType.readWrite => {..._readKeys, ..._writeKeys},
+    };
   }
 
-  bool _isActionAllowed(AnonymousAccessType access, String routeKey) {
-    switch (access) {
-      case AnonymousAccessType.readOnly:
-        return _readKeys.contains(routeKey);
-      case AnonymousAccessType.writeOnly:
-        return _writeKeys.contains(routeKey);
-      case AnonymousAccessType.readWrite:
-        return _readKeys.contains(routeKey) || _writeKeys.contains(routeKey);
-    }
-  }
-
-  AnonymousRuleModel? _findMatchingRule(String key) {
-    for (var rule in rules) {
-      var pattern = rule.prefix;
-      // S3 keys usually don't start with '/', so we normalize the pattern
-      if (pattern.startsWith('/')) {
-        pattern = pattern.substring(1);
-      }
-
-      // Basic support for wildcards:
-      // We convert '.' to '\.' to treat it as a literal dot,
-      // and '*' to '.*' to treat it as a wildcard.
-      final regexSource = pattern.replaceAll('.', '\\.').replaceAll('*', '.*');
-
-      try {
-        final regex = RegExp('^$regexSource');
-        if (regex.hasMatch(key)) {
-          return rule;
-        }
-      } catch (_) {
-        // Fallback: if it's not a valid regex, treat it as a simple prefix
-        final simplePrefix = pattern.split('*').first;
-        if (key.startsWith(simplePrefix)) {
-          return rule;
-        }
-      }
-    }
-    return null;
+  ///Solo si nadie se ha autenticado antes (JWT o SigV4)
+  @override
+  bool shouldFilter(RequestEntity request) {
+    return !request.securityContext.isAuthenticated;
   }
 
   @override
   String toString() {
-    return 'AnonymousAccessFilter{bucket: $bucketName, rules: ${rules.length}}';
+    return 'AnonymousAccessFilter()';
   }
 }

@@ -9,9 +9,11 @@ class AccessRuleTableRepo {
   Future<List<AnonymousRuleTableData>> getRulesByBucket({
     required String bucket,
   }) {
-    return (_db.select(
-      _db.anonymousRuleTable,
-    )..where((tbl) => tbl.bucketName.equals(bucket))).get();
+    //en orden de creacion: si varias reglas coinciden, gana la primera
+    return (_db.select(_db.anonymousRuleTable)
+          ..where((tbl) => tbl.bucketName.equals(bucket))
+          ..orderBy([(tbl) => OrderingTerm.asc(tbl.id)]))
+        .get();
   }
 
   Future<AnonymousRuleTableData?> getRule({
@@ -41,6 +43,12 @@ class AccessRuleTableRepo {
           ),
           mode: InsertMode.insertOrReplace,
         );
+  }
+
+  Future deleteByBucket(String bucketName) async {
+    await (_db.delete(
+      _db.anonymousRuleTable,
+    )..where((tbl) => tbl.bucketName.equals(bucketName))).go();
   }
 
   Future deleteRule({

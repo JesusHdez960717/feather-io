@@ -5,6 +5,9 @@ class BucketModel implements Serializable {
   final int objectCount;
   final int size;
   final DateTime creationDate;
+
+  /// Fecha del objeto modificado mas recientemente; null si el bucket esta vacio
+  final DateTime? lastModified;
   final String? description;
   final int? color;
 
@@ -13,6 +16,7 @@ class BucketModel implements Serializable {
     required this.objectCount,
     required this.size,
     required this.creationDate,
+    this.lastModified,
     this.description,
     this.color,
   });
@@ -24,6 +28,7 @@ class BucketModel implements Serializable {
       'object_count': objectCount,
       'size_bytes': size,
       'creation_date': creationDate.toIso8601String(),
+      'last_modified': lastModified?.toIso8601String(),
       'description': description,
       'color': color,
     };

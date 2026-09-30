@@ -16,6 +16,24 @@ class AdminController {
             path: '/login',
             handler: authController.login,
           ),
+          Route.get(
+            key: 'admin.bucket.get',
+            path: '/bucket/{bucket}',
+            handler: getBucket,
+            filterConfig: FilterConfig([
+              AuthFilter(rules: hasPermission('admin.bucket.get')),
+              ReservedBucketFilter(),
+            ]),
+          ),
+          Route.delete(
+            key: 'admin.bucket.empty',
+            path: '/bucket/{bucket}/objects',
+            handler: emptyBucket,
+            filterConfig: FilterConfig([
+              AuthFilter(rules: hasPermission('admin.bucket.empty')),
+              ReservedBucketFilter(),
+            ]),
+          ),
           Route.put(
             key: 'admin.bucket.update',
             path: '/bucket/{bucket}',
@@ -76,6 +94,18 @@ class AdminController {
 
   final FileManagementService fileManagement;
   final BucketService bucketService;
+
+  Future<ResponseEntity> getBucket(RequestEntity request) async {
+    final bucket = await bucketService.getBucket(
+      bucketName: request.pathParams['bucket']!,
+    );
+    return ResponseEntity.ok(body: bucket);
+  }
+
+  Future<ResponseEntity> emptyBucket(RequestEntity request) async {
+    await bucketService.emptyBucket(bucketName: request.pathParams['bucket']!);
+    return ResponseEntity(204);
+  }
 
   Future<ResponseEntity> updateBucket(RequestEntity request) async {
     final bucketName = request.pathParams['bucket']!;

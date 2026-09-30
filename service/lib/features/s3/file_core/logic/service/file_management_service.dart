@@ -67,6 +67,27 @@ class FileManagementService {
     return true;
   }
 
+  Future<bool> bucketExists(String bucketName) async {
+    if (!S3Validator.isValidBucketName(bucketName)) {
+      throw S3Exception.invalidBucketName(bucketName);
+    }
+    return Directory(_getBucketPath(bucketName)).exists();
+  }
+
+  /// Borra todo el contenido del bucket y deja la carpeta vacia
+  Future<void> emptyBucket(String bucketName) async {
+    if (!S3Validator.isValidBucketName(bucketName)) {
+      throw S3Exception.invalidBucketName(bucketName);
+    }
+    final dir = Directory(_getBucketPath(bucketName));
+    if (!await dir.exists()) {
+      throw S3Exception.noSuchBucket(bucketName);
+    }
+    await for (final entity in dir.list()) {
+      await entity.delete(recursive: true);
+    }
+  }
+
   Future<bool> uploadFile({
     required String bucketName,
     required String key,
