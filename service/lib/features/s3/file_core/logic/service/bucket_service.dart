@@ -114,7 +114,8 @@ class BucketService {
 
     final bucketEntities = await dir.list(recursive: true).toList();
     for (var bucketEntity in bucketEntities) {
-      if (bucketEntity is File) {
+      if (bucketEntity is File &&
+          p.basename(bucketEntity.path) != S3Validator.folderMarker) {
         final fileStat = await bucketEntity.stat();
         objectCount++;
         totalSize += fileStat.size;

@@ -1,6 +1,8 @@
 @TestOn('vm')
 library;
 
+import 'dart:io';
+
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 
@@ -74,6 +76,41 @@ void main() {
         headers: server.auth(),
       );
       expect(response.statusCode, 400);
+    });
+  });
+
+  group('S3Controller - HEAD Object', () {
+    test('Should answer the headers without the body', () async {
+      final response = await http.head(
+        server.url('/$bucket/test.txt'),
+        headers: server.auth(),
+      );
+      expect(response.statusCode, 200);
+      expect(response.body, isEmpty);
+      expect(response.headers['content-length'], '7');
+      expect(response.headers['content-type'], contains('text/plain'));
+      expect(HttpDate.parse(response.headers['last-modified']!), isA<DateTime>());
+    });
+
+    test('Should send Last-Modified on GET too', () async {
+      final response = await http.get(
+        server.url('/$bucket/test.txt'),
+        headers: server.auth(),
+      );
+      expect(response.headers['last-modified'], isNotNull);
+    });
+
+    test('Should return 404 for a missing object', () async {
+      final response = await http.head(
+        server.url('/$bucket/notfound.txt'),
+        headers: server.auth(),
+      );
+      expect(response.statusCode, 404);
+    });
+
+    test('Should fail without auth (401)', () async {
+      final response = await http.head(server.url('/$bucket/test.txt'));
+      expect(response.statusCode, 401);
     });
   });
 }

@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:archive/archive_io.dart';
 import 'package:path/path.dart' as p;
@@ -53,9 +55,16 @@ class FileManagementService {
       throw S3Exception.noSuchBucket(bucketName);
     }
 
-    // S3 requiere que el bucket esté vacío para ser borrado
-    final entities = await dir.list().toList();
-    if (entities.isNotEmpty) {
+    // S3 requiere que el bucket esté vacío para ser borrado. Las carpetas
+    // vacias (solo con su marcador) no son objetos y no lo impiden
+    final hasObjects = await dir
+        .list(recursive: true)
+        .any(
+          (entity) =>
+              entity is File &&
+              p.basename(entity.path) != S3Validator.folderMarker,
+        );
+    if (hasObjects) {
       throw S3Exception(
         S3ErrorCode.bucketNotEmpty,
         message: 'El bucket "$bucketName" no está vacío y no puede ser borrado.',
@@ -63,7 +72,7 @@ class FileManagementService {
       );
     }
 
-    await dir.delete();
+    await dir.delete(recursive: true);
     return true;
   }
 
@@ -113,6 +122,16 @@ class FileManagementService {
       );
     }
 
+    // Una key terminada en '/' es una carpeta, como en la consola de S3: se
+    // crea vacia con su marcador y el cuerpo (vacio) se descarta
+    if (key.endsWith('/')) {
+      await binary.drain<void>();
+      final folder = Directory(p.join(_getBucketPath(bucketName), key));
+      await folder.create(recursive: true);
+      await File(p.join(folder.path, S3Validator.folderMarker)).create();
+      return true;
+    }
+
     final file = _getFile(bucketName, key);
 
     //creo el bucket y las subcarpetas si no existen
@@ -148,14 +167,34 @@ class FileManagementService {
     }
   }
 
+  /// Maximo de claves por pagina en [listFiles], como en S3
+  static const int maxKeysLimit = 1000;
+
+  /// Lista los objetos del bucket ordenados por key. Con [delimiter] agrupa lo
+  /// que hay por debajo en prefijos comunes. Pagina como ListObjectsV2: como
+  /// mucho [maxKeys] claves (objetos + prefijos) y, si hay mas, un token para
+  /// pedir la pagina siguiente
   Future<ListObjectsResponse> listFiles({
     required String bucketName,
     String? prefix,
     String? delimiter,
+    int maxKeys = maxKeysLimit,
+    String? continuationToken,
   }) async {
     if (!S3Validator.isValidBucketName(bucketName)) {
       throw S3Exception.invalidBucketName(bucketName);
     }
+    if (maxKeys < 0) {
+      throw S3Exception(
+        S3ErrorCode.invalidArgument,
+        message: 'max-keys no puede ser negativo.',
+        resource: bucketName,
+      );
+    }
+    final startAfter = continuationToken == null
+        ? null
+        : _decodeContinuationToken(continuationToken);
+
     final bucketPath = _getBucketPath(bucketName);
     final dir = Directory(bucketPath);
 
@@ -168,50 +207,131 @@ class FileManagementService {
         .list(recursive: true)
         .toList();
 
-    final List<FileModel> filesList = [];
+    final Map<String, FileModel> files = {};
     final Set<String> commonPrefixes = {};
 
     final normalizedPrefix = prefix ?? '';
 
     for (var entity in entities) {
-      if (entity is File) {
-        // Obtenemos la ruta relativa al bucket para usarla como key (ej: files/test/123.jpg)
-        final key = p
-            .relative(entity.path, from: bucketPath)
-            .replaceAll('\\', '/');
+      if (entity is! File) continue;
 
-        // Filtrar por prefijo
-        if (!key.startsWith(normalizedPrefix)) continue;
+      // Obtenemos la ruta relativa al bucket para usarla como key (ej: files/test/123.jpg)
+      final relative = p
+          .relative(entity.path, from: bucketPath)
+          .replaceAll('\\', '/');
 
-        if (delimiter != null && delimiter.isNotEmpty) {
-          // Si hay delimitador, buscamos si hay uno después del prefijo
-          final remainingKey = key.substring(normalizedPrefix.length);
-          final delimiterIndex = remainingKey.indexOf(delimiter);
+      // El marcador de una carpeta creada a mano se lista como la key "carpeta/"
+      final isFolder = p.posix.basename(relative) == S3Validator.folderMarker;
+      final folder = p.posix.dirname(relative);
+      if (isFolder && folder == '.') continue;
+      final key = isFolder ? '$folder/' : relative;
 
-          if (delimiterIndex != -1) {
-            // Es una "carpeta" (Common Prefix)
-            final commonPrefix =
-                normalizedPrefix +
-                remainingKey.substring(0, delimiterIndex + 1);
-            commonPrefixes.add(commonPrefix);
-            continue;
-          }
+      // Filtrar por prefijo
+      if (!key.startsWith(normalizedPrefix)) continue;
+
+      if (delimiter != null && delimiter.isNotEmpty) {
+        // Si hay delimitador, buscamos si hay uno después del prefijo
+        final remainingKey = key.substring(normalizedPrefix.length);
+        final delimiterIndex = remainingKey.indexOf(delimiter);
+
+        if (delimiterIndex != -1) {
+          // Es una "carpeta" (Common Prefix)
+          final commonPrefix =
+              normalizedPrefix + remainingKey.substring(0, delimiterIndex + 1);
+          commonPrefixes.add(commonPrefix);
+          continue;
         }
-
-        final stat = await entity.stat();
-        filesList.add(
-          FileModel(key: key, size: stat.size, lastModified: stat.modified),
-        );
       }
+
+      final stat = await entity.stat();
+      files[key] = FileModel(
+        key: key,
+        size: isFolder ? 0 : stat.size,
+        lastModified: stat.modified,
+      );
     }
+
+    // Objetos y prefijos van juntos y ordenados, como en S3, y se pagina sobre
+    // ese orden: la pagina empieza despues de la ultima key de la anterior
+    final keys = {...files.keys, ...commonPrefixes}.toList()..sort();
+    final pending = startAfter == null
+        ? keys
+        : keys.where((key) => key.compareTo(startAfter) > 0).toList();
+    final page = pending.take(min(maxKeys, maxKeysLimit)).toList();
+    final isTruncated = pending.length > page.length;
 
     return ListObjectsResponse(
       bucketName: bucketName,
       prefix: prefix,
       delimiter: delimiter,
-      contents: filesList,
-      commonPrefixes: commonPrefixes.toList()..sort(),
+      contents: [
+        for (final key in page)
+          if (files[key] != null) files[key]!,
+      ],
+      commonPrefixes: [
+        for (final key in page)
+          if (commonPrefixes.contains(key)) key,
+      ],
+      maxKeys: min(maxKeys, maxKeysLimit),
+      continuationToken: continuationToken,
+      isTruncated: isTruncated,
+      nextContinuationToken: isTruncated && page.isNotEmpty
+          ? base64Url.encode(utf8.encode(page.last))
+          : null,
+      totalKeys: keys.length,
     );
+  }
+
+  String _decodeContinuationToken(String token) {
+    try {
+      return utf8.decode(base64Url.decode(token));
+    } catch (_) {
+      throw S3Exception(
+        S3ErrorCode.invalidArgument,
+        message: 'El continuation-token no es válido.',
+        resource: token,
+      );
+    }
+  }
+
+  /// Copia un objeto (CopyObject). El destino se sobrescribe si existe
+  Future<FileModel> copyFile({
+    required String sourceBucket,
+    required String sourceKey,
+    required String bucketName,
+    required String key,
+  }) async {
+    for (final bucket in [sourceBucket, bucketName]) {
+      if (!S3Validator.isValidBucketName(bucket)) {
+        throw S3Exception.invalidBucketName(bucket);
+      }
+    }
+    for (final k in [sourceKey, key]) {
+      if (!S3Validator.isValidKey(k) || k.endsWith('/')) {
+        throw S3Exception.invalidKey(k);
+      }
+    }
+    if (sourceBucket == bucketName && sourceKey == key) {
+      throw S3Exception(
+        S3ErrorCode.invalidRequest,
+        message: 'El origen y el destino de la copia son el mismo objeto.',
+        resource: key,
+      );
+    }
+    if (!await Directory(_getBucketPath(sourceBucket)).exists()) {
+      throw S3Exception.noSuchBucket(sourceBucket);
+    }
+    final source = _getFile(sourceBucket, sourceKey);
+    if (!await source.exists()) {
+      throw S3Exception.noSuchKey(sourceKey);
+    }
+
+    final target = _getFile(bucketName, key);
+    await target.parent.create(recursive: true);
+    await source.copy(target.path);
+
+    final stat = await target.stat();
+    return FileModel(key: key, size: stat.size, lastModified: stat.modified);
   }
 
   Future<File> getFile({
@@ -268,7 +388,8 @@ class FileManagementService {
               .list(recursive: true)
               .toList();
           for (final entity in entities) {
-            if (entity is File) {
+            if (entity is File &&
+                p.basename(entity.path) != S3Validator.folderMarker) {
               final relativeKey = p
                   .relative(entity.path, from: bucketPath)
                   .replaceAll('\\', '/');

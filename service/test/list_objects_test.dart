@@ -95,4 +95,92 @@ void main() {
       expect(response.body, contains('<Code>NoSuchBucket</Code>'));
     });
   });
+
+  group('S3Controller - LIST Objects pagination', () {
+    const pageBucket = 'page-bucket';
+
+    setUpAll(() async {
+      for (final key in ['a.txt', 'b.txt', 'c/1.txt', 'd.txt', 'e.txt']) {
+        await server.putObject(pageBucket, key, key);
+      }
+    });
+
+    Future<Map<String, dynamic>> page(String query) async {
+      final response = await http.get(
+        server.url('/$pageBucket?$query'),
+        headers: server.auth(json: true),
+      );
+      expect(response.statusCode, 200, reason: response.body);
+      return jsonDecode(response.body);
+    }
+
+    List<String> keysOf(Map<String, dynamic> body) => [
+      ...(body['contents'] as List).map((e) => e['key'] as String),
+      ...(body['common_prefixes'] as List).cast<String>(),
+    ]..sort();
+
+    test('Should walk every key in order with max-keys and the token', () async {
+      final seen = <String>[];
+      String? token;
+      var pages = 0;
+      do {
+        final body = await page(
+          'delimiter=/&max-keys=2${token == null ? '' : '&continuation-token=$token'}',
+        );
+        expect(body['max_keys'], 2);
+        expect(body['key_count'], lessThanOrEqualTo(2));
+        expect(body['total_keys'], 5);
+        seen.addAll(keysOf(body));
+        token = body['next_continuation_token'];
+        expect(body['is_truncated'], token != null);
+        pages++;
+      } while (token != null);
+
+      expect(pages, 3);
+      expect(seen, ['a.txt', 'b.txt', 'c/', 'd.txt', 'e.txt']);
+    });
+
+    test('Should not be truncated when everything fits', () async {
+      final body = await page('delimiter=/');
+      expect(body['is_truncated'], isFalse);
+      expect(body['next_continuation_token'], isNull);
+      expect(body['max_keys'], 1000);
+      expect(body['key_count'], 5);
+    });
+
+    test('Should cap max-keys at 1000', () async {
+      final body = await page('max-keys=5000');
+      expect(body['max_keys'], 1000);
+    });
+
+    test('Should report the pagination in the XML', () async {
+      final response = await http.get(
+        server.url('/$pageBucket?max-keys=1'),
+        headers: server.auth(),
+      );
+      expect(response.body, contains('<IsTruncated>true</IsTruncated>'));
+      expect(response.body, contains('<MaxKeys>1</MaxKeys>'));
+      expect(response.body, contains('<KeyCount>1</KeyCount>'));
+      expect(response.body, contains('<NextContinuationToken>'));
+    });
+
+    test('Should reject an invalid max-keys (400)', () async {
+      for (final value in ['-1', 'abc']) {
+        final response = await http.get(
+          server.url('/$pageBucket?max-keys=$value'),
+          headers: server.auth(json: true),
+        );
+        expect(response.statusCode, 400, reason: value);
+        expect(jsonDecode(response.body)['code'], 'InvalidArgument');
+      }
+    });
+
+    test('Should reject an invalid continuation-token (400)', () async {
+      final response = await http.get(
+        server.url('/$pageBucket?continuation-token=%%%'),
+        headers: server.auth(json: true),
+      );
+      expect(response.statusCode, 400);
+    });
+  });
 }

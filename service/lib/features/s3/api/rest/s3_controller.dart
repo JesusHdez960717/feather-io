@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:mime/mime.dart';
 import 'package:service/feather.dart';
@@ -158,24 +159,94 @@ class S3Controller {
   }
 
   Future<ResponseEntity> putObject(RequestEntity request) async {
+    final copySource = request.headers['x-amz-copy-source'];
+    if (copySource != null) return _copyObject(request, copySource);
+
     await fileManagement.uploadFile(
       bucketName: request.pathParams['bucket']!,
-      key: request.pathParams['key']!,
+      key: _objectKey(request),
       binary: request.read(),
     );
 
     return ResponseEntity.ok(body: 'File uploaded successfully.');
   }
 
+  /// La key del objeto. El parametro de ruta pierde la `/` final, que es la que
+  /// distingue una carpeta (`fotos/`) de un objeto (`fotos`): se recupera de la URL
+  String _objectKey(RequestEntity request) {
+    final key = request.pathParams['key']!;
+    return request.requestedUri.path.endsWith('/') && !key.endsWith('/')
+        ? '$key/'
+        : key;
+  }
+
+  /// CopyObject: `PUT` con `x-amz-copy-source: /bucket/key`. Leer el origen
+  /// exige el permiso normal de descarga; una regla anonima no basta
+  Future<ResponseEntity> _copyObject(
+    RequestEntity request,
+    String copySource,
+  ) async {
+    final bucketName = request.pathParams['bucket']!;
+    final permissions =
+        request.securityContext.authentication?.permissions ?? const {};
+    if (!permissions.contains('s3.get-object')) {
+      throw S3Exception(
+        S3ErrorCode.accessDenied,
+        message: 'Copiar un objeto requiere permiso de lectura sobre el origen.',
+        resource: copySource,
+      );
+    }
+
+    // "/bucket/key" o "bucket/key", codificado como URL y quiza con ?versionId
+    final source = Uri.decodeComponent(copySource.split('?').first);
+    final path = source.startsWith('/') ? source.substring(1) : source;
+    final slash = path.indexOf('/');
+    if (slash <= 0 || slash == path.length - 1) {
+      throw S3Exception(
+        S3ErrorCode.invalidArgument,
+        message: 'x-amz-copy-source debe tener la forma /bucket/key.',
+        resource: copySource,
+      );
+    }
+
+    final copied = await fileManagement.copyFile(
+      sourceBucket: path.substring(0, slash),
+      sourceKey: path.substring(slash + 1),
+      bucketName: bucketName,
+      key: request.pathParams['key']!,
+    );
+
+    if (_acceptsJson(request)) {
+      return ResponseEntity.ok(body: copied);
+    }
+    return ResponseEntity.ok(
+      body: _mapCopyResultToXml(copied),
+      headers: {'content-type': 'application/xml'},
+    );
+  }
+
   Future<ResponseEntity> listObjects(RequestEntity request) async {
     final bucketName = request.pathParams['bucket']!;
     final prefix = request.queryParams['prefix'];
     final delimiter = request.queryParams['delimiter'];
+    final maxKeysParam = request.queryParams['max-keys'];
+    final maxKeys = maxKeysParam == null
+        ? FileManagementService.maxKeysLimit
+        : int.tryParse(maxKeysParam);
+    if (maxKeys == null) {
+      throw S3Exception(
+        S3ErrorCode.invalidArgument,
+        message: 'max-keys debe ser un número entero.',
+        resource: maxKeysParam,
+      );
+    }
 
     final result = await fileManagement.listFiles(
       bucketName: bucketName,
       prefix: prefix,
       delimiter: delimiter,
+      maxKeys: maxKeys,
+      continuationToken: request.queryParams['continuation-token'],
     );
 
     if (_acceptsJson(request)) {
@@ -198,11 +269,14 @@ class S3Controller {
     final contentType =
         lookupMimeType(file.path) ?? MediaType.applicationOctetStream;
 
+    //un HEAD usa esta misma ruta: Winter manda las cabeceras sin el cuerpo
+    final stat = await file.stat();
     return ResponseEntity.ok(
       body: file.openRead(),
       headers: {
         'content-type': contentType,
-        'content-length': (await file.length()).toString(),
+        'content-length': stat.size.toString(),
+        'last-modified': HttpDate.format(stat.modified),
       },
     );
   }
@@ -279,6 +353,19 @@ class S3Controller {
     return buffer.toString();
   }
 
+  String _mapCopyResultToXml(FileModel copied) {
+    final buffer = StringBuffer();
+    buffer.writeln('<?xml version="1.0" encoding="UTF-8"?>');
+    buffer.writeln(
+      '<CopyObjectResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">',
+    );
+    buffer.writeln(
+      '  <LastModified>${copied.lastModified.toUtc().toIso8601String()}</LastModified>',
+    );
+    buffer.writeln('</CopyObjectResult>');
+    return buffer.toString();
+  }
+
   String _mapListObjectsToXml(ListObjectsResponse response) {
     final buffer = StringBuffer();
     buffer.writeln('<?xml version="1.0" encoding="UTF-8"?>');
@@ -292,7 +379,19 @@ class S3Controller {
     if (response.delimiter != null) {
       buffer.writeln('  <Delimiter>${response.delimiter}</Delimiter>');
     }
-    buffer.writeln('  <IsTruncated>false</IsTruncated>');
+    buffer.writeln('  <MaxKeys>${response.maxKeys}</MaxKeys>');
+    buffer.writeln('  <KeyCount>${response.keyCount}</KeyCount>');
+    if (response.continuationToken != null) {
+      buffer.writeln(
+        '  <ContinuationToken>${response.continuationToken}</ContinuationToken>',
+      );
+    }
+    buffer.writeln('  <IsTruncated>${response.isTruncated}</IsTruncated>');
+    if (response.nextContinuationToken != null) {
+      buffer.writeln(
+        '  <NextContinuationToken>${response.nextContinuationToken}</NextContinuationToken>',
+      );
+    }
 
     for (final file in response.contents) {
       buffer.writeln('  <Contents>');

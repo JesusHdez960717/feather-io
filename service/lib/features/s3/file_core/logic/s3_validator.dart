@@ -1,6 +1,10 @@
 import 'package:path/path.dart' as p;
 
 class S3Validator {
+  /// Fichero oculto que marca una carpeta creada a mano (`PUT carpeta/`), para
+  /// que exista aunque este vacia. Ninguna key puede usar este nombre
+  static const String folderMarker = '.feather-folder';
+
   /// Valida el nombre del bucket según reglas de AWS S3.
   static bool isValidBucketName(String name) {
     if (name.length < 3 || name.length > 63) return false;
@@ -23,6 +27,7 @@ class S3Validator {
   /// Valida el Key (objeto) según reglas de AWS S3 y seguridad local.
   static bool isValidKey(String key) {
     if (key.isEmpty || key.length > 1024) return false;
+    if (key.split('/').contains(folderMarker)) return false;
 
     // Caracteres seguros recomendados por S3: 0-9a-zA-Z!-_.*'()/
     // También bloqueamos secuencias de Path Traversal por seguridad.
