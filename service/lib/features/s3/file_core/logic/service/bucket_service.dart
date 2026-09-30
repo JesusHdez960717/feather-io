@@ -37,6 +37,29 @@ class BucketService {
     await bucketRepo.delete(bucketName);
   }
 
+  /// Reemplaza la descripcion y el color de un bucket existente.
+  Future<BucketModel> updateBucket({
+    required String bucketName,
+    String? description,
+    int? color,
+  }) async {
+    if (!S3Validator.isValidBucketName(bucketName)) {
+      throw S3Exception.invalidBucketName(bucketName);
+    }
+    final dir = Directory(p.join(env.storageVolumePath, bucketName));
+    if (!await dir.exists()) {
+      throw S3Exception.noSuchBucket(bucketName);
+    }
+
+    await bucketRepo.save(
+      name: bucketName,
+      description: description,
+      color: color,
+    );
+
+    return _toModel(dir, await bucketRepo.findByName(bucketName));
+  }
+
   Future<List<BucketModel>> listBuckets() async {
     final storageDir = Directory(env.storageVolumePath);
     if (!await storageDir.exists()) {
@@ -55,34 +78,35 @@ class BucketService {
         final bucketName = p.basename(entity.path);
         if (!S3Validator.isValidBucketName(bucketName)) continue;
 
-        final stat = await entity.stat();
-        final dbBucket = dbBucketsMap[bucketName];
-
-        // Physical stats
-        int totalSize = 0;
-        int objectCount = 0;
-
-        final bucketEntities = await entity.list(recursive: true).toList();
-        for (var bucketEntity in bucketEntities) {
-          if (bucketEntity is File) {
-            objectCount++;
-            totalSize += await bucketEntity.length();
-          }
-        }
-
-        buckets.add(
-          BucketModel(
-            name: bucketName,
-            objectCount: objectCount,
-            size: totalSize,
-            creationDate: dbBucket?.createdAt ?? stat.changed,
-            description: dbBucket?.description,
-            color: dbBucket?.color,
-          ),
-        );
+        buckets.add(await _toModel(entity, dbBucketsMap[bucketName]));
       }
     }
 
     return buckets;
+  }
+
+  /// Junta las estadisticas del disco con los metadatos de la BD
+  Future<BucketModel> _toModel(Directory dir, BucketTableData? dbBucket) async {
+    final stat = await dir.stat();
+
+    int totalSize = 0;
+    int objectCount = 0;
+
+    final bucketEntities = await dir.list(recursive: true).toList();
+    for (var bucketEntity in bucketEntities) {
+      if (bucketEntity is File) {
+        objectCount++;
+        totalSize += await bucketEntity.length();
+      }
+    }
+
+    return BucketModel(
+      name: p.basename(dir.path),
+      objectCount: objectCount,
+      size: totalSize,
+      creationDate: dbBucket?.createdAt ?? stat.changed,
+      description: dbBucket?.description,
+      color: dbBucket?.color,
+    );
   }
 }

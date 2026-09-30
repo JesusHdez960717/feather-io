@@ -5,6 +5,7 @@ export 'logic/model/delete_objects_response.dart';
 export 'logic/model/download_objects_request.dart';
 export 'logic/model/file_model.dart';
 export 'logic/model/list_objects_response.dart';
+export 'logic/model/update_bucket_request.dart';
 export 'logic/s3_exception.dart';
 export 'logic/s3_validator.dart';
 export 'logic/service/bucket_service.dart';

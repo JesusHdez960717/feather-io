@@ -30,6 +30,7 @@ class AuthController {
           's3.delete-object',
           's3.multi-delete-objects',
           //admin stuff
+          'admin.bucket.update',
           'admin.bucket.download',
           'admin.bucket.anonymous-access.get-rules',
           'admin.bucket.anonymous-access.write-rule',

@@ -42,6 +42,11 @@ class FeatherIO {
         (data) => CreateBucketRequest.fromJson(data),
       ),
     );
+    om.addDeserializer(
+      Deserializer<UpdateBucketRequest>(
+        (data) => UpdateBucketRequest.fromJson(data),
+      ),
+    );
 
     //--------------- Errors ---------------\\
     Winter.context.setUp(exceptionHandler: S3ExceptionHandler());

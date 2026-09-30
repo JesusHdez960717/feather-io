@@ -16,6 +16,15 @@ class AdminController {
             path: '/login',
             handler: authController.login,
           ),
+          Route.put(
+            key: 'admin.bucket.update',
+            path: '/bucket/{bucket}',
+            handler: updateBucket,
+            filterConfig: FilterConfig([
+              AuthFilter(rules: hasPermission('admin.bucket.update')),
+              ReservedBucketFilter(),
+            ]),
+          ),
           Route.get(
             key: 'admin.bucket.anonymous-access.get-rules',
             path: '/bucket/{bucket}/anonymous-access',
@@ -61,10 +70,27 @@ class AdminController {
 
   AdminController()
       : fileManagement = di.find(),
+        bucketService = BucketService(),
         authController = AuthController(),
         anonymousAccessController = AnonymousAccessController();
 
   final FileManagementService fileManagement;
+  final BucketService bucketService;
+
+  Future<ResponseEntity> updateBucket(RequestEntity request) async {
+    final bucketName = request.pathParams['bucket']!;
+
+    final updateRequest = await request.body<UpdateBucketRequest>();
+    updateRequest.validate().throwOnFailure();
+
+    final bucket = await bucketService.updateBucket(
+      bucketName: bucketName,
+      description: updateRequest.description,
+      color: updateRequest.color,
+    );
+
+    return ResponseEntity.ok(body: bucket);
+  }
 
   Future<ResponseEntity> downloadObjects(RequestEntity request) async {
     final bucketName = request.pathParams['bucket']!;
