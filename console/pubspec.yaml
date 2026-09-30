@@ -42,8 +42,8 @@ dependencies:
   intl: 0.20.3
   web: 1.1.1
 
-  mime: any
-  cupertino_ui: any
+  mime: 2.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
