@@ -58,4 +58,5 @@ Sección de variables de entorno configurables para el servicio.
 | `STORAGE_VOLUME_PATH`   |  **Sí**   |         -          | Ruta local en el volumen donde se almacenarán los buckets y objetos.                                |
 | `ADMIN_PREFIX`          |    No     |      `_admin`      | Prefijo utilizado para la consola de administración y rutas reservadas del sistema.                 |
 | `RESERVED_BUCKET_NAMES` |    No     | ***(empty list)*** | Lista (separada por comas) de nombres de buckets reservados que no pueden ser creados por usuarios. |
+| `MAX_OBJECT_SIZE`       |    No     |  `5368709120`  | Tamaño máximo en bytes de un objeto subido con `PUT` (5 GiB por defecto); por encima responde `EntityTooLarge`. |
 | `JWT_SECRET`            |  **SI**   |         -          | Clave secreta para firmar los jwt.                                                                  |

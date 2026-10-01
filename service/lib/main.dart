@@ -72,8 +72,10 @@ class FeatherIO {
     AdminController adminController = AdminController();
 
     await Winter.start(
-      config: ServerConfig(port: port),
-      globalFilterConfig: FilterConfig([JwtFilter()]),
+      //el limite global es el de un objeto, que va a disco como stream; el
+      //resto de peticiones lo acota BodySizeFilter
+      config: ServerConfig(port: port, maxBodySize: env.maxObjectSize),
+      globalFilterConfig: FilterConfig([BodySizeFilter(), JwtFilter()]),
       securityConfig: SecurityConfig(cors: const CorsConfig()),
       router: WinterRouter(
         config: RouterConfig(onLoadedRoutes: DefaultOnLoadedRoutes.log()),

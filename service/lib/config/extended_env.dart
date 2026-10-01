@@ -2,6 +2,9 @@ import 'dart:io';
 
 import 'package:service/feather.dart';
 
+///Tamaño maximo por defecto de un objeto (5 GiB, el limite de un `PUT` en S3)
+const int defaultMaxObjectSize = 5 * 1024 * 1024 * 1024;
+
 extension ExtendedEnv on Env {
   String get secret => find<String>('FEATHER_SECRET', required: true)!;
 
@@ -11,6 +14,10 @@ extension ExtendedEnv on Env {
 
   String get storageVolumePath =>
       find<String>('STORAGE_VOLUME_PATH', required: true)!;
+
+  ///Tamaño maximo (en bytes) de un objeto subido con `PUT`
+  int get maxObjectSize =>
+      find<int>('MAX_OBJECT_SIZE', required: false) ?? defaultMaxObjectSize;
 
   String get adminPrefix {
     final String key = 'ADMIN_PREFIX';

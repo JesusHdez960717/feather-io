@@ -39,7 +39,7 @@ FEATHER_ACCESS=access FEATHER_SECRET=secret JWT_SECRET=some-jwt-secret \
 STORAGE_VOLUME_PATH=./uploads_local ADMIN_PREFIX=_admin fvm dart run lib/main.dart
 ```
 
-Required env: `FEATHER_ACCESS`, `FEATHER_SECRET`, `JWT_SECRET`, `STORAGE_VOLUME_PATH`. Optional: `ADMIN_PREFIX` (default `_admin`) and `RESERVED_BUCKET_NAMES`. See `service/README.md` (in Spanish; its endpoint table lists only some routes, so treat the controllers as the source of truth).
+Required env: `FEATHER_ACCESS`, `FEATHER_SECRET`, `JWT_SECRET`, `STORAGE_VOLUME_PATH`. Optional: `ADMIN_PREFIX` (default `_admin`), `RESERVED_BUCKET_NAMES` and `MAX_OBJECT_SIZE` (bytes, default 5 GiB). See `service/README.md` (in Spanish; its endpoint table lists only some routes, so treat the controllers as the source of truth).
 
 The SQLite path is hardcoded in `database.dart` and does **not** follow `STORAGE_VOLUME_PATH`.
 
@@ -122,14 +122,14 @@ XML is S3-compliant and the default. The console always asks for JSON. `multiDel
 - Other errors (login, admin request parsing) still throw Winter `ApiException` subclasses with plain-string bodies. Messages are currently a mix of Spanish and English.
 - A controller that wraps a block in `try/catch` must `if (e is ApiException) rethrow;` before converting unknown errors.
 
-**Storage & performance.** Buckets are directories under `STORAGE_VOLUME_PATH`. Bucket metadata (description, color, timestamps) and anonymous rules live in SQLite via Drift. Object payloads must always flow as `Stream<List<int>>` (`request.read()`, `file.openRead()`): **never** `readAsBytes()` or `Uint8List` for object data. Multi-object downloads build the zip in a temp file (`FileManagementService.zipObjects`) and stream it with `openAndDeleteTemp`. Every bucket name goes through `S3Validator.isValidBucketName` and every key through `S3Validator.isValidKey` (path traversal protection) before touching the filesystem.
+**Storage & performance.** Buckets are directories under `STORAGE_VOLUME_PATH`. Bucket metadata (description, color, timestamps) and anonymous rules live in SQLite via Drift. Object payloads must always flow as `Stream<List<int>>` (`request.read()`, `file.openRead()`): **never** `readAsBytes()` or `Uint8List` for object data. Multi-object downloads build the zip in a temp file (`FileManagementService.zipObjects`) and stream it with `openAndDeleteTemp`. Winter's `ServerConfig.maxBodySize` (10 MB by default) is set to `MAX_OBJECT_SIZE`, and `BodySizeFilter` (global) narrows it by route from the `Content-Length`: `s3.put-object` over `MAX_OBJECT_SIZE` → `EntityTooLarge`; every other body (read into memory) is capped at 2 MB (413), and a `POST`/`PUT`/`PATCH` without `Content-Length` gets 411. Every bucket name goes through `S3Validator.isValidBucketName` and every key through `S3Validator.isValidKey` (path traversal protection) before touching the filesystem.
 
 **Folders and listing.** A key ending in `/` is a folder: `PUT /{bucket}/fotos/` creates the directory with a hidden `S3Validator.folderMarker` file (`.feather-folder`), so empty folders survive the cleanup of empty parents. Listings show the marker as the key `fotos/` (size 0), stats and zips skip it, no key may use that name, and a bucket holding only empty folders counts as empty. Winter drops the trailing `/` from the `{key}` path param; `S3Controller._objectKey` restores it from the URL. `listFiles` sorts objects and common prefixes together and pages over them like ListObjectsV2 (`max-keys` up to 1000, `continuation-token` = base64url of the last key returned). `PUT` with `x-amz-copy-source` is CopyObject and needs the plain `s3.get-object` permission, so an anonymous rule can never copy. `HEAD` object is served by the `GET` route (Winter sends the headers only), which includes `Last-Modified`.
 
 **Tests.** Rules for new tests:
 - Every new feature gets tests. `s3_controller_test.dart` holds the happy path (upload → list → get → delete); each endpoint gets its own file (`put_object_test.dart`, `list_buckets_test.dart`…).
 - Use `TestServer` (`test/support/test_server.dart`): `TestServer(port: …, name: …)`, then `setUpAll(server.start)` / `tearDownAll(server.stop)`. It sets the env, starts the real server with an in-memory SQLite (`FeatherIO.start(database: …)`), logs in to get `server.token`, and creates and deletes `./uploads_test/<name>` (gitignored). Helpers: `server.url(path)`, `server.auth(json: …)`, `server.putObject(…)`.
-- Use one distinct port per file so files run in parallel. Ports in use: 8082–8099.
+- Use one distinct port per file so files run in parallel. Ports in use: 8082–8100.
 - Cover auth (missing or invalid token → 401, wrong login credentials → 403), validation (bad bucket names, path traversal, forbidden chars → 400), content negotiation (JSON vs XML, including the S3 error code) and edge cases (404, empty lists).
 - To send a path traversal that reaches the server, encode the slashes (`..%2F..%2Ffile`). The HTTP client normalizes `%2e%2e` segments away.
 
