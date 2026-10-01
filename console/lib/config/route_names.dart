@@ -23,6 +23,20 @@ abstract class RouteNames {
   ///`?tab=` de [buckets]: la pestaña del detalle (por defecto, la general)
   static const String bucketsTabParam = 'tab';
 
+  ///Abre el explorador en [folder] (`fotos/2026/`, vacia para la raiz) de [bucket]
+  static void openBrowserFolder(String bucket, String folder) {
+    final path = folder.endsWith('/')
+        ? folder.substring(0, folder.length - 1)
+        : folder;
+    app.navigator.go(
+      browser,
+      queryParameters: {
+        browserBucketParam: bucket,
+        if (path.isNotEmpty) browserFolderParam: path,
+      },
+    );
+  }
+
   ///Abre la seccion *Buckets* con [bucket] seleccionado, en su pestaña general
   static void openBucketSettings(String bucket) {
     app.navigator.go(buckets, queryParameters: {bucketsBucketParam: bucket});

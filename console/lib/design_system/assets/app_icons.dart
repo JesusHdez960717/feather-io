@@ -9,7 +9,6 @@ class AppIcons {
   final ViewTypeIcons viewType = const ViewTypeIcons();
   final StorageIcons storage = const StorageIcons();
   final NavigationIcons navigation = const NavigationIcons();
-
 }
 
 class NavigationIcons {
@@ -84,6 +83,8 @@ class ActionsIcons {
   SvgAsset get search => const SvgAsset('$_actions/search.svg');
 
   SvgAsset get settings => const SvgAsset('$_actions/settings.svg');
+
+  SvgAsset get transfer => const SvgAsset('$_actions/transfer.svg');
 
   SvgAsset get upload => const SvgAsset('$_actions/upload.svg');
 

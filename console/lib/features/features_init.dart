@@ -39,6 +39,7 @@ class FeaturesInit {
       BrowserInit.init(),
       BucketsInit.init(),
       AnonymousAccessInit.init(),
+      TransfersInit.init(),
     ]);
 
     // Listen for logout to reset other cubits
@@ -50,6 +51,7 @@ class FeaturesInit {
   }
 
   static Future<void> _resetCubits() async {
+    app.di.find<TransferCubit>().reset();
     app.di.find<AuthCubit>().reset();
   }
 

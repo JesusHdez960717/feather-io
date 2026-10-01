@@ -43,19 +43,6 @@ class BrowserClient extends BaseClient {
     );
   }
 
-  Future<void> uploadObject({
-    required String bucket,
-    required String key,
-    required Stream<List<int>> data,
-    required int length,
-    String? token,
-  }) async {
-    final requestOptions = options(token: token);
-    requestOptions.headers!['content-length'] = length.toString();
-
-    await dio.put('$baseUrl/$bucket/$key', data: data, options: requestOptions);
-  }
-
   ///Crea una carpeta vacia: un `PUT` de la key terminada en `/` sin cuerpo
   Future<void> createFolder({
     required String bucket,
@@ -122,20 +109,6 @@ class BrowserClient extends BaseClient {
     );
     return PresignResponse.fromJson(rawResponse.data);
   }
-
-  Future<List<int>> download({
-    required String bucket,
-    required List<String> keys,
-    String? token,
-  }) async {
-    final admin = Environment.adminPrefix;
-    Response<List<int>> response = await dio.post<List<int>>(
-      '$baseUrl/$admin/bucket/$bucket/download',
-      data: DownloadObjectsRequest(keys: keys).toJson(),
-      options: options(token: token).copyWith(responseType: ResponseType.bytes),
-    );
-    return response.data!;
-  }
 }
 
 //---------- DELETE OBJECTS REQUEST ----------
@@ -150,17 +123,6 @@ class DeleteObjectsRequest {
         'objects': keys.map((k) => {'key': k}).toList(),
       },
     };
-  }
-}
-
-//---------- DOWNLOAD OBJECTS REQUEST ----------
-class DownloadObjectsRequest {
-  final List<String> keys;
-
-  DownloadObjectsRequest({required this.keys});
-
-  Map<String, dynamic> toJson() {
-    return {'keys': keys};
   }
 }
 

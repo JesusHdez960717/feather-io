@@ -1567,6 +1567,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Link copied'**
   String get shareLinkCopied;
+
+  /// No description provided for @transfersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfers'**
+  String get transfersTitle;
+
+  /// No description provided for @transfersActive.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 transfer in progress} other{{count} transfers in progress}}'**
+  String transfersActive(int count);
+
+  /// No description provided for @transfersFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 transfer failed} other{{count} transfers failed}}'**
+  String transfersFailed(int count);
+
+  /// No description provided for @transfersAllDone.
+  ///
+  /// In en, this message translates to:
+  /// **'All transfers finished'**
+  String get transfersAllDone;
+
+  /// No description provided for @transfersEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No transfers yet. Uploads and downloads keep going in the background while you use the console.'**
+  String get transfersEmpty;
+
+  /// No description provided for @transfersUploadsAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file added to transfers} other{{count} files added to transfers}}'**
+  String transfersUploadsAdded(int count);
+
+  /// No description provided for @transfersDownloadAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading {name} in the background'**
+  String transfersDownloadAdded(String name);
+
+  /// No description provided for @transfersClearFinished.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear finished'**
+  String get transfersClearFinished;
+
+  /// No description provided for @transferUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload'**
+  String get transferUpload;
+
+  /// No description provided for @transferDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get transferDownload;
+
+  /// No description provided for @transferStatusQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Queued'**
+  String get transferStatusQueued;
+
+  /// No description provided for @transferStatusPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing the zip…'**
+  String get transferStatusPreparing;
+
+  /// No description provided for @transferStatusProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} · {percent}%'**
+  String transferStatusProgress(String done, String total, int percent);
+
+  /// No description provided for @transferStatusUploaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploaded · {size}'**
+  String transferStatusUploaded(String size);
+
+  /// No description provided for @transferStatusDownloaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloaded · {size}'**
+  String transferStatusDownloaded(String size);
+
+  /// No description provided for @transferStatusFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {message}'**
+  String transferStatusFailed(String message);
+
+  /// No description provided for @transferStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get transferStatusCancelled;
+
+  /// No description provided for @transferCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get transferCancel;
+
+  /// No description provided for @transferRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from list'**
+  String get transferRemove;
 }
 
 class _AppLocalizationsDelegate

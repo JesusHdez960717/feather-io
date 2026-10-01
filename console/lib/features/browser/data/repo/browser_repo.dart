@@ -40,26 +40,6 @@ class BrowserRepo {
     }
   }
 
-  Future<void> uploadObject({
-    required String bucket,
-    required String key,
-    required Stream<List<int>> data,
-    required int length,
-    String? token,
-  }) async {
-    try {
-      await client.uploadObject(
-        token: token,
-        bucket: bucket,
-        key: key,
-        data: data,
-        length: length,
-      );
-    } catch (e) {
-      throw ExceptionConverter.parse(e);
-    }
-  }
-
   Future<void> createFolder({
     required String bucket,
     required String key,
@@ -140,18 +120,6 @@ class BrowserRepo {
         token: token,
       );
       return response.toModel();
-    } catch (e) {
-      throw ExceptionConverter.parse(e);
-    }
-  }
-
-  Future<List<int>> download({
-    required String bucket,
-    required List<String> keys,
-    String? token,
-  }) async {
-    try {
-      return await client.download(token: token, bucket: bucket, keys: keys);
     } catch (e) {
       throw ExceptionConverter.parse(e);
     }

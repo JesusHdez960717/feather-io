@@ -67,6 +67,8 @@ class _BaseScreenState extends State<BaseScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
+                    const TransfersIndicator(),
+                    app.dimensions.padding.m.gap(),
                     const LanguageWidget(),
                     app.dimensions.padding.m.gap(),
                     PrimaryButton.svgIcon(

@@ -891,4 +891,96 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get shareLinkCopied => 'Enlace copiado';
+
+  @override
+  String get transfersTitle => 'Transferencias';
+
+  @override
+  String transfersActive(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transferencias en curso',
+      one: '1 transferencia en curso',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String transfersFailed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transferencias con error',
+      one: '1 transferencia con error',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get transfersAllDone => 'Todas las transferencias han terminado';
+
+  @override
+  String get transfersEmpty =>
+      'Aún no hay transferencias. Las subidas y descargas siguen en segundo plano mientras usas la consola.';
+
+  @override
+  String transfersUploadsAdded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ficheros añadidos a las transferencias',
+      one: '1 fichero añadido a las transferencias',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String transfersDownloadAdded(String name) {
+    return 'Descargando $name en segundo plano';
+  }
+
+  @override
+  String get transfersClearFinished => 'Limpiar terminadas';
+
+  @override
+  String get transferUpload => 'Subida';
+
+  @override
+  String get transferDownload => 'Descarga';
+
+  @override
+  String get transferStatusQueued => 'En cola';
+
+  @override
+  String get transferStatusPreparing => 'Preparando el zip…';
+
+  @override
+  String transferStatusProgress(String done, String total, int percent) {
+    return '$done de $total · $percent%';
+  }
+
+  @override
+  String transferStatusUploaded(String size) {
+    return 'Subido · $size';
+  }
+
+  @override
+  String transferStatusDownloaded(String size) {
+    return 'Descargado · $size';
+  }
+
+  @override
+  String transferStatusFailed(String message) {
+    return 'Error: $message';
+  }
+
+  @override
+  String get transferStatusCancelled => 'Cancelada';
+
+  @override
+  String get transferCancel => 'Cancelar';
+
+  @override
+  String get transferRemove => 'Quitar de la lista';
 }

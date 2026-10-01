@@ -243,13 +243,30 @@ class _BrowserScreenState extends State<BrowserScreen> {
               onExit: () => _navigate(),
               onDelete: (keys) =>
                   cubit.deleteObjects(bucket: bucket, keys: keys),
-              onUpload: (files) => cubit.uploadFiles(
-                bucket: bucket,
-                prefix: state.prefix,
-                files: files,
-              ),
-              onDownload: (keys, {zipName}) =>
-                  cubit.download(bucket: bucket, keys: keys, zipName: zipName),
+              onUpload: (files) {
+                app.di.find<TransferCubit>().upload(
+                  bucket: bucket.name,
+                  prefix: state.prefix,
+                  files: files,
+                );
+                app.snack.showSuccess(
+                  message: app.intl.transfersUploadsAdded(files.length),
+                  context: context,
+                );
+              },
+              onDownload: (keys, {zipName}) {
+                app.di.find<TransferCubit>().download(
+                  bucket: bucket.name,
+                  keys: keys,
+                  zipName: zipName,
+                );
+                app.snack.showSuccess(
+                  message: app.intl.transfersDownloadAdded(
+                    TransferCubit.zipFileName(keys, zipName: zipName),
+                  ),
+                  context: context,
+                );
+              },
               onView: (key) => cubit.viewObject(bucket: bucket, key: key),
               onViewTypeChanged: (type) => BrowserScreen.navigator.show(
                 bucket: bucket.name,

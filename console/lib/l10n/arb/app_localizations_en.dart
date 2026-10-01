@@ -890,4 +890,96 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shareLinkCopied => 'Link copied';
+
+  @override
+  String get transfersTitle => 'Transfers';
+
+  @override
+  String transfersActive(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transfers in progress',
+      one: '1 transfer in progress',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String transfersFailed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transfers failed',
+      one: '1 transfer failed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get transfersAllDone => 'All transfers finished';
+
+  @override
+  String get transfersEmpty =>
+      'No transfers yet. Uploads and downloads keep going in the background while you use the console.';
+
+  @override
+  String transfersUploadsAdded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files added to transfers',
+      one: '1 file added to transfers',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String transfersDownloadAdded(String name) {
+    return 'Downloading $name in the background';
+  }
+
+  @override
+  String get transfersClearFinished => 'Clear finished';
+
+  @override
+  String get transferUpload => 'Upload';
+
+  @override
+  String get transferDownload => 'Download';
+
+  @override
+  String get transferStatusQueued => 'Queued';
+
+  @override
+  String get transferStatusPreparing => 'Preparing the zip…';
+
+  @override
+  String transferStatusProgress(String done, String total, int percent) {
+    return '$done of $total · $percent%';
+  }
+
+  @override
+  String transferStatusUploaded(String size) {
+    return 'Uploaded · $size';
+  }
+
+  @override
+  String transferStatusDownloaded(String size) {
+    return 'Downloaded · $size';
+  }
+
+  @override
+  String transferStatusFailed(String message) {
+    return 'Error: $message';
+  }
+
+  @override
+  String get transferStatusCancelled => 'Cancelled';
+
+  @override
+  String get transferCancel => 'Cancel';
+
+  @override
+  String get transferRemove => 'Remove from list';
 }

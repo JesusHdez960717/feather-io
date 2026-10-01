@@ -3,7 +3,6 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:console/app_exporter.dart';
-import 'package:cross_file/cross_file.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:web/web.dart' as web;
 
@@ -269,70 +268,6 @@ class BrowserCubit extends Cubit<BrowserState>
         prefix: currentState.prefix,
         pageIndex: currentState.pageIndex,
       );
-    });
-  }
-
-  Future<void> uploadFiles({
-    required BucketModel bucket,
-    required String prefix,
-    required List<XFile> files,
-  }) async {
-    await _process(changedBucket: bucket, (currentState) async {
-      for (final file in files) {
-        final length = await file.length();
-        //el prefijo de una carpeta ya termina en '/' (p. ej. 'fotos/')
-        final key = prefix.isEmpty || prefix.endsWith('/')
-            ? '$prefix${file.name}'
-            : '$prefix/${file.name}';
-        await repo.uploadObject(
-          token: auth.auth?.accessToken,
-          bucket: bucket.name,
-          key: key,
-          data: file.openRead(),
-          length: length,
-        );
-      }
-
-      await _list(
-        bucket: bucket,
-        prefix: currentState.prefix,
-        pageIndex: currentState.pageIndex,
-      );
-    });
-  }
-
-  Future<void> download({
-    required BucketModel bucket,
-    required List<String> keys,
-    String? zipName,
-  }) async {
-    await _process((currentState) async {
-      final bytes = await repo.download(
-        token: auth.auth?.accessToken,
-        bucket: bucket.name,
-        keys: keys,
-      );
-
-      final String fileName;
-      if (zipName != null) {
-        fileName = zipName.endsWith('.zip') ? zipName : '$zipName.zip';
-      } else if (keys.length == 1) {
-        final name = keys.first.split('/').where((s) => s.isNotEmpty).last;
-        fileName = '$name.zip';
-      } else {
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
-        fileName = 'download_$timestamp.zip';
-      }
-
-      final blob = web.Blob([Uint8List.fromList(bytes).toJS].toJS);
-      final url = web.URL.createObjectURL(blob);
-      final anchor = web.document.createElement('a') as web.HTMLAnchorElement;
-      anchor.href = url;
-      anchor.download = fileName;
-      anchor.click();
-      web.URL.revokeObjectURL(url);
-
-      emit(_loadingSuccessFrom(currentState));
     });
   }
 
