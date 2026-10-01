@@ -982,4 +982,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get transferRemove => 'Remove from list';
+
+  @override
+  String navLanguage(String name) {
+    return 'Language: $name';
+  }
+
+  @override
+  String get navLogout => 'Log out';
 }

@@ -18,57 +18,25 @@ class TransfersIndicator extends StatelessWidget {
         final badge = active
             ? state.activeCount
             : (failed ? state.failedCount : 0);
-        return Tooltip(
-          message: TransfersPanel.summary(state) ?? app.intl.transfersTitle,
-          //el badge va fuera del Material: este pinta su borde por encima
-          //de lo que contiene
+        return RailButton(
+          tooltip: TransfersPanel.summary(state) ?? app.intl.transfersTitle,
+          onPressed: TransfersPanel.show,
+          badge: badge > 0 ? _Badge(count: badge, error: !active) : null,
           child: Stack(
-            clipBehavior: Clip.none,
+            alignment: Alignment.center,
             children: [
-              AppFocusRing(
-                borderRadius: app.dimensions.border.borderRadius.s,
-                child: Material(
-                  color: app.colors.primary.background2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: app.dimensions.border.borderRadius.s,
-                    side: BorderSide(color: app.colors.neutral.grey5),
-                  ),
-                  child: InkWell(
-                    borderRadius: app.dimensions.border.borderRadius.s,
-                    onTap: () => TransfersPanel.show(context),
-                    child: SizedBox(
-                      width: 44,
-                      height: 44,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          if (active)
-                            SizedBox(
-                              width: 30,
-                              height: 30,
-                              child: CircularProgressIndicator(
-                                value: state.progress,
-                                strokeWidth: 2.5,
-                                color: app.colors.primary.primaryFaded,
-                                backgroundColor: app.colors.neutral.grey5,
-                              ),
-                            ),
-                          _icon(state),
-                        ],
-                      ),
-                    ),
+              if (active)
+                SizedBox(
+                  width: 30,
+                  height: 30,
+                  child: CircularProgressIndicator(
+                    value: state.progress,
+                    strokeWidth: 2.5,
+                    color: app.colors.primary.primaryFaded,
+                    backgroundColor: app.colors.neutral.grey5,
                   ),
                 ),
-              ),
-              if (badge > 0)
-                Positioned(
-                  top: -6,
-                  right: -6,
-                  //no tapa la pulsacion del boton
-                  child: IgnorePointer(
-                    child: _Badge(count: badge, error: !active),
-                  ),
-                ),
+              _icon(state),
             ],
           ),
         );
@@ -90,7 +58,7 @@ class TransfersIndicator extends StatelessWidget {
         size: 20,
         color: app.colors.primary.green,
       ),
-      _ => icon.build(size: 18, color: app.colors.neutral.grey3),
+      _ => icon.build(size: 18, color: app.colors.neutral.grey2),
     };
   }
 }

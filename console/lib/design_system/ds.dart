@@ -1,6 +1,7 @@
 export 'assets/app_assets.dart';
 export 'assets/app_icons.dart';
 export 'buttons/primary_button.dart';
+export 'buttons/rail_button.dart';
 export 'buttons/view_type_selector.dart';
 export 'color_picker/app_color_picker.dart';
 export 'color_picker/color_popover.dart';

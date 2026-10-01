@@ -5,7 +5,11 @@ class LanguageModel {
   final SvgAsset icon;
   final String key;
 
-  LanguageModel({required this.icon, required this.key});
+  ///Nombre del idioma en ese mismo idioma (`English`, `Español`): no se
+  ///traduce, para que cada cual reconozca el suyo
+  final String name;
+
+  LanguageModel({required this.icon, required this.key, required this.name});
 
   Locale get locale => Locale(key);
 

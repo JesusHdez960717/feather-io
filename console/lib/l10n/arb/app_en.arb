@@ -373,5 +373,8 @@
   "@transferStatusFailed": {"placeholders": {"message": {"type": "String"}}},
   "transferStatusCancelled": "Cancelled",
   "transferCancel": "Cancel",
-  "transferRemove": "Remove from list"
+  "transferRemove": "Remove from list",
+  "navLanguage": "Language: {name}",
+  "@navLanguage": {"placeholders": {"name": {"type": "String"}}},
+  "navLogout": "Log out"
 }

@@ -298,5 +298,7 @@
   "transferStatusFailed": "Error: {message}",
   "transferStatusCancelled": "Cancelada",
   "transferCancel": "Cancelar",
-  "transferRemove": "Quitar de la lista"
+  "transferRemove": "Quitar de la lista",
+  "navLanguage": "Idioma: {name}",
+  "navLogout": "Cerrar sesión"
 }

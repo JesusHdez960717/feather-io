@@ -1681,6 +1681,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remove from list'**
   String get transferRemove;
+
+  /// No description provided for @navLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language: {name}'**
+  String navLanguage(String name);
+
+  /// No description provided for @navLogout.
+  ///
+  /// In en, this message translates to:
+  /// **'Log out'**
+  String get navLogout;
 }
 
 class _AppLocalizationsDelegate
