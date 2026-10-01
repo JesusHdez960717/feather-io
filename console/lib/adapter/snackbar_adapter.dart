@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:console/app_exporter.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:top_snackbar_flutter/top_snack_bar.dart';
@@ -31,14 +33,23 @@ class SnackBarAdapter {
     );
   }
 
+  ///Ancho del aviso; en pantallas mas estrechas, lo que quepa
+  static const double width = 420;
+
   void _show({required BuildContext context, required Widget child}) {
+    //el overlay raiz cubre toda la pantalla; el de cada rama del shell solo
+    //el contenido, sin el rail, y el aviso perderia el ancho de este
+    final overlay = Overlay.of(context, rootOverlay: true);
+    final screen = MediaQuery.sizeOf(overlay.context).width;
+    final margin = app.dimensions.padding.l;
     showTopSnackBar(
-      Overlay.of(context),
+      overlay,
       snackBarPosition: SnackBarPosition.bottom,
+      //abajo a la derecha con ancho fijo: el margen izquierdo es lo que sobra
       padding: EdgeInsets.only(
-        right: app.dimensions.padding.l,
-        bottom: app.dimensions.padding.l,
-        left: MediaQuery.of(context).size.width * 0.75,
+        right: margin,
+        bottom: margin,
+        left: max(margin, screen - margin - width),
       ),
       child,
     );
