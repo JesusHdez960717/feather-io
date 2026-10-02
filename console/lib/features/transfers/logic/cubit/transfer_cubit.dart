@@ -18,6 +18,13 @@ class TransferCubit extends Cubit<TransferState> {
   ///para no recargar el explorador por cada fichero
   static const Duration announceInterval = Duration(seconds: 2);
 
+  ///Por encima de este tamaño se sube por partes (multipart): en web cada
+  ///peticion se carga entera en memoria, asi solo hay una parte a la vez
+  static const int multipartThreshold = 16 * 1024 * 1024;
+
+  ///Tamaño de cada parte (S3 pide al menos 5 MiB salvo la ultima)
+  static const int partSize = 8 * 1024 * 1024;
+
   final TransferRepo _repo;
   final AuthCubit _auth;
 
@@ -201,21 +208,86 @@ class TransferCubit extends Cubit<TransferState> {
   Future<void> _runUpload(TransferTask task) async {
     var uploaded = false;
     try {
-      await _repo.upload(
-        id: task.id,
-        token: _auth.auth?.accessToken,
-        bucket: task.bucket,
-        key: task.key!,
-        data: task.file!.openRead(),
-        length: task.size,
-        onProgress: _progress(task.id),
-      );
+      if (task.size > multipartThreshold) {
+        await _uploadMultipart(task);
+      } else {
+        await _repo.upload(
+          id: task.id,
+          token: _auth.auth?.accessToken,
+          bucket: task.bucket,
+          key: task.key!,
+          data: task.file!.openRead(),
+          length: task.size,
+          onProgress: _progress(task.id),
+        );
+      }
       uploaded = true;
       _finish(task.id);
     } catch (e) {
       _fail(task.id, e);
     } finally {
       _announce(task.bucket, uploaded: uploaded);
+    }
+  }
+
+  ///Sube [task] por partes de [partSize], una tras otra. Si falla o se
+  ///cancela, aborta la subida en el servicio para no dejar partes sueltas
+  Future<void> _uploadMultipart(TransferTask task) async {
+    final token = _auth.auth?.accessToken;
+    final report = _progress(task.id);
+    String? uploadId;
+    try {
+      uploadId = await _repo.createMultipart(
+        id: task.id,
+        token: token,
+        bucket: task.bucket,
+        key: task.key!,
+      );
+      final parts = <UploadedPart>[];
+      var done = 0;
+      for (var number = 1; done < task.size; number++) {
+        //cancelada entre dos partes
+        if (_find(task.id)?.status != TransferStatus.running) {
+          throw const _Cancelled();
+        }
+        final end = min(done + partSize, task.size);
+        final sent = done;
+        final etag = await _repo.uploadPart(
+          id: task.id,
+          token: token,
+          bucket: task.bucket,
+          key: task.key!,
+          uploadId: uploadId,
+          partNumber: number,
+          data: task.file!.openRead(done, end),
+          length: end - done,
+          onProgress: (bytes, _) => report(sent + bytes, task.size),
+        );
+        parts.add(UploadedPart(number: number, etag: etag));
+        done = end;
+      }
+      await _repo.completeMultipart(
+        id: task.id,
+        token: token,
+        bucket: task.bucket,
+        key: task.key!,
+        uploadId: uploadId,
+        parts: parts,
+      );
+    } catch (_) {
+      final id = uploadId;
+      if (id != null) {
+        //sin esperar: si falla, el servicio la borra al borrar el bucket
+        _repo
+            .abortMultipart(
+              token: token,
+              bucket: task.bucket,
+              key: task.key!,
+              uploadId: id,
+            )
+            .ignore();
+      }
+      rethrow;
     }
   }
 
@@ -363,6 +435,11 @@ class TransferCubit extends Cubit<TransferState> {
     _guardLeave(false);
     return super.close();
   }
+}
+
+///Una subida multipart cancelada entre dos partes
+class _Cancelled implements Exception {
+  const _Cancelled();
 }
 
 abstract class TransferState {

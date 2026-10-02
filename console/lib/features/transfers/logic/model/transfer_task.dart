@@ -95,3 +95,11 @@ class TransferTask {
     return path.substring(0, path.lastIndexOf('/') + 1);
   }
 }
+
+///Parte ya subida de una subida multipart
+class UploadedPart {
+  final int number;
+  final String etag;
+
+  const UploadedPart({required this.number, required this.etag});
+}
