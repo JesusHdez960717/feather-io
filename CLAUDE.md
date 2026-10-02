@@ -191,7 +191,7 @@ goes through `_escapeXml`.
 
 `UnsupportedSubresourceFilter` (S3 parent) answers `501 NotImplemented` to the subresources the
 service does not implement (`?versioning`, `?policy`, `?tagging`, `?acl`, `?legal-hold`…, plus
-`GET ?uploads`/`?uploadId`, i.e. ListMultipartUploads and ListParts). Without it they would fall into
+`GET ?uploadId`, i.e. ListParts). Without it they would fall into
 the normal routes (`PUT /{bucket}?versioning` would create the bucket). A newly implemented
 subresource must be removed from its list.
 
@@ -264,7 +264,12 @@ table, with the file's size and mtime. The headers are the ones S3 stores (`Cont
 `x-amz-meta-*`, lowercased): the controller picks them from the request (`_objectHeaders`) on
 PutObject, CreateMultipartUpload (kept in `upload.json` until Complete) and CopyObject with
 `x-amz-metadata-directive: REPLACE` (otherwise the copy keeps the source's), and GET/HEAD send them
-back. Without a stored `Content-Type` it comes from the extension. Uploads compute the md5 while streaming (`Md5Tap`, also used by UploadPart), copies
+back. Without a stored `Content-Type` it comes from the extension. `x-amz-storage-class` is
+validated (`InvalidStorageClass`) and stored like those headers, except `STANDARD`, which S3 never
+sends back; a copy takes it from the request, not from the source. A signed `GET` may override the
+response headers with `?response-content-type=…` (and `-disposition`, `-cache-control`, …); anonymous
+requests can't. CopyObject and UploadPartCopy check the `x-amz-copy-source-if-*` conditions
+(`CopyConditions`, `412 PreconditionFailed`). Uploads compute the md5 while streaming (`Md5Tap`, also used by UploadPart), copies
 reuse the source's ETag and multipart stores `md5(part md5s)-N`. On read (GET/HEAD, listings), a
 missing row or one whose size/mtime no longer match (the file changed outside the service) gets its
 ETag recomputed by reading the file and saved, keeping its headers; listings only compute it for the objects of the returned
@@ -280,7 +285,10 @@ is not a valid bucket, so it isn't listed. Complete checks ascending order, ETag
 minimum of every part but the last, joins the parts inside the upload folder and moves the result,
 so the object never shows half-written; the final ETag is S3's `md5(part md5s)-N`. Deleting a bucket
 aborts its uploads. The upload id is validated as 32 hex chars before it touches a path. ListParts
-and ListMultipartUploads are not implemented. CORS exposes `ETag` so the console can read it.
+is not implemented. ListMultipartUploads (`GET /{bucket}?uploads`, list-objects route) lists the
+pending uploads of the bucket, sorted and without paging. UploadPartCopy (`PUT ?partNumber&uploadId`
+with `x-amz-copy-source` and optionally `x-amz-copy-source-range: bytes=a-b`) feeds UploadPart with
+`FileManagementService.readForCopy`. CORS exposes `ETag` so the console can read it.
 
 **Tests.** Rules for new tests:
 

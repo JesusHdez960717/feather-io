@@ -218,7 +218,7 @@ class S3Controller {
     } else {
       headers['content-encoding'] = encoding;
     }
-    return headers;
+    return {...headers, 'x-amz-storage-class': ?_storageClass(request)};
   }
 
   static const Set<String> _storedHeaders = {
@@ -229,6 +229,9 @@ class S3Controller {
     'content-type',
     'expires',
   };
+
+  //x-amz-storage-class no esta en [_storedHeaders]: se valida y se añade
+  //aparte, y la normal (STANDARD) no se guarda
 
   /// La key del objeto. El parametro de ruta pierde la `/` final, que es la que
   /// distingue una carpeta (`fotos/`) de un objeto (`fotos`): se recupera de la URL
@@ -246,38 +249,19 @@ class S3Controller {
     String copySource,
   ) async {
     final bucketName = request.pathParams['bucket']!;
-    final permissions =
-        request.securityContext.authentication?.permissions ?? const {};
-    if (!permissions.contains('s3.get-object')) {
-      throw S3Exception(
-        S3ErrorCode.accessDenied,
-        message:
-            'Copiar un objeto requiere permiso de lectura sobre el origen.',
-        resource: copySource,
-      );
-    }
-
-    // "/bucket/key" o "bucket/key", codificado como URL y quiza con ?versionId
-    final source = Uri.decodeComponent(copySource.split('?').first);
-    final path = source.startsWith('/') ? source.substring(1) : source;
-    final slash = path.indexOf('/');
-    if (slash <= 0 || slash == path.length - 1) {
-      throw S3Exception(
-        S3ErrorCode.invalidArgument,
-        message: 'x-amz-copy-source debe tener la forma /bucket/key.',
-        resource: copySource,
-      );
-    }
+    final (sourceBucket, sourceKey) = _copySource(request, copySource);
 
     //como S3: copia las cabeceras del origen salvo que se pida REPLACE
     final replace =
         request.headers['x-amz-metadata-directive']?.toUpperCase() == 'REPLACE';
     final copied = await fileManagement.copyFile(
-      sourceBucket: path.substring(0, slash),
-      sourceKey: path.substring(slash + 1),
+      sourceBucket: sourceBucket,
+      sourceKey: sourceKey,
       bucketName: bucketName,
       key: request.pathParams['key']!,
       headers: replace ? _objectHeaders(request) : null,
+      storageClass: _storageClass(request),
+      conditions: _copyConditions(request),
     );
 
     if (_acceptsJson(request)) {
@@ -289,10 +273,110 @@ class S3Controller {
     );
   }
 
+  /// El objeto de origen de una copia (`x-amz-copy-source`: `/bucket/key` o
+  /// `bucket/key`, codificado como URL y quiza con `?versionId`). Leerlo exige
+  /// el permiso normal de descarga; una regla anonima no basta
+  (String, String) _copySource(RequestEntity request, String copySource) {
+    final permissions =
+        request.securityContext.authentication?.permissions ?? const {};
+    if (!permissions.contains('s3.get-object')) {
+      throw S3Exception(
+        S3ErrorCode.accessDenied,
+        message:
+            'Copiar un objeto requiere permiso de lectura sobre el origen.',
+        resource: copySource,
+      );
+    }
+
+    final source = Uri.decodeComponent(copySource.split('?').first);
+    final path = source.startsWith('/') ? source.substring(1) : source;
+    final slash = path.indexOf('/');
+    if (slash <= 0 || slash == path.length - 1) {
+      throw S3Exception(
+        S3ErrorCode.invalidArgument,
+        message: 'x-amz-copy-source debe tener la forma /bucket/key.',
+        resource: copySource,
+      );
+    }
+    return (path.substring(0, slash), path.substring(slash + 1));
+  }
+
+  /// Las condiciones `x-amz-copy-source-if-*` de una copia. Una fecha que no
+  /// se entiende se ignora, como en S3
+  CopyConditions _copyConditions(RequestEntity request) {
+    DateTime? date(String name) {
+      final value = request.headers['x-amz-copy-source-if-$name'];
+      if (value == null) return null;
+      try {
+        return HttpDate.parse(value);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    return CopyConditions(
+      ifMatch: request.headers['x-amz-copy-source-if-match'],
+      ifNoneMatch: request.headers['x-amz-copy-source-if-none-match'],
+      ifModifiedSince: date('modified-since'),
+      ifUnmodifiedSince: date('unmodified-since'),
+    );
+  }
+
+  /// Clases de almacenamiento de S3. Todas se guardan igual: solo se recuerda
+  /// la que pidio el cliente para devolverla
+  static const Set<String> _storageClasses = {
+    'STANDARD',
+    'REDUCED_REDUNDANCY',
+    'STANDARD_IA',
+    'ONEZONE_IA',
+    'INTELLIGENT_TIERING',
+    'GLACIER',
+    'GLACIER_IR',
+    'DEEP_ARCHIVE',
+    'OUTPOSTS',
+    'EXPRESS_ONEZONE',
+  };
+
+  /// La clase de `x-amz-storage-class`, o null si no viene o es la normal
+  /// (`STANDARD`, que S3 no devuelve)
+  String? _storageClass(RequestEntity request) {
+    final value = request.headers['x-amz-storage-class']?.trim().toUpperCase();
+    if (value == null || value.isEmpty || value == 'STANDARD') return null;
+    if (!_storageClasses.contains(value)) {
+      throw S3Exception(
+        S3ErrorCode.invalidStorageClass,
+        message: 'La clase de almacenamiento "$value" no es válida.',
+        resource: request.requestedUri.path,
+      );
+    }
+    return value;
+  }
+
+  /// ListMultipartUploads (`GET /{bucket}?uploads`): las subidas en curso, sin
+  /// paginar (como mucho 1000)
+  Future<ResponseEntity> _listMultipartUploads(
+    RequestEntity request,
+    String bucketName,
+  ) async {
+    final prefix = request.queryParams['prefix'];
+    final uploads = (await multipart.list(
+      bucketName: bucketName,
+      prefix: prefix,
+    )).take(FileManagementService.maxKeysLimit).toList();
+    if (_acceptsJson(request)) return ResponseEntity.ok(body: uploads);
+    return ResponseEntity.ok(
+      body: _mapMultipartUploadsToXml(bucketName, prefix, uploads),
+      headers: {'content-type': 'application/xml'},
+    );
+  }
+
   Future<ResponseEntity> listObjects(RequestEntity request) async {
     final bucketName = request.pathParams['bucket']!;
     if (request.queryParams.containsKey('location')) {
       return _bucketLocation(bucketName);
+    }
+    if (request.queryParams.containsKey('uploads')) {
+      return _listMultipartUploads(request, bucketName);
     }
     final prefix = request.queryParams['prefix'];
     final delimiter = request.queryParams['delimiter'];
@@ -367,6 +451,17 @@ class S3Controller {
       'accept-ranges': 'bytes',
     };
 
+    //una peticion firmada puede cambiar las cabeceras de la respuesta con
+    //?response-content-type=… (S3 no lo permite a las anonimas)
+    final permissions =
+        request.securityContext.authentication?.permissions ?? const {};
+    if (permissions.contains('s3.get-object')) {
+      for (final name in _overridableHeaders) {
+        final value = request.queryParams['response-$name'];
+        if (value != null) headers[name] = value;
+      }
+    }
+
     final range = _requestedRange(request, stat.size, key);
     if (range == null) {
       return ResponseEntity.ok(
@@ -385,6 +480,15 @@ class S3Controller {
       },
     );
   }
+
+  static const List<String> _overridableHeaders = [
+    'cache-control',
+    'content-disposition',
+    'content-encoding',
+    'content-language',
+    'content-type',
+    'expires',
+  ];
 
   /// El tramo que pide la cabecera `Range` (`bytes=a-b`, `bytes=a-` o
   /// `bytes=-n`, los ultimos n) como posiciones inclusivas. Null si no hay
@@ -493,6 +597,10 @@ class S3Controller {
         resource: key,
       );
     }
+    final copySource = request.headers['x-amz-copy-source'];
+    if (copySource != null) {
+      return _uploadPartCopy(request, key, uploadId, partNumber, copySource);
+    }
     final etag = await multipart.uploadPart(
       bucketName: request.pathParams['bucket']!,
       key: key,
@@ -501,6 +609,62 @@ class S3Controller {
       binary: _objectBody(request),
     );
     return ResponseEntity(200, headers: {'etag': '"$etag"'});
+  }
+
+  /// UploadPartCopy: la parte es otro objeto, entero o el tramo de
+  /// `x-amz-copy-source-range: bytes=a-b`
+  Future<ResponseEntity> _uploadPartCopy(
+    RequestEntity request,
+    String key,
+    String uploadId,
+    int partNumber,
+    String copySource,
+  ) async {
+    final (sourceBucket, sourceKey) = _copySource(request, copySource);
+    final rangeHeader = request.headers['x-amz-copy-source-range'];
+    (int, int)? range;
+    if (rangeHeader != null) {
+      final match = RegExp(
+        r'^bytes=(\d+)-(\d+)$',
+      ).firstMatch(rangeHeader.trim());
+      if (match == null) {
+        throw S3Exception(
+          S3ErrorCode.invalidArgument,
+          message: 'x-amz-copy-source-range debe tener la forma bytes=a-b.',
+          resource: rangeHeader,
+        );
+      }
+      range = (int.parse(match.group(1)!), int.parse(match.group(2)!));
+    }
+
+    final source = await fileManagement.readForCopy(
+      sourceBucket: sourceBucket,
+      sourceKey: sourceKey,
+      range: range,
+      conditions: _copyConditions(request),
+    );
+    final etag = await multipart.uploadPart(
+      bucketName: request.pathParams['bucket']!,
+      key: key,
+      uploadId: uploadId,
+      partNumber: partNumber,
+      binary: source,
+    );
+    final copied = CopiedPartModel(
+      etag: etag,
+      lastModified: DateTime.now().toUtc(),
+    );
+
+    if (_acceptsJson(request)) return ResponseEntity.ok(body: copied);
+    return ResponseEntity.ok(
+      body:
+          '<?xml version="1.0" encoding="UTF-8"?>\n'
+          '<CopyPartResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">\n'
+          '  <LastModified>${_s3Date(copied.lastModified)}</LastModified>\n'
+          '  <ETag>&quot;${copied.etag}&quot;</ETag>\n'
+          '</CopyPartResult>\n',
+      headers: {'content-type': 'application/xml'},
+    );
   }
 
   /// Las partes de CompleteMultipartUpload: XML de S3 o JSON (la consola)
@@ -697,6 +861,45 @@ class S3Controller {
       };
     },
   );
+
+  String _mapMultipartUploadsToXml(
+    String bucketName,
+    String? prefix,
+    List<MultipartUploadModel> uploads,
+  ) {
+    final buffer = StringBuffer();
+    buffer.writeln('<?xml version="1.0" encoding="UTF-8"?>');
+    buffer.writeln(
+      '<ListMultipartUploadsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">',
+    );
+    buffer.writeln('  <Bucket>${_escapeXml(bucketName)}</Bucket>');
+    buffer.writeln('  <KeyMarker></KeyMarker>');
+    buffer.writeln('  <UploadIdMarker></UploadIdMarker>');
+    buffer.writeln('  <NextKeyMarker></NextKeyMarker>');
+    buffer.writeln('  <NextUploadIdMarker></NextUploadIdMarker>');
+    buffer.writeln('  <Prefix>${_escapeXml(prefix ?? '')}</Prefix>');
+    buffer.writeln(
+      '  <MaxUploads>${FileManagementService.maxKeysLimit}</MaxUploads>',
+    );
+    buffer.writeln('  <IsTruncated>false</IsTruncated>');
+    for (final upload in uploads) {
+      buffer.writeln('  <Upload>');
+      buffer.writeln('    <Key>${_escapeXml(upload.key)}</Key>');
+      buffer.writeln('    <UploadId>${upload.uploadId}</UploadId>');
+      for (final role in ['Initiator', 'Owner']) {
+        buffer.writeln(
+          '    <$role><ID>$_ownerId</ID><DisplayName>$_ownerId</DisplayName></$role>',
+        );
+      }
+      buffer.writeln('    <StorageClass>STANDARD</StorageClass>');
+      buffer.writeln(
+        '    <Initiated>${_s3Date(upload.initiated)}</Initiated>',
+      );
+      buffer.writeln('  </Upload>');
+    }
+    buffer.writeln('</ListMultipartUploadsResult>');
+    return buffer.toString();
+  }
 
   String _mapDeleteResultToXml(DeleteObjectsResponse result) {
     final buffer = StringBuffer();

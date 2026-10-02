@@ -15,12 +15,14 @@ enum S3ErrorCode {
   invalidPart('InvalidPart', 400),
   invalidPartOrder('InvalidPartOrder', 400),
   invalidRange('InvalidRange', 416),
+  invalidStorageClass('InvalidStorageClass', 400),
   invalidRequest('InvalidRequest', 400),
   malformedXML('MalformedXML', 400),
   noSuchBucket('NoSuchBucket', 404),
   noSuchKey('NoSuchKey', 404),
   noSuchUpload('NoSuchUpload', 404),
   notImplemented('NotImplemented', 501),
+  preconditionFailed('PreconditionFailed', 412),
   signatureDoesNotMatch('SignatureDoesNotMatch', 403);
 
   final String code;

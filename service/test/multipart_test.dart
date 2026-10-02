@@ -385,4 +385,154 @@ void main() {
       );
     });
   });
+
+  group('S3Controller - ListMultipartUploads (GET ?uploads)', () {
+    const listBucket = 'mp-list';
+
+    setUpAll(() => server.createBucket(listBucket));
+
+    Future<String> start(String key) async {
+      final created = await http.post(
+        server.url('/$listBucket/$key?uploads'),
+        headers: server.auth(json: true),
+      );
+      return jsonDecode(created.body)['upload_id'] as String;
+    }
+
+    test('Should list the pending uploads of the bucket in XML', () async {
+      final first = await start('b/uno.bin');
+      final second = await start('a/dos.bin');
+
+      final response = await http.get(
+        server.url('/$listBucket?uploads'),
+        headers: server.auth(),
+      );
+      expect(response.statusCode, 200, reason: response.body);
+      expect(response.body, contains('<ListMultipartUploadsResult'));
+      final keys = RegExp(r'<Key>(.*?)</Key>')
+          .allMatches(response.body)
+          .map((m) => m.group(1));
+      expect(keys, ['a/dos.bin', 'b/uno.bin']);
+      expect(response.body, contains('<UploadId>$first</UploadId>'));
+      expect(response.body, contains('<UploadId>$second</UploadId>'));
+      expect(response.body, contains('<Initiated>'));
+    });
+
+    test('Should filter by prefix and answer JSON', () async {
+      final response = await http.get(
+        server.url('/$listBucket?uploads&prefix=a/'),
+        headers: server.auth(json: true),
+      );
+      final uploads = jsonDecode(response.body) as List;
+      expect(uploads.map((u) => u['key']), ['a/dos.bin']);
+    });
+
+    test('Should not list the uploads of other buckets nor the finished ones', () async {
+      final response = await http.get(
+        server.url('/$bucket?uploads'),
+        headers: server.auth(json: true),
+      );
+      final keys = (jsonDecode(response.body) as List).map((u) => u['key']);
+      expect(keys, isNot(contains('b/uno.bin')));
+    });
+
+    test('Should return 404 for a missing bucket', () async {
+      final response = await http.get(
+        server.url('/no-existe?uploads'),
+        headers: server.auth(),
+      );
+      expect(response.statusCode, 404);
+    });
+  });
+
+  group('S3Controller - UploadPartCopy', () {
+    const copyBucket = 'mp-copy';
+
+    setUpAll(() => server.putObject(copyBucket, 'origen.txt', 'abcdefghij'));
+
+    Future<String> start(String key) async {
+      final created = await http.post(
+        server.url('/$copyBucket/$key?uploads'),
+        headers: server.auth(json: true),
+      );
+      return jsonDecode(created.body)['upload_id'] as String;
+    }
+
+    Future<http.Response> copyPart(
+      String key,
+      String uploadId,
+      int number, {
+      String? range,
+      Map<String, String> headers = const {},
+    }) => http.put(
+      server.url('/$copyBucket/$key?partNumber=$number&uploadId=$uploadId'),
+      headers: {
+        ...server.auth(),
+        'x-amz-copy-source': '/$copyBucket/origen.txt',
+        'x-amz-copy-source-range': ?range,
+        ...headers,
+      },
+    );
+
+    test('Should copy a whole object as a part', () async {
+      final uploadId = await start('entera.txt');
+      final response = await copyPart('entera.txt', uploadId, 1);
+      expect(response.statusCode, 200, reason: response.body);
+      expect(response.body, contains('<CopyPartResult'));
+      expect(
+        response.body,
+        contains('<ETag>&quot;${md5.convert(utf8.encode('abcdefghij'))}&quot;</ETag>'),
+      );
+    });
+
+    test('Should copy ranges and complete the object with them', () async {
+      const key = 'rangos.txt';
+      final uploadId = await start(key);
+      final first = await copyPart(key, uploadId, 1, range: 'bytes=0-2');
+      final second = await copyPart(key, uploadId, 2, range: 'bytes=7-9');
+      expect(first.statusCode, 200, reason: first.body);
+      expect(second.statusCode, 200, reason: second.body);
+
+      String etag(http.Response r) =>
+          RegExp(r'<ETag>(.*?)</ETag>').firstMatch(r.body)!.group(1)!;
+      //la primera parte tiene menos de 5 MiB: solo vale si es la unica, asi
+      //que se completa solo con la segunda para comprobar su contenido
+      final completed = await http.post(
+        server.url('/$copyBucket/$key?uploadId=$uploadId'),
+        headers: server.auth(),
+        body: '<CompleteMultipartUpload><Part><PartNumber>2</PartNumber>'
+            '<ETag>${etag(second)}</ETag></Part></CompleteMultipartUpload>',
+      );
+      expect(completed.statusCode, 200, reason: completed.body);
+      expect(
+        await File('${server.storagePath}/$copyBucket/$key').readAsString(),
+        'hij',
+      );
+    });
+
+    test('Should reject a range outside the source (416)', () async {
+      final uploadId = await start('fuera.txt');
+      final response = await copyPart('fuera.txt', uploadId, 1, range: 'bytes=5-20');
+      expect(response.statusCode, 416);
+      expect(response.body, contains('<Code>InvalidRange</Code>'));
+    });
+
+    test('Should reject a malformed range (400)', () async {
+      final uploadId = await start('mal.txt');
+      final response = await copyPart('mal.txt', uploadId, 1, range: 'bytes=5-');
+      expect(response.statusCode, 400);
+    });
+
+    test('Should check the copy conditions (412)', () async {
+      final uploadId = await start('condicion.txt');
+      final response = await copyPart(
+        'condicion.txt',
+        uploadId,
+        1,
+        headers: {'x-amz-copy-source-if-match': '"otro-etag"'},
+      );
+      expect(response.statusCode, 412);
+      expect(response.body, contains('<Code>PreconditionFailed</Code>'));
+    });
+  });
 }

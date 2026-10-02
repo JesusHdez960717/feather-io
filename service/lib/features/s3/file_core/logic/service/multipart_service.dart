@@ -46,11 +46,12 @@ class MultipartService {
     ).join();
     final dir = Directory(p.join(_root.path, uploadId));
     await dir.create(recursive: true);
+    final initiated = DateTime.now().toUtc();
     await File(p.join(dir.path, _infoFile)).writeAsString(
       jsonEncode({
         'bucket': bucketName,
         'key': key,
-        'initiated': DateTime.now().toUtc().toIso8601String(),
+        'initiated': initiated.toIso8601String(),
         'headers': headers,
       }),
     );
@@ -58,6 +59,7 @@ class MultipartService {
       bucket: bucketName,
       key: key,
       uploadId: uploadId,
+      initiated: initiated,
     );
   }
 
@@ -205,6 +207,45 @@ class MultipartService {
   }) async {
     final dir = await _uploadDir(bucketName, key, uploadId);
     await dir.delete(recursive: true);
+  }
+
+  /// ListMultipartUploads: las subidas en curso de [bucketName] cuya key
+  /// empieza por [prefix], ordenadas por key y por fecha de inicio
+  Future<List<MultipartUploadModel>> list({
+    required String bucketName,
+    String? prefix,
+  }) async {
+    if (!S3Validator.isValidBucketName(bucketName)) {
+      throw S3Exception.invalidBucketName(bucketName);
+    }
+    if (!await Directory(p.join(env.storageVolumePath, bucketName)).exists()) {
+      throw S3Exception.noSuchBucket(bucketName);
+    }
+    final uploads = <MultipartUploadModel>[];
+    if (!await _root.exists()) return uploads;
+    await for (final entity in _root.list()) {
+      if (entity is! Directory) continue;
+      final info = await _readInfo(entity);
+      final key = info?['key'];
+      if (info?['bucket'] != bucketName || key is! String) continue;
+      if (prefix != null && !key.startsWith(prefix)) continue;
+      uploads.add(
+        MultipartUploadModel(
+          bucket: bucketName,
+          key: key,
+          uploadId: p.basename(entity.path),
+          initiated:
+              DateTime.tryParse('${info?['initiated']}') ??
+              (await entity.stat()).changed.toUtc(),
+        ),
+      );
+    }
+    uploads.sort(
+      (a, b) => a.key != b.key
+          ? a.key.compareTo(b.key)
+          : a.initiated.compareTo(b.initiated),
+    );
+    return uploads;
   }
 
   /// Borra las subidas en curso de [bucketName] (al borrar el bucket)

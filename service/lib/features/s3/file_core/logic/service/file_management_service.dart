@@ -331,12 +331,17 @@ class FileManagementService {
 
   /// Copia un objeto (CopyObject). El destino se sobrescribe si existe y se
   /// queda con las cabeceras del origen, o con [headers] si se indican
+  ///
+  /// La clase de almacenamiento no se copia: es la de la peticion
+  /// ([storageClass], null para la normal), como en S3
   Future<FileModel> copyFile({
     required String sourceBucket,
     required String sourceKey,
     required String bucketName,
     required String key,
     Map<String, String>? headers,
+    String? storageClass,
+    CopyConditions conditions = CopyConditions.none,
   }) async {
     for (final bucket in [sourceBucket, bucketName]) {
       if (!S3Validator.isValidBucketName(bucket)) {
@@ -367,10 +372,17 @@ class FileManagementService {
       throw S3Exception.noSuchBucket(bucketName);
     }
 
+    final sourceStat = await source.stat();
     final sourceMeta = await objectMeta.metaOf(
       bucketName: sourceBucket,
       key: sourceKey,
       file: source,
+      stat: sourceStat,
+    );
+    conditions.check(
+      etag: sourceMeta.etag,
+      modified: sourceStat.modified,
+      resource: sourceKey,
     );
     final etag = sourceMeta.etag;
     final target = _getFile(bucketName, key);
@@ -381,7 +393,12 @@ class FileManagementService {
       key: key,
       file: target,
       etag: etag,
-      headers: headers ?? sourceMeta.headers,
+      headers: {
+        for (final MapEntry(key: name, :value)
+            in (headers ?? sourceMeta.headers).entries)
+          if (name != 'x-amz-storage-class') name: value,
+        'x-amz-storage-class': ?storageClass,
+      },
     );
 
     final stat = await target.stat();
@@ -391,6 +408,40 @@ class FileManagementService {
       lastModified: stat.modified,
       etag: etag,
     );
+  }
+
+  /// El contenido de un objeto para copiarlo en una parte (UploadPartCopy),
+  /// entero o solo [range] (posiciones inclusivas), si cumple [conditions]
+  Future<Stream<List<int>>> readForCopy({
+    required String sourceBucket,
+    required String sourceKey,
+    (int, int)? range,
+    CopyConditions conditions = CopyConditions.none,
+  }) async {
+    final source = await getFile(bucketName: sourceBucket, key: sourceKey);
+    final stat = await source.stat();
+    final meta = await objectMeta.metaOf(
+      bucketName: sourceBucket,
+      key: sourceKey,
+      file: source,
+      stat: stat,
+    );
+    conditions.check(
+      etag: meta.etag,
+      modified: stat.modified,
+      resource: sourceKey,
+    );
+    if (range == null) return source.openRead();
+    final (start, end) = range;
+    if (start > end || end >= stat.size) {
+      throw S3Exception(
+        S3ErrorCode.invalidRange,
+        message:
+            'El rango $start-$end está fuera del objeto (${stat.size} bytes).',
+        resource: sourceKey,
+      );
+    }
+    return source.openRead(start, end + 1);
   }
 
   Future<File> getFile({

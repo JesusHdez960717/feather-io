@@ -50,12 +50,12 @@ class UnsupportedSubresourceFilter extends Filter {
   ) async {
     final params = request.queryParams.keys;
     var subresource = params.where(_unsupported.contains).firstOrNull;
-    //?uploads y ?uploadId solo existen para POST, PUT y DELETE (multipart);
-    //con GET serian ListMultipartUploads y ListParts
-    if (subresource == null && const {'GET', 'HEAD'}.contains(request.method)) {
-      subresource = params
-          .where((p) => p == 'uploads' || p == 'uploadId')
-          .firstOrNull;
+    //con GET, ?uploadId seria ListParts (?uploads, ListMultipartUploads, si
+    //esta implementado)
+    if (subresource == null &&
+        const {'GET', 'HEAD'}.contains(request.method) &&
+        params.contains('uploadId')) {
+      subresource = 'uploadId';
     }
     if (subresource != null) {
       throw S3Exception(

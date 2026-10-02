@@ -1,5 +1,6 @@
 export 'logic/model/bucket_model.dart';
 export 'logic/model/complete_multipart_request.dart';
+export 'logic/model/copy_conditions.dart';
 export 'logic/model/create_bucket_request.dart';
 export 'logic/model/delete_objects_request.dart';
 export 'logic/model/delete_objects_response.dart';

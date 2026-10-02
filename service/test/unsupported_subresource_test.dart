@@ -57,10 +57,7 @@ void main() {
       );
     });
 
-    test('Should answer 501 to ListMultipartUploads and ListParts', () async {
-      expectNotImplemented(
-        await http.get(server.url('/$bucket?uploads'), headers: server.auth()),
-      );
+    test('Should answer 501 to ListParts', () async {
       expectNotImplemented(
         await http.get(
           server.url('/$bucket/a.txt?uploadId=abc'),

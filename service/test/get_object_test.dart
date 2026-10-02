@@ -239,4 +239,37 @@ void main() {
       expect(response.headers['content-range'], 'bytes 0-1/6');
     });
   });
+
+  group('S3Controller - GET Object (response-* overrides)', () {
+    test('Should override the response headers from the query', () async {
+      final response = await http.get(
+        server.url(
+          '/$bucket/test.txt?response-content-type=application/pdf'
+          '&response-content-disposition=attachment%3B%20filename%3D%22a.pdf%22'
+          '&response-cache-control=no-cache',
+        ),
+        headers: server.auth(),
+      );
+      expect(response.statusCode, 200);
+      expect(response.headers['content-type'], 'application/pdf');
+      expect(response.headers['content-disposition'], 'attachment; filename="a.pdf"');
+      expect(response.headers['cache-control'], 'no-cache');
+      expect(response.body, 'content');
+    });
+
+    test('Should ignore the overrides of an anonymous request', () async {
+      final rule = await http.post(
+        server.url('/_admin/bucket/$bucket/anonymous-access'),
+        headers: {...server.auth(json: true), 'content-type': 'application/json'},
+        body: jsonEncode({'prefix': 'test.txt', 'access': 'readOnly'}),
+      );
+      expect(rule.statusCode, anyOf(200, 201), reason: rule.body);
+
+      final response = await http.get(
+        server.url('/$bucket/test.txt?response-content-type=application/pdf'),
+      );
+      expect(response.statusCode, 200);
+      expect(response.headers['content-type'], contains('text/plain'));
+    });
+  });
 }

@@ -158,4 +158,64 @@ void main() {
       expect(response.headers['x-amz-meta-autor'], 'jesus');
     });
   });
+
+  group('S3Controller - Storage class', () {
+    test('Should keep the storage class and send it back', () async {
+      await server.putObject(
+        bucket,
+        'frio.bin',
+        'x',
+        headers: {'x-amz-storage-class': 'reduced_redundancy'},
+      );
+      final response = await head('frio.bin');
+      expect(response.headers['x-amz-storage-class'], 'REDUCED_REDUNDANCY');
+    });
+
+    test('Should not send the STANDARD class, like S3', () async {
+      await server.putObject(
+        bucket,
+        'normal.bin',
+        'x',
+        headers: {'x-amz-storage-class': 'STANDARD'},
+      );
+      expect((await head('normal.bin')).headers['x-amz-storage-class'], isNull);
+    });
+
+    test('Should reject an unknown storage class (400)', () async {
+      final response = await http.put(
+        server.url('/$bucket/mala.bin'),
+        headers: {...server.auth(), 'x-amz-storage-class': 'DE_PLATA'},
+        body: [1],
+      );
+      expect(response.statusCode, 400);
+      expect(response.body, contains('<Code>InvalidStorageClass</Code>'));
+      expect(await File('${server.storagePath}/$bucket/mala.bin').exists(), isFalse);
+    });
+
+    test('Should take the class of the copy request, not of the source', () async {
+      await server.putObject(
+        bucket,
+        'clase-origen.bin',
+        'x',
+        headers: {'x-amz-storage-class': 'GLACIER', 'x-amz-meta-autor': 'jesus'},
+      );
+      Future<http.Response> copy(String target, [String? storageClass]) =>
+          http.put(
+            server.url('/$bucket/$target'),
+            headers: {
+              ...server.auth(),
+              'x-amz-copy-source': '/$bucket/clase-origen.bin',
+              'x-amz-storage-class': ?storageClass,
+            },
+          );
+
+      expect((await copy('clase-ia.bin', 'STANDARD_IA')).statusCode, 200);
+      final ia = await head('clase-ia.bin');
+      expect(ia.headers['x-amz-storage-class'], 'STANDARD_IA');
+      expect(ia.headers['x-amz-meta-autor'], 'jesus');
+
+      expect((await copy('clase-normal.bin')).statusCode, 200);
+      expect((await head('clase-normal.bin')).headers['x-amz-storage-class'], isNull);
+    });
+  });
 }

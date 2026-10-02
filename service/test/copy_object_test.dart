@@ -144,4 +144,61 @@ void main() {
       expect(await File('${server.storagePath}/$bucket/buzon/robado.pdf').exists(), isFalse);
     });
   });
+
+  group('S3Controller - CopyObject conditions', () {
+    late String etag;
+
+    setUpAll(() async {
+      await server.putObject(bucket, 'condiciones/origen.txt', 'condicion');
+      etag = md5.convert(utf8.encode('condicion')).toString();
+    });
+
+    Future<http.Response> copyIf(Map<String, String> conditions) => http.put(
+      server.url('/$bucket/condiciones/copia.txt'),
+      headers: {
+        ...server.auth(),
+        'x-amz-copy-source': '/$bucket/condiciones/origen.txt',
+        ...conditions,
+      },
+    );
+
+    final past = HttpDate.format(DateTime.utc(2010, 3, 26));
+    final future = HttpDate.format(DateTime.now().toUtc().add(const Duration(days: 1)));
+
+    test('Should copy when the conditions hold', () async {
+      for (final conditions in [
+        {'x-amz-copy-source-if-match': '"$etag"'},
+        {'x-amz-copy-source-if-match': '*'},
+        {'x-amz-copy-source-if-none-match': '"otro"'},
+        {'x-amz-copy-source-if-modified-since': past},
+        {'x-amz-copy-source-if-unmodified-since': future},
+        //si el if-match se cumple, el if-unmodified-since no cuenta
+        {
+          'x-amz-copy-source-if-match': etag,
+          'x-amz-copy-source-if-unmodified-since': past,
+        },
+      ]) {
+        final response = await copyIf(conditions);
+        expect(response.statusCode, 200, reason: '$conditions: ${response.body}');
+      }
+    });
+
+    test('Should fail with 412 when a condition does not hold', () async {
+      for (final conditions in [
+        {'x-amz-copy-source-if-match': '"otro"'},
+        {'x-amz-copy-source-if-none-match': '"$etag"'},
+        {'x-amz-copy-source-if-modified-since': future},
+        {'x-amz-copy-source-if-unmodified-since': past},
+      ]) {
+        final response = await copyIf(conditions);
+        expect(response.statusCode, 412, reason: '$conditions');
+        expect(response.body, contains('<Code>PreconditionFailed</Code>'));
+      }
+    });
+
+    test('Should ignore a date it does not understand', () async {
+      final response = await copyIf({'x-amz-copy-source-if-modified-since': 'ayer'});
+      expect(response.statusCode, 200);
+    });
+  });
 }

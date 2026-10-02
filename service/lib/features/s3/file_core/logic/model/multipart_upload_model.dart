@@ -6,16 +6,37 @@ class MultipartUploadModel implements Serializable {
   final String bucket;
   final String key;
   final String uploadId;
+  final DateTime initiated;
 
   MultipartUploadModel({
     required this.bucket,
     required this.key,
     required this.uploadId,
+    required this.initiated,
   });
 
   @override
   Object? toJson() {
-    return {'bucket': bucket, 'key': key, 'upload_id': uploadId};
+    return {
+      'bucket': bucket,
+      'key': key,
+      'upload_id': uploadId,
+      'initiated': initiated.toIso8601String(),
+    };
+  }
+}
+
+/// Parte copiada de otro objeto (UploadPartCopy)
+class CopiedPartModel implements Serializable {
+  /// md5 de la parte (sin comillas)
+  final String etag;
+  final DateTime lastModified;
+
+  CopiedPartModel({required this.etag, required this.lastModified});
+
+  @override
+  Object? toJson() {
+    return {'etag': etag, 'last_modified': lastModified.toIso8601String()};
   }
 }
 
