@@ -19,6 +19,7 @@ void main() {
     //por encima de los 10 MB que Winter deja por defecto
     env.put('MAX_OBJECT_SIZE', '${12 * mb}');
     await server.start();
+    await server.createBucket(bucket);
   });
   tearDownAll(server.stop);
 

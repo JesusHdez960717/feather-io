@@ -3,6 +3,7 @@ library;
 
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 
@@ -62,6 +63,43 @@ void main() {
       expect(response.body, contains('<ListBucketResult'));
       expect(response.body, contains('<Key>f1.txt</Key>'));
       expect(response.body, contains('<Key>folder/f2.txt</Key>'));
+    });
+
+    test('Should send the ETag and a UTC LastModified in the XML', () async {
+      final response = await http.get(
+        server.url('/$bucket?prefix=f1'),
+        headers: server.auth(),
+      );
+      final contents = RegExp(
+        r'<Contents>(.*?)</Contents>',
+        dotAll: true,
+      ).firstMatch(response.body)!.group(1)!;
+      expect(
+        contents,
+        contains('<ETag>&quot;${md5.convert(utf8.encode('1'))}&quot;</ETag>'),
+      );
+      final lastModified = RegExp(
+        r'<LastModified>(.*?)</LastModified>',
+      ).firstMatch(contents)!.group(1)!;
+      expect(lastModified, matches(RegExp(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$')));
+    });
+
+    test('Should send the ETag in JSON', () async {
+      final response = await http.get(
+        server.url('/$bucket?prefix=folder/'),
+        headers: server.auth(json: true),
+      );
+      final contents = jsonDecode(response.body)['contents'] as List;
+      expect(contents.single['etag'], md5.convert(utf8.encode('22')).toString());
+    });
+
+    test('Should escape the XML special chars of the keys', () async {
+      await server.putObject(bucket, 'a&b.txt', 'x');
+      final response = await http.get(
+        server.url('/$bucket?prefix=a'),
+        headers: server.auth(),
+      );
+      expect(response.body, contains('<Key>a&amp;b.txt</Key>'));
     });
 
     test('Should return an empty list for an empty prefix', () async {

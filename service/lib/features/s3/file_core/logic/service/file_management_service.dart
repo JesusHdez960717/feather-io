@@ -7,13 +7,13 @@ import 'package:path/path.dart' as p;
 import 'package:service/feather.dart';
 
 class FileManagementService {
-  final bool createBucketIfNotExist;
   final int maxFileSize;
+  final ObjectEtagService etags;
 
   FileManagementService({
-    this.createBucketIfNotExist = true,
     this.maxFileSize = 5 * 1024 * 1024 * 1024, // 5GB por defecto (límite S3)
-  });
+    ObjectEtagService? etags,
+  }) : etags = etags ?? ObjectEtagService();
 
   Future<bool> createBucket({required String bucketName}) async {
     // Valido el nombre del bucket con reglas S3
@@ -67,12 +67,14 @@ class FileManagementService {
     if (hasObjects) {
       throw S3Exception(
         S3ErrorCode.bucketNotEmpty,
-        message: 'El bucket "$bucketName" no está vacío y no puede ser borrado.',
+        message:
+            'El bucket "$bucketName" no está vacío y no puede ser borrado.',
         resource: bucketName,
       );
     }
 
     await dir.delete(recursive: true);
+    await etags.forgetBucket(bucketName);
     return true;
   }
 
@@ -95,9 +97,11 @@ class FileManagementService {
     await for (final entity in dir.list()) {
       await entity.delete(recursive: true);
     }
+    await etags.forgetBucket(bucketName);
   }
 
-  Future<bool> uploadFile({
+  /// Guarda el objeto y devuelve su ETag (el md5 del contenido)
+  Future<String> uploadFile({
     required String bucketName,
     required String key,
     required Stream<List<int>> binary,
@@ -122,6 +126,11 @@ class FileManagementService {
       );
     }
 
+    //como en S3, el bucket tiene que existir; las subcarpetas se crean solas
+    if (!await Directory(_getBucketPath(bucketName)).exists()) {
+      throw S3Exception.noSuchBucket(bucketName);
+    }
+
     // Una key terminada en '/' es una carpeta, como en la consola de S3: se
     // crea vacia con su marcador y el cuerpo (vacio) se descarta
     if (key.endsWith('/')) {
@@ -129,19 +138,16 @@ class FileManagementService {
       final folder = Directory(p.join(_getBucketPath(bucketName), key));
       await folder.create(recursive: true);
       await File(p.join(folder.path, S3Validator.folderMarker)).create();
-      return true;
+      return ObjectEtagService.emptyEtag;
     }
 
     final file = _getFile(bucketName, key);
-
-    //creo el bucket y las subcarpetas si no existen
-    if (createBucketIfNotExist) {
-      await file.parent.create(recursive: true);
-    }
+    await file.parent.create(recursive: true);
 
     int bytesRead = 0;
     try {
       final sink = file.openWrite();
+      final hasher = Md5Tap();
 
       // Transformamos el stream para contar bytes y validar el límite en tiempo real
       final monitoredStream = binary.map((chunk) {
@@ -156,9 +162,16 @@ class FileManagementService {
         return chunk;
       });
 
-      await monitoredStream.pipe(sink);
+      await hasher.bind(monitoredStream).pipe(sink);
 
-      return true;
+      final etag = hasher.close();
+      await etags.save(
+        bucketName: bucketName,
+        key: key,
+        file: file,
+        etag: etag,
+      );
+      return etag;
     } catch (e) {
       if (await file.exists()) {
         await file.delete();
@@ -207,7 +220,7 @@ class FileManagementService {
         .list(recursive: true)
         .toList();
 
-    final Map<String, FileModel> files = {};
+    final Map<String, (File, FileStat)> files = {};
     final Set<String> commonPrefixes = {};
 
     final normalizedPrefix = prefix ?? '';
@@ -243,12 +256,7 @@ class FileManagementService {
         }
       }
 
-      final stat = await entity.stat();
-      files[key] = FileModel(
-        key: key,
-        size: isFolder ? 0 : stat.size,
-        lastModified: stat.modified,
-      );
+      files[key] = (entity, await entity.stat());
     }
 
     // Objetos y prefijos van juntos y ordenados, como en S3, y se pagina sobre
@@ -260,13 +268,29 @@ class FileManagementService {
     final page = pending.take(min(maxKeys, maxKeysLimit)).toList();
     final isTruncated = pending.length > page.length;
 
+    //el ETag solo de los objetos de esta pagina: si falta hay que leer el fichero
+    final pageFiles = {
+      for (final key in page)
+        if (files[key] != null && !key.endsWith('/')) key: files[key]!,
+    };
+    final pageEtags = await etags.etagsOf(
+      bucketName: bucketName,
+      files: pageFiles,
+    );
+
     return ListObjectsResponse(
       bucketName: bucketName,
       prefix: prefix,
       delimiter: delimiter,
       contents: [
         for (final key in page)
-          if (files[key] != null) files[key]!,
+          if (files[key] case (_, final stat))
+            FileModel(
+              key: key,
+              size: key.endsWith('/') ? 0 : stat.size,
+              lastModified: stat.modified,
+              etag: pageEtags[key] ?? ObjectEtagService.emptyEtag,
+            ),
       ],
       commonPrefixes: [
         for (final key in page)
@@ -326,12 +350,32 @@ class FileManagementService {
       throw S3Exception.noSuchKey(sourceKey);
     }
 
+    if (!await Directory(_getBucketPath(bucketName)).exists()) {
+      throw S3Exception.noSuchBucket(bucketName);
+    }
+
+    final etag = await etags.etagOf(
+      bucketName: sourceBucket,
+      key: sourceKey,
+      file: source,
+    );
     final target = _getFile(bucketName, key);
     await target.parent.create(recursive: true);
     await source.copy(target.path);
+    await etags.save(
+      bucketName: bucketName,
+      key: key,
+      file: target,
+      etag: etag,
+    );
 
     final stat = await target.stat();
-    return FileModel(key: key, size: stat.size, lastModified: stat.modified);
+    return FileModel(
+      key: key,
+      size: stat.size,
+      lastModified: stat.modified,
+      etag: etag,
+    );
   }
 
   Future<File> getFile({
@@ -345,7 +389,10 @@ class FileManagementService {
       throw S3Exception.invalidKey(key);
     }
 
-    final file = _getFile(bucketName, key);
+    //una carpeta (`fotos/`) es su marcador: un objeto vacio
+    final file = key.endsWith('/')
+        ? File(p.join(_getBucketPath(bucketName), key, S3Validator.folderMarker))
+        : _getFile(bucketName, key);
 
     if (!await file.exists()) {
       throw S3Exception.noSuchKey(key);
@@ -353,6 +400,14 @@ class FileManagementService {
 
     return file;
   }
+
+  /// El ETag de un objeto ya leido con [getFile]
+  Future<String> etagOf({
+    required String bucketName,
+    required String key,
+    required File file,
+    FileStat? stat,
+  }) => etags.etagOf(bucketName: bucketName, key: key, file: file, stat: stat);
 
   /// Genera el zip en un fichero temporal (sin cargar los objetos en memoria).
   /// Usar [openAndDeleteTemp] para servirlo y borrarlo al terminar.
@@ -448,9 +503,11 @@ class FileManagementService {
     if (type == FileSystemEntityType.directory) {
       // Si es un directorio, borramos recursivamente (comportamiento de carpeta)
       await Directory(fullPath).delete(recursive: true);
+      await etags.forgetFolder(bucketName, key);
     } else {
       // Si es un archivo normal
       await File(fullPath).delete();
+      await etags.forget(bucketName, key);
     }
 
     // Limpieza recursiva de carpetas vacías (si aplica)
@@ -474,7 +531,9 @@ class FileManagementService {
         await deleteFile(bucketName: bucketName, key: key);
         deleted.add(key);
       } on S3Exception catch (e) {
-        errors.add(DeleteError(key: key, code: e.code.code, message: e.message));
+        errors.add(
+          DeleteError(key: key, code: e.code.code, message: e.message),
+        );
       } catch (e) {
         errors.add(
           DeleteError(

@@ -116,7 +116,8 @@ file.
   authenticated. `S3SigV4Filter` accepts the signature in the `Authorization` header or in the
   query (presigned URL: `X-Amz-Signature`, `X-Amz-Date`, `X-Amz-Expires` up to 7 days), and passes
   through requests with neither, so an unauthenticated request gets a 401 from the route's
-  `AuthFilter`. The SigV4 maths live in `security/logic/sig_v4_signer.dart` (`SigV4Signer`), shared
+  `AuthFilter`. The `Authorization` fields may be separated by `,` with or without a space (s3cmd
+  sends none). The SigV4 maths live in `security/logic/sig_v4_signer.dart` (`SigV4Signer`), shared
   with `PresignService`, which signs `GET` URLs with the service keys for
   `POST /{admin}/bucket/{bucket}/presign` (the console has no secret key, so it asks the service).
   The URL uses the scheme and `Host` of that request, because the host is part of the signature.
@@ -178,8 +179,18 @@ headers: {'content-type': 'application/xml'},
 );
 ```
 
-XML is S3-compliant and the default. The console always asks for JSON. `multiDelete` and the
-create/put endpoints still answer JSON/plain text only.
+XML is S3-compliant and the default. The console always asks for JSON. `multiDelete` still answers
+JSON only. CreateBucket and PutObject answer like S3, with no body: CreateBucket with a `Location`
+header, PutObject with its `ETag`. GetBucketLocation (`GET /{bucket}?location`, served by the
+list-objects route) always answers an empty XML `LocationConstraint` (`us-east-1`). XML dates are
+UTC with milliseconds (`_s3Date`: `2026-10-02T14:22:35.000Z`) and every key, prefix and description
+goes through `_escapeXml`.
+
+`UnsupportedSubresourceFilter` (S3 parent) answers `501 NotImplemented` to the subresources the
+service does not implement (`?versioning`, `?policy`, `?tagging`, `?acl`, `?legal-hold`…, plus
+`GET ?uploads`/`?uploadId`, i.e. ListMultipartUploads and ListParts). Without it they would fall into
+the normal routes (`PUT /{bucket}?versioning` would create the bucket). A newly implemented
+subresource must be removed from its list.
 
 **Errors.**
 
@@ -197,7 +208,10 @@ create/put endpoints still answer JSON/plain text only.
   converting unknown errors.
 
 **Storage & performance.** Buckets are directories under `STORAGE_VOLUME_PATH`. Bucket metadata (
-description, color, timestamps) and anonymous rules live in SQLite via Drift. Object payloads must
+description, color, timestamps), anonymous rules and object ETags live in SQLite via Drift. The
+schema has no migrations while in development: when it changes, delete the SQLite file and let it be
+recreated. PutObject, CopyObject and CreateMultipartUpload need an existing bucket (`NoSuchBucket`
+otherwise); only the subfolders of the key are created on the fly. Object payloads must
 always flow as `Stream<List<int>>` (`request.read()`, `file.openRead()`): **never** `readAsBytes()`
 or `Uint8List` for object data. Multi-object downloads build the zip in a temp file (
 `FileManagementService.zipObjects`) and stream it with `openAndDeleteTemp`. Winter's
@@ -217,7 +231,18 @@ from the URL. `listFiles` sorts objects and common prefixes together and pages o
 ListObjectsV2 (`max-keys` up to 1000, `continuation-token` = base64url of the last key returned).
 `PUT` with `x-amz-copy-source` is CopyObject and needs the plain `s3.get-object` permission, so an
 anonymous rule can never copy. `HEAD` object is served by the `GET` route (Winter sends the headers
-only), which includes `Last-Modified`.
+only), which includes `Last-Modified`, `ETag` and `Accept-Ranges`. A file without a known extension
+is `application/octet-stream`. `GET`/`HEAD` honour a single `Range` (`bytes=a-b`, `bytes=a-`,
+`bytes=-n`) with `206` + `Content-Range`, read with `file.openRead(start, end)`; a range starting
+past the end is `416 InvalidRange`, and a malformed or multiple range is ignored (`200` with the whole
+object), as in S3.
+
+**ETags.** `ObjectEtagService` keeps each object's ETag in the `object_etag` table with the file's
+size and mtime. Uploads compute the md5 while streaming (`Md5Tap`, also used by UploadPart), copies
+reuse the source's ETag and multipart stores `md5(part md5s)-N`. On read (GET/HEAD, listings), a
+missing row or one whose size/mtime no longer match (the file changed outside the service) is
+recomputed by reading the file and saved; listings only compute it for the objects of the returned
+page. Deleting an object, a folder or a bucket, or emptying a bucket, deletes its rows.
 
 **Multipart upload.** `MultipartService` implements CreateMultipartUpload (
 `POST /{bucket}/{key}?uploads`, route `s3.post-object`), UploadPart (`PUT ?partNumber=&uploadId=`,
@@ -240,8 +265,10 @@ and ListMultipartUploads are not implemented. CORS exposes `ETag` so the console
   `setUpAll(server.start)` / `tearDownAll(server.stop)`. It sets the env, starts the real server
   with an in-memory SQLite (`FeatherIO.start(database: …)`), logs in to get `server.token`, and
   creates and deletes `./uploads_test/<name>` (gitignored). Helpers: `server.url(path)`,
-  `server.auth(json: …)`, `server.putObject(…)`.
-- Use one distinct port per file so files run in parallel. Ports in use: 8082–8101.
+  `server.auth(json: …)`, `server.createBucket(…)` (tolerates an existing one),
+  `server.putObject(…)` (creates the bucket first) and `server.sigV4(method, path, query: …)`, the
+  headers of a native client signed with SigV4. Uploading with `http.put` needs the bucket created.
+- Use one distinct port per file so files run in parallel. Ports in use: 8082–8103.
 - Cover auth (missing or invalid token → 401, wrong login credentials → 403), validation (bad bucket
   names, path traversal, forbidden chars → 400), content negotiation (JSON vs XML, including the S3
   error code) and edge cases (404, empty lists).

@@ -127,6 +127,7 @@ void main() {
       expect(object.statusCode, 200);
       expect(object.bodyBytes.length, part1.length + part2.length);
       expect(object.bodyBytes.last, 2);
+      expect(object.headers['etag'], '"$expectedEtag"');
 
       //la subida ya no existe
       final again = await uploadPart(key, uploadId, 3, [1]);
@@ -344,37 +345,13 @@ void main() {
 
   group('S3Controller - multipart with SigV4', () {
     test('Should create an upload signed with the service keys', () async {
-      final now = DateTime.now().toUtc();
-      final amzDate = SigV4Signer.amzDate(now);
-      final scope = SigV4Signer.scope(SigV4Signer.dateStamp(now));
-      final headers = {
-        'host': 'localhost:8101',
-        'x-amz-date': amzDate,
-        'x-amz-content-sha256': SigV4Signer.unsignedPayload,
-      };
-      const signedHeaders = 'host;x-amz-content-sha256;x-amz-date';
-      final signature = SigV4Signer.signature(
-        secret: testSecret,
-        amzDate: amzDate,
-        scope: scope,
-        canonicalRequest: SigV4Signer.canonicalRequest(
-          method: 'POST',
-          path: '/$bucket/firmada.bin',
-          query: const {'uploads': ''},
-          headers: headers,
-          signedHeaders: signedHeaders,
-          payloadHash: SigV4Signer.unsignedPayload,
-        ),
-      );
-
       final response = await http.post(
         server.url('/$bucket/firmada.bin?uploads'),
-        headers: {
-          ...headers,
-          'authorization':
-              '${SigV4Signer.algorithm} Credential=$testAccess/$scope, '
-              'SignedHeaders=$signedHeaders, Signature=$signature',
-        },
+        headers: server.sigV4(
+          'POST',
+          '/$bucket/firmada.bin',
+          query: const {'uploads': ''},
+        ),
       );
       expect(response.statusCode, 200, reason: response.body);
       expect(xmlTag(response.body, 'UploadId'), isNotNull);

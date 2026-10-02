@@ -1,8 +1,10 @@
 @TestOn('vm')
 library;
 
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 
@@ -10,12 +12,15 @@ import 'support/test_server.dart';
 
 void main() {
   final server = TestServer(port: 8086, name: 'put_test');
+  const bucket = 'put-bucket';
 
-  setUpAll(server.start);
+  setUpAll(() async {
+    await server.start();
+    await server.createBucket(bucket);
+  });
   tearDownAll(server.stop);
 
   group('S3Controller - PUT Object', () {
-    const bucket = 'put-bucket';
 
     test('Should upload successfully in root', () async {
       final response = await http.put(
@@ -41,6 +46,31 @@ void main() {
         await File('${server.storagePath}/$bucket/a/b/c/d/file.txt').exists(),
         isTrue,
       );
+    });
+
+    test('Should answer the ETag (md5 of the content) without body', () async {
+      final response = await http.put(
+        server.url('/$bucket/etag.txt'),
+        headers: server.auth(),
+        body: 'data',
+      );
+      expect(response.statusCode, 200);
+      expect(
+        response.headers['etag'],
+        '"${md5.convert(utf8.encode('data'))}"',
+      );
+      expect(response.body, isEmpty);
+    });
+
+    test('Should not create the bucket if it does not exist (404)', () async {
+      final response = await http.put(
+        server.url('/no-existe/file.txt'),
+        headers: server.auth(),
+        body: 'data',
+      );
+      expect(response.statusCode, 404);
+      expect(response.body, contains('<Code>NoSuchBucket</Code>'));
+      expect(await Directory('${server.storagePath}/no-existe').exists(), isFalse);
     });
 
     test('Should fail without auth (401)', () async {

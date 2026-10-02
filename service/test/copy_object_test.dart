@@ -4,6 +4,7 @@ library;
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:service/feather.dart';
 import 'package:test/test.dart';
@@ -42,6 +43,10 @@ void main() {
       expect(response.statusCode, 200);
       expect(response.body, contains('<CopyObjectResult'));
       expect(response.body, contains('<LastModified>'));
+      expect(
+        response.body,
+        contains('<ETag>&quot;${md5.convert(utf8.encode('contenido'))}&quot;</ETag>'),
+      );
 
       expect(
         await File('${server.storagePath}/$bucket/destino/informe.pdf').readAsString(),
@@ -84,6 +89,16 @@ void main() {
       final response = await copy('x.txt', '/$bucket/no-existe.txt', headers: server.auth(json: true));
       expect(response.statusCode, 404);
       expect(jsonDecode(response.body)['code'], 'NoSuchKey');
+    });
+
+    test('Should return 404 for a missing target bucket', () async {
+      final response = await copy(
+        'copia.pdf',
+        '/$bucket/origen/informe.pdf',
+        targetBucket: 'no-existe',
+      );
+      expect(response.statusCode, 404);
+      expect(response.body, contains('<Code>NoSuchBucket</Code>'));
     });
 
     test('Should return 404 for a missing source bucket', () async {

@@ -41,6 +41,21 @@ void main() {
       expect((jsonDecode(list.body) as List).map((b) => b['name']), isNot(contains('empty-bucket')));
     });
 
+    test('DELETE /{bucket} - Should delete a bucket signed with SigV4 (204)', () async {
+      final create = await http.put(
+        server.url('/sigv4-bucket'),
+        headers: server.auth(),
+      );
+      expect(create.statusCode, 200);
+
+      final response = await http.delete(
+        server.url('/sigv4-bucket'),
+        headers: server.sigV4('DELETE', '/sigv4-bucket'),
+      );
+      expect(response.statusCode, 204, reason: response.body);
+      expect(await bucketExists('sigv4-bucket'), isFalse);
+    });
+
     test('DELETE /{bucket} - Should reject a non-empty bucket (409)', () async {
       await server.putObject('full-bucket', 'file.txt', 'data');
 

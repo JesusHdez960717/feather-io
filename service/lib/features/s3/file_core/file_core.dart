@@ -15,5 +15,7 @@ export 'logic/s3_validator.dart';
 export 'logic/service/bucket_service.dart';
 export 'logic/service/file_management_service.dart';
 export 'logic/service/multipart_service.dart';
+export 'logic/service/object_etag_service.dart';
 export 'logic/service/presign_service.dart';
 export 'repo/bucket_table_repo.dart';
+export 'repo/object_etag_table_repo.dart';

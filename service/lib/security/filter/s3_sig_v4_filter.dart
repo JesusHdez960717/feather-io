@@ -11,6 +11,8 @@ class S3SigV4Filter extends Filter {
 
   static const Set<String> _permissions = {
     's3.list-buckets',
+    's3.create-bucket',
+    's3.delete-bucket',
     's3.list-objects',
     's3.put-object',
     's3.get-object',
@@ -59,20 +61,12 @@ class S3SigV4Filter extends Filter {
 
   /// `Authorization: AWS4-HMAC-SHA256 Credential=…, SignedHeaders=…, Signature=…`
   String _verifyHeader(RequestEntity request, String authHeader) {
-    String? credential;
-    String? signedHeaders;
-    String? signature;
-    for (final part in authHeader.split(', ')) {
-      if (part.startsWith('${SigV4Signer.algorithm} Credential=')) {
-        credential = part.substring(
-          '${SigV4Signer.algorithm} Credential='.length,
-        );
-      } else if (part.startsWith('SignedHeaders=')) {
-        signedHeaders = part.substring('SignedHeaders='.length);
-      } else if (part.startsWith('Signature=')) {
-        signature = part.substring('Signature='.length);
-      }
-    }
+    //los campos van separados por comas, con o sin espacio (s3cmd no lo pone)
+    String? field(String name) =>
+        RegExp('[\\s,]$name=([^,\\s]+)').firstMatch(authHeader)?.group(1);
+    final credential = field('Credential');
+    final signedHeaders = field('SignedHeaders');
+    final signature = field('Signature');
     if (credential == null || signedHeaders == null || signature == null) {
       throw S3Exception(
         S3ErrorCode.accessDenied,

@@ -1,8 +1,10 @@
 @TestOn('vm')
 library;
 
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 
@@ -16,7 +18,15 @@ void main() {
     await server.start();
     await server.putObject(bucket, 'test.txt', 'content');
     await server.putObject(bucket, 'image.png', 'png');
+    await server.putObject(bucket, 'sin-extension', 'abcdef');
   });
+
+  String md5Of(String content) => md5.convert(utf8.encode(content)).toString();
+
+  Future<http.Response> getRange(String key, String range) => http.get(
+    server.url('/$bucket/$key'),
+    headers: {...server.auth(), 'range': range},
+  );
   tearDownAll(server.stop);
 
   group('S3Controller - GET Object', () {
@@ -100,6 +110,25 @@ void main() {
       expect(response.headers['last-modified'], isNotNull);
     });
 
+    test('Should answer an object without extension as octet-stream', () async {
+      final response = await http.head(
+        server.url('/$bucket/sin-extension'),
+        headers: server.auth(),
+      );
+      expect(response.statusCode, 200);
+      expect(response.headers['content-type'], 'application/octet-stream');
+      expect(response.headers['content-length'], '6');
+    });
+
+    test('Should send the ETag (md5 of the content)', () async {
+      final response = await http.head(
+        server.url('/$bucket/test.txt'),
+        headers: server.auth(),
+      );
+      expect(response.headers['etag'], '"${md5Of('content')}"');
+      expect(response.headers['accept-ranges'], 'bytes');
+    });
+
     test('Should return 404 for a missing object', () async {
       final response = await http.head(
         server.url('/$bucket/notfound.txt'),
@@ -111,6 +140,103 @@ void main() {
     test('Should fail without auth (401)', () async {
       final response = await http.head(server.url('/$bucket/test.txt'));
       expect(response.statusCode, 401);
+    });
+  });
+
+  group('S3Controller - GET Object (no extension, ETag)', () {
+    test('Should download an object without extension as octet-stream', () async {
+      final response = await http.get(
+        server.url('/$bucket/sin-extension'),
+        headers: server.auth(),
+      );
+      expect(response.statusCode, 200);
+      expect(response.body, 'abcdef');
+      expect(response.headers['content-type'], 'application/octet-stream');
+    });
+
+    test('Should send the ETag (md5 of the content)', () async {
+      final response = await http.get(
+        server.url('/$bucket/test.txt'),
+        headers: server.auth(),
+      );
+      expect(response.headers['etag'], '"${md5Of('content')}"');
+    });
+
+    test('Should recompute the ETag when the file changes outside', () async {
+      await server.putObject(bucket, 'cambia.txt', 'antes');
+      //otro tamaño, asi no depende de la precision de la fecha del disco
+      await File(
+        '${server.storagePath}/$bucket/cambia.txt',
+      ).writeAsString('despues');
+
+      final response = await http.head(
+        server.url('/$bucket/cambia.txt'),
+        headers: server.auth(),
+      );
+      expect(response.headers['etag'], '"${md5Of('despues')}"');
+    });
+  });
+
+  group('S3Controller - GET Object (Range)', () {
+    test('Should answer a closed range with 206', () async {
+      final response = await getRange('sin-extension', 'bytes=1-3');
+      expect(response.statusCode, 206);
+      expect(response.body, 'bcd');
+      expect(response.headers['content-range'], 'bytes 1-3/6');
+      expect(response.headers['content-length'], '3');
+      expect(response.headers['etag'], '"${md5Of('abcdef')}"');
+    });
+
+    test('Should answer an open range up to the end', () async {
+      final response = await getRange('sin-extension', 'bytes=4-');
+      expect(response.statusCode, 206);
+      expect(response.body, 'ef');
+      expect(response.headers['content-range'], 'bytes 4-5/6');
+    });
+
+    test('Should answer the last bytes with a suffix range', () async {
+      final response = await getRange('sin-extension', 'bytes=-2');
+      expect(response.statusCode, 206);
+      expect(response.body, 'ef');
+      expect(response.headers['content-range'], 'bytes 4-5/6');
+    });
+
+    test('Should cut a range that goes past the end', () async {
+      final response = await getRange('sin-extension', 'bytes=2-100');
+      expect(response.statusCode, 206);
+      expect(response.body, 'cdef');
+      expect(response.headers['content-range'], 'bytes 2-5/6');
+    });
+
+    test('Should answer the whole object for a suffix bigger than it', () async {
+      final response = await getRange('sin-extension', 'bytes=-100');
+      expect(response.statusCode, 206);
+      expect(response.body, 'abcdef');
+      expect(response.headers['content-range'], 'bytes 0-5/6');
+    });
+
+    test('Should reject a range that starts after the end (416)', () async {
+      final response = await getRange('sin-extension', 'bytes=6-');
+      expect(response.statusCode, 416);
+      expect(response.body, contains('<Code>InvalidRange</Code>'));
+    });
+
+    test('Should ignore a malformed range and answer everything', () async {
+      for (final range in ['bytes=3-1', 'bytes=0-1,3-4', 'items=0-1']) {
+        final response = await getRange('sin-extension', range);
+        expect(response.statusCode, 200, reason: range);
+        expect(response.body, 'abcdef', reason: range);
+      }
+    });
+
+    test('Should send only the headers of the range on HEAD', () async {
+      final response = await http.head(
+        server.url('/$bucket/sin-extension'),
+        headers: {...server.auth(), 'range': 'bytes=0-1'},
+      );
+      expect(response.statusCode, 206);
+      expect(response.body, isEmpty);
+      expect(response.headers['content-range'], 'bytes 0-1/6');
     });
   });
 }

@@ -19,6 +19,15 @@ void main() {
     const key = 'test-file.txt';
     const content = 'Hello World';
 
+    test('0. PUT /{bucket} - Should create the bucket', () async {
+      final response = await http.put(
+        server.url('/$bucket'),
+        headers: server.auth(),
+      );
+      expect(response.statusCode, 200);
+      expect(response.headers['location'], '/$bucket');
+    });
+
     test('1. PUT - Should upload successfully', () async {
       final response = await http.put(
         server.url('/$bucket/$key'),

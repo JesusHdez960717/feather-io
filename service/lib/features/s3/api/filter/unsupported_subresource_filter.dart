@@ -1,0 +1,73 @@
+import 'package:service/feather.dart';
+
+/// Responde `501 NotImplemented`, como S3, a los subrecursos que el servicio no
+/// implementa (`?versioning`, `?policy`, `?tagging`…). Sin el filtro caerian en
+/// la ruta normal: `PUT /{bucket}?versioning` intentaria crear el bucket y
+/// `GET /{bucket}?policy` devolveria el listado
+class UnsupportedSubresourceFilter extends Filter {
+  static final UnsupportedSubresourceFilter _instance =
+      UnsupportedSubresourceFilter._();
+
+  UnsupportedSubresourceFilter._();
+
+  factory UnsupportedSubresourceFilter() => _instance;
+
+  static const Set<String> _unsupported = {
+    'accelerate',
+    'acl',
+    'analytics',
+    'attributes',
+    'cors',
+    'encryption',
+    'intelligent-tiering',
+    'inventory',
+    'legal-hold',
+    'lifecycle',
+    'logging',
+    'metrics',
+    'notification',
+    'object-lock',
+    'ownershipControls',
+    'policy',
+    'policyStatus',
+    'publicAccessBlock',
+    'replication',
+    'requestPayment',
+    'restore',
+    'retention',
+    'select',
+    'tagging',
+    'torrent',
+    'versioning',
+    'versions',
+    'website',
+  };
+
+  @override
+  Future<ResponseEntity> doFilter(
+    RequestEntity request,
+    FilterChain chain,
+  ) async {
+    final params = request.queryParams.keys;
+    var subresource = params.where(_unsupported.contains).firstOrNull;
+    //?uploads y ?uploadId solo existen para POST, PUT y DELETE (multipart);
+    //con GET serian ListMultipartUploads y ListParts
+    if (subresource == null && const {'GET', 'HEAD'}.contains(request.method)) {
+      subresource = params
+          .where((p) => p == 'uploads' || p == 'uploadId')
+          .firstOrNull;
+    }
+    if (subresource != null) {
+      throw S3Exception(
+        S3ErrorCode.notImplemented,
+        message: 'El subrecurso "$subresource" no está implementado.',
+        resource: request.requestedUri.path,
+      );
+    }
+
+    return await chain.doFilter(request);
+  }
+
+  @override
+  String toString() => 'UnsupportedSubresourceFilter()';
+}

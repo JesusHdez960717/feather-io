@@ -13,7 +13,10 @@ void main() {
   final server = TestServer(port: 8097, name: 'create_folder');
   const bucket = 'folder-bucket';
 
-  setUpAll(server.start);
+  setUpAll(() async {
+    await server.start();
+    await server.createBucket(bucket);
+  });
   tearDownAll(server.stop);
 
   Future<http.Response> createFolder(String key, {bool auth = true}) =>
@@ -101,6 +104,33 @@ void main() {
 
     test('Should fail without auth (401)', () async {
       expect((await createFolder('sin-auth/', auth: false)).statusCode, 401);
+    });
+
+    test('Should answer HEAD and GET on the folder as an empty object', () async {
+      expect((await createFolder('cabecera/')).statusCode, 200);
+
+      final head = await http.head(
+        server.url('/$bucket/cabecera/'),
+        headers: server.auth(),
+      );
+      expect(head.statusCode, 200);
+      expect(head.headers['content-length'], '0');
+      expect(head.headers['etag'], '"d41d8cd98f00b204e9800998ecf8427e"');
+
+      final get = await http.get(
+        server.url('/$bucket/cabecera/'),
+        headers: server.auth(),
+      );
+      expect(get.statusCode, 200);
+      expect(get.body, isEmpty);
+    });
+
+    test('Should answer 404 on HEAD of a folder that does not exist', () async {
+      final head = await http.head(
+        server.url('/$bucket/no-existe/'),
+        headers: server.auth(),
+      );
+      expect(head.statusCode, 404);
     });
 
     test('Should delete a bucket that only has empty folders (204)', () async {

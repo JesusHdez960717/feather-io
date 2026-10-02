@@ -24,6 +24,7 @@ class MultipartService {
   static final RegExp _uploadIdPattern = RegExp(r'^[0-9a-f]{32}$');
 
   final Random _random = Random.secure();
+  final ObjectEtagService _etags = ObjectEtagService();
 
   Directory get _root => Directory(p.join(env.storageVolumePath, folderName));
 
@@ -77,22 +78,15 @@ class MultipartService {
     final part = File(p.join(dir.path, '$partNumber.part'));
     final temp = File('${part.path}.tmp');
 
-    final digest = _DigestSink();
-    final hasher = md5.startChunkedConversion(digest);
+    final hasher = Md5Tap();
     try {
-      await binary
-          .map((chunk) {
-            hasher.add(chunk);
-            return chunk;
-          })
-          .pipe(temp.openWrite());
+      await hasher.bind(binary).pipe(temp.openWrite());
     } catch (_) {
       if (await temp.exists()) await temp.delete();
       rethrow;
     }
-    hasher.close();
 
-    final etag = digest.value.toString();
+    final etag = hasher.close();
     await temp.rename(part.path);
     await File(p.join(dir.path, '$partNumber.etag')).writeAsString(etag);
     return etag;
@@ -186,10 +180,18 @@ class MultipartService {
     await joined.rename(target.path);
     await dir.delete(recursive: true);
 
+    final etag = '${md5.convert(digests)}-${parts.length}';
+    await _etags.save(
+      bucketName: bucketName,
+      key: key,
+      file: target,
+      etag: etag,
+    );
+
     return CompletedMultipartModel(
       bucket: bucketName,
       key: key,
-      etag: '${md5.convert(digests)}-${parts.length}',
+      etag: etag,
       size: size,
     );
   }
@@ -260,15 +262,4 @@ class MultipartService {
     for (var i = 0; i + 1 < hex.length; i += 2)
       int.parse(hex.substring(i, i + 2), radix: 16),
   ];
-}
-
-/// Recoge el resultado de un hash por trozos
-class _DigestSink implements Sink<Digest> {
-  late Digest value;
-
-  @override
-  void add(Digest data) => value = data;
-
-  @override
-  void close() {}
 }

@@ -43,7 +43,29 @@ class AnonymousRuleTable extends Table {
   List<String> get customConstraints => ['UNIQUE (bucket_name, prefix)'];
 }
 
-@DriftDatabase(tables: [AnonymousRuleTable, BucketTable])
+/// ETag (md5) de cada objeto, calculado al escribirlo. [size] y [modified] son
+/// los del fichero en ese momento: si no coinciden con los actuales, el fichero
+/// ha cambiado por fuera y el ETag se recalcula
+class ObjectEtagTable extends Table {
+  @override
+  String get tableName => 'object_etag';
+
+  TextColumn get bucketName => text().references(BucketTable, #name)();
+
+  TextColumn get objectKey => text()();
+
+  TextColumn get etag => text()();
+
+  IntColumn get size => integer()();
+
+  /// Fecha de modificacion del fichero en microsegundos desde epoch
+  IntColumn get modified => integer()();
+
+  @override
+  Set<Column> get primaryKey => {bucketName, objectKey};
+}
+
+@DriftDatabase(tables: [AnonymousRuleTable, BucketTable, ObjectEtagTable])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 

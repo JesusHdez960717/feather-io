@@ -48,6 +48,18 @@ void main() {
       expect(response.statusCode, 401);
     });
 
+    test('PUT /{bucket} - Should create a bucket signed with SigV4', () async {
+      final response = await http.put(
+        server.url('/create-test-sigv4'),
+        headers: server.sigV4('PUT', '/create-test-sigv4'),
+      );
+      expect(response.statusCode, 200, reason: response.body);
+      expect(await bucketExists('create-test-sigv4'), isTrue);
+      //como S3: sin cuerpo (los clientes lo leerian como XML) y con Location
+      expect(response.body, isEmpty);
+      expect(response.headers['location'], '/create-test-sigv4');
+    });
+
     test('PUT /{bucket} - Should create a bucket with description and color', () async {
       const color = 0xFFC0156E;
       final response = await http.put(

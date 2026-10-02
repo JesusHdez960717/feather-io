@@ -55,8 +55,56 @@ class TestServer {
     if (json) 'accept': 'application/json',
   };
 
-  /// Sube un objeto (y crea la carpeta del bucket si no existe).
+  /// Cabeceras de un cliente S3 nativo: firma SigV4 con las claves de test y
+  /// payload sin firmar. [path] va tal cual en la URL (ya codificado).
+  Map<String, String> sigV4(
+    String method,
+    String path, {
+    Map<String, String> query = const {},
+  }) {
+    final now = DateTime.now().toUtc();
+    final amzDate = SigV4Signer.amzDate(now);
+    final scope = SigV4Signer.scope(SigV4Signer.dateStamp(now));
+    final headers = {
+      'host': 'localhost:$port',
+      'x-amz-date': amzDate,
+      'x-amz-content-sha256': SigV4Signer.unsignedPayload,
+    };
+    const signedHeaders = 'host;x-amz-content-sha256;x-amz-date';
+    final signature = SigV4Signer.signature(
+      secret: testSecret,
+      amzDate: amzDate,
+      scope: scope,
+      canonicalRequest: SigV4Signer.canonicalRequest(
+        method: method,
+        path: path,
+        query: query,
+        headers: headers,
+        signedHeaders: signedHeaders,
+        payloadHash: SigV4Signer.unsignedPayload,
+      ),
+    );
+    return {
+      ...headers,
+      'authorization':
+          '${SigV4Signer.algorithm} Credential=$testAccess/$scope, '
+          'SignedHeaders=$signedHeaders, Signature=$signature',
+    };
+  }
+
+  /// Crea el bucket si no existe (un 409 es que ya estaba).
+  Future<void> createBucket(String bucket) async {
+    final response = await http.put(url('/$bucket'), headers: auth());
+    expect(
+      response.statusCode,
+      anyOf(200, 409),
+      reason: 'create $bucket: ${response.body}',
+    );
+  }
+
+  /// Sube un objeto (y crea el bucket si no existe).
   Future<void> putObject(String bucket, String key, String body) async {
+    await createBucket(bucket);
     final response = await http.put(
       url('/$bucket/$key'),
       headers: auth(),

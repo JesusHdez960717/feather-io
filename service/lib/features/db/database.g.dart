@@ -682,12 +682,383 @@ class BucketTableCompanion extends UpdateCompanion<BucketTableData> {
   }
 }
 
+class $ObjectEtagTableTable extends ObjectEtagTable
+    with TableInfo<$ObjectEtagTableTable, ObjectEtagTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ObjectEtagTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _bucketNameMeta = const VerificationMeta(
+    'bucketName',
+  );
+  @override
+  late final GeneratedColumn<String> bucketName = GeneratedColumn<String>(
+    'bucket_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _objectKeyMeta = const VerificationMeta(
+    'objectKey',
+  );
+  @override
+  late final GeneratedColumn<String> objectKey = GeneratedColumn<String>(
+    'object_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _etagMeta = const VerificationMeta('etag');
+  @override
+  late final GeneratedColumn<String> etag = GeneratedColumn<String>(
+    'etag',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sizeMeta = const VerificationMeta('size');
+  @override
+  late final GeneratedColumn<int> size = GeneratedColumn<int>(
+    'size',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _modifiedMeta = const VerificationMeta(
+    'modified',
+  );
+  @override
+  late final GeneratedColumn<int> modified = GeneratedColumn<int>(
+    'modified',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    bucketName,
+    objectKey,
+    etag,
+    size,
+    modified,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'object_etag';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ObjectEtagTableData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('bucket_name')) {
+      context.handle(
+        _bucketNameMeta,
+        bucketName.isAcceptableOrUnknown(data['bucket_name']!, _bucketNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bucketNameMeta);
+    }
+    if (data.containsKey('object_key')) {
+      context.handle(
+        _objectKeyMeta,
+        objectKey.isAcceptableOrUnknown(data['object_key']!, _objectKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_objectKeyMeta);
+    }
+    if (data.containsKey('etag')) {
+      context.handle(
+        _etagMeta,
+        etag.isAcceptableOrUnknown(data['etag']!, _etagMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_etagMeta);
+    }
+    if (data.containsKey('size')) {
+      context.handle(
+        _sizeMeta,
+        size.isAcceptableOrUnknown(data['size']!, _sizeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sizeMeta);
+    }
+    if (data.containsKey('modified')) {
+      context.handle(
+        _modifiedMeta,
+        modified.isAcceptableOrUnknown(data['modified']!, _modifiedMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_modifiedMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {bucketName, objectKey};
+  @override
+  ObjectEtagTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ObjectEtagTableData(
+      bucketName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}bucket_name'],
+      )!,
+      objectKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}object_key'],
+      )!,
+      etag: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}etag'],
+      )!,
+      size: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}size'],
+      )!,
+      modified: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}modified'],
+      )!,
+    );
+  }
+
+  @override
+  $ObjectEtagTableTable createAlias(String alias) {
+    return $ObjectEtagTableTable(attachedDatabase, alias);
+  }
+}
+
+class ObjectEtagTableData extends DataClass
+    implements Insertable<ObjectEtagTableData> {
+  final String bucketName;
+  final String objectKey;
+  final String etag;
+  final int size;
+
+  /// Fecha de modificacion del fichero en microsegundos desde epoch
+  final int modified;
+  const ObjectEtagTableData({
+    required this.bucketName,
+    required this.objectKey,
+    required this.etag,
+    required this.size,
+    required this.modified,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['bucket_name'] = Variable<String>(bucketName);
+    map['object_key'] = Variable<String>(objectKey);
+    map['etag'] = Variable<String>(etag);
+    map['size'] = Variable<int>(size);
+    map['modified'] = Variable<int>(modified);
+    return map;
+  }
+
+  ObjectEtagTableCompanion toCompanion(bool nullToAbsent) {
+    return ObjectEtagTableCompanion(
+      bucketName: Value(bucketName),
+      objectKey: Value(objectKey),
+      etag: Value(etag),
+      size: Value(size),
+      modified: Value(modified),
+    );
+  }
+
+  factory ObjectEtagTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ObjectEtagTableData(
+      bucketName: serializer.fromJson<String>(json['bucketName']),
+      objectKey: serializer.fromJson<String>(json['objectKey']),
+      etag: serializer.fromJson<String>(json['etag']),
+      size: serializer.fromJson<int>(json['size']),
+      modified: serializer.fromJson<int>(json['modified']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'bucketName': serializer.toJson<String>(bucketName),
+      'objectKey': serializer.toJson<String>(objectKey),
+      'etag': serializer.toJson<String>(etag),
+      'size': serializer.toJson<int>(size),
+      'modified': serializer.toJson<int>(modified),
+    };
+  }
+
+  ObjectEtagTableData copyWith({
+    String? bucketName,
+    String? objectKey,
+    String? etag,
+    int? size,
+    int? modified,
+  }) => ObjectEtagTableData(
+    bucketName: bucketName ?? this.bucketName,
+    objectKey: objectKey ?? this.objectKey,
+    etag: etag ?? this.etag,
+    size: size ?? this.size,
+    modified: modified ?? this.modified,
+  );
+  ObjectEtagTableData copyWithCompanion(ObjectEtagTableCompanion data) {
+    return ObjectEtagTableData(
+      bucketName: data.bucketName.present
+          ? data.bucketName.value
+          : this.bucketName,
+      objectKey: data.objectKey.present ? data.objectKey.value : this.objectKey,
+      etag: data.etag.present ? data.etag.value : this.etag,
+      size: data.size.present ? data.size.value : this.size,
+      modified: data.modified.present ? data.modified.value : this.modified,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ObjectEtagTableData(')
+          ..write('bucketName: $bucketName, ')
+          ..write('objectKey: $objectKey, ')
+          ..write('etag: $etag, ')
+          ..write('size: $size, ')
+          ..write('modified: $modified')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(bucketName, objectKey, etag, size, modified);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ObjectEtagTableData &&
+          other.bucketName == this.bucketName &&
+          other.objectKey == this.objectKey &&
+          other.etag == this.etag &&
+          other.size == this.size &&
+          other.modified == this.modified);
+}
+
+class ObjectEtagTableCompanion extends UpdateCompanion<ObjectEtagTableData> {
+  final Value<String> bucketName;
+  final Value<String> objectKey;
+  final Value<String> etag;
+  final Value<int> size;
+  final Value<int> modified;
+  final Value<int> rowid;
+  const ObjectEtagTableCompanion({
+    this.bucketName = const Value.absent(),
+    this.objectKey = const Value.absent(),
+    this.etag = const Value.absent(),
+    this.size = const Value.absent(),
+    this.modified = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ObjectEtagTableCompanion.insert({
+    required String bucketName,
+    required String objectKey,
+    required String etag,
+    required int size,
+    required int modified,
+    this.rowid = const Value.absent(),
+  }) : bucketName = Value(bucketName),
+       objectKey = Value(objectKey),
+       etag = Value(etag),
+       size = Value(size),
+       modified = Value(modified);
+  static Insertable<ObjectEtagTableData> custom({
+    Expression<String>? bucketName,
+    Expression<String>? objectKey,
+    Expression<String>? etag,
+    Expression<int>? size,
+    Expression<int>? modified,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (bucketName != null) 'bucket_name': bucketName,
+      if (objectKey != null) 'object_key': objectKey,
+      if (etag != null) 'etag': etag,
+      if (size != null) 'size': size,
+      if (modified != null) 'modified': modified,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ObjectEtagTableCompanion copyWith({
+    Value<String>? bucketName,
+    Value<String>? objectKey,
+    Value<String>? etag,
+    Value<int>? size,
+    Value<int>? modified,
+    Value<int>? rowid,
+  }) {
+    return ObjectEtagTableCompanion(
+      bucketName: bucketName ?? this.bucketName,
+      objectKey: objectKey ?? this.objectKey,
+      etag: etag ?? this.etag,
+      size: size ?? this.size,
+      modified: modified ?? this.modified,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (bucketName.present) {
+      map['bucket_name'] = Variable<String>(bucketName.value);
+    }
+    if (objectKey.present) {
+      map['object_key'] = Variable<String>(objectKey.value);
+    }
+    if (etag.present) {
+      map['etag'] = Variable<String>(etag.value);
+    }
+    if (size.present) {
+      map['size'] = Variable<int>(size.value);
+    }
+    if (modified.present) {
+      map['modified'] = Variable<int>(modified.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ObjectEtagTableCompanion(')
+          ..write('bucketName: $bucketName, ')
+          ..write('objectKey: $objectKey, ')
+          ..write('etag: $etag, ')
+          ..write('size: $size, ')
+          ..write('modified: $modified, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $AnonymousRuleTableTable anonymousRuleTable =
       $AnonymousRuleTableTable(this);
   late final $BucketTableTable bucketTable = $BucketTableTable(this);
+  late final $ObjectEtagTableTable objectEtagTable = $ObjectEtagTableTable(
+    this,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -695,6 +1066,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     anonymousRuleTable,
     bucketTable,
+    objectEtagTable,
   ];
 }
 
@@ -1095,6 +1467,218 @@ typedef $$BucketTableTableProcessedTableManager =
       BucketTableData,
       PrefetchHooks Function()
     >;
+typedef $$ObjectEtagTableTableCreateCompanionBuilder =
+    ObjectEtagTableCompanion Function({
+      required String bucketName,
+      required String objectKey,
+      required String etag,
+      required int size,
+      required int modified,
+      Value<int> rowid,
+    });
+typedef $$ObjectEtagTableTableUpdateCompanionBuilder =
+    ObjectEtagTableCompanion Function({
+      Value<String> bucketName,
+      Value<String> objectKey,
+      Value<String> etag,
+      Value<int> size,
+      Value<int> modified,
+      Value<int> rowid,
+    });
+
+class $$ObjectEtagTableTableFilterComposer
+    extends Composer<_$AppDatabase, $ObjectEtagTableTable> {
+  $$ObjectEtagTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get bucketName => $composableBuilder(
+    column: $table.bucketName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get objectKey => $composableBuilder(
+    column: $table.objectKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get etag => $composableBuilder(
+    column: $table.etag,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get size => $composableBuilder(
+    column: $table.size,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get modified => $composableBuilder(
+    column: $table.modified,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ObjectEtagTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $ObjectEtagTableTable> {
+  $$ObjectEtagTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get bucketName => $composableBuilder(
+    column: $table.bucketName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get objectKey => $composableBuilder(
+    column: $table.objectKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get etag => $composableBuilder(
+    column: $table.etag,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get size => $composableBuilder(
+    column: $table.size,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get modified => $composableBuilder(
+    column: $table.modified,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ObjectEtagTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ObjectEtagTableTable> {
+  $$ObjectEtagTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get bucketName => $composableBuilder(
+    column: $table.bucketName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get objectKey =>
+      $composableBuilder(column: $table.objectKey, builder: (column) => column);
+
+  GeneratedColumn<String> get etag =>
+      $composableBuilder(column: $table.etag, builder: (column) => column);
+
+  GeneratedColumn<int> get size =>
+      $composableBuilder(column: $table.size, builder: (column) => column);
+
+  GeneratedColumn<int> get modified =>
+      $composableBuilder(column: $table.modified, builder: (column) => column);
+}
+
+class $$ObjectEtagTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ObjectEtagTableTable,
+          ObjectEtagTableData,
+          $$ObjectEtagTableTableFilterComposer,
+          $$ObjectEtagTableTableOrderingComposer,
+          $$ObjectEtagTableTableAnnotationComposer,
+          $$ObjectEtagTableTableCreateCompanionBuilder,
+          $$ObjectEtagTableTableUpdateCompanionBuilder,
+          (
+            ObjectEtagTableData,
+            BaseReferences<
+              _$AppDatabase,
+              $ObjectEtagTableTable,
+              ObjectEtagTableData
+            >,
+          ),
+          ObjectEtagTableData,
+          PrefetchHooks Function()
+        > {
+  $$ObjectEtagTableTableTableManager(
+    _$AppDatabase db,
+    $ObjectEtagTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ObjectEtagTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ObjectEtagTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ObjectEtagTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> bucketName = const Value.absent(),
+                Value<String> objectKey = const Value.absent(),
+                Value<String> etag = const Value.absent(),
+                Value<int> size = const Value.absent(),
+                Value<int> modified = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ObjectEtagTableCompanion(
+                bucketName: bucketName,
+                objectKey: objectKey,
+                etag: etag,
+                size: size,
+                modified: modified,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String bucketName,
+                required String objectKey,
+                required String etag,
+                required int size,
+                required int modified,
+                Value<int> rowid = const Value.absent(),
+              }) => ObjectEtagTableCompanion.insert(
+                bucketName: bucketName,
+                objectKey: objectKey,
+                etag: etag,
+                size: size,
+                modified: modified,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ObjectEtagTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ObjectEtagTableTable,
+      ObjectEtagTableData,
+      $$ObjectEtagTableTableFilterComposer,
+      $$ObjectEtagTableTableOrderingComposer,
+      $$ObjectEtagTableTableAnnotationComposer,
+      $$ObjectEtagTableTableCreateCompanionBuilder,
+      $$ObjectEtagTableTableUpdateCompanionBuilder,
+      (
+        ObjectEtagTableData,
+        BaseReferences<
+          _$AppDatabase,
+          $ObjectEtagTableTable,
+          ObjectEtagTableData
+        >,
+      ),
+      ObjectEtagTableData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -1103,4 +1687,6 @@ class $AppDatabaseManager {
       $$AnonymousRuleTableTableTableManager(_db, _db.anonymousRuleTable);
   $$BucketTableTableTableManager get bucketTable =>
       $$BucketTableTableTableManager(_db, _db.bucketTable);
+  $$ObjectEtagTableTableTableManager get objectEtagTable =>
+      $$ObjectEtagTableTableTableManager(_db, _db.objectEtagTable);
 }

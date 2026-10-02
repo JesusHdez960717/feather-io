@@ -13,11 +13,13 @@ enum S3ErrorCode {
   invalidBucketName('InvalidBucketName', 400),
   invalidPart('InvalidPart', 400),
   invalidPartOrder('InvalidPartOrder', 400),
+  invalidRange('InvalidRange', 416),
   invalidRequest('InvalidRequest', 400),
   malformedXML('MalformedXML', 400),
   noSuchBucket('NoSuchBucket', 404),
   noSuchKey('NoSuchKey', 404),
   noSuchUpload('NoSuchUpload', 404),
+  notImplemented('NotImplemented', 501),
   signatureDoesNotMatch('SignatureDoesNotMatch', 403);
 
   final String code;

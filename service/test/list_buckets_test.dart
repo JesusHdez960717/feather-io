@@ -79,6 +79,10 @@ void main() {
       expect(response.body, contains('<ListAllMyBucketsResult'));
       expect(response.body, contains('<Name>test-bucket-1</Name>'));
       expect(response.body, contains('<ObjectCount>1</ObjectCount>'));
+      final creationDate = RegExp(
+        r'<CreationDate>(.*?)</CreationDate>',
+      ).firstMatch(response.body)!.group(1)!;
+      expect(creationDate, matches(RegExp(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$')));
     });
 
     test('GET / - Should update stats after deleting a file', () async {

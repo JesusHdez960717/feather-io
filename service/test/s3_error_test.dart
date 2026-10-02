@@ -129,5 +129,12 @@ void main() {
       expect(response.statusCode, 403);
       expect(response.body, contains('<Code>SignatureDoesNotMatch</Code>'));
     });
+
+    test('Should accept the Authorization fields without spaces (s3cmd)', () async {
+      final headers = server.sigV4('GET', '/');
+      headers['authorization'] = headers['authorization']!.replaceAll(', ', ',');
+      final response = await http.get(server.url('/'), headers: headers);
+      expect(response.statusCode, 200, reason: response.body);
+    });
   });
 }

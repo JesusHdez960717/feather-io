@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:mime/mime.dart';
 import 'package:service/feather.dart';
@@ -14,6 +15,7 @@ class S3Controller {
       path: '/',
       filterConfig: FilterConfig([
         S3BucketNameFilter(),
+        UnsupportedSubresourceFilter(),
         JwtFilter(),
         S3SigV4Filter(),
         AnonymousAccessFilter(),
@@ -160,7 +162,8 @@ class S3Controller {
       color: createRequest?.color,
     );
 
-    return ResponseEntity.ok(body: 'Bucket created successfully.');
+    //como S3: sin cuerpo y con la ruta del bucket en Location
+    return ResponseEntity(200, headers: {'location': '/$bucketName'});
   }
 
   Future<ResponseEntity> deleteBucket(RequestEntity request) async {
@@ -178,13 +181,13 @@ class S3Controller {
     final copySource = request.headers['x-amz-copy-source'];
     if (copySource != null) return _copyObject(request, copySource);
 
-    await fileManagement.uploadFile(
+    final etag = await fileManagement.uploadFile(
       bucketName: request.pathParams['bucket']!,
       key: _objectKey(request),
       binary: request.read(),
     );
 
-    return ResponseEntity.ok(body: 'File uploaded successfully.');
+    return ResponseEntity(200, headers: {'etag': '"$etag"'});
   }
 
   /// La key del objeto. El parametro de ruta pierde la `/` final, que es la que
@@ -244,6 +247,9 @@ class S3Controller {
 
   Future<ResponseEntity> listObjects(RequestEntity request) async {
     final bucketName = request.pathParams['bucket']!;
+    if (request.queryParams.containsKey('location')) {
+      return _bucketLocation(bucketName);
+    }
     final prefix = request.queryParams['prefix'];
     final delimiter = request.queryParams['delimiter'];
     final maxKeysParam = request.queryParams['max-keys'];
@@ -277,25 +283,94 @@ class S3Controller {
     }
   }
 
+  /// GetBucketLocation (`?location`): siempre la region por defecto, que S3
+  /// devuelve como un LocationConstraint vacio. Los clientes la piden para
+  /// saber con que region firmar
+  Future<ResponseEntity> _bucketLocation(String bucketName) async {
+    if (!await fileManagement.bucketExists(bucketName)) {
+      throw S3Exception.noSuchBucket(bucketName);
+    }
+    return ResponseEntity.ok(
+      body:
+          '<?xml version="1.0" encoding="UTF-8"?>\n'
+          '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/"/>\n',
+      headers: {'content-type': 'application/xml'},
+    );
+  }
+
   Future<ResponseEntity> getFile(RequestEntity request) async {
     final bucketName = request.pathParams['bucket']!;
-    final key = request.pathParams['key']!;
+    final key = _objectKey(request);
 
     final file = await fileManagement.getFile(bucketName: bucketName, key: key);
-
-    final contentType =
-        lookupMimeType(file.path) ?? MediaType.applicationOctetStream;
+    final stat = await file.stat();
+    final etag = await fileManagement.etagOf(
+      bucketName: bucketName,
+      key: key,
+      file: file,
+      stat: stat,
+    );
 
     //un HEAD usa esta misma ruta: Winter manda las cabeceras sin el cuerpo
-    final stat = await file.stat();
-    return ResponseEntity.ok(
-      body: file.openRead(),
+    final headers = {
+      'content-type':
+          lookupMimeType(file.path) ??
+          MediaType.applicationOctetStream.mimeType,
+      'last-modified': HttpDate.format(stat.modified),
+      'etag': '"$etag"',
+      'accept-ranges': 'bytes',
+    };
+
+    final range = _requestedRange(request, stat.size, key);
+    if (range == null) {
+      return ResponseEntity.ok(
+        body: file.openRead(),
+        headers: {...headers, 'content-length': stat.size.toString()},
+      );
+    }
+    final (start, end) = range;
+    return ResponseEntity(
+      206,
+      body: file.openRead(start, end + 1),
       headers: {
-        'content-type': contentType,
-        'content-length': stat.size.toString(),
-        'last-modified': HttpDate.format(stat.modified),
+        ...headers,
+        'content-length': '${end - start + 1}',
+        'content-range': 'bytes $start-$end/${stat.size}',
       },
     );
+  }
+
+  /// El tramo que pide la cabecera `Range` (`bytes=a-b`, `bytes=a-` o
+  /// `bytes=-n`, los ultimos n) como posiciones inclusivas. Null si no hay
+  /// cabecera o no se entiende: entonces se sirve entero, como hace S3 (que
+  /// tampoco admite varios tramos). Un tramo fuera del objeto es un 416
+  (int, int)? _requestedRange(RequestEntity request, int size, String key) {
+    final header = request.headers['range'];
+    if (header == null) return null;
+    final match = RegExp(r'^bytes=(\d*)-(\d*)$').firstMatch(header.trim());
+    if (match == null) return null;
+    final first = int.tryParse(match.group(1)!);
+    final last = int.tryParse(match.group(2)!);
+
+    final int start;
+    final int end;
+    if (first == null) {
+      if (last == null) return null;
+      start = last == 0 ? size : max(0, size - last);
+      end = size - 1;
+    } else {
+      if (last != null && last < first) return null;
+      start = first;
+      end = last == null ? size - 1 : min(last, size - 1);
+    }
+    if (start >= size) {
+      throw S3Exception(
+        S3ErrorCode.invalidRange,
+        message: 'El rango "$header" está fuera del objeto ($size bytes).',
+        resource: key,
+      );
+    }
+    return (start, end);
   }
 
   Future<ResponseEntity> deleteFile(RequestEntity request) async {
@@ -490,6 +565,20 @@ class S3Controller {
     return buffer.toString();
   }
 
+  /// Fecha de S3 en el XML: UTC con milisegundos (`2026-10-02T14:22:35.000Z`)
+  String _s3Date(DateTime date) {
+    final utc = date.toUtc();
+    return DateTime.utc(
+      utc.year,
+      utc.month,
+      utc.day,
+      utc.hour,
+      utc.minute,
+      utc.second,
+      utc.millisecond,
+    ).toIso8601String();
+  }
+
   String _escapeXml(String value) => value
       .replaceAll('&', '&amp;')
       .replaceAll('<', '&lt;')
@@ -507,12 +596,12 @@ class S3Controller {
       buffer.writeln('      <Name>${bucket.name}</Name>');
       if (bucket.description != null) {
         buffer.writeln(
-          '      <Description>${bucket.description}</Description>',
+          '      <Description>${_escapeXml(bucket.description!)}</Description>',
         );
       }
       buffer.writeln('      <Color>${bucket.color}</Color>');
       buffer.writeln(
-        '      <CreationDate>${bucket.creationDate.toIso8601String()}</CreationDate>',
+        '      <CreationDate>${_s3Date(bucket.creationDate)}</CreationDate>',
       );
       buffer.writeln('      <ObjectCount>${bucket.objectCount}</ObjectCount>');
       buffer.writeln('      <Size>${bucket.size}</Size>');
@@ -530,8 +619,9 @@ class S3Controller {
       '<CopyObjectResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">',
     );
     buffer.writeln(
-      '  <LastModified>${copied.lastModified.toUtc().toIso8601String()}</LastModified>',
+      '  <LastModified>${_s3Date(copied.lastModified)}</LastModified>',
     );
+    buffer.writeln('  <ETag>&quot;${copied.etag}&quot;</ETag>');
     buffer.writeln('</CopyObjectResult>');
     return buffer.toString();
   }
@@ -544,10 +634,12 @@ class S3Controller {
     );
     buffer.writeln('  <Name>${response.bucketName}</Name>');
     if (response.prefix != null) {
-      buffer.writeln('  <Prefix>${response.prefix}</Prefix>');
+      buffer.writeln('  <Prefix>${_escapeXml(response.prefix!)}</Prefix>');
     }
     if (response.delimiter != null) {
-      buffer.writeln('  <Delimiter>${response.delimiter}</Delimiter>');
+      buffer.writeln(
+        '  <Delimiter>${_escapeXml(response.delimiter!)}</Delimiter>',
+      );
     }
     buffer.writeln('  <MaxKeys>${response.maxKeys}</MaxKeys>');
     buffer.writeln('  <KeyCount>${response.keyCount}</KeyCount>');
@@ -565,13 +657,11 @@ class S3Controller {
 
     for (final file in response.contents) {
       buffer.writeln('  <Contents>');
-      buffer.writeln('    <Key>${file.key}</Key>');
+      buffer.writeln('    <Key>${_escapeXml(file.key)}</Key>');
       buffer.writeln(
-        '    <LastModified>${file.lastModified.toIso8601String()}</LastModified>',
+        '    <LastModified>${_s3Date(file.lastModified)}</LastModified>',
       );
-      buffer.writeln(
-        '    <ETag>&quot;d41d8cd98f00b204e9800998ecf8427e&quot;</ETag>',
-      );
+      buffer.writeln('    <ETag>&quot;${file.etag}&quot;</ETag>');
       buffer.writeln('    <Size>${file.size}</Size>');
       buffer.writeln('    <StorageClass>STANDARD</StorageClass>');
       buffer.writeln('  </Contents>');
@@ -579,7 +669,7 @@ class S3Controller {
 
     for (final prefix in response.commonPrefixes) {
       buffer.writeln('  <CommonPrefixes>');
-      buffer.writeln('    <Prefix>$prefix</Prefix>');
+      buffer.writeln('    <Prefix>${_escapeXml(prefix)}</Prefix>');
       buffer.writeln('  </CommonPrefixes>');
     }
 
