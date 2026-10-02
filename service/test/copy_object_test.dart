@@ -107,10 +107,49 @@ void main() {
       expect(jsonDecode(response.body)['code'], 'NoSuchBucket');
     });
 
-    test('Should reject copying an object onto itself (400)', () async {
+    test('Should reject copying an object onto itself without changes (400)', () async {
       final response = await copy('origen/informe.pdf', '/$bucket/origen/informe.pdf');
       expect(response.statusCode, 400);
       expect(response.body, contains('<Code>InvalidRequest</Code>'));
+    });
+
+    test('Should copy an object onto itself to change its metadata', () async {
+      await server.putObject(bucket, 'mismo.txt', 'igual');
+      final response = await copy(
+        'mismo.txt',
+        '/$bucket/mismo.txt',
+        headers: {
+          ...server.auth(),
+          'x-amz-metadata-directive': 'REPLACE',
+          'content-type': 'text/csv',
+        },
+      );
+      expect(response.statusCode, 200, reason: response.body);
+
+      final head = await http.head(
+        server.url('/$bucket/mismo.txt'),
+        headers: server.auth(),
+      );
+      expect(head.headers['content-type'], 'text/csv');
+      expect(
+        await File('${server.storagePath}/$bucket/mismo.txt').readAsString(),
+        'igual',
+      );
+    });
+
+    test('Should copy an object onto itself to change its storage class', () async {
+      await server.putObject(bucket, 'mismo-clase.txt', 'igual');
+      final response = await copy(
+        'mismo-clase.txt',
+        '/$bucket/mismo-clase.txt',
+        headers: {...server.auth(), 'x-amz-storage-class': 'STANDARD_IA'},
+      );
+      expect(response.statusCode, 200, reason: response.body);
+      final head = await http.head(
+        server.url('/$bucket/mismo-clase.txt'),
+        headers: server.auth(),
+      );
+      expect(head.headers['x-amz-storage-class'], 'STANDARD_IA');
     });
 
     test('Should reject a malformed source (400)', () async {

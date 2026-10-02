@@ -535,4 +535,83 @@ void main() {
       expect(response.body, contains('<Code>PreconditionFailed</Code>'));
     });
   });
+
+  group('S3Controller - ListParts (GET ?uploadId)', () {
+    const partsBucket = 'mp-parts';
+
+    setUpAll(() => server.createBucket(partsBucket));
+
+    Future<String> startWithParts(String key, List<int> numbers) async {
+      final created = await http.post(
+        server.url('/$partsBucket/$key?uploads'),
+        headers: server.auth(json: true),
+      );
+      final uploadId = jsonDecode(created.body)['upload_id'] as String;
+      for (final number in numbers) {
+        await http.put(
+          server.url('/$partsBucket/$key?partNumber=$number&uploadId=$uploadId'),
+          headers: server.auth(),
+          body: List<int>.filled(number, number),
+        );
+      }
+      return uploadId;
+    }
+
+    test('Should list the uploaded parts in order (XML)', () async {
+      final uploadId = await startWithParts('partes.bin', [3, 1, 2]);
+      final response = await http.get(
+        server.url('/$partsBucket/partes.bin?uploadId=$uploadId'),
+        headers: server.auth(),
+      );
+      expect(response.statusCode, 200, reason: response.body);
+      expect(response.body, contains('<ListPartsResult'));
+      final numbers = RegExp(r'<PartNumber>(\d+)</PartNumber>')
+          .allMatches(response.body)
+          .map((m) => m.group(1));
+      expect(numbers, ['1', '2', '3']);
+      expect(response.body, contains('<Size>3</Size>'));
+      expect(
+        response.body,
+        contains('<ETag>&quot;${md5.convert([1])}&quot;</ETag>'),
+      );
+      expect(response.body, contains('<IsTruncated>false</IsTruncated>'));
+    });
+
+    test('Should page with part-number-marker and max-parts (JSON)', () async {
+      final uploadId = await startWithParts('paginas.bin', [1, 2, 3]);
+      final response = await http.get(
+        server.url(
+          '/$partsBucket/paginas.bin?uploadId=$uploadId'
+          '&part-number-marker=1&max-parts=1',
+        ),
+        headers: server.auth(json: true),
+      );
+      final parts = jsonDecode(response.body) as List;
+      expect(parts.map((p) => p['part_number']), [2]);
+    });
+
+    test('Should answer NoSuchUpload for an unknown upload', () async {
+      final response = await http.get(
+        server.url('/$partsBucket/x.bin?uploadId=${'0' * 32}'),
+        headers: server.auth(),
+      );
+      expect(response.statusCode, 404);
+      expect(response.body, contains('<Code>NoSuchUpload</Code>'));
+    });
+
+    test('Should not let an anonymous reader list the parts (403)', () async {
+      final uploadId = await startWithParts('anonimo.bin', [1]);
+      final rule = await http.post(
+        server.url('/_admin/bucket/$partsBucket/anonymous-access'),
+        headers: {...server.auth(json: true), 'content-type': 'application/json'},
+        body: jsonEncode({'prefix': '*', 'access': 'readOnly'}),
+      );
+      expect(rule.statusCode, anyOf(200, 201), reason: rule.body);
+
+      final response = await http.get(
+        server.url('/$partsBucket/anonimo.bin?uploadId=$uploadId'),
+      );
+      expect(response.statusCode, 403);
+    });
+  });
 }

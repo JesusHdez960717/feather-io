@@ -191,15 +191,52 @@ void main() {
       expect(body['max_keys'], 1000);
     });
 
-    test('Should report the pagination in the XML', () async {
+    test('Should report the V2 pagination in the XML', () async {
       final response = await http.get(
-        server.url('/$pageBucket?max-keys=1'),
+        server.url('/$pageBucket?list-type=2&max-keys=1'),
         headers: server.auth(),
       );
       expect(response.body, contains('<IsTruncated>true</IsTruncated>'));
       expect(response.body, contains('<MaxKeys>1</MaxKeys>'));
       expect(response.body, contains('<KeyCount>1</KeyCount>'));
       expect(response.body, contains('<NextContinuationToken>'));
+      expect(response.body, isNot(contains('<NextMarker>')));
+    });
+
+    Future<String> xmlPage(String query) async {
+      final response = await http.get(
+        server.url('/$pageBucket?$query'),
+        headers: server.auth(),
+      );
+      expect(response.statusCode, 200, reason: response.body);
+      return response.body;
+    }
+
+    List<String> xmlKeys(String xml) => RegExp(r'<Key>(.*?)</Key>')
+        .allMatches(xml)
+        .map((m) => m.group(1)!)
+        .toList();
+
+    test('Should walk every key with the V1 marker and NextMarker', () async {
+      final keys = <String>[];
+      String? marker;
+      for (var i = 0; i < 10; i++) {
+        final xml = await xmlPage(
+          'max-keys=2${marker == null ? '' : '&marker=${Uri.encodeQueryComponent(marker)}'}',
+        );
+        expect(xml, isNot(contains('<KeyCount>')));
+        expect(xml, contains('<Marker>${marker ?? ''}</Marker>'));
+        keys.addAll(xmlKeys(xml));
+        if (!xml.contains('<IsTruncated>true</IsTruncated>')) break;
+        marker = RegExp(r'<NextMarker>(.*?)</NextMarker>').firstMatch(xml)!.group(1);
+      }
+      expect(keys, ['a.txt', 'b.txt', 'c/1.txt', 'd.txt', 'e.txt']);
+    });
+
+    test('Should start after start-after in V2', () async {
+      final xml = await xmlPage('list-type=2&start-after=c/1.txt');
+      expect(xmlKeys(xml), ['d.txt', 'e.txt']);
+      expect(xml, contains('<StartAfter>c/1.txt</StartAfter>'));
     });
 
     test('Should reject an invalid max-keys (400)', () async {
@@ -219,6 +256,43 @@ void main() {
         headers: server.auth(json: true),
       );
       expect(response.statusCode, 400);
+    });
+  });
+
+  group('S3Controller - LIST Objects encoding-type=url', () {
+    const encBucket = 'list-encoding';
+
+    setUpAll(() async {
+      await server.putObject(encBucket, 'carpeta con espacio/a+b%c.txt', 'x');
+    });
+
+    test('Should URL-encode the keys, keeping the slashes', () async {
+      final response = await http.get(
+        server.url('/$encBucket?list-type=2&encoding-type=url'),
+        headers: server.auth(),
+      );
+      expect(response.body, contains('<EncodingType>url</EncodingType>'));
+      expect(
+        response.body,
+        contains('<Key>carpeta%20con%20espacio/a%2Bb%25c.txt</Key>'),
+      );
+    });
+
+    test('Should URL-encode the common prefixes', () async {
+      final response = await http.get(
+        server.url('/$encBucket?delimiter=/&encoding-type=url'),
+        headers: server.auth(),
+      );
+      expect(response.body, contains('<Prefix>carpeta%20con%20espacio/</Prefix>'));
+    });
+
+    test('Should not encode without encoding-type', () async {
+      final response = await http.get(
+        server.url('/$encBucket?list-type=2'),
+        headers: server.auth(),
+      );
+      expect(response.body, contains('<Key>carpeta con espacio/a+b%c.txt</Key>'));
+      expect(response.body, isNot(contains('<EncodingType>')));
     });
   });
 }

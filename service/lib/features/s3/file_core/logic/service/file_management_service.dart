@@ -204,6 +204,7 @@ class FileManagementService {
     String? delimiter,
     int maxKeys = maxKeysLimit,
     String? continuationToken,
+    String? startAfter,
   }) async {
     if (!S3Validator.isValidBucketName(bucketName)) {
       throw S3Exception.invalidBucketName(bucketName);
@@ -215,8 +216,9 @@ class FileManagementService {
         resource: bucketName,
       );
     }
-    final startAfter = continuationToken == null
-        ? null
+    //el token manda sobre start-after/marker, como en ListObjectsV2
+    final after = continuationToken == null
+        ? startAfter
         : _decodeContinuationToken(continuationToken);
 
     final bucketPath = _getBucketPath(bucketName);
@@ -273,9 +275,9 @@ class FileManagementService {
     // Objetos y prefijos van juntos y ordenados, como en S3, y se pagina sobre
     // ese orden: la pagina empieza despues de la ultima key de la anterior
     final keys = {...files.keys, ...commonPrefixes}.toList()..sort();
-    final pending = startAfter == null
+    final pending = after == null
         ? keys
-        : keys.where((key) => key.compareTo(startAfter) > 0).toList();
+        : keys.where((key) => key.compareTo(after) > 0).toList();
     final page = pending.take(min(maxKeys, maxKeysLimit)).toList();
     final isTruncated = pending.length > page.length;
 
@@ -309,6 +311,8 @@ class FileManagementService {
       ],
       maxKeys: min(maxKeys, maxKeysLimit),
       continuationToken: continuationToken,
+      startAfter: startAfter,
+      nextMarker: isTruncated && page.isNotEmpty ? page.last : null,
       isTruncated: isTruncated,
       nextContinuationToken: isTruncated && page.isNotEmpty
           ? base64Url.encode(utf8.encode(page.last))
@@ -353,10 +357,15 @@ class FileManagementService {
         throw S3Exception.invalidKey(k);
       }
     }
-    if (sourceBucket == bucketName && sourceKey == key) {
+    //como S3, copiar un objeto sobre si mismo solo vale para cambiarle los
+    //metadatos (REPLACE) o la clase de almacenamiento
+    final sameObject = sourceBucket == bucketName && sourceKey == key;
+    if (sameObject && headers == null && storageClass == null) {
       throw S3Exception(
         S3ErrorCode.invalidRequest,
-        message: 'El origen y el destino de la copia son el mismo objeto.',
+        message:
+            'Copiar un objeto sobre sí mismo exige cambiar sus metadatos o su '
+            'clase de almacenamiento.',
         resource: key,
       );
     }
@@ -386,8 +395,10 @@ class FileManagementService {
     );
     final etag = sourceMeta.etag;
     final target = _getFile(bucketName, key);
-    await target.parent.create(recursive: true);
-    await source.copy(target.path);
+    if (!sameObject) {
+      await target.parent.create(recursive: true);
+      await source.copy(target.path);
+    }
     await objectMeta.save(
       bucketName: bucketName,
       key: key,

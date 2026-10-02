@@ -26,6 +26,33 @@ class MultipartUploadModel implements Serializable {
   }
 }
 
+/// Parte ya subida de una subida multipart (ListParts)
+class UploadedPartModel implements Serializable {
+  final int partNumber;
+
+  /// md5 de la parte (sin comillas)
+  final String etag;
+  final int size;
+  final DateTime lastModified;
+
+  UploadedPartModel({
+    required this.partNumber,
+    required this.etag,
+    required this.size,
+    required this.lastModified,
+  });
+
+  @override
+  Object? toJson() {
+    return {
+      'part_number': partNumber,
+      'etag': etag,
+      'size_bytes': size,
+      'last_modified': lastModified.toIso8601String(),
+    };
+  }
+}
+
 /// Parte copiada de otro objeto (UploadPartCopy)
 class CopiedPartModel implements Serializable {
   /// md5 de la parte (sin comillas)

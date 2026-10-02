@@ -392,18 +392,25 @@ class S3Controller {
       );
     }
 
+    //ListObjectsV2 con list-type=2; si no, V1 (pagina con marker)
+    final v2 = request.queryParams['list-type'] == '2';
     final result = await fileManagement.listFiles(
       bucketName: bucketName,
       prefix: prefix,
       delimiter: delimiter,
       maxKeys: maxKeys,
       continuationToken: request.queryParams['continuation-token'],
+      startAfter: request.queryParams[v2 ? 'start-after' : 'marker'],
     );
 
     if (_acceptsJson(request)) {
       return ResponseEntity.ok(body: result);
     } else {
-      final xmlBody = _mapListObjectsToXml(result);
+      final xmlBody = _mapListObjectsToXml(
+        result,
+        v2: v2,
+        urlEncoded: request.queryParams['encoding-type'] == 'url',
+      );
       return ResponseEntity.ok(
         body: xmlBody,
         headers: {'content-type': 'application/xml'},
@@ -429,6 +436,8 @@ class S3Controller {
   Future<ResponseEntity> getFile(RequestEntity request) async {
     final bucketName = request.pathParams['bucket']!;
     final key = _objectKey(request);
+    final uploadId = request.queryParams['uploadId'];
+    if (uploadId != null) return _listParts(request, bucketName, key, uploadId);
 
     final file = await fileManagement.getFile(bucketName: bucketName, key: key);
     final stat = await file.stat();
@@ -609,6 +618,79 @@ class S3Controller {
       binary: _objectBody(request),
     );
     return ResponseEntity(200, headers: {'etag': '"$etag"'});
+  }
+
+  /// ListParts (`GET /{bucket}/{key}?uploadId=`): las partes ya subidas, para
+  /// reanudar una subida. Va por la ruta de descarga, pero como el resto de
+  /// multipart exige el permiso de subida
+  Future<ResponseEntity> _listParts(
+    RequestEntity request,
+    String bucketName,
+    String key,
+    String uploadId,
+  ) async {
+    final permissions =
+        request.securityContext.authentication?.permissions ?? const {};
+    if (!permissions.contains('s3.put-object')) {
+      throw S3Exception(
+        S3ErrorCode.accessDenied,
+        message: 'Listar las partes de una subida requiere permiso de subida.',
+        resource: key,
+      );
+    }
+    final marker =
+        int.tryParse(request.queryParams['part-number-marker'] ?? '') ?? 0;
+    final maxParts =
+        (int.tryParse(request.queryParams['max-parts'] ?? '') ??
+                FileManagementService.maxKeysLimit)
+            .clamp(0, FileManagementService.maxKeysLimit);
+
+    final pending = (await multipart.listParts(
+      bucketName: bucketName,
+      key: key,
+      uploadId: uploadId,
+    )).where((part) => part.partNumber > marker).toList();
+    final parts = pending.take(maxParts).toList();
+    final isTruncated = pending.length > parts.length;
+
+    if (_acceptsJson(request)) return ResponseEntity.ok(body: parts);
+    final buffer = StringBuffer();
+    buffer.writeln('<?xml version="1.0" encoding="UTF-8"?>');
+    buffer.writeln(
+      '<ListPartsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">',
+    );
+    buffer.writeln('  <Bucket>${_escapeXml(bucketName)}</Bucket>');
+    buffer.writeln('  <Key>${_escapeXml(key)}</Key>');
+    buffer.writeln('  <UploadId>$uploadId</UploadId>');
+    for (final role in ['Initiator', 'Owner']) {
+      buffer.writeln(
+        '  <$role><ID>$_ownerId</ID><DisplayName>$_ownerId</DisplayName></$role>',
+      );
+    }
+    buffer.writeln('  <StorageClass>STANDARD</StorageClass>');
+    buffer.writeln('  <PartNumberMarker>$marker</PartNumberMarker>');
+    if (parts.isNotEmpty) {
+      buffer.writeln(
+        '  <NextPartNumberMarker>${parts.last.partNumber}</NextPartNumberMarker>',
+      );
+    }
+    buffer.writeln('  <MaxParts>$maxParts</MaxParts>');
+    buffer.writeln('  <IsTruncated>$isTruncated</IsTruncated>');
+    for (final part in parts) {
+      buffer.writeln('  <Part>');
+      buffer.writeln('    <PartNumber>${part.partNumber}</PartNumber>');
+      buffer.writeln(
+        '    <LastModified>${_s3Date(part.lastModified)}</LastModified>',
+      );
+      buffer.writeln('    <ETag>&quot;${part.etag}&quot;</ETag>');
+      buffer.writeln('    <Size>${part.size}</Size>');
+      buffer.writeln('  </Part>');
+    }
+    buffer.writeln('</ListPartsResult>');
+    return ResponseEntity.ok(
+      body: buffer.toString(),
+      headers: {'content-type': 'application/xml'},
+    );
   }
 
   /// UploadPartCopy: la parte es otro objeto, entero o el tramo de
@@ -975,38 +1057,60 @@ class S3Controller {
     return buffer.toString();
   }
 
-  String _mapListObjectsToXml(ListObjectsResponse response) {
+  /// ListObjects en XML: V2 (`list-type=2`, pagina con continuation-token) o
+  /// V1 (pagina con marker). Con `encoding-type=url` las keys y los prefijos
+  /// van codificados como URL (salvo `/`), y el cliente los decodifica
+  String _mapListObjectsToXml(
+    ListObjectsResponse response, {
+    required bool v2,
+    required bool urlEncoded,
+  }) {
+    String text(String value) => urlEncoded
+        ? value.split('/').map(SigV4Signer.uriEncode).join('/')
+        : _escapeXml(value);
+
     final buffer = StringBuffer();
     buffer.writeln('<?xml version="1.0" encoding="UTF-8"?>');
     buffer.writeln(
       '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">',
     );
     buffer.writeln('  <Name>${response.bucketName}</Name>');
-    if (response.prefix != null) {
-      buffer.writeln('  <Prefix>${_escapeXml(response.prefix!)}</Prefix>');
-    }
+    buffer.writeln('  <Prefix>${text(response.prefix ?? '')}</Prefix>');
     if (response.delimiter != null) {
-      buffer.writeln(
-        '  <Delimiter>${_escapeXml(response.delimiter!)}</Delimiter>',
-      );
+      buffer.writeln('  <Delimiter>${text(response.delimiter!)}</Delimiter>');
     }
+    if (urlEncoded) buffer.writeln('  <EncodingType>url</EncodingType>');
     buffer.writeln('  <MaxKeys>${response.maxKeys}</MaxKeys>');
-    buffer.writeln('  <KeyCount>${response.keyCount}</KeyCount>');
-    if (response.continuationToken != null) {
-      buffer.writeln(
-        '  <ContinuationToken>${response.continuationToken}</ContinuationToken>',
-      );
+    if (v2) {
+      buffer.writeln('  <KeyCount>${response.keyCount}</KeyCount>');
+      if (response.startAfter != null) {
+        buffer.writeln(
+          '  <StartAfter>${text(response.startAfter!)}</StartAfter>',
+        );
+      }
+      if (response.continuationToken != null) {
+        buffer.writeln(
+          '  <ContinuationToken>${response.continuationToken}</ContinuationToken>',
+        );
+      }
+      if (response.nextContinuationToken != null) {
+        buffer.writeln(
+          '  <NextContinuationToken>${response.nextContinuationToken}</NextContinuationToken>',
+        );
+      }
+    } else {
+      buffer.writeln('  <Marker>${text(response.startAfter ?? '')}</Marker>');
+      if (response.nextMarker != null) {
+        buffer.writeln(
+          '  <NextMarker>${text(response.nextMarker!)}</NextMarker>',
+        );
+      }
     }
     buffer.writeln('  <IsTruncated>${response.isTruncated}</IsTruncated>');
-    if (response.nextContinuationToken != null) {
-      buffer.writeln(
-        '  <NextContinuationToken>${response.nextContinuationToken}</NextContinuationToken>',
-      );
-    }
 
     for (final file in response.contents) {
       buffer.writeln('  <Contents>');
-      buffer.writeln('    <Key>${_escapeXml(file.key)}</Key>');
+      buffer.writeln('    <Key>${text(file.key)}</Key>');
       buffer.writeln(
         '    <LastModified>${_s3Date(file.lastModified)}</LastModified>',
       );
@@ -1018,7 +1122,7 @@ class S3Controller {
 
     for (final prefix in response.commonPrefixes) {
       buffer.writeln('  <CommonPrefixes>');
-      buffer.writeln('    <Prefix>${_escapeXml(prefix)}</Prefix>');
+      buffer.writeln('    <Prefix>${text(prefix)}</Prefix>');
       buffer.writeln('  </CommonPrefixes>');
     }
 

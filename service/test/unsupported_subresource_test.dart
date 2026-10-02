@@ -57,15 +57,6 @@ void main() {
       );
     });
 
-    test('Should answer 501 to ListParts', () async {
-      expectNotImplemented(
-        await http.get(
-          server.url('/$bucket/a.txt?uploadId=abc'),
-          headers: server.auth(),
-        ),
-      );
-    });
-
     test('Should still serve the supported operations', () async {
       final list = await http.get(server.url('/$bucket'), headers: server.auth());
       expect(list.statusCode, 200);

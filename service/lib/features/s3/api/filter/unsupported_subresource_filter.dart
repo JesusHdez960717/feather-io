@@ -49,14 +49,7 @@ class UnsupportedSubresourceFilter extends Filter {
     FilterChain chain,
   ) async {
     final params = request.queryParams.keys;
-    var subresource = params.where(_unsupported.contains).firstOrNull;
-    //con GET, ?uploadId seria ListParts (?uploads, ListMultipartUploads, si
-    //esta implementado)
-    if (subresource == null &&
-        const {'GET', 'HEAD'}.contains(request.method) &&
-        params.contains('uploadId')) {
-      subresource = 'uploadId';
-    }
+    final subresource = params.where(_unsupported.contains).firstOrNull;
     if (subresource != null) {
       throw S3Exception(
         S3ErrorCode.notImplemented,

@@ -117,7 +117,10 @@ file.
   query (presigned URL: `X-Amz-Signature`, `X-Amz-Date`, `X-Amz-Expires` up to 7 days), and passes
   through requests with neither, so an unauthenticated request gets a 401 from the route's
   `AuthFilter`. The `Authorization` fields may be separated by `,` with or without a space (s3cmd
-  sends none). The SigV4 maths live in `security/logic/sig_v4_signer.dart` (`SigV4Signer`), shared
+  sends none). Canonical query names and values, and the paths `PresignService` builds, are encoded
+with `SigV4Signer.uriEncode` (everything but `A-Za-z0-9-_.~`, like AWS; `Uri.encodeComponent`
+leaves `!'()*` alone and the signature would not match); `test/sig_v4_signer_test.dart` checks it
+against the AWS docs example. The SigV4 maths live in `security/logic/sig_v4_signer.dart` (`SigV4Signer`), shared
   with `PresignService`, which signs `GET` URLs with the service keys for
   `POST /{admin}/bucket/{bucket}/presign` (the console has no secret key, so it asks the service).
   The URL uses the scheme and `Host` of that request, because the host is part of the signature.
@@ -190,8 +193,7 @@ UTC with milliseconds (`_s3Date`: `2026-10-02T14:22:35.000Z`) and every key, pre
 goes through `_escapeXml`.
 
 `UnsupportedSubresourceFilter` (S3 parent) answers `501 NotImplemented` to the subresources the
-service does not implement (`?versioning`, `?policy`, `?tagging`, `?acl`, `?legal-hold`…, plus
-`GET ?uploadId`, i.e. ListParts). Without it they would fall into
+service does not implement (`?versioning`, `?policy`, `?tagging`, `?acl`, `?legal-hold`…). Without it they would fall into
 the normal routes (`PUT /{bucket}?versioning` would create the bucket). A newly implemented
 subresource must be removed from its list.
 
@@ -248,10 +250,15 @@ folder with its content the console calls the admin endpoint
 `DELETE /{admin}/bucket/{bucket}/folder?prefix=fotos/` (`FileManagementService.deleteFolder`,
 permission `admin.bucket.delete-folder`); `BrowserRepo.deleteObjects` sends the folder keys there and
 the rest to the multi-delete. Winter drops the trailing `/` from the `{key}` path param; `S3Controller._objectKey` restores it
-from the URL. `listFiles` sorts objects and common prefixes together and pages over them like
-ListObjectsV2 (`max-keys` up to 1000, `continuation-token` = base64url of the last key returned).
+from the URL. `listFiles` sorts objects and common prefixes together and pages over them
+(`max-keys` up to 1000). With `list-type=2` the controller answers ListObjectsV2
+(`continuation-token` = base64url of the last key returned, or `start-after`); otherwise
+ListObjects V1 (`marker` and `NextMarker`). With `encoding-type=url` keys, prefixes and markers go
+URL-encoded (`SigV4Signer.uriEncode` per segment, keeping `/`) with `<EncodingType>url`, because
+clients decode them.
 `PUT` with `x-amz-copy-source` is CopyObject and needs the plain `s3.get-object` permission, so an
-anonymous rule can never copy. `HEAD` object is served by the `GET` route (Winter sends the headers
+anonymous rule can never copy. Copying an object onto itself is only allowed to change its metadata
+(`REPLACE`) or storage class, and then only the metadata is rewritten. `HEAD` object is served by the `GET` route (Winter sends the headers
 only), which includes `Last-Modified`, `ETag` and `Accept-Ranges`. A file without a known extension
 is `application/octet-stream`. `GET`/`HEAD` honour a single `Range` (`bytes=a-b`, `bytes=a-`,
 `bytes=-n`) with `206` + `Content-Range`, read with `file.openRead(start, end)`; a range starting
@@ -285,7 +292,8 @@ is not a valid bucket, so it isn't listed. Complete checks ascending order, ETag
 minimum of every part but the last, joins the parts inside the upload folder and moves the result,
 so the object never shows half-written; the final ETag is S3's `md5(part md5s)-N`. Deleting a bucket
 aborts its uploads. The upload id is validated as 32 hex chars before it touches a path. ListParts
-is not implemented. ListMultipartUploads (`GET /{bucket}?uploads`, list-objects route) lists the
+(`GET /{bucket}/{key}?uploadId=`, served by the get-object route) lists the uploaded parts with
+`part-number-marker`/`max-parts`, and requires `s3.put-object` like the rest of multipart. ListMultipartUploads (`GET /{bucket}?uploads`, list-objects route) lists the
 pending uploads of the bucket, sorted and without paging. UploadPartCopy (`PUT ?partNumber&uploadId`
 with `x-amz-copy-source` and optionally `x-amz-copy-source-range: bytes=a-b`) feeds UploadPart with
 `FileManagementService.readForCopy`. CORS exposes `ETag` so the console can read it.

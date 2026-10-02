@@ -53,13 +53,37 @@ class SigV4Signer {
   static String scope(String dateStamp, {String region = region}) =>
       '$dateStamp/$region/$service/aws4_request';
 
+  /// Codifica [value] como lo hace AWS al firmar: todo en `%XX` (bytes UTF-8)
+  /// salvo `A-Za-z0-9-_.~`. `Uri.encodeComponent` deja `!'()*` sin codificar y
+  /// la firma no coincidiria
+  static String uriEncode(String value) {
+    final buffer = StringBuffer();
+    for (final byte in utf8.encode(value)) {
+      final unreserved =
+          (byte >= 0x41 && byte <= 0x5A) || // A-Z
+          (byte >= 0x61 && byte <= 0x7A) || // a-z
+          (byte >= 0x30 && byte <= 0x39) || // 0-9
+          byte == 0x2D || // -
+          byte == 0x5F || // _
+          byte == 0x2E || // .
+          byte == 0x7E; // ~
+      buffer.write(
+        unreserved
+            ? String.fromCharCode(byte)
+            : '%${byte.toRadixString(16).toUpperCase().padLeft(2, '0')}',
+      );
+    }
+    return buffer.toString();
+  }
+
+  /// La query canonica: cada nombre y valor con [uriEncode], ordenada por el
+  /// nombre ya codificado
   static String canonicalQuery(Map<String, String> params) {
-    final keys = params.keys.toList()..sort();
-    return keys
-        .map(
-          (k) => '${Uri.encodeComponent(k)}=${Uri.encodeComponent(params[k]!)}',
-        )
-        .join('&');
+    final encoded = [
+      for (final MapEntry(:key, :value) in params.entries)
+        (uriEncode(key), uriEncode(value)),
+    ]..sort((a, b) => a.$1 != b.$1 ? a.$1.compareTo(b.$1) : a.$2.compareTo(b.$2));
+    return encoded.map((pair) => '${pair.$1}=${pair.$2}').join('&');
   }
 
   static String canonicalHeaders(

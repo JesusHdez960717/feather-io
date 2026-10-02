@@ -199,6 +199,34 @@ class MultipartService {
     );
   }
 
+  /// ListParts: las partes ya subidas de la subida, en orden
+  Future<List<UploadedPartModel>> listParts({
+    required String bucketName,
+    required String key,
+    required String uploadId,
+  }) async {
+    final dir = await _uploadDir(bucketName, key, uploadId);
+    final parts = <UploadedPartModel>[];
+    await for (final entity in dir.list()) {
+      final name = p.basename(entity.path);
+      if (entity is! File || !name.endsWith('.part')) continue;
+      final number = int.tryParse(name.substring(0, name.length - 5));
+      final etagFile = File(p.join(dir.path, '$number.etag'));
+      if (number == null || !await etagFile.exists()) continue;
+      final stat = await entity.stat();
+      parts.add(
+        UploadedPartModel(
+          partNumber: number,
+          etag: (await etagFile.readAsString()).trim(),
+          size: stat.size,
+          lastModified: stat.modified,
+        ),
+      );
+    }
+    parts.sort((a, b) => a.partNumber.compareTo(b.partNumber));
+    return parts;
+  }
+
   /// AbortMultipartUpload: borra la subida y sus partes
   Future<void> abort({
     required String bucketName,

@@ -13,6 +13,14 @@ class ListObjectsResponse implements Serializable {
   /// Token con el que se pidio esta pagina, si no es la primera
   final String? continuationToken;
 
+  /// Key despues de la que empieza la pagina (`marker` de ListObjects V1,
+  /// `start-after` de V2), tal y como se pidio
+  final String? startAfter;
+
+  /// Ultima key de esta pagina, para pedir la siguiente con `marker` (V1);
+  /// solo si [isTruncated]
+  final String? nextMarker;
+
   /// Hay mas claves despues de esta pagina
   final bool isTruncated;
 
@@ -31,6 +39,8 @@ class ListObjectsResponse implements Serializable {
     required this.commonPrefixes,
     required this.maxKeys,
     this.continuationToken,
+    this.startAfter,
+    this.nextMarker,
     this.isTruncated = false,
     this.nextContinuationToken,
     required this.totalKeys,

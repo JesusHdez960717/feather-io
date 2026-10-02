@@ -30,8 +30,8 @@ class PresignService {
     final amzDate = SigV4Signer.amzDate(now);
     final scope = SigV4Signer.scope(SigV4Signer.dateStamp(now));
     final path =
-        '/${Uri.encodeComponent(bucketName)}/'
-        '${key.split('/').map(Uri.encodeComponent).join('/')}';
+        '/${SigV4Signer.uriEncode(bucketName)}/'
+        '${key.split('/').map(SigV4Signer.uriEncode).join('/')}';
     final query = {
       SigV4Signer.algorithmParam: SigV4Signer.algorithm,
       SigV4Signer.credentialParam: '${env.access}/$scope',
