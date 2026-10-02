@@ -7,6 +7,7 @@ import 'package:service/feather.dart';
 class S3Controller {
   final FileManagementService fileManagement;
   final BucketService bucketService;
+  final MultipartService multipart;
 
   Route get routing {
     return Route.parent(
@@ -74,6 +75,15 @@ class S3Controller {
                 ),
               ]),
             ),
+            //CreateMultipartUpload (?uploads) y CompleteMultipartUpload (?uploadId)
+            Route.post(
+              key: 's3.post-object',
+              path: '/{key|.*}',
+              handler: postObject,
+              filterConfig: FilterConfig([
+                AuthFilter(rules: hasPermission('s3.put-object')),
+              ]),
+            ),
             Route.get(
               key: 's3.get-object',
               path: '/{key|.*}',
@@ -113,7 +123,10 @@ class S3Controller {
     );
   }
 
-  S3Controller() : fileManagement = di.find(), bucketService = BucketService();
+  S3Controller()
+    : fileManagement = di.find(),
+      bucketService = BucketService(),
+      multipart = MultipartService();
 
   Future<ResponseEntity> listBuckets(RequestEntity request) async {
     final buckets = await bucketService.listBuckets();
@@ -159,6 +172,9 @@ class S3Controller {
   }
 
   Future<ResponseEntity> putObject(RequestEntity request) async {
+    final uploadId = request.queryParams['uploadId'];
+    if (uploadId != null) return _uploadPart(request, uploadId);
+
     final copySource = request.headers['x-amz-copy-source'];
     if (copySource != null) return _copyObject(request, copySource);
 
@@ -192,7 +208,8 @@ class S3Controller {
     if (!permissions.contains('s3.get-object')) {
       throw S3Exception(
         S3ErrorCode.accessDenied,
-        message: 'Copiar un objeto requiere permiso de lectura sobre el origen.',
+        message:
+            'Copiar un objeto requiere permiso de lectura sobre el origen.',
         resource: copySource,
       );
     }
@@ -282,12 +299,123 @@ class S3Controller {
   }
 
   Future<ResponseEntity> deleteFile(RequestEntity request) async {
+    final uploadId = request.queryParams['uploadId'];
+    if (uploadId != null) {
+      await multipart.abort(
+        bucketName: request.pathParams['bucket']!,
+        key: _objectKey(request),
+        uploadId: uploadId,
+      );
+      return ResponseEntity(204);
+    }
+
     await fileManagement.deleteFile(
       bucketName: request.pathParams['bucket']!,
       key: request.pathParams['key']!,
     );
 
     return ResponseEntity(204);
+  }
+
+  /// `POST` sobre un objeto: solo las operaciones de multipart
+  Future<ResponseEntity> postObject(RequestEntity request) async {
+    final bucketName = request.pathParams['bucket']!;
+    final key = _objectKey(request);
+
+    if (request.queryParams.containsKey('uploads')) {
+      final upload = await multipart.create(bucketName: bucketName, key: key);
+      if (_acceptsJson(request)) return ResponseEntity.ok(body: upload);
+      return ResponseEntity.ok(
+        body: _mapInitiateMultipartToXml(upload),
+        headers: {'content-type': 'application/xml'},
+      );
+    }
+
+    final uploadId = request.queryParams['uploadId'];
+    if (uploadId != null) {
+      final parts = await _readCompletedParts(request, key);
+      final completed = await multipart.complete(
+        bucketName: bucketName,
+        key: key,
+        uploadId: uploadId,
+        parts: parts,
+      );
+      if (_acceptsJson(request)) return ResponseEntity.ok(body: completed);
+      return ResponseEntity.ok(
+        body: _mapCompleteMultipartToXml(request, completed),
+        headers: {'content-type': 'application/xml'},
+      );
+    }
+
+    throw S3Exception(
+      S3ErrorCode.invalidRequest,
+      message: 'POST sobre un objeto solo admite ?uploads o ?uploadId.',
+      resource: key,
+    );
+  }
+
+  /// UploadPart: `PUT ?partNumber=N&uploadId=X`. El ETag va en la cabecera
+  Future<ResponseEntity> _uploadPart(
+    RequestEntity request,
+    String uploadId,
+  ) async {
+    final key = _objectKey(request);
+    final partNumber = int.tryParse(request.queryParams['partNumber'] ?? '');
+    if (partNumber == null) {
+      throw S3Exception(
+        S3ErrorCode.invalidArgument,
+        message: 'Falta el número de parte (partNumber).',
+        resource: key,
+      );
+    }
+    final etag = await multipart.uploadPart(
+      bucketName: request.pathParams['bucket']!,
+      key: key,
+      uploadId: uploadId,
+      partNumber: partNumber,
+      binary: request.read(),
+    );
+    return ResponseEntity(200, headers: {'etag': '"$etag"'});
+  }
+
+  /// Las partes de CompleteMultipartUpload: XML de S3 o JSON (la consola)
+  Future<List<CompletedPart>> _readCompletedParts(
+    RequestEntity request,
+    String key,
+  ) async {
+    final malformed = S3Exception(
+      S3ErrorCode.malformedXML,
+      message: 'La lista de partes no es válida.',
+      resource: key,
+    );
+    final body = await utf8.decodeStream(request.read());
+    if (request.headers['content-type']?.contains('json') == true) {
+      try {
+        return CompleteMultipartRequest.fromJson(jsonDecode(body)).parts;
+      } catch (_) {
+        throw malformed;
+      }
+    }
+
+    String? tag(String xml, String name) => RegExp(
+      '<$name>\\s*(.*?)\\s*</$name>',
+      dotAll: true,
+    ).firstMatch(xml)?.group(1);
+
+    final parts = <CompletedPart>[];
+    final partPattern = RegExp(r'<Part>(.*?)</Part>', dotAll: true);
+    for (final match in partPattern.allMatches(body)) {
+      final xml = match.group(1)!;
+      final number = int.tryParse(tag(xml, 'PartNumber') ?? '');
+      if (number == null) throw malformed;
+      final etag = (tag(xml, 'ETag') ?? '')
+          .replaceAll('&quot;', '"')
+          .replaceAll('&#34;', '"')
+          .replaceAll('&amp;', '&');
+      parts.add(CompletedPart(partNumber: number, etag: etag));
+    }
+    if (parts.isEmpty) throw malformed;
+    return parts;
   }
 
   Future<ResponseEntity> multiDelete(RequestEntity request) async {
@@ -324,6 +452,48 @@ class S3Controller {
 
   bool _acceptsJson(RequestEntity request) =>
       request.headers['accept']?.contains('application/json') == true;
+
+  String _mapInitiateMultipartToXml(MultipartUploadModel upload) {
+    final buffer = StringBuffer();
+    buffer.writeln('<?xml version="1.0" encoding="UTF-8"?>');
+    buffer.writeln(
+      '<InitiateMultipartUploadResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">',
+    );
+    buffer.writeln('  <Bucket>${_escapeXml(upload.bucket)}</Bucket>');
+    buffer.writeln('  <Key>${_escapeXml(upload.key)}</Key>');
+    buffer.writeln('  <UploadId>${upload.uploadId}</UploadId>');
+    buffer.writeln('</InitiateMultipartUploadResult>');
+    return buffer.toString();
+  }
+
+  String _mapCompleteMultipartToXml(
+    RequestEntity request,
+    CompletedMultipartModel completed,
+  ) {
+    final uri = request.requestedUri;
+    final location = Uri(
+      scheme: uri.scheme,
+      host: uri.host,
+      port: uri.port,
+      path: uri.path,
+    ).toString();
+    final buffer = StringBuffer();
+    buffer.writeln('<?xml version="1.0" encoding="UTF-8"?>');
+    buffer.writeln(
+      '<CompleteMultipartUploadResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">',
+    );
+    buffer.writeln('  <Location>${_escapeXml(location)}</Location>');
+    buffer.writeln('  <Bucket>${_escapeXml(completed.bucket)}</Bucket>');
+    buffer.writeln('  <Key>${_escapeXml(completed.key)}</Key>');
+    buffer.writeln('  <ETag>&quot;${completed.etag}&quot;</ETag>');
+    buffer.writeln('</CompleteMultipartUploadResult>');
+    return buffer.toString();
+  }
+
+  String _escapeXml(String value) => value
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;');
 
   String _mapBucketsToXml(List<BucketModel> buckets) {
     final buffer = StringBuffer();

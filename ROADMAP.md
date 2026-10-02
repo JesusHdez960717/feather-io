@@ -74,7 +74,8 @@ terminarla.
   aunque se cambie de carpeta, de bucket o de sección, con un indicador siempre visible en el rail
   (sobre el idioma) y un panel con el progreso de cada fichero o zip, cancelar y reintentar. Las
   subidas avisan con `BucketChangedEvent` para que el explorador se recargue solo.
-- [ ] Multipart upload.
+- [x] Multipart upload: crear, subir partes, completar y abortar (sin ListParts ni
+  ListMultipartUploads). La consola sube por partes de 8 MiB los ficheros de más de 16 MiB.
 - [ ] Pruebas contra clientes reales (aws cli, rclone, SDKs).
 
 ## Fase 5: Operación y producción

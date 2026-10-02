@@ -6,13 +6,18 @@ enum S3ErrorCode {
   bucketAlreadyOwnedByYou('BucketAlreadyOwnedByYou', 409),
   bucketNotEmpty('BucketNotEmpty', 409),
   entityTooLarge('EntityTooLarge', 400),
+  entityTooSmall('EntityTooSmall', 400),
   internalError('InternalError', 500),
   invalidAccessKeyId('InvalidAccessKeyId', 403),
   invalidArgument('InvalidArgument', 400),
   invalidBucketName('InvalidBucketName', 400),
+  invalidPart('InvalidPart', 400),
+  invalidPartOrder('InvalidPartOrder', 400),
   invalidRequest('InvalidRequest', 400),
+  malformedXML('MalformedXML', 400),
   noSuchBucket('NoSuchBucket', 404),
   noSuchKey('NoSuchKey', 404),
+  noSuchUpload('NoSuchUpload', 404),
   signatureDoesNotMatch('SignatureDoesNotMatch', 403);
 
   final String code;

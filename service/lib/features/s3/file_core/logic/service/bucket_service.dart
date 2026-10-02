@@ -36,7 +36,10 @@ class BucketService {
     // 1. Physical delete (checks if empty)
     await fileManagement.deleteBucketPhysical(bucketName);
 
-    // 2. Database delete (sus reglas de acceso anonimo primero)
+    // 2. Las subidas multipart que tuviera a medias
+    await MultipartService().abortAll(bucketName);
+
+    // 3. Database delete (sus reglas de acceso anonimo primero)
     await accessRuleRepo.deleteByBucket(bucketName);
     await bucketRepo.delete(bucketName);
   }

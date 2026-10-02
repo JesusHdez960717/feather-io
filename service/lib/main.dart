@@ -76,7 +76,10 @@ class FeatherIO {
       //resto de peticiones lo acota BodySizeFilter
       config: ServerConfig(port: port, maxBodySize: env.maxObjectSize),
       globalFilterConfig: FilterConfig([BodySizeFilter(), JwtFilter()]),
-      securityConfig: SecurityConfig(cors: const CorsConfig()),
+      //la consola lee el ETag de cada parte de una subida multipart
+      securityConfig: SecurityConfig(
+        cors: const CorsConfig(exposedHeaders: ['ETag']),
+      ),
       router: WinterRouter(
         config: RouterConfig(onLoadedRoutes: DefaultOnLoadedRoutes.log()),
         routes: [adminController.routing, s3controller.routing],
