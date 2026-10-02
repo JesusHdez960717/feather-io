@@ -60,6 +60,22 @@ void main() {
       expect(response.headers['location'], '/create-test-sigv4');
     });
 
+    test('PUT /{bucket} - Should accept a request without Content-Length nor body', () async {
+      //como el CreateBucket de aws-sdk-java-v2; package:http siempre manda la
+      //cabecera, asi que va por socket
+      final socket = await Socket.connect('localhost', server.port);
+      socket.write(
+        'PUT /create-test-no-length HTTP/1.1\r\n'
+        'Host: localhost:${server.port}\r\n'
+        'Authorization: Bearer ${server.token}\r\n'
+        'Connection: close\r\n\r\n',
+      );
+      final response = await utf8.decodeStream(socket);
+      socket.destroy();
+      expect(response, startsWith('HTTP/1.1 200'));
+      expect(await bucketExists('create-test-no-length'), isTrue);
+    });
+
     test('PUT /{bucket} - Should create a bucket with description and color', () async {
       const color = 0xFFC0156E;
       final response = await http.put(

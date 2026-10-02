@@ -6,8 +6,9 @@ import 'package:service/feather.dart';
 ///- Subir un objeto (`s3.put-object`) va a disco como stream: si declara mas
 ///  de [ExtendedEnv.maxObjectSize], `EntityTooLarge`.
 ///- El resto lee el cuerpo en memoria (JSON, XML del borrado multiple, login):
-///  como mucho [maxRequestBodySize], y con `Content-Length` obligatorio en
-///  `POST`, `PUT` y `PATCH`
+///  como mucho [maxRequestBodySize]. Sin `Content-Length` (cuerpo vacio o
+///  chunked: shelf quita `Transfer-Encoding` y no se distinguen) el limite se
+///  comprueba mientras se lee el cuerpo
 class BodySizeFilter extends Filter {
   static const String objectRouteKey = 's3.put-object';
 
@@ -42,11 +43,14 @@ class BodySizeFilter extends Filter {
     } else if (length != null && length > maxRequestBodySize) {
       throw PayloadTooLargeException();
     } else if (length == null && _bodyMethods.contains(request.method)) {
-      //sin tamaño (cuerpo chunked) no se puede acotar antes de leerlo. dart:io
-      //decodifica el chunked y no deja ver `Transfer-Encoding`, asi que se pide
-      //`Content-Length` a todo lo que lleva cuerpo; los clientes lo mandan
-      //aunque el cuerpo este vacio
-      throw ApiException(statusCode: 411, body: 'Length Required');
+      //sin tamaño no se puede acotar antes de leerlo: se corta al leerlo (413).
+      //Asi pasa un cuerpo vacio sin cabecera, como el CreateBucket de
+      //aws-sdk-java-v2
+      return await chain.doFilter(
+        request.change(
+          body: limitBodySize(request.read(), maxBytes: maxRequestBodySize),
+        ),
+      );
     }
 
     return await chain.doFilter(request);

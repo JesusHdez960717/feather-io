@@ -1,6 +1,7 @@
 @TestOn('vm')
 library;
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -69,17 +70,36 @@ void main() {
       expect(response.statusCode, 413);
     });
 
-    test('Should reject a chunked body without Content-Length (411)', () async {
+    Future<http.StreamedResponse> chunkedLogin(List<int> body) {
       final request = http.StreamedRequest(
         'POST',
         server.url('/${env.adminPrefix}/login'),
       )..headers['content-type'] = 'application/json';
-      //send() primero: el sink no se cierra hasta que alguien lee el stream
+      //send() primero: el sink no se cierra hasta que alguien lee el stream.
+      //Si el servidor corta, el error llega por el futuro de send()
       final sent = request.send();
-      request.sink.add(utf8.encode('{"access": "x", "secret": "y"}'));
-      await request.sink.close();
-      final response = await sent;
-      expect(response.statusCode, 411);
+      request.sink.add(body);
+      unawaited(request.sink.close());
+      return sent;
+    }
+
+    test('Should accept a chunked body without Content-Length', () async {
+      final response = await chunkedLogin(
+        utf8.encode(jsonEncode({'access': testAccess, 'secret': testSecret})),
+      );
+      expect(response.statusCode, 200);
+    });
+
+    test('Should cut a chunked body over 2 MB while reading it (413)', () async {
+      try {
+        final response = await chunkedLogin(
+          utf8.encode(jsonEncode({'access': 'a' * (3 * mb), 'secret': testSecret})),
+        );
+        expect(response.statusCode, 413);
+      } on http.ClientException {
+        //el servidor responde 413 y cierra antes de que el cliente acabe de
+        //escribir: tambien demuestra que no leyo el cuerpo entero
+      }
     });
 
     test('Should still accept a normal JSON request', () async {

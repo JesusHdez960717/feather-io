@@ -24,14 +24,16 @@ class MultipartService {
   static final RegExp _uploadIdPattern = RegExp(r'^[0-9a-f]{32}$');
 
   final Random _random = Random.secure();
-  final ObjectEtagService _etags = ObjectEtagService();
+  final ObjectMetaService _objectMeta = ObjectMetaService();
 
   Directory get _root => Directory(p.join(env.storageVolumePath, folderName));
 
-  /// CreateMultipartUpload
+  /// CreateMultipartUpload. Las [headers] del objeto (`Content-Type`,
+  /// `x-amz-meta-*`…) se guardan con la subida y se aplican al completarla
   Future<MultipartUploadModel> create({
     required String bucketName,
     required String key,
+    Map<String, String> headers = const {},
   }) async {
     _validate(bucketName, key);
     if (!await Directory(p.join(env.storageVolumePath, bucketName)).exists()) {
@@ -49,6 +51,7 @@ class MultipartService {
         'bucket': bucketName,
         'key': key,
         'initiated': DateTime.now().toUtc().toIso8601String(),
+        'headers': headers,
       }),
     );
     return MultipartUploadModel(
@@ -101,6 +104,7 @@ class MultipartService {
     required List<CompletedPart> parts,
   }) async {
     final dir = await _uploadDir(bucketName, key, uploadId);
+    final info = await _readInfo(dir);
     if (parts.isEmpty) {
       throw S3Exception(
         S3ErrorCode.malformedXML,
@@ -181,11 +185,16 @@ class MultipartService {
     await dir.delete(recursive: true);
 
     final etag = '${md5.convert(digests)}-${parts.length}';
-    await _etags.save(
+    await _objectMeta.save(
       bucketName: bucketName,
       key: key,
       file: target,
       etag: etag,
+      headers: {
+        for (final MapEntry(:key, :value)
+            in ((info?['headers'] as Map?) ?? const {}).entries)
+          '$key': '$value',
+      },
     );
 
     return CompletedMultipartModel(

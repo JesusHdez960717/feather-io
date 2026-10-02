@@ -102,13 +102,20 @@ class TestServer {
     );
   }
 
-  /// Sube un objeto (y crea el bucket si no existe).
-  Future<void> putObject(String bucket, String key, String body) async {
+  /// Sube un objeto (y crea el bucket si no existe). Va en bytes y sin
+  /// `Content-Type` (con un String, package:http mandaria `text/plain`), asi
+  /// que al leerlo el tipo sale de la extension. [headers] se añaden a la subida
+  Future<void> putObject(
+    String bucket,
+    String key,
+    String body, {
+    Map<String, String> headers = const {},
+  }) async {
     await createBucket(bucket);
     final response = await http.put(
       url('/$bucket/$key'),
-      headers: auth(),
-      body: body,
+      headers: {...auth(), ...headers},
+      body: utf8.encode(body),
     );
     expect(response.statusCode, 200, reason: 'put $bucket/$key');
   }

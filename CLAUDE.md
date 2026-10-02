@@ -179,8 +179,11 @@ headers: {'content-type': 'application/xml'},
 );
 ```
 
-XML is S3-compliant and the default. The console always asks for JSON. `multiDelete` still answers
-JSON only. CreateBucket and PutObject answer like S3, with no body: CreateBucket with a `Location`
+XML is S3-compliant and the default. The console always asks for JSON. `multiDelete` reads the S3
+`<Delete>` XML or, with a JSON `Content-Type` or body, the console's JSON (at most 1000 keys), and
+answers `<DeleteResult>` or JSON. XML bodies are parsed with the controller's `_xmlTag`/`_xmlTags`
+(regex, no XML package) and `_unescapeXml`. ListBuckets includes a fixed `<Owner>` (`feather-io`),
+which some clients require. CreateBucket and PutObject answer like S3, with no body: CreateBucket with a `Location`
 header, PutObject with its `ETag`. GetBucketLocation (`GET /{bucket}?location`, served by the
 list-objects route) always answers an empty XML `LocationConstraint` (`us-east-1`). XML dates are
 UTC with milliseconds (`_s3Date`: `2026-10-02T14:22:35.000Z`) and every key, prefix and description
@@ -217,8 +220,10 @@ or `Uint8List` for object data. Multi-object downloads build the zip in a temp f
 `FileManagementService.zipObjects`) and stream it with `openAndDeleteTemp`. Winter's
 `ServerConfig.maxBodySize` (10 MB by default) is set to `MAX_OBJECT_SIZE`, and `BodySizeFilter` (
 global) narrows it by route from the `Content-Length`: `s3.put-object` over `MAX_OBJECT_SIZE` →
-`EntityTooLarge`; every other body (read into memory) is capped at 2 MB (413), and a `POST`/`PUT`/
-`PATCH` without `Content-Length` gets 411. Every bucket name goes through
+`EntityTooLarge`; every other body (read into memory) is capped at 2 MB (413). A `POST`/`PUT`/
+`PATCH` without `Content-Length` (empty, as aws-sdk-java-v2's CreateBucket, or chunked: shelf drops
+`Transfer-Encoding`, so they look the same) gets its body wrapped in Winter's `limitBodySize`, which
+fails with 413 while reading. Every bucket name goes through
 `S3Validator.isValidBucketName` and every key through `S3Validator.isValidKey` (path traversal
 protection) before touching the filesystem.
 
@@ -237,11 +242,16 @@ is `application/octet-stream`. `GET`/`HEAD` honour a single `Range` (`bytes=a-b`
 past the end is `416 InvalidRange`, and a malformed or multiple range is ignored (`200` with the whole
 object), as in S3.
 
-**ETags.** `ObjectEtagService` keeps each object's ETag in the `object_etag` table with the file's
-size and mtime. Uploads compute the md5 while streaming (`Md5Tap`, also used by UploadPart), copies
+**Object metadata.** `ObjectMetaService` keeps each object's ETag and headers in the `object_meta`
+table, with the file's size and mtime. The headers are the ones S3 stores (`Content-Type`,
+`Content-Encoding`, `Content-Disposition`, `Content-Language`, `Cache-Control`, `Expires` and
+`x-amz-meta-*`, lowercased): the controller picks them from the request (`_objectHeaders`) on
+PutObject, CreateMultipartUpload (kept in `upload.json` until Complete) and CopyObject with
+`x-amz-metadata-directive: REPLACE` (otherwise the copy keeps the source's), and GET/HEAD send them
+back. Without a stored `Content-Type` it comes from the extension. Uploads compute the md5 while streaming (`Md5Tap`, also used by UploadPart), copies
 reuse the source's ETag and multipart stores `md5(part md5s)-N`. On read (GET/HEAD, listings), a
-missing row or one whose size/mtime no longer match (the file changed outside the service) is
-recomputed by reading the file and saved; listings only compute it for the objects of the returned
+missing row or one whose size/mtime no longer match (the file changed outside the service) gets its
+ETag recomputed by reading the file and saved, keeping its headers; listings only compute it for the objects of the returned
 page. Deleting an object, a folder or a bucket, or emptying a bucket, deletes its rows.
 
 **Multipart upload.** `MultipartService` implements CreateMultipartUpload (
@@ -266,9 +276,10 @@ and ListMultipartUploads are not implemented. CORS exposes `ETag` so the console
   with an in-memory SQLite (`FeatherIO.start(database: …)`), logs in to get `server.token`, and
   creates and deletes `./uploads_test/<name>` (gitignored). Helpers: `server.url(path)`,
   `server.auth(json: …)`, `server.createBucket(…)` (tolerates an existing one),
-  `server.putObject(…)` (creates the bucket first) and `server.sigV4(method, path, query: …)`, the
+  `server.putObject(…, headers: …)` (creates the bucket first and sends bytes without
+  `Content-Type`, so reads fall back to the extension) and `server.sigV4(method, path, query: …)`, the
   headers of a native client signed with SigV4. Uploading with `http.put` needs the bucket created.
-- Use one distinct port per file so files run in parallel. Ports in use: 8082–8103.
+- Use one distinct port per file so files run in parallel. Ports in use: 8082–8104.
 - Cover auth (missing or invalid token → 401, wrong login credentials → 403), validation (bad bucket
   names, path traversal, forbidden chars → 400), content negotiation (JSON vs XML, including the S3
   error code) and edge cases (404, empty lists).

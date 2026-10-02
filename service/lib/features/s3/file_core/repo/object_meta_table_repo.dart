@@ -1,24 +1,23 @@
 import 'package:drift/drift.dart';
 import 'package:service/feather.dart';
 
-class ObjectEtagTableRepo {
+class ObjectMetaTableRepo {
   final AppDatabase _db;
 
-  ObjectEtagTableRepo(this._db);
+  ObjectMetaTableRepo(this._db);
 
-  Future<ObjectEtagTableData?> find(String bucketName, String key) {
-    return (_db.select(_db.objectEtagTable)..where(
-          (tbl) =>
-              tbl.bucketName.equals(bucketName) & tbl.objectKey.equals(key),
+  Future<ObjectMetaTableData?> find(String bucketName, String key) {
+    return (_db.select(_db.objectMetaTable)..where(
+          (tbl) => tbl.bucketName.equals(bucketName) & tbl.objectKey.equals(key),
         ))
         .getSingleOrNull();
   }
 
-  Future<List<ObjectEtagTableData>> findByKeys(
+  Future<List<ObjectMetaTableData>> findByKeys(
     String bucketName,
     Iterable<String> keys,
   ) {
-    return (_db.select(_db.objectEtagTable)..where(
+    return (_db.select(_db.objectMetaTable)..where(
           (tbl) => tbl.bucketName.equals(bucketName) & tbl.objectKey.isIn(keys),
         ))
         .get();
@@ -30,31 +29,32 @@ class ObjectEtagTableRepo {
     required String etag,
     required int size,
     required DateTime modified,
+    required String headers,
   }) async {
     await _db
-        .into(_db.objectEtagTable)
+        .into(_db.objectMetaTable)
         .insertOnConflictUpdate(
-          ObjectEtagTableCompanion.insert(
+          ObjectMetaTableCompanion.insert(
             bucketName: bucketName,
             objectKey: key,
             etag: etag,
             size: size,
             modified: modified.microsecondsSinceEpoch,
+            headers: Value(headers),
           ),
         );
   }
 
   Future<void> delete(String bucketName, String key) async {
-    await (_db.delete(_db.objectEtagTable)..where(
-          (tbl) =>
-              tbl.bucketName.equals(bucketName) & tbl.objectKey.equals(key),
+    await (_db.delete(_db.objectMetaTable)..where(
+          (tbl) => tbl.bucketName.equals(bucketName) & tbl.objectKey.equals(key),
         ))
         .go();
   }
 
   /// Borra los de todas las keys que empiezan por [prefix] (una carpeta)
   Future<void> deleteByPrefix(String bucketName, String prefix) async {
-    await (_db.delete(_db.objectEtagTable)..where(
+    await (_db.delete(_db.objectMetaTable)..where(
           (tbl) =>
               tbl.bucketName.equals(bucketName) &
               tbl.objectKey.substr(1, prefix.length).equals(prefix),
@@ -64,7 +64,7 @@ class ObjectEtagTableRepo {
 
   Future<void> deleteByBucket(String bucketName) async {
     await (_db.delete(
-      _db.objectEtagTable,
+      _db.objectMetaTable,
     )..where((tbl) => tbl.bucketName.equals(bucketName))).go();
   }
 }

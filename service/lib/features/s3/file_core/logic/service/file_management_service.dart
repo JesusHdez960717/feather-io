@@ -8,12 +8,12 @@ import 'package:service/feather.dart';
 
 class FileManagementService {
   final int maxFileSize;
-  final ObjectEtagService etags;
+  final ObjectMetaService objectMeta;
 
   FileManagementService({
     this.maxFileSize = 5 * 1024 * 1024 * 1024, // 5GB por defecto (límite S3)
-    ObjectEtagService? etags,
-  }) : etags = etags ?? ObjectEtagService();
+    ObjectMetaService? objectMeta,
+  }) : objectMeta = objectMeta ?? ObjectMetaService();
 
   Future<bool> createBucket({required String bucketName}) async {
     // Valido el nombre del bucket con reglas S3
@@ -74,7 +74,7 @@ class FileManagementService {
     }
 
     await dir.delete(recursive: true);
-    await etags.forgetBucket(bucketName);
+    await objectMeta.forgetBucket(bucketName);
     return true;
   }
 
@@ -97,15 +97,17 @@ class FileManagementService {
     await for (final entity in dir.list()) {
       await entity.delete(recursive: true);
     }
-    await etags.forgetBucket(bucketName);
+    await objectMeta.forgetBucket(bucketName);
   }
 
-  /// Guarda el objeto y devuelve su ETag (el md5 del contenido)
+  /// Guarda el objeto con sus [headers] (`Content-Type`, `x-amz-meta-*`…) y
+  /// devuelve su ETag (el md5 del contenido)
   Future<String> uploadFile({
     required String bucketName,
     required String key,
     required Stream<List<int>> binary,
     int? contentLength,
+    Map<String, String> headers = const {},
   }) async {
     // Valido el nombre del bucket
     if (!S3Validator.isValidBucketName(bucketName)) {
@@ -138,7 +140,7 @@ class FileManagementService {
       final folder = Directory(p.join(_getBucketPath(bucketName), key));
       await folder.create(recursive: true);
       await File(p.join(folder.path, S3Validator.folderMarker)).create();
-      return ObjectEtagService.emptyEtag;
+      return ObjectMetaService.emptyEtag;
     }
 
     final file = _getFile(bucketName, key);
@@ -165,11 +167,12 @@ class FileManagementService {
       await hasher.bind(monitoredStream).pipe(sink);
 
       final etag = hasher.close();
-      await etags.save(
+      await objectMeta.save(
         bucketName: bucketName,
         key: key,
         file: file,
         etag: etag,
+        headers: headers,
       );
       return etag;
     } catch (e) {
@@ -273,7 +276,7 @@ class FileManagementService {
       for (final key in page)
         if (files[key] != null && !key.endsWith('/')) key: files[key]!,
     };
-    final pageEtags = await etags.etagsOf(
+    final pageEtags = await objectMeta.etagsOf(
       bucketName: bucketName,
       files: pageFiles,
     );
@@ -289,7 +292,7 @@ class FileManagementService {
               key: key,
               size: key.endsWith('/') ? 0 : stat.size,
               lastModified: stat.modified,
-              etag: pageEtags[key] ?? ObjectEtagService.emptyEtag,
+              etag: pageEtags[key] ?? ObjectMetaService.emptyEtag,
             ),
       ],
       commonPrefixes: [
@@ -318,12 +321,14 @@ class FileManagementService {
     }
   }
 
-  /// Copia un objeto (CopyObject). El destino se sobrescribe si existe
+  /// Copia un objeto (CopyObject). El destino se sobrescribe si existe y se
+  /// queda con las cabeceras del origen, o con [headers] si se indican
   Future<FileModel> copyFile({
     required String sourceBucket,
     required String sourceKey,
     required String bucketName,
     required String key,
+    Map<String, String>? headers,
   }) async {
     for (final bucket in [sourceBucket, bucketName]) {
       if (!S3Validator.isValidBucketName(bucket)) {
@@ -354,19 +359,21 @@ class FileManagementService {
       throw S3Exception.noSuchBucket(bucketName);
     }
 
-    final etag = await etags.etagOf(
+    final sourceMeta = await objectMeta.metaOf(
       bucketName: sourceBucket,
       key: sourceKey,
       file: source,
     );
+    final etag = sourceMeta.etag;
     final target = _getFile(bucketName, key);
     await target.parent.create(recursive: true);
     await source.copy(target.path);
-    await etags.save(
+    await objectMeta.save(
       bucketName: bucketName,
       key: key,
       file: target,
       etag: etag,
+      headers: headers ?? sourceMeta.headers,
     );
 
     final stat = await target.stat();
@@ -401,13 +408,18 @@ class FileManagementService {
     return file;
   }
 
-  /// El ETag de un objeto ya leido con [getFile]
-  Future<String> etagOf({
+  /// Los metadatos (ETag y cabeceras) de un objeto ya leido con [getFile]
+  Future<ObjectMetaModel> metaOf({
     required String bucketName,
     required String key,
     required File file,
     FileStat? stat,
-  }) => etags.etagOf(bucketName: bucketName, key: key, file: file, stat: stat);
+  }) => objectMeta.metaOf(
+    bucketName: bucketName,
+    key: key,
+    file: file,
+    stat: stat,
+  );
 
   /// Genera el zip en un fichero temporal (sin cargar los objetos en memoria).
   /// Usar [openAndDeleteTemp] para servirlo y borrarlo al terminar.
@@ -503,11 +515,11 @@ class FileManagementService {
     if (type == FileSystemEntityType.directory) {
       // Si es un directorio, borramos recursivamente (comportamiento de carpeta)
       await Directory(fullPath).delete(recursive: true);
-      await etags.forgetFolder(bucketName, key);
+      await objectMeta.forgetFolder(bucketName, key);
     } else {
       // Si es un archivo normal
       await File(fullPath).delete();
-      await etags.forget(bucketName, key);
+      await objectMeta.forget(bucketName, key);
     }
 
     // Limpieza recursiva de carpetas vacías (si aplica)

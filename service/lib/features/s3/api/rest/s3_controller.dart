@@ -185,10 +185,29 @@ class S3Controller {
       bucketName: request.pathParams['bucket']!,
       key: _objectKey(request),
       binary: request.read(),
+      headers: _objectHeaders(request),
     );
 
     return ResponseEntity(200, headers: {'etag': '"$etag"'});
   }
+
+  /// Cabeceras de la peticion que se guardan con el objeto y se devuelven al
+  /// leerlo, como en S3: las de contenido y los metadatos `x-amz-meta-*`
+  Map<String, String> _objectHeaders(RequestEntity request) => {
+    for (final MapEntry(:key, :value) in request.headers.entries)
+      if (_storedHeaders.contains(key.toLowerCase()) ||
+          key.toLowerCase().startsWith('x-amz-meta-'))
+        key.toLowerCase(): value,
+  };
+
+  static const Set<String> _storedHeaders = {
+    'cache-control',
+    'content-disposition',
+    'content-encoding',
+    'content-language',
+    'content-type',
+    'expires',
+  };
 
   /// La key del objeto. El parametro de ruta pierde la `/` final, que es la que
   /// distingue una carpeta (`fotos/`) de un objeto (`fotos`): se recupera de la URL
@@ -229,11 +248,15 @@ class S3Controller {
       );
     }
 
+    //como S3: copia las cabeceras del origen salvo que se pida REPLACE
+    final replace =
+        request.headers['x-amz-metadata-directive']?.toUpperCase() == 'REPLACE';
     final copied = await fileManagement.copyFile(
       sourceBucket: path.substring(0, slash),
       sourceKey: path.substring(slash + 1),
       bucketName: bucketName,
       key: request.pathParams['key']!,
+      headers: replace ? _objectHeaders(request) : null,
     );
 
     if (_acceptsJson(request)) {
@@ -304,20 +327,22 @@ class S3Controller {
 
     final file = await fileManagement.getFile(bucketName: bucketName, key: key);
     final stat = await file.stat();
-    final etag = await fileManagement.etagOf(
+    final meta = await fileManagement.metaOf(
       bucketName: bucketName,
       key: key,
       file: file,
       stat: stat,
     );
 
-    //un HEAD usa esta misma ruta: Winter manda las cabeceras sin el cuerpo
+    //un HEAD usa esta misma ruta: Winter manda las cabeceras sin el cuerpo.
+    //Sin Content-Type guardado, el de la extension
     final headers = {
       'content-type':
           lookupMimeType(file.path) ??
           MediaType.applicationOctetStream.mimeType,
+      ...meta.headers,
       'last-modified': HttpDate.format(stat.modified),
-      'etag': '"$etag"',
+      'etag': '"${meta.etag}"',
       'accept-ranges': 'bytes',
     };
 
@@ -398,7 +423,11 @@ class S3Controller {
     final key = _objectKey(request);
 
     if (request.queryParams.containsKey('uploads')) {
-      final upload = await multipart.create(bucketName: bucketName, key: key);
+      final upload = await multipart.create(
+        bucketName: bucketName,
+        key: key,
+        headers: _objectHeaders(request),
+      );
       if (_acceptsJson(request)) return ResponseEntity.ok(body: upload);
       return ResponseEntity.ok(
         body: _mapInitiateMultipartToXml(upload),
@@ -472,21 +501,11 @@ class S3Controller {
       }
     }
 
-    String? tag(String xml, String name) => RegExp(
-      '<$name>\\s*(.*?)\\s*</$name>',
-      dotAll: true,
-    ).firstMatch(xml)?.group(1);
-
     final parts = <CompletedPart>[];
-    final partPattern = RegExp(r'<Part>(.*?)</Part>', dotAll: true);
-    for (final match in partPattern.allMatches(body)) {
-      final xml = match.group(1)!;
-      final number = int.tryParse(tag(xml, 'PartNumber') ?? '');
+    for (final xml in _xmlTags(body, 'Part')) {
+      final number = int.tryParse(_xmlTag(xml, 'PartNumber')?.trim() ?? '');
       if (number == null) throw malformed;
-      final etag = (tag(xml, 'ETag') ?? '')
-          .replaceAll('&quot;', '"')
-          .replaceAll('&#34;', '"')
-          .replaceAll('&amp;', '&');
+      final etag = _xmlTag(xml, 'ETag')?.trim() ?? '';
       parts.add(CompletedPart(partNumber: number, etag: etag));
     }
     if (parts.isEmpty) throw malformed;
@@ -504,19 +523,40 @@ class S3Controller {
       );
     }
 
-    try {
-      final bodyString = await utf8.decodeStream(request.read());
-      final Map<String, dynamic> body = jsonDecode(bodyString);
-      final deleteRequest = DeleteObjectsRequest.fromJson(body);
-
-      final result = await fileManagement.deleteObjects(
-        bucketName: bucketName,
-        request: deleteRequest,
+    final body = await utf8.decodeStream(request.read());
+    final isJson =
+        request.headers['content-type']?.contains('json') == true ||
+        body.trimLeft().startsWith('{');
+    final deleteRequest = isJson
+        ? _readDeleteJson(body, bucketName)
+        : _readDeleteXml(body, bucketName);
+    if (deleteRequest.keys.length > FileManagementService.maxKeysLimit) {
+      throw S3Exception(
+        S3ErrorCode.malformedXML,
+        message:
+            'Como mucho se pueden borrar '
+            '${FileManagementService.maxKeysLimit} objetos por petición.',
+        resource: bucketName,
       );
+    }
 
-      return ResponseEntity.ok(body: result);
+    final result = await fileManagement.deleteObjects(
+      bucketName: bucketName,
+      request: deleteRequest,
+    );
+
+    if (_acceptsJson(request)) return ResponseEntity.ok(body: result);
+    return ResponseEntity.ok(
+      body: _mapDeleteResultToXml(result),
+      headers: {'content-type': 'application/xml'},
+    );
+  }
+
+  /// DeleteObjects en JSON (la consola)
+  DeleteObjectsRequest _readDeleteJson(String body, String bucketName) {
+    try {
+      return DeleteObjectsRequest.fromJson(jsonDecode(body));
     } catch (e) {
-      if (e is ApiException) rethrow;
       throw S3Exception(
         S3ErrorCode.invalidRequest,
         message: 'Invalid JSON for delete request: $e',
@@ -524,6 +564,29 @@ class S3Controller {
       );
     }
   }
+
+  /// DeleteObjects en el XML de S3:
+  /// `<Delete><Quiet>true</Quiet><Object><Key>k</Key></Object>…</Delete>`
+  DeleteObjectsRequest _readDeleteXml(String body, String bucketName) {
+    if (_xmlTag(body, 'Delete') == null) {
+      throw S3Exception(
+        S3ErrorCode.malformedXML,
+        message: 'El cuerpo debe ser un <Delete> con los objetos a borrar.',
+        resource: bucketName,
+      );
+    }
+    final keys = [
+      for (final object in _xmlTags(body, 'Object'))
+        if (_xmlTag(object, 'Key') case final key? when key.isNotEmpty) key,
+    ];
+    return DeleteObjectsRequest(
+      keys: keys,
+      quiet: _xmlTag(body, 'Quiet')?.trim().toLowerCase() == 'true',
+    );
+  }
+
+  /// Dueño de todos los buckets en las respuestas de S3
+  static const String _ownerId = 'feather-io';
 
   bool _acceptsJson(RequestEntity request) =>
       request.headers['accept']?.contains('application/json') == true;
@@ -579,6 +642,63 @@ class S3Controller {
     ).toIso8601String();
   }
 
+  /// El contenido de la primera etiqueta [name] de [xml], con las entidades ya
+  /// decodificadas, o null si no esta
+  String? _xmlTag(String xml, String name) {
+    final match = RegExp(
+      '<$name(?:\\s[^>]*)?>(.*?)</$name>',
+      dotAll: true,
+    ).firstMatch(xml);
+    return match == null ? null : _unescapeXml(match.group(1)!);
+  }
+
+  /// El contenido en bruto de cada etiqueta [name] de [xml]
+  Iterable<String> _xmlTags(String xml, String name) => RegExp(
+    '<$name(?:\\s[^>]*)?>(.*?)</$name>',
+    dotAll: true,
+  ).allMatches(xml).map((match) => match.group(1)!);
+
+  /// Decodifica las entidades de XML (`&amp;`, `&quot;`, `&#34;`, `&#x22;`…)
+  String _unescapeXml(String value) => value.replaceAllMapped(
+    RegExp(r'&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);'),
+    (match) {
+      final entity = match.group(1)!;
+      return switch (entity) {
+        'amp' => '&',
+        'lt' => '<',
+        'gt' => '>',
+        'quot' => '"',
+        'apos' => "'",
+        _ when entity.startsWith('#x') => String.fromCharCode(
+          int.parse(entity.substring(2), radix: 16),
+        ),
+        _ => String.fromCharCode(int.parse(entity.substring(1))),
+      };
+    },
+  );
+
+  String _mapDeleteResultToXml(DeleteObjectsResponse result) {
+    final buffer = StringBuffer();
+    buffer.writeln('<?xml version="1.0" encoding="UTF-8"?>');
+    buffer.writeln(
+      '<DeleteResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">',
+    );
+    if (!result.quiet) {
+      for (final key in result.deleted) {
+        buffer.writeln('  <Deleted><Key>${_escapeXml(key)}</Key></Deleted>');
+      }
+    }
+    for (final error in result.errors) {
+      buffer.writeln('  <Error>');
+      buffer.writeln('    <Key>${_escapeXml(error.key)}</Key>');
+      buffer.writeln('    <Code>${error.code}</Code>');
+      buffer.writeln('    <Message>${_escapeXml(error.message)}</Message>');
+      buffer.writeln('  </Error>');
+    }
+    buffer.writeln('</DeleteResult>');
+    return buffer.toString();
+  }
+
   String _escapeXml(String value) => value
       .replaceAll('&', '&amp;')
       .replaceAll('<', '&lt;')
@@ -590,6 +710,11 @@ class S3Controller {
     buffer.writeln(
       '<ListAllMyBucketsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">',
     );
+    //hay un unico usuario; algunos clientes (minio-java) exigen el Owner
+    buffer.writeln('  <Owner>');
+    buffer.writeln('    <ID>$_ownerId</ID>');
+    buffer.writeln('    <DisplayName>$_ownerId</DisplayName>');
+    buffer.writeln('  </Owner>');
     buffer.writeln('  <Buckets>');
     for (final bucket in buckets) {
       buffer.writeln('    <Bucket>');

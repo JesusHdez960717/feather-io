@@ -123,14 +123,90 @@ void main() {
       expect(jsonDecode(response.body)['code'], 'InvalidRequest');
     });
 
-    test('Should reject an invalid body (400)', () async {
+    test('Should reject an invalid JSON body (400)', () async {
       final response = await http.post(
         server.url('/$bucket?delete'),
-        headers: server.auth(json: true),
+        headers: {...server.auth(json: true), 'content-type': 'application/json'},
         body: 'not json',
       );
       expect(response.statusCode, 400);
       expect(jsonDecode(response.body)['code'], 'InvalidRequest');
+    });
+
+    test('Should reject a body that is neither JSON nor <Delete> (400)', () async {
+      final response = await http.post(
+        server.url('/$bucket?delete'),
+        headers: server.auth(),
+        body: 'not xml',
+      );
+      expect(response.statusCode, 400);
+      expect(response.body, contains('<Code>MalformedXML</Code>'));
+    });
+  });
+
+  group('S3Controller - Multi-delete Objects (S3 XML)', () {
+    const bucket = 'multi-delete-xml';
+
+    String deleteXml(List<String> keys, {bool quiet = false}) =>
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">'
+        '${quiet ? '<Quiet>true</Quiet>' : ''}'
+        '${keys.map((k) => '<Object><Key>$k</Key></Object>').join()}'
+        '</Delete>';
+
+    test('Should delete several objects and answer the S3 XML', () async {
+      await server.putObject(bucket, 'one.txt', '1');
+      await server.putObject(bucket, 'a&b.txt', '2');
+
+      final response = await http.post(
+        server.url('/$bucket?delete'),
+        headers: {...server.auth(), 'content-type': 'application/xml'},
+        body: deleteXml(['one.txt', 'a&amp;b.txt']),
+      );
+      expect(response.statusCode, 200, reason: response.body);
+      expect(response.headers['content-type'], contains('application/xml'));
+      expect(response.body, contains('<DeleteResult'));
+      expect(response.body, contains('<Deleted><Key>one.txt</Key></Deleted>'));
+      expect(response.body, contains('<Deleted><Key>a&amp;b.txt</Key></Deleted>'));
+      expect(await File('${server.storagePath}/$bucket/one.txt').exists(), isFalse);
+      expect(await File('${server.storagePath}/$bucket/a&b.txt').exists(), isFalse);
+    });
+
+    test('Should only list the errors in quiet mode', () async {
+      await server.putObject(bucket, 'quiet.txt', '1');
+
+      final response = await http.post(
+        server.url('/$bucket?delete'),
+        headers: server.auth(),
+        body: deleteXml(['quiet.txt', 'invalid:name'], quiet: true),
+      );
+      expect(response.statusCode, 200);
+      expect(response.body, isNot(contains('<Deleted>')));
+      expect(response.body, contains('<Key>invalid:name</Key>'));
+      expect(response.body, contains('<Code>InvalidArgument</Code>'));
+      expect(await File('${server.storagePath}/$bucket/quiet.txt').exists(), isFalse);
+    });
+
+    test('Should accept a request signed with SigV4', () async {
+      await server.putObject(bucket, 'signed.txt', '1');
+
+      final response = await http.post(
+        server.url('/$bucket?delete'),
+        headers: server.sigV4('POST', '/$bucket', query: const {'delete': ''}),
+        body: deleteXml(['signed.txt']),
+      );
+      expect(response.statusCode, 200, reason: response.body);
+      expect(response.body, contains('<Deleted><Key>signed.txt</Key></Deleted>'));
+    });
+
+    test('Should reject more than 1000 keys (400)', () async {
+      final response = await http.post(
+        server.url('/$bucket?delete'),
+        headers: server.auth(),
+        body: deleteXml([for (var i = 0; i < 1001; i++) 'k$i']),
+      );
+      expect(response.statusCode, 400);
+      expect(response.body, contains('<Code>MalformedXML</Code>'));
     });
   });
 }

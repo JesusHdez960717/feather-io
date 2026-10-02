@@ -43,12 +43,13 @@ class AnonymousRuleTable extends Table {
   List<String> get customConstraints => ['UNIQUE (bucket_name, prefix)'];
 }
 
-/// ETag (md5) de cada objeto, calculado al escribirlo. [size] y [modified] son
-/// los del fichero en ese momento: si no coinciden con los actuales, el fichero
-/// ha cambiado por fuera y el ETag se recalcula
-class ObjectEtagTable extends Table {
+/// Metadatos de cada objeto, guardados al escribirlo: su ETag (md5) y las
+/// cabeceras con las que se subio (`Content-Type`, `x-amz-meta-*`…). [size] y
+/// [modified] son los del fichero en ese momento: si no coinciden con los
+/// actuales, el fichero ha cambiado por fuera y el ETag se recalcula
+class ObjectMetaTable extends Table {
   @override
-  String get tableName => 'object_etag';
+  String get tableName => 'object_meta';
 
   TextColumn get bucketName => text().references(BucketTable, #name)();
 
@@ -61,11 +62,14 @@ class ObjectEtagTable extends Table {
   /// Fecha de modificacion del fichero en microsegundos desde epoch
   IntColumn get modified => integer()();
 
+  /// Cabeceras del objeto en JSON (`{"content-type": "image/png", …}`)
+  TextColumn get headers => text().withDefault(const Constant('{}'))();
+
   @override
   Set<Column> get primaryKey => {bucketName, objectKey};
 }
 
-@DriftDatabase(tables: [AnonymousRuleTable, BucketTable, ObjectEtagTable])
+@DriftDatabase(tables: [AnonymousRuleTable, BucketTable, ObjectMetaTable])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 

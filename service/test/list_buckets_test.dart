@@ -79,6 +79,7 @@ void main() {
       expect(response.body, contains('<ListAllMyBucketsResult'));
       expect(response.body, contains('<Name>test-bucket-1</Name>'));
       expect(response.body, contains('<ObjectCount>1</ObjectCount>'));
+      expect(response.body, contains('<Owner>'));
       final creationDate = RegExp(
         r'<CreationDate>(.*?)</CreationDate>',
       ).firstMatch(response.body)!.group(1)!;
