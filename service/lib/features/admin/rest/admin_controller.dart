@@ -33,6 +33,15 @@ class AdminController {
           ReservedBucketFilter(),
         ]),
       ),
+      Route.delete(
+        key: 'admin.bucket.delete-folder',
+        path: '/bucket/{bucket}/folder',
+        handler: deleteFolder,
+        filterConfig: FilterConfig([
+          AuthFilter(rules: hasPermission('admin.bucket.delete-folder')),
+          ReservedBucketFilter(),
+        ]),
+      ),
       Route.post(
         key: 'admin.bucket.presign',
         path: '/bucket/{bucket}/presign',
@@ -128,6 +137,22 @@ class AdminController {
 
   Future<ResponseEntity> emptyBucket(RequestEntity request) async {
     await bucketService.emptyBucket(bucketName: request.pathParams['bucket']!);
+    return ResponseEntity(204);
+  }
+
+  /// Borra una carpeta con todo su contenido: `?prefix=fotos/`. Con la API de
+  /// S3, borrar `fotos/` solo quita la carpeta vacia (su marcador)
+  Future<ResponseEntity> deleteFolder(RequestEntity request) async {
+    final bucketName = request.pathParams['bucket']!;
+    final prefix = request.queryParams['prefix'];
+    if (prefix == null || prefix.isEmpty) {
+      throw S3Exception(
+        S3ErrorCode.invalidArgument,
+        message: 'Falta la carpeta a borrar (prefix).',
+        resource: bucketName,
+      );
+    }
+    await fileManagement.deleteFolder(bucketName: bucketName, prefix: prefix);
     return ResponseEntity(204);
   }
 

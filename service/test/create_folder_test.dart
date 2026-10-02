@@ -80,7 +80,8 @@ void main() {
       expect(stats['object_count'], 0);
     });
 
-    test('Should delete the folder with its content', () async {
+    test('Should only delete the folder marker, like S3, keeping its content', () async {
+      await createFolder('borrar/');
       await server.putObject(bucket, 'borrar/a.txt', 'a');
       final delete = await http.delete(
         server.url('/$bucket/borrar/'),
@@ -88,8 +89,51 @@ void main() {
       );
       expect(delete.statusCode, 204);
       expect(
-        await Directory('${server.storagePath}/$bucket/borrar').exists(),
+        await File('${server.storagePath}/$bucket/borrar/a.txt').exists(),
+        isTrue,
+      );
+      final keys = (await list(prefix: 'borrar/'))['contents'] as List;
+      expect(keys.map((o) => o['key']), ['borrar/a.txt']);
+    });
+
+    test('Should delete an empty folder', () async {
+      await createFolder('vacia-borrar/');
+      final delete = await http.delete(
+        server.url('/$bucket/vacia-borrar/'),
+        headers: server.auth(),
+      );
+      expect(delete.statusCode, 204);
+      expect(
+        await Directory('${server.storagePath}/$bucket/vacia-borrar').exists(),
         isFalse,
+      );
+    });
+
+    test('Should not delete a directory addressed without the slash', () async {
+      await server.putObject(bucket, 'sin-barra/a.txt', 'a');
+      final delete = await http.delete(
+        server.url('/$bucket/sin-barra'),
+        headers: server.auth(),
+      );
+      expect(delete.statusCode, 204);
+      expect(
+        await File('${server.storagePath}/$bucket/sin-barra/a.txt').exists(),
+        isTrue,
+      );
+    });
+
+    test('Should only delete the marker in a multi-delete too', () async {
+      await createFolder('multi/');
+      await server.putObject(bucket, 'multi/a.txt', 'a');
+      final response = await http.post(
+        server.url('/$bucket?delete'),
+        headers: server.auth(),
+        body: '<Delete><Object><Key>multi/</Key></Object></Delete>',
+      );
+      expect(response.statusCode, 200);
+      expect(
+        await File('${server.storagePath}/$bucket/multi/a.txt').exists(),
+        isTrue,
       );
     });
 

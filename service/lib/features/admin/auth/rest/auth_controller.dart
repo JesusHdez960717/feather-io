@@ -34,6 +34,7 @@ class AuthController {
           'admin.bucket.update',
           'admin.bucket.presign',
           'admin.bucket.empty',
+          'admin.bucket.delete-folder',
           'admin.bucket.download',
           'admin.bucket.anonymous-access.get-rules',
           'admin.bucket.anonymous-access.write-rule',

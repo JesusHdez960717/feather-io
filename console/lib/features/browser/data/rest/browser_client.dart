@@ -43,6 +43,20 @@ class BrowserClient extends BaseClient {
     );
   }
 
+  ///Borra una carpeta con todo su contenido. Con la API de S3, borrar la key
+  ///`carpeta/` solo quita la carpeta vacia
+  Future<void> deleteFolder({
+    required String bucket,
+    required String prefix,
+    String? token,
+  }) async {
+    await dio.delete(
+      '$baseUrl/${Environment.adminPrefix}/bucket/$bucket/folder',
+      queryParameters: {'prefix': prefix},
+      options: options(token: token),
+    );
+  }
+
   ///Crea una carpeta vacia: un `PUT` de la key terminada en `/` sin cuerpo
   Future<void> createFolder({
     required String bucket,

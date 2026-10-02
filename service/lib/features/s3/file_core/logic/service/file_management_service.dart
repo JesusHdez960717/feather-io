@@ -95,7 +95,7 @@ class FileManagementService {
       throw S3Exception.noSuchBucket(bucketName);
     }
     await for (final entity in dir.list()) {
-      await entity.delete(recursive: true);
+      await _delete(entity);
     }
     await objectMeta.forgetBucket(bucketName);
   }
@@ -143,44 +143,52 @@ class FileManagementService {
       return ObjectMetaService.emptyEtag;
     }
 
+    // Transformamos el stream para contar bytes y validar el límite en tiempo real
+    int bytesRead = 0;
+    final monitoredStream = binary.map((chunk) {
+      bytesRead += chunk.length;
+      if (bytesRead > maxFileSize) {
+        throw S3Exception(
+          S3ErrorCode.entityTooLarge,
+          message: 'El archivo excede el tamaño máximo permitido.',
+          resource: key,
+        );
+      }
+      return chunk;
+    });
+
+    //se escribe aparte y se mueve al terminar: si la subida falla, el objeto
+    //que hubiera sigue intacto, y nunca se ve a medias
+    final temp = await _tempFile();
+    final etag = await Md5Tap.write(monitoredStream, temp);
     final file = _getFile(bucketName, key);
     await file.parent.create(recursive: true);
+    await temp.rename(file.path);
 
-    int bytesRead = 0;
-    try {
-      final sink = file.openWrite();
-      final hasher = Md5Tap();
+    await objectMeta.save(
+      bucketName: bucketName,
+      key: key,
+      file: file,
+      etag: etag,
+      headers: headers,
+    );
+    return etag;
+  }
 
-      // Transformamos el stream para contar bytes y validar el límite en tiempo real
-      final monitoredStream = binary.map((chunk) {
-        bytesRead += chunk.length;
-        if (bytesRead > maxFileSize) {
-          throw S3Exception(
-            S3ErrorCode.entityTooLarge,
-            message: 'El archivo excede el tamaño máximo permitido.',
-            resource: key,
-          );
-        }
-        return chunk;
-      });
+  /// Carpeta de los ficheros a medio escribir. Empieza por punto, asi que no es
+  /// un bucket valido y no se lista
+  static const String tempFolderName = '.tmp';
 
-      await hasher.bind(monitoredStream).pipe(sink);
+  final Random _random = Random.secure();
 
-      final etag = hasher.close();
-      await objectMeta.save(
-        bucketName: bucketName,
-        key: key,
-        file: file,
-        etag: etag,
-        headers: headers,
-      );
-      return etag;
-    } catch (e) {
-      if (await file.exists()) {
-        await file.delete();
-      }
-      rethrow;
-    }
+  Future<File> _tempFile() async {
+    final dir = Directory(p.join(env.storageVolumePath, tempFolderName));
+    await dir.create(recursive: true);
+    final id = List.generate(
+      16,
+      (_) => _random.nextInt(256).toRadixString(16).padLeft(2, '0'),
+    ).join();
+    return File(p.join(dir.path, '$id.tmp'));
   }
 
   /// Maximo de claves por pagina en [listFiles], como en S3
@@ -504,31 +512,62 @@ class FileManagementService {
       throw S3Exception.invalidKey(key);
     }
 
-    final fullPath = p.join(_getBucketPath(bucketName), key);
-    final type = await FileSystemEntity.type(fullPath);
+    final bucketPath = _getBucketPath(bucketName);
 
-    if (type == FileSystemEntityType.notFound) {
-      // En S3, borrar un objeto que no existe se considera éxito (idempotencia)
-      return true;
+    // Como S3, borra solo el objeto [key]: una carpeta (`fotos/`) es su
+    // marcador y lo que tenga dentro no se toca (para eso, [deleteFolder]).
+    // Borrar lo que no existe es un exito (idempotencia), y una key sin `/`
+    // que es un directorio no es un objeto
+    final file = key.endsWith('/')
+        ? File(p.join(bucketPath, key, S3Validator.folderMarker))
+        : File(p.join(bucketPath, key));
+    if (await FileSystemEntity.type(file.path) == FileSystemEntityType.file) {
+      await _delete(file);
+      await _deleteEmptyParents(file.parent, bucketPath);
     }
-
-    if (type == FileSystemEntityType.directory) {
-      // Si es un directorio, borramos recursivamente (comportamiento de carpeta)
-      await Directory(fullPath).delete(recursive: true);
-      await objectMeta.forgetFolder(bucketName, key);
-    } else {
-      // Si es un archivo normal
-      await File(fullPath).delete();
-      await objectMeta.forget(bucketName, key);
-    }
-
-    // Limpieza recursiva de carpetas vacías (si aplica)
-    await _deleteEmptyParents(
-      Directory(fullPath).parent,
-      _getBucketPath(bucketName),
-    );
+    await objectMeta.forget(bucketName, key);
 
     return true;
+  }
+
+  /// Borra la carpeta [prefix] (`fotos/`) con todo su contenido. No es una
+  /// operacion de S3: la usa la consola para borrar carpetas
+  Future<void> deleteFolder({
+    required String bucketName,
+    required String prefix,
+  }) async {
+    if (!S3Validator.isValidBucketName(bucketName)) {
+      throw S3Exception.invalidBucketName(bucketName);
+    }
+    if (!prefix.endsWith('/') || !S3Validator.isValidKey(prefix)) {
+      throw S3Exception.invalidKey(prefix);
+    }
+    final bucketPath = _getBucketPath(bucketName);
+    if (!await Directory(bucketPath).exists()) {
+      throw S3Exception.noSuchBucket(bucketName);
+    }
+
+    final dir = Directory(p.join(bucketPath, prefix));
+    if (await dir.exists()) {
+      await _delete(dir);
+      await _deleteEmptyParents(dir.parent, bucketPath);
+    }
+    await objectMeta.forgetFolder(bucketName, prefix);
+  }
+
+  /// Borra [entity] (si es un directorio, con su contenido). En Windows no se
+  /// puede borrar un fichero abierto (una descarga que aun no lo ha cerrado, el
+  /// antivirus revisando uno recien subido): se reintenta durante unos segundos
+  Future<void> _delete(FileSystemEntity entity) async {
+    for (var attempt = 1; ; attempt++) {
+      try {
+        await entity.delete(recursive: true);
+        return;
+      } on PathAccessException {
+        if (!Platform.isWindows || attempt == 10) rethrow;
+        await Future<void>.delayed(Duration(milliseconds: 50 * attempt));
+      }
+    }
   }
 
   Future<DeleteObjectsResponse> deleteObjects({
@@ -576,7 +615,7 @@ class FileManagementService {
     if (await dir.exists()) {
       final entities = await dir.list().toList();
       if (entities.isEmpty) {
-        await dir.delete();
+        await _delete(dir);
         // Intentamos borrar el padre recursivamente
         await _deleteEmptyParents(dir.parent, bucketPath);
       }

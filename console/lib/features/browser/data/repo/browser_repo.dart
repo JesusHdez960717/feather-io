@@ -28,13 +28,20 @@ class BrowserRepo {
     }
   }
 
+  ///Borra objetos y carpetas (keys terminadas en `/`) con todo su contenido
   Future<void> deleteObjects({
     required String bucket,
     required List<String> keys,
     String? token,
   }) async {
     try {
-      await client.deleteObjects(token: token, bucket: bucket, keys: keys);
+      final objects = keys.where((key) => !key.endsWith('/')).toList();
+      if (objects.isNotEmpty) {
+        await client.deleteObjects(token: token, bucket: bucket, keys: objects);
+      }
+      for (final folder in keys.where((key) => key.endsWith('/'))) {
+        await client.deleteFolder(token: token, bucket: bucket, prefix: folder);
+      }
     } catch (e) {
       throw ExceptionConverter.parse(e);
     }

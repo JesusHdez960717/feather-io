@@ -81,15 +81,7 @@ class MultipartService {
     final part = File(p.join(dir.path, '$partNumber.part'));
     final temp = File('${part.path}.tmp');
 
-    final hasher = Md5Tap();
-    try {
-      await hasher.bind(binary).pipe(temp.openWrite());
-    } catch (_) {
-      if (await temp.exists()) await temp.delete();
-      rethrow;
-    }
-
-    final etag = hasher.close();
+    final etag = await Md5Tap.write(binary, temp);
     await temp.rename(part.path);
     await File(p.join(dir.path, '$partNumber.etag')).writeAsString(etag);
     return etag;

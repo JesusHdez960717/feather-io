@@ -214,7 +214,18 @@ subresource must be removed from its list.
 description, color, timestamps), anonymous rules and object ETags live in SQLite via Drift. The
 schema has no migrations while in development: when it changes, delete the SQLite file and let it be
 recreated. PutObject, CopyObject and CreateMultipartUpload need an existing bucket (`NoSuchBucket`
-otherwise); only the subfolders of the key are created on the fly. Object payloads must
+otherwise); only the subfolders of the key are created on the fly. PutObject writes into
+`STORAGE_VOLUME_PATH/.tmp/` (a dot folder, never listed) and renames the file into place when the
+upload ends, so a failed upload keeps the previous object; `Md5Tap.write` closes and deletes the file
+when the stream fails (`pipe` does not close the sink). Deletes go through
+`FileManagementService._delete`, which on Windows retries for a few seconds while the file is open
+(a download not yet closed, the antivirus scanning a new file). Clients that sign by chunks
+(`x-amz-content-sha256: STREAMING-…` or `Content-Encoding: aws-chunked`: mc and recent AWS SDKs/CLI)
+send `aws-chunked` bodies; `AwsChunkedDecoder` (controller layer) strips the framing in streaming
+for PutObject and UploadPart, without checking chunk signatures or trailing checksums, and answers
+`IncompleteBody` for a malformed body only after reading it all (if the request body is not read to
+the end, dart:io drops the connection without sending the error). `aws-chunked` is never stored as
+the object's `Content-Encoding`. Object payloads must
 always flow as `Stream<List<int>>` (`request.read()`, `file.openRead()`): **never** `readAsBytes()`
 or `Uint8List` for object data. Multi-object downloads build the zip in a temp file (
 `FileManagementService.zipObjects`) and stream it with `openAndDeleteTemp`. Winter's
@@ -231,7 +242,12 @@ protection) before touching the filesystem.
 directory with a hidden `S3Validator.folderMarker` file (`.feather-folder`), so empty folders
 survive the cleanup of empty parents. Listings show the marker as the key `fotos/` (size 0), stats
 and zips skip it, no key may use that name, and a bucket holding only empty folders counts as empty.
-Winter drops the trailing `/` from the `{key}` path param; `S3Controller._objectKey` restores it
+Deleting works like S3: `DELETE /{bucket}/fotos/` (or `fotos/` in a multi-delete) removes only the
+marker, never the content, and a key without `/` that is a directory deletes nothing. To delete a
+folder with its content the console calls the admin endpoint
+`DELETE /{admin}/bucket/{bucket}/folder?prefix=fotos/` (`FileManagementService.deleteFolder`,
+permission `admin.bucket.delete-folder`); `BrowserRepo.deleteObjects` sends the folder keys there and
+the rest to the multi-delete. Winter drops the trailing `/` from the `{key}` path param; `S3Controller._objectKey` restores it
 from the URL. `listFiles` sorts objects and common prefixes together and pages over them like
 ListObjectsV2 (`max-keys` up to 1000, `continuation-token` = base64url of the last key returned).
 `PUT` with `x-amz-copy-source` is CopyObject and needs the plain `s3.get-object` permission, so an
@@ -279,7 +295,7 @@ and ListMultipartUploads are not implemented. CORS exposes `ETag` so the console
   `server.putObject(…, headers: …)` (creates the bucket first and sends bytes without
   `Content-Type`, so reads fall back to the extension) and `server.sigV4(method, path, query: …)`, the
   headers of a native client signed with SigV4. Uploading with `http.put` needs the bucket created.
-- Use one distinct port per file so files run in parallel. Ports in use: 8082–8104.
+- Use one distinct port per file so files run in parallel. Ports in use: 8082–8106.
 - Cover auth (missing or invalid token → 401, wrong login credentials → 403), validation (bad bucket
   names, path traversal, forbidden chars → 400), content negotiation (JSON vs XML, including the S3
   error code) and edge cases (404, empty lists).

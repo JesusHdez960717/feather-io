@@ -123,6 +123,24 @@ class ObjectMetaService {
 
 /// Calcula el md5 de un stream mientras pasa por [bind], sin guardarlo entero
 class Md5Tap {
+  /// Escribe [binary] en [file] y devuelve su md5. Si el stream falla, cierra
+  /// el fichero (`pipe` no lo hace, y en Windows no se puede borrar abierto),
+  /// lo borra y relanza el error
+  static Future<String> write(Stream<List<int>> binary, File file) async {
+    final hasher = Md5Tap();
+    final sink = file.openWrite();
+    try {
+      await hasher.bind(binary).pipe(sink);
+    } catch (_) {
+      try {
+        await sink.close();
+      } catch (_) {}
+      if (await file.exists()) await file.delete();
+      rethrow;
+    }
+    return hasher.close();
+  }
+
   final _DigestSink _digest = _DigestSink();
   late final ByteConversionSink _hasher = md5.startChunkedConversion(_digest);
 

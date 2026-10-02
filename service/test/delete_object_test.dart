@@ -35,6 +35,30 @@ void main() {
       expect(getResponse.statusCode, 404);
     });
 
+    test(
+      'Should retry deleting a file that is open for a moment',
+      () async {
+        const key = 'abierto.txt';
+        await server.putObject(bucket, key, 'data');
+        final file = File('${server.storagePath}/$bucket/$key');
+        //en Windows un fichero abierto no se puede borrar hasta que se cierra
+        final handle = await file.open();
+        final closed = Future<void>.delayed(
+          const Duration(milliseconds: 200),
+          handle.close,
+        );
+
+        final response = await http.delete(
+          server.url('/$bucket/$key'),
+          headers: server.auth(),
+        );
+        await closed;
+        expect(response.statusCode, 204);
+        expect(await file.exists(), isFalse);
+      },
+      testOn: 'windows',
+    );
+
     test('Should clean up empty parent folders after delete', () async {
       const key = 'a/b/c/file.txt';
       await server.putObject(bucket, key, 'data');

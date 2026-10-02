@@ -184,21 +184,42 @@ class S3Controller {
     final etag = await fileManagement.uploadFile(
       bucketName: request.pathParams['bucket']!,
       key: _objectKey(request),
-      binary: request.read(),
+      binary: _objectBody(request),
       headers: _objectHeaders(request),
     );
 
     return ResponseEntity(200, headers: {'etag': '"$etag"'});
   }
 
+  /// El contenido de un objeto o de una parte, sin el formato `aws-chunked`
+  /// si el cliente lo manda asi
+  Stream<List<int>> _objectBody(RequestEntity request) =>
+      AwsChunkedDecoder.appliesTo(request)
+      ? AwsChunkedDecoder.decode(request.read())
+      : request.read();
+
   /// Cabeceras de la peticion que se guardan con el objeto y se devuelven al
-  /// leerlo, como en S3: las de contenido y los metadatos `x-amz-meta-*`
-  Map<String, String> _objectHeaders(RequestEntity request) => {
-    for (final MapEntry(:key, :value) in request.headers.entries)
-      if (_storedHeaders.contains(key.toLowerCase()) ||
-          key.toLowerCase().startsWith('x-amz-meta-'))
-        key.toLowerCase(): value,
-  };
+  /// leerlo, como en S3: las de contenido y los metadatos `x-amz-meta-*`.
+  /// `aws-chunked` es el formato del envio, no del objeto: no se guarda
+  Map<String, String> _objectHeaders(RequestEntity request) {
+    final headers = {
+      for (final MapEntry(:key, :value) in request.headers.entries)
+        if (_storedHeaders.contains(key.toLowerCase()) ||
+            key.toLowerCase().startsWith('x-amz-meta-'))
+          key.toLowerCase(): value,
+    };
+    final encoding = headers['content-encoding']
+        ?.split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty && e != 'aws-chunked')
+        .join(', ');
+    if (encoding == null || encoding.isEmpty) {
+      headers.remove('content-encoding');
+    } else {
+      headers['content-encoding'] = encoding;
+    }
+    return headers;
+  }
 
   static const Set<String> _storedHeaders = {
     'cache-control',
@@ -411,7 +432,7 @@ class S3Controller {
 
     await fileManagement.deleteFile(
       bucketName: request.pathParams['bucket']!,
-      key: request.pathParams['key']!,
+      key: _objectKey(request),
     );
 
     return ResponseEntity(204);
@@ -477,7 +498,7 @@ class S3Controller {
       key: key,
       uploadId: uploadId,
       partNumber: partNumber,
-      binary: request.read(),
+      binary: _objectBody(request),
     );
     return ResponseEntity(200, headers: {'etag': '"$etag"'});
   }

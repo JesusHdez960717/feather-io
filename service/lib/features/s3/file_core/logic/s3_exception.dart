@@ -7,6 +7,7 @@ enum S3ErrorCode {
   bucketNotEmpty('BucketNotEmpty', 409),
   entityTooLarge('EntityTooLarge', 400),
   entityTooSmall('EntityTooSmall', 400),
+  incompleteBody('IncompleteBody', 400),
   internalError('InternalError', 500),
   invalidAccessKeyId('InvalidAccessKeyId', 403),
   invalidArgument('InvalidArgument', 400),
