@@ -47,13 +47,13 @@ TEST_DESC = {
     'get_object_test.dart': 'GET/HEAD: tipos, ETag, `Range` (206/416), overrides `response-*`.',
     'list_buckets_test.dart': 'ListBuckets: JSON/XML, fechas UTC, `Owner`, estadísticas.',
     'list_objects_test.dart': 'ListObjects V1 y V2: prefijos, paginación (token, `marker`, `start-after`), ETags, `encoding-type=url`.',
-    'login_test.dart': 'Login de la consola (JWT).',
+    'login_test.dart': 'Login de la consola (JWT) y tokens manipulados: sin `exp`, caducados, con otro secreto, `alg: none`; errores sin detalles internos.',
     'multipart_test.dart': 'Multipart: crear, partes, completar, abortar, ListMultipartUploads, ListParts, UploadPartCopy.',
     'object_metadata_test.dart': 'Metadatos: `Content-Type`, `x-amz-meta-*`, clase de almacenamiento, en copias y multipart.',
     'presign_test.dart': 'URLs prefirmadas (endpoint admin y verificación SigV4 por query).',
     'put_object_test.dart': 'PutObject: subidas, ETag, bucket inexistente, validación de keys, path traversal y sustituir un objeto abierto (Windows).',
     's3_controller_test.dart': 'Camino feliz completo (crear bucket → subir → listar → bajar → borrar).',
-    's3_error_test.dart': 'Errores S3 en XML/JSON y validación de firmas SigV4.',
+    's3_error_test.dart': 'Errores S3 en XML/JSON y firmas SigV4: firma y clave erróneas, replay (±15 min), fecha de la credencial, sha256 del cuerpo, URL prefirmada con fecha futura.',
     'sig_v4_signer_test.dart': 'Firma SigV4 contra el ejemplo oficial de la documentación de AWS.',
     'unsupported_subresource_test.dart': '`501 NotImplemented` para subrecursos y las lecturas que sí se contestan (tagging, versioning).',
     'update_bucket_test.dart': 'Editar descripción y color de un bucket (admin).',
@@ -65,7 +65,7 @@ SUITE_ORDER = ['awscli', 'aws-sdk-go', 'aws-sdk-java', 'aws-sdk-java-v2', 'aws-s
 
 SUITE_STATUS = {
     'awscli': 'Se corta en `s3 presign` (SigV2 de la CLI v1).',
-    'aws-sdk-go': 'Se corta en el primer test: espera que se valide `x-amz-content-sha256`.',
+    'aws-sdk-go': 'Se corta en el primer test: espera que una URL prefirmada valide el `x-amz-content-sha256` de una cabecera.',
     'aws-sdk-java': 'Pasa entera.',
     'aws-sdk-java-v2': 'Pasa entera.',
     'aws-sdk-php': 'Se corta al abortar una subida inexistente (comportamiento de MinIO).',
@@ -84,8 +84,8 @@ SUITE_STATUS = {
 # (texto que aparece en el test o su error, causa). Gana el primero que encaja
 REASONS = [
     ('s3 presign', 'Fuera de alcance: la CLI v1 firma `s3 presign` con SigV2.'),
-    ('XAmzContentSHA256Mismatch', 'Fuera de alcance: no se valida `x-amz-content-sha256`.'),
-    ('PresignedPut', 'Fuera de alcance: no se valida `x-amz-content-sha256`.'),
+    ('XAmzContentSHA256Mismatch', 'Fuera de alcance: en una URL prefirmada no se valida el `x-amz-content-sha256` (sí con firma por cabecera).'),
+    ('PresignedPut', 'Fuera de alcance: en una URL prefirmada no se valida el `x-amz-content-sha256` (sí con firma por cabecera).'),
     ('non-existent', 'Comportamiento de MinIO: abortar una subida inexistente da 204; AWS S3 (y feather-io) dan 404 `NoSuchUpload`.'),
     ('presignedPost', 'Fuera de alcance: subidas con POST policy.'),
     ('PresignedPost', 'Fuera de alcance: subidas con POST policy.'),
@@ -120,7 +120,8 @@ UNCLASSIFIED = '**Sin clasificar: revisar**'
 NOT_WORKING = """**Fuera de alcance** (en *Aparcado* del `ROADMAP.md`; responden `501 NotImplemented` o 401)
 
 - Firma SigV2 (incluido `aws s3 presign` de la CLI v1).
-- Validar `x-amz-content-sha256` y los checksums (`Content-MD5`, CRC de `aws-chunked`).
+- Validar los checksums (`Content-MD5`, CRC de `aws-chunked`, firmas de cada trozo) y el
+  `x-amz-content-sha256` en URLs prefirmadas (con firma por cabecera sí se valida).
 - Subidas con POST policy (formularios prefirmados).
 - Versionado (solo se contesta que nunca está activado) y etiquetas (solo se contesta que no hay).
 - Bucket policies, ACL, cifrado, lifecycle, CORS por bucket, website, logging, replicación.
@@ -306,31 +307,29 @@ def main():
         ok = sum(1 for t in items if t['result'] == 'success')
         w(f'| `{name}` | {ok}/{len(items)} | {TEST_DESC.get(name, "**Sin descripción: añadirla en report.py**")} |')
     w('')
-    w('<details><summary>Lista completa de tests</summary>')
-    w('')
-    for name, items in tests.items():
-        w(f'**{name}**')
+    failed_tests = [(name, t) for name, items in tests.items() for t in items
+                    if t['result'] != 'success']
+    if failed_tests:
+        w('Tests que no pasan:')
         w('')
-        for t in items:
-            mark = '✅' if t['result'] == 'success' else ('⏭️' if t['result'] == 'skipped' else '❌')
-            w(f'- {mark} {md(t["name"])}')
+        for name, t in failed_tests:
+            w(f'- `{name}`: {md(t["name"])} ({t["result"]})')
         w('')
-    w('</details>')
-    w('')
     w('La consola no tiene tests (está en el roadmap, fase 5); solo se analiza.')
     w('')
 
     w('## 2. Clientes reales: AWS CLI v2 y rclone')
     w('')
-    w('Scripts `awscli.sh` y `rclone.sh`. Cada paso compara también el contenido cuando baja algo.')
+    w('Scripts `awscli.sh` y `rclone.sh` (qué prueba cada paso: ver los scripts). Cada paso compara')
+    w('también el contenido cuando baja algo.')
     w('')
+    w('| Cliente | Pasos | Fallan |')
+    w('|---|---:|---|')
     for name, label in (('awscli', 'AWS CLI v2'), ('rclone', 'rclone')):
         ok = sum(1 for s, _ in steps[name] if s == 'PASS')
-        w(f'### {label} (`{versions[name]}`): {ok}/{len(steps[name])}')
-        w('')
-        for status, step in steps[name]:
-            w(f'- {"✅" if status == "PASS" else "❌"} {md(step)}')
-        w('')
+        failed = [md(step) for status, step in steps[name] if status != 'PASS']
+        w(f'| {label} (`{versions[name]}`) | {ok}/{len(steps[name])} | {"; ".join(failed) or "—"} |')
+    w('')
 
     w('## 3. MinIO Mint')
     w('')
@@ -354,17 +353,7 @@ def main():
     for row in failures:
         w(f'| `{row["suite"]}` | {short(row["function"], 90)} | {md(reason(row))} |')
     w('')
-    w('<details><summary>Tests de Mint que pasan</summary>')
-    w('')
-    for s in SUITE_ORDER:
-        names = list(dict.fromkeys(short(r['function'], 110) for r in by_suite[s] if r['status'] == 'PASS'))
-        if names:
-            w(f'**{s}** ({counts[s]["PASS"]})')
-            w('')
-            w('\n'.join(f'- {n}' for n in names))
-            w('')
-    w('</details>')
-    w('')
+
 
     w('## 4. Lo que no funciona')
     w('')

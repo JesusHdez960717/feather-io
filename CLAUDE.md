@@ -340,8 +340,8 @@ from scratch and regenerate `service/tool/s3_compat/RESULTADOS.md`. Outputs go t
 4. Clients: `ACCESS_KEY=… SECRET_KEY=… service/tool/s3_compat/run.sh awscli rclone mint` from the
    repo root.
 5. Report: `python service/tool/s3_compat/report.py --server-log <service log>` rewrites
-   `RESULTADOS.md` (date, commit, versions, every service test, every client step, every Mint
-   result with its cause, what doesn't work and what isn't tested).
+   `RESULTADOS.md` (date, commit, versions, totals per test file, client and Mint suite, only the
+   failures, each Mint failure with its cause, what doesn't work and what isn't tested).
 6. Review before committing:
    - Mint failures marked **Sin clasificar** and any unhandled error in the service log are new:
      investigate them; a real bug is fixed (with its test), a new out-of-scope one goes into
