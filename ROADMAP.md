@@ -88,8 +88,8 @@ terminarla.
 
 - [ ] Gestión de access keys con permisos, con su pantalla de administración en la consola.
 - [ ] Ruta de SQLite basada en `STORAGE_VOLUME_PATH`.
-- [ ] Dockerfile: versión de Dart `^3.13` y `libsqlite3` en la imagen final.
 - [ ] i18n de los mensajes de error del servicio.
+- [ ] Dockerfile: versión de Dart `^3.13` y `libsqlite3` en la imagen final.
 - [ ] Tests de la consola (cubits y repos).
 
 ## Después de la 1.0 (mejoras futuras)
@@ -111,3 +111,14 @@ No entran en la 1.0; se harán más adelante.
   retention/object lock y las APIs propias de MinIO (admin, snowball, force-delete).
 - Keys con caracteres que el sistema de ficheros no admite (`<>:"|?*` en Windows): habría que
   codificar las keys en disco.
+
+## Ideas
+
+- [ ] Hacer como un Object Mapper para XML y asi no tener los parseToXML en el servicio, que el
+  objeto implemente el .toJson o .toXML y cada objeto lo implemente a su manera
+- [ ] Reducir el tamaño de la clase s3 controller que tiene más de 1000 líneas de código.
+- [ ] Pruebas de rendimiento/benchmark, tal vez con minio wrap?
+- [ ] Un Readme decente, con ducumentacion basica pero clara, cosas soportadas, proximos agregos,
+  como correrlo...
+- [ ] Generar identidad visual/icono como el de brag y video promocional con capturas de pantallas
+  reales del diseño
