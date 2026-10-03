@@ -52,7 +52,7 @@ class AuthController {
       );
     } catch (e) {
       if (e is ApiException) rethrow;
-      throw BadRequestException(body: 'Invalid login request: $e');
+      throw BadRequestException(body: 'Invalid login request');
     }
   }
 }

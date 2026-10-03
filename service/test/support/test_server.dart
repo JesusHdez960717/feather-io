@@ -55,20 +55,24 @@ class TestServer {
     if (json) 'accept': 'application/json',
   };
 
-  /// Cabeceras de un cliente S3 nativo: firma SigV4 con las claves de test y
-  /// payload sin firmar. [path] va tal cual en la URL (ya codificado).
+  /// Cabeceras de un cliente S3 nativo: firma SigV4 con las claves de test.
+  /// [path] va tal cual en la URL (ya codificado). [at] cambia la fecha de la
+  /// firma (ahora por defecto) y [payloadHash] firma el sha256 del cuerpo en
+  /// vez de `UNSIGNED-PAYLOAD`.
   Map<String, String> sigV4(
     String method,
     String path, {
     Map<String, String> query = const {},
+    DateTime? at,
+    String payloadHash = SigV4Signer.unsignedPayload,
   }) {
-    final now = DateTime.now().toUtc();
+    final now = (at ?? DateTime.now()).toUtc();
     final amzDate = SigV4Signer.amzDate(now);
     final scope = SigV4Signer.scope(SigV4Signer.dateStamp(now));
     final headers = {
       'host': 'localhost:$port',
       'x-amz-date': amzDate,
-      'x-amz-content-sha256': SigV4Signer.unsignedPayload,
+      'x-amz-content-sha256': payloadHash,
     };
     const signedHeaders = 'host;x-amz-content-sha256;x-amz-date';
     final signature = SigV4Signer.signature(
@@ -81,7 +85,7 @@ class TestServer {
         query: query,
         headers: headers,
         signedHeaders: signedHeaders,
-        payloadHash: SigV4Signer.unsignedPayload,
+        payloadHash: payloadHash,
       ),
     );
     return {

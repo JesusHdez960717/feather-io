@@ -860,7 +860,7 @@ class S3Controller {
     } catch (e) {
       throw S3Exception(
         S3ErrorCode.invalidRequest,
-        message: 'Invalid JSON for delete request: $e',
+        message: 'Invalid JSON for delete request',
         resource: bucketName,
       );
     }

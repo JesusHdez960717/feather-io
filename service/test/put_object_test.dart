@@ -208,4 +208,24 @@ void main() {
       timeout: const Timeout(Duration(seconds: 30)),
     );
   });
+
+  group('S3Controller - PUT Object key validation', () {
+    test('Should reject a backslash in the key (400)', () async {
+      //en Windows `a\b` seria otra forma de escribir `a/b`, y permitiria
+      //escribir el marcador de carpeta (`x\.feather-folder`)
+      for (final key in ['carpeta%5Cfichero.txt', 'otra%5C.feather-folder']) {
+        final response = await http.put(
+          server.url('/$bucket/$key'),
+          headers: server.auth(),
+          body: 'x',
+        );
+        expect(response.statusCode, 400, reason: key);
+        expect(response.body, contains('<Code>InvalidArgument</Code>'));
+      }
+      expect(
+        await File('${server.storagePath}/$bucket/carpeta/fichero.txt').exists(),
+        isFalse,
+      );
+    });
+  });
 }

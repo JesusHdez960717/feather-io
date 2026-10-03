@@ -2,7 +2,9 @@
 library;
 
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:service/feather.dart';
 import 'package:test/test.dart';
@@ -102,14 +104,16 @@ void main() {
   });
 
   group('S3SigV4Filter', () {
+    final now = DateTime.now().toUtc();
+
     test('Should reject a SigV4 request with a wrong access key (403)', () async {
       final response = await http.get(
         server.url('/'),
         headers: {
           'authorization':
-              'AWS4-HMAC-SHA256 Credential=wrong/20260101/us-east-1/s3/aws4_request, '
+              'AWS4-HMAC-SHA256 Credential=wrong/${SigV4Signer.dateStamp(now)}/us-east-1/s3/aws4_request, '
               'SignedHeaders=host;x-amz-date, Signature=abc',
-          'x-amz-date': '20260101T000000Z',
+          'x-amz-date': SigV4Signer.amzDate(now),
         },
       );
       expect(response.statusCode, 403);
@@ -121,9 +125,9 @@ void main() {
         server.url('/'),
         headers: {
           'authorization':
-              'AWS4-HMAC-SHA256 Credential=$testAccess/20260101/us-east-1/s3/aws4_request, '
+              'AWS4-HMAC-SHA256 Credential=$testAccess/${SigV4Signer.dateStamp(now)}/us-east-1/s3/aws4_request, '
               'SignedHeaders=host;x-amz-date, Signature=abc',
-          'x-amz-date': '20260101T000000Z',
+          'x-amz-date': SigV4Signer.amzDate(now),
         },
       );
       expect(response.statusCode, 403);
@@ -135,6 +139,124 @@ void main() {
       headers['authorization'] = headers['authorization']!.replaceAll(', ', ',');
       final response = await http.get(server.url('/'), headers: headers);
       expect(response.statusCode, 200, reason: response.body);
+    });
+  });
+
+  group('S3SigV4Filter - replay and body', () {
+    test('Should reject a signature older than 15 minutes (replay)', () async {
+      final response = await http.get(
+        server.url('/'),
+        headers: server.sigV4(
+          'GET',
+          '/',
+          at: DateTime.now().subtract(const Duration(minutes: 16)),
+        ),
+      );
+      expect(response.statusCode, 403);
+      expect(response.body, contains('<Code>RequestTimeTooSkewed</Code>'));
+    });
+
+    test('Should reject a signature dated in the future', () async {
+      final response = await http.get(
+        server.url('/'),
+        headers: server.sigV4(
+          'GET',
+          '/',
+          at: DateTime.now().add(const Duration(minutes: 16)),
+        ),
+      );
+      expect(response.statusCode, 403);
+      expect(response.body, contains('<Code>RequestTimeTooSkewed</Code>'));
+    });
+
+    test('Should accept a small clock skew', () async {
+      final response = await http.get(
+        server.url('/'),
+        headers: server.sigV4(
+          'GET',
+          '/',
+          at: DateTime.now().subtract(const Duration(minutes: 5)),
+        ),
+      );
+      expect(response.statusCode, 200, reason: response.body);
+    });
+
+    test('Should reject a credential scope of another day', () async {
+      final headers = server.sigV4('GET', '/');
+      headers['authorization'] = headers['authorization']!.replaceFirst(
+        RegExp(r'/\d{8}/'),
+        '/20200101/',
+      );
+      final response = await http.get(server.url('/'), headers: headers);
+      expect(response.statusCode, 403);
+      expect(response.body, contains('<Code>SignatureDoesNotMatch</Code>'));
+    });
+
+    test('Should store a body that matches the signed sha256', () async {
+      await server.createBucket('firma-cuerpo');
+      final body = utf8.encode('original');
+      final response = await http.put(
+        server.url('/firma-cuerpo/ok.txt'),
+        headers: server.sigV4(
+          'PUT',
+          '/firma-cuerpo/ok.txt',
+          payloadHash: sha256.convert(body).toString(),
+        ),
+        body: body,
+      );
+      expect(response.statusCode, 200, reason: response.body);
+    });
+
+    test('Should reject a body that does not match the signed sha256', () async {
+      await server.putObject('firma-cuerpo', 'cambiado.txt', 'anterior');
+      final response = await http.put(
+        server.url('/firma-cuerpo/cambiado.txt'),
+        headers: server.sigV4(
+          'PUT',
+          '/firma-cuerpo/cambiado.txt',
+          payloadHash: sha256.convert(utf8.encode('original')).toString(),
+        ),
+        body: 'manipulado',
+      );
+      expect(response.statusCode, 400);
+      expect(response.body, contains('<Code>XAmzContentSHA256Mismatch</Code>'));
+      //el objeto anterior sigue intacto
+      expect(
+        await File('${server.storagePath}/firma-cuerpo/cambiado.txt').readAsString(),
+        'anterior',
+      );
+    });
+
+    test('Should reject a presigned URL dated in the future', () async {
+      final future = DateTime.now().toUtc().add(const Duration(days: 30));
+      final amzDate = SigV4Signer.amzDate(future);
+      final scope = SigV4Signer.scope(SigV4Signer.dateStamp(future));
+      final query = {
+        SigV4Signer.algorithmParam: SigV4Signer.algorithm,
+        SigV4Signer.credentialParam: '$testAccess/$scope',
+        SigV4Signer.dateParam: amzDate,
+        SigV4Signer.expiresParam: '3600',
+        SigV4Signer.signedHeadersParam: 'host',
+      };
+      final signature = SigV4Signer.signature(
+        secret: testSecret,
+        amzDate: amzDate,
+        scope: scope,
+        canonicalRequest: SigV4Signer.canonicalRequest(
+          method: 'GET',
+          path: '/',
+          query: query,
+          headers: {'host': 'localhost:${server.port}'},
+          signedHeaders: 'host',
+          payloadHash: SigV4Signer.unsignedPayload,
+        ),
+      );
+      final signedQuery = SigV4Signer.canonicalQuery({
+        ...query,
+        SigV4Signer.signatureParam: signature,
+      });
+      final response = await http.get(server.url('/?$signedQuery'));
+      expect(response.statusCode, 403);
     });
   });
 }

@@ -196,7 +196,7 @@ class AdminController {
       );
     } catch (e) {
       if (e is ApiException) rethrow;
-      throw BadRequestException(body: 'Invalid request: $e');
+      throw BadRequestException(body: 'Invalid request');
     }
   }
 }

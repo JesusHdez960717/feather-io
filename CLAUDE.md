@@ -108,7 +108,8 @@ file.
 **Auth and authorization.**
 
 - The global filter is `JwtFilter`. It populates the `securityContext` from a `Bearer` token issued
-  by `POST /{admin}/login`. That endpoint checks `FEATHER_ACCESS`/`FEATHER_SECRET` and issues a
+  by `POST /{admin}/login`; `JwtService.verifyToken` also requires an `exp` claim, so no token can
+  live forever. That endpoint checks `FEATHER_ACCESS`/`FEATHER_SECRET` and issues a
   token with a fixed permission list.
 - `S3SigV4Filter` handles native S3 clients and is registered only on the S3 parent route, so the
   admin API accepts JWT only. `JwtFilter` is registered globally and again on both parents.
@@ -116,7 +117,14 @@ file.
   authenticated. `S3SigV4Filter` accepts the signature in the `Authorization` header or in the
   query (presigned URL: `X-Amz-Signature`, `X-Amz-Date`, `X-Amz-Expires` up to 7 days), and passes
   through requests with neither, so an unauthenticated request gets a 401 from the route's
-  `AuthFilter`. The `Authorization` fields may be separated by `,` with or without a space (s3cmd
+  `AuthFilter`. Like S3, a signature more than 15 minutes away from the server clock is
+  `RequestTimeTooSkewed` (`S3SigV4Filter.maxClockSkew`; it stops replaying captured requests), the
+  credential scope must be the signature's day, and a presigned URL can't be dated in the future
+  (that would stretch it past the 7-day maximum). When the client signs the body's sha256 (a hex
+  `x-amz-content-sha256`), the filter wraps the body and fails with `XAmzContentSHA256Mismatch`
+  after reading it if it doesn't match, so a captured request can't be replayed with another body
+  (`UNSIGNED-PAYLOAD` and `STREAMING-…` bodies are not checked). Authentication errors never
+  include internal details. The `Authorization` fields may be separated by `,` with or without a space (s3cmd
   sends none). Canonical query names and values, and the paths `PresignService` builds, are encoded
 with `SigV4Signer.uriEncode` (everything but `A-Za-z0-9-_.~`, like AWS; `Uri.encodeComponent`
 leaves `!'()*` alone and the signature would not match); `test/sig_v4_signer_test.dart` checks it
@@ -247,7 +255,8 @@ global) narrows it by route from the `Content-Length`: `s3.put-object` over `MAX
 `Transfer-Encoding`, so they look the same) gets its body wrapped in Winter's `limitBodySize`, which
 fails with 413 while reading. Every bucket name goes through
 `S3Validator.isValidBucketName` and every key through `S3Validator.isValidKey` (path traversal
-protection) before touching the filesystem.
+protection) before touching the filesystem. Keys can't contain `\`: on Windows it is a folder
+separator, so `a\b` would alias `a/b` and could write a folder marker.
 
 **Folders and listing.** A key ending in `/` is a folder: `PUT /{bucket}/fotos/` creates the
 directory with a hidden `S3Validator.folderMarker` file (`.feather-folder`), so empty folders

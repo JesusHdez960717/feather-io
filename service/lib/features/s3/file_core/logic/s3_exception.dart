@@ -23,8 +23,10 @@ enum S3ErrorCode {
   noSuchUpload('NoSuchUpload', 404),
   notImplemented('NotImplemented', 501),
   preconditionFailed('PreconditionFailed', 412),
+  requestTimeTooSkewed('RequestTimeTooSkewed', 403),
   serviceUnavailable('ServiceUnavailable', 503),
-  signatureDoesNotMatch('SignatureDoesNotMatch', 403);
+  signatureDoesNotMatch('SignatureDoesNotMatch', 403),
+  xAmzContentSHA256Mismatch('XAmzContentSHA256Mismatch', 400);
 
   final String code;
   final int statusCode;

@@ -39,8 +39,9 @@ class S3Validator {
     }
 
     // Caracteres prohibidos comunes (que S3 recomienda evitar o que causan problemas en FS)
-    // Bloqueamos caracteres de control, >, <, :, ", |, ?, *
-    final invalidChars = RegExp(r'[\x00-\x1F\x7F<>:"|?*]');
+    // Bloqueamos caracteres de control, >, <, :, ", |, ?, * y \ (separador de
+    // carpetas en Windows: `a\b` seria otra forma de escribir `a/b`)
+    final invalidChars = RegExp(r'[\x00-\x1F\x7F<>:"|?*\\]');
     if (invalidChars.hasMatch(key)) return false;
 
     try {
