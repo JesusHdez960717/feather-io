@@ -51,7 +51,7 @@ El detalle de la última ejecución completa, test a test, está en [`RESULTADOS
 | Suite          | Se corta en                                                                                    |
 |----------------|------------------------------------------------------------------------------------------------|
 | `awscli`       | `s3 presign` de la CLI v1, que firma con SigV2                                                 |
-| `aws-sdk-go`   | espera `XAmzContentSHA256Mismatch` (no se valida `x-amz-content-sha256`)                       |
+| `aws-sdk-go`   | espera que una URL prefirmada valide el `x-amz-content-sha256` de una cabecera (con firma por cabecera sí se valida) |
 | `aws-sdk-php`  | abortar una subida inexistente: espera 204 como MinIO; S3 y feather-io dan 404                 |
 | `aws-sdk-ruby` | subida con POST policy                                                                         |
 | `minio-py`     | snowball (API propia de MinIO)                                                                 |
