@@ -109,7 +109,12 @@ file.
 
 - The global filter is `JwtFilter`. It populates the `securityContext` from a `Bearer` token issued
   by `POST /{admin}/login`; `JwtService.verifyToken` also requires an `exp` claim, so no token can
-  live forever. That endpoint checks `FEATHER_ACCESS`/`FEATHER_SECRET` and issues a
+  live forever. Login is rate limited per client IP by `LoginRateLimiter` (in DI): every failure
+  waits `LOGIN_FAILURE_DELAY_MS` (1 s) and `LOGIN_MAX_FAILURES` (10) failures in a row lock the IP
+  for `LOGIN_LOCK_SECONDS` (15 min, `429` + `Retry-After`, even with good credentials); a success
+  clears it. The IP is `request.clientIp(trustedProxies: TRUSTED_PROXIES)`, so `X-Forwarded-For`
+  is ignored unless proxies are declared. Credentials are compared in constant time. That endpoint
+  checks `FEATHER_ACCESS`/`FEATHER_SECRET` and issues a
   token with a fixed permission list.
 - `S3SigV4Filter` handles native S3 clients and is registered only on the S3 parent route, so the
   admin API accepts JWT only. `JwtFilter` is registered globally and again on both parents.
@@ -364,7 +369,7 @@ from scratch and regenerate `service/tool/s3_compat/RESULTADOS.md`. Outputs go t
   `server.putObject(…, headers: …)` (creates the bucket first and sends bytes without
   `Content-Type`, so reads fall back to the extension) and `server.sigV4(method, path, query: …)`, the
   headers of a native client signed with SigV4. Uploading with `http.put` needs the bucket created.
-- Use one distinct port per file so files run in parallel. Ports in use: 8082–8106.
+- Use one distinct port per file so files run in parallel. Ports in use: 8082–8107.
 - Cover auth (missing or invalid token → 401, wrong login credentials → 403), validation (bad bucket
   names, path traversal, forbidden chars → 400), content negotiation (JSON vs XML, including the S3
   error code) and edge cases (404, empty lists).

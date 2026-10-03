@@ -19,6 +19,22 @@ extension ExtendedEnv on Env {
   int get maxObjectSize =>
       find<int>('MAX_OBJECT_SIZE', required: false) ?? defaultMaxObjectSize;
 
+  ///Proxies propios delante del servicio que añaden su entrada a
+  ///`X-Forwarded-For`; con 0 (por defecto) se usa la IP de la conexion
+  int get trustedProxies => find<int>('TRUSTED_PROXIES', required: false) ?? 0;
+
+  ///Fallos de login seguidos que bloquean una IP
+  int get loginMaxFailures =>
+      find<int>('LOGIN_MAX_FAILURES', required: false) ?? 10;
+
+  ///Segundos que dura el bloqueo de una IP tras [loginMaxFailures] fallos
+  int get loginLockSeconds =>
+      find<int>('LOGIN_LOCK_SECONDS', required: false) ?? 15 * 60;
+
+  ///Milisegundos de espera antes de responder a un login fallido
+  int get loginFailureDelayMs =>
+      find<int>('LOGIN_FAILURE_DELAY_MS', required: false) ?? 1000;
+
   String get adminPrefix {
     final String key = 'ADMIN_PREFIX';
     final String defaultValue = '_admin';

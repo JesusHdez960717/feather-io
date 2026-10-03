@@ -1,17 +1,37 @@
+import 'dart:convert';
+
 import 'package:service/feather.dart';
 
 class AuthController {
   final JwtService jwtService;
+  final LoginRateLimiter rateLimiter;
 
-  AuthController() : jwtService = di.find();
+  AuthController() : jwtService = di.find(), rateLimiter = di.find();
 
   Future<ResponseEntity> login(RequestEntity request) async {
+    //por IP; detras de proxies propios, ver TRUSTED_PROXIES
+    final client =
+        request.clientIp(trustedProxies: env.trustedProxies) ?? 'unknown';
+    final locked = rateLimiter.lockedFor(client);
+    if (locked != null) {
+      return ResponseEntity.tooManyRequests(
+        body: 'Too many failed login attempts',
+        retryAfter: (locked.inMilliseconds / 1000).ceil(),
+      );
+    }
+
     try {
       final loginReq = await request.body<LoginRequest>();
 
-      if (loginReq.access != env.access || loginReq.secret != env.secret) {
+      //las dos comparaciones siempre, y sin cortar en el primer caracter
+      //distinto: el tiempo de respuesta no da pistas
+      final validAccess = _sameText(loginReq.access, env.access);
+      final validSecret = _sameText(loginReq.secret, env.secret);
+      if (!validAccess || !validSecret) {
+        await rateLimiter.failed(client);
         throw ForbiddenException(body: 'Invalid credentials');
       }
+      rateLimiter.succeeded(client);
 
       final expiresAfter = Duration(hours: 12);
       final expireAt = DateTime.now().add(expiresAfter);
@@ -54,5 +74,16 @@ class AuthController {
       if (e is ApiException) rethrow;
       throw BadRequestException(body: 'Invalid login request');
     }
+  }
+
+  /// Compara sin cortar en la primera diferencia
+  static bool _sameText(String given, String expected) {
+    final a = utf8.encode(given);
+    final b = utf8.encode(expected);
+    var diff = a.length ^ b.length;
+    for (var i = 0; i < b.length; i++) {
+      diff |= (i < a.length ? a[i] : 0) ^ b[i];
+    }
+    return diff == 0;
   }
 }

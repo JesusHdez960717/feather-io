@@ -32,9 +32,11 @@ void main() {
       expect(body['expire_at'], greaterThan(DateTime.now().millisecondsSinceEpoch));
     });
 
-    test('Should reject wrong credentials (403)', () async {
+    test('Should reject wrong credentials (403) after the 1 s penalty', () async {
+      final watch = Stopwatch()..start();
       final response = await login({'access': testAccess, 'secret': 'wrong'});
       expect(response.statusCode, 403);
+      expect(watch.elapsed, greaterThanOrEqualTo(const Duration(milliseconds: 900)));
     });
 
     test('Should reject a malformed body (400)', () async {

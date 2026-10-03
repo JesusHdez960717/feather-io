@@ -64,6 +64,13 @@ class FeatherIO {
     //--------------- JWT ---------------\\
     JwtService jwtService = JwtService();
     di.put(jwtService);
+    di.put(
+      LoginRateLimiter(
+        maxFailures: env.loginMaxFailures,
+        lockDuration: Duration(seconds: env.loginLockSeconds),
+        failureDelay: Duration(milliseconds: env.loginFailureDelayMs),
+      ),
+    );
 
     //--------------- s3 ---------------\\
     S3Controller s3controller = S3Controller();
