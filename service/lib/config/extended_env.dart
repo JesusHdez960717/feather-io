@@ -23,6 +23,16 @@ extension ExtendedEnv on Env {
   ///`X-Forwarded-For`; con 0 (por defecto) se usa la IP de la conexion
   int get trustedProxies => find<int>('TRUSTED_PROXIES', required: false) ?? 0;
 
+  ///Peticiones por IP en cada ventana de [rateLimitWindowSeconds] (limite
+  ///general); 0 lo desactiva. Alto por defecto: los clientes S3 mandan rafagas
+  ///(subidas por partes, `sync` de muchos ficheros)
+  int get rateLimitRequests =>
+      find<int>('RATE_LIMIT_REQUESTS', required: false) ?? 2000;
+
+  ///Segundos de la ventana del limite general
+  int get rateLimitWindowSeconds =>
+      find<int>('RATE_LIMIT_WINDOW_SECONDS', required: false) ?? 60;
+
   ///Fallos de login seguidos que bloquean una IP
   int get loginMaxFailures =>
       find<int>('LOGIN_MAX_FAILURES', required: false) ?? 10;

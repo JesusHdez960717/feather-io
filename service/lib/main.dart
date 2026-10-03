@@ -82,7 +82,20 @@ class FeatherIO {
       //el limite global es el de un objeto, que va a disco como stream; el
       //resto de peticiones lo acota BodySizeFilter
       config: ServerConfig(port: port, maxBodySize: env.maxObjectSize),
-      globalFilterConfig: FilterConfig([BodySizeFilter(), JwtFilter()]),
+      globalFilterConfig: FilterConfig([
+        //el primero: corta una avalancha antes de leer cuerpos o comprobar
+        //firmas. Por IP (detras de proxies propios, ver TRUSTED_PROXIES)
+        if (env.rateLimitRequests > 0)
+          RateLimiterFilter(
+            maxRequests: env.rateLimitRequests,
+            window: Duration(seconds: env.rateLimitWindowSeconds),
+            onRequest: (request) =>
+                request.clientIp(trustedProxies: env.trustedProxies) ??
+                'unknown',
+          ),
+        BodySizeFilter(),
+        JwtFilter(),
+      ]),
       //la consola lee el ETag de cada parte de una subida multipart
       securityConfig: SecurityConfig(
         cors: const CorsConfig(exposedHeaders: ['ETag']),

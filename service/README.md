@@ -112,6 +112,8 @@ Sección de variables de entorno configurables para el servicio.
 | `RESERVED_BUCKET_NAMES` |    No     | ***(empty list)*** | Lista (separada por comas) de nombres de buckets reservados que no pueden ser creados por usuarios. |
 | `MAX_OBJECT_SIZE`       |    No     |  `5368709120`  | Tamaño máximo en bytes de un objeto subido con `PUT` (5 GiB por defecto); por encima responde `EntityTooLarge`. |
 | `JWT_SECRET`            |  **SI**   |         -          | Clave secreta para firmar los jwt.                                                                  |
+| `RATE_LIMIT_REQUESTS`   |    No     |       `2000`       | Peticiones por IP en cada ventana (límite general, `429` por encima); `0` lo desactiva. Ver `DECISIONES.md`. |
+| `RATE_LIMIT_WINDOW_SECONDS` | No    |        `60`        | Segundos de la ventana del límite general.                                                          |
 | `LOGIN_MAX_FAILURES`    |    No     |        `10`        | Logins fallidos seguidos que bloquean una IP.                                                       |
 | `LOGIN_LOCK_SECONDS`    |    No     |       `900`        | Segundos que dura el bloqueo de una IP (responde `429` con `Retry-After`).                          |
 | `LOGIN_FAILURE_DELAY_MS`|    No     |       `1000`       | Espera antes de responder a cada login fallido.                                                     |

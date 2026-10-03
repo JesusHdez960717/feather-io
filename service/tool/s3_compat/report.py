@@ -49,6 +49,7 @@ TEST_DESC = {
     'list_objects_test.dart': 'ListObjects V1 y V2: prefijos, paginación (token, `marker`, `start-after`), ETags, `encoding-type=url`.',
     'login_rate_limiter_test.dart': 'Límite de intentos de login (unitario, con reloj falso): penalización, bloqueo, desbloqueo y reinicio.',
     'login_rate_limit_test.dart': 'Límite de intentos de login contra el servidor: 429 con `Retry-After`, `X-Forwarded-For` falso, fin del bloqueo.',
+    'rate_limit_test.dart': 'Límite general por IP: cabeceras `X-RateLimit-*`, 429 con `Retry-After` en todo tipo de petición, `X-Forwarded-For` falso, nueva ventana.',
     'login_test.dart': 'Login de la consola (JWT) y tokens manipulados: sin `exp`, caducados, con otro secreto, `alg: none`; errores sin detalles internos.',
     'multipart_test.dart': 'Multipart: crear, partes, completar, abortar, ListMultipartUploads, ListParts, UploadPartCopy.',
     'object_metadata_test.dart': 'Metadatos: `Content-Type`, `x-amz-meta-*`, clase de almacenamiento, en copias y multipart.',
