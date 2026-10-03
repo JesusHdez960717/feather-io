@@ -86,7 +86,7 @@ void main() {
     });
 
     test('Should return 404 for a missing source object', () async {
-      final response = await copy('x.txt', '/$bucket/no-existe.txt', headers: server.auth(json: true));
+      final response = await copy('x.txt', '/$bucket/missing.txt', headers: server.auth(json: true));
       expect(response.statusCode, 404);
       expect(jsonDecode(response.body)['code'], 'NoSuchKey');
     });
@@ -95,7 +95,7 @@ void main() {
       final response = await copy(
         'copy.pdf',
         '/$bucket/source/report.pdf',
-        targetBucket: 'no-existe',
+        targetBucket: 'missing',
       );
       expect(response.statusCode, 404);
       expect(response.body, contains('<Code>NoSuchBucket</Code>'));
@@ -173,14 +173,14 @@ void main() {
       final rule = await http.post(
         server.url(rulesPath(bucket)),
         headers: {...server.auth(), 'content-type': 'application/json'},
-        body: jsonEncode({'prefix': 'buzon/', 'access': 'writeOnly'}),
+        body: jsonEncode({'prefix': 'inbox/', 'access': 'writeOnly'}),
       );
       expect(rule.statusCode, 200);
 
-      final response = await copy('buzon/robado.pdf', '/$bucket/source/report.pdf', headers: {});
+      final response = await copy('inbox/stolen.pdf', '/$bucket/source/report.pdf', headers: {});
       expect(response.statusCode, 403);
       expect(response.body, contains('<Code>AccessDenied</Code>'));
-      expect(await File('${server.storagePath}/$bucket/buzon/robado.pdf').exists(), isFalse);
+      expect(await File('${server.storagePath}/$bucket/inbox/stolen.pdf').exists(), isFalse);
     });
   });
 
@@ -236,7 +236,7 @@ void main() {
     });
 
     test('Should ignore a date it does not understand', () async {
-      final response = await copyIf({'x-amz-copy-source-if-modified-since': 'ayer'});
+      final response = await copyIf({'x-amz-copy-source-if-modified-since': 'yesterday'});
       expect(response.statusCode, 200);
     });
   });

@@ -7,13 +7,10 @@ import 'package:path/path.dart' as p;
 import 'package:service/feather.dart';
 
 class FileManagementService {
-  final int maxFileSize;
   final ObjectMetaService objectMeta;
 
-  FileManagementService({
-    this.maxFileSize = 5 * 1024 * 1024 * 1024, // 5 GiB by default (the S3 limit)
-    ObjectMetaService? objectMeta,
-  }) : objectMeta = objectMeta ?? ObjectMetaService();
+  FileManagementService({ObjectMetaService? objectMeta})
+    : objectMeta = objectMeta ?? ObjectMetaService();
 
   Future<bool> createBucket({required String bucketName}) async {
     // Bucket name with the S3 rules
@@ -68,8 +65,7 @@ class FileManagementService {
     if (hasObjects) {
       throw S3Exception(
         S3ErrorCode.bucketNotEmpty,
-        message:
-            'The bucket "$bucketName" is not empty and cannot be deleted.',
+        message: 'The bucket "$bucketName" is not empty and cannot be deleted.',
         resource: bucketName,
       );
     }
@@ -107,7 +103,6 @@ class FileManagementService {
     required String bucketName,
     required String key,
     required Stream<List<int>> binary,
-    int? contentLength,
     Map<String, String> headers = const {},
   }) async {
     if (!S3Validator.isValidBucketName(bucketName)) {
@@ -115,17 +110,6 @@ class FileManagementService {
     }
     if (!S3Validator.isValidKey(key)) {
       throw S3Exception.invalidKey(key);
-    }
-
-    // Maximum size, when the content length is known up front
-    if (contentLength != null && contentLength > maxFileSize) {
-      throw S3Exception(
-        S3ErrorCode.entityTooLarge,
-        message:
-            'The object exceeds the maximum allowed size of '
-            '${maxFileSize / (1024 * 1024)} MB.',
-        resource: key,
-      );
     }
 
     // As in S3, the bucket must exist; the subfolders are created on the fly
@@ -143,14 +127,17 @@ class FileManagementService {
       return ObjectMetaService.emptyEtag;
     }
 
-    // Counts the bytes as they arrive, to enforce the limit while streaming
+    // Counts the bytes as they arrive, to enforce the limit while streaming.
+    // BodySizeFilter already rejects a larger Content-Length and Winter cuts
+    // any body above it; this also covers a body whose size isn't declared
+    final max = env.maxObjectSize;
     int bytesRead = 0;
     final monitoredStream = binary.map((chunk) {
       bytesRead += chunk.length;
-      if (bytesRead > maxFileSize) {
+      if (bytesRead > max) {
         throw S3Exception(
           S3ErrorCode.entityTooLarge,
-          message: 'The object exceeds the maximum allowed size.',
+          message: 'The object is over the maximum of $max bytes.',
           resource: key,
         );
       }
@@ -209,8 +196,7 @@ class FileManagementService {
         if (await source.exists()) await source.delete();
         throw S3Exception(
           S3ErrorCode.serviceUnavailable,
-          message:
-              'The object is in use and cannot be replaced; please retry.',
+          message: 'The object is in use and cannot be replaced; please retry.',
           resource: key,
         );
       }
@@ -506,7 +492,9 @@ class FileManagementService {
 
     // A folder (`photos/`) is its marker: an empty object
     final file = key.endsWith('/')
-        ? File(p.join(_getBucketPath(bucketName), key, S3Validator.folderMarker))
+        ? File(
+            p.join(_getBucketPath(bucketName), key, S3Validator.folderMarker),
+          )
         : _getFile(bucketName, key);
 
     if (!await file.exists()) {

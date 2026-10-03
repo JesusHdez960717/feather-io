@@ -43,21 +43,51 @@ void main() {
     test(
       'Should reject an object over MAX_OBJECT_SIZE with EntityTooLarge',
       () async {
-        final response = await put('enorme.bin', 13 * mb);
+        final response = await put('huge.bin', 13 * mb);
         expect(response.statusCode, 400);
         expect(response.body, contains('<Code>EntityTooLarge</Code>'));
         expect(
-          File('${server.storagePath}/$bucket/enorme.bin').existsSync(),
+          File('${server.storagePath}/$bucket/huge.bin').existsSync(),
           isFalse,
         );
       },
     );
 
     test('Should answer EntityTooLarge as JSON when asked', () async {
-      final response = await put('enorme.bin', 13 * mb, json: true);
+      final response = await put('huge.bin', 13 * mb, json: true);
       expect(response.statusCode, 400);
       expect(jsonDecode(response.body)['code'], 'EntityTooLarge');
     });
+
+    test(
+      'Should reject a chunked object over MAX_OBJECT_SIZE while reading it',
+      () async {
+        // Without Content-Length the size is only known while the body arrives
+        final request = http.StreamedRequest(
+          'PUT',
+          server.url('/$bucket/chunked-huge.bin'),
+        )..headers.addAll(server.auth());
+        final sent = request.send();
+        for (var i = 0; i < 13; i++) {
+          request.sink.add(List<int>.filled(mb, 7));
+        }
+        unawaited(request.sink.close());
+        try {
+          final response = await sent;
+          final body = await response.stream.bytesToString();
+          expect(response.statusCode, 400, reason: body);
+          expect(body, contains('<Code>EntityTooLarge</Code>'));
+        } on http.ClientException {
+          // Winter cuts the body at MAX_OBJECT_SIZE while reading it, and
+          // dart:io drops the connection because the body wasn't read to the
+          // end: the client gets no response, but nothing is stored
+        }
+        expect(
+          File('${server.storagePath}/$bucket/chunked-huge.bin').existsSync(),
+          isFalse,
+        );
+      },
+    );
   });
 
   group('BodySizeFilter - other requests', () {
@@ -90,17 +120,22 @@ void main() {
       expect(response.statusCode, 200);
     });
 
-    test('Should cut a chunked body over 2 MB while reading it (413)', () async {
-      try {
-        final response = await chunkedLogin(
-          utf8.encode(jsonEncode({'access': 'a' * (3 * mb), 'secret': testSecret})),
-        );
-        expect(response.statusCode, 413);
-      } on http.ClientException {
-        // The server answers 413 and closes before the client finishes
-        // writing: that also shows it didn't read the whole body
-      }
-    });
+    test(
+      'Should cut a chunked body over 2 MB while reading it (413)',
+      () async {
+        try {
+          final response = await chunkedLogin(
+            utf8.encode(
+              jsonEncode({'access': 'a' * (3 * mb), 'secret': testSecret}),
+            ),
+          );
+          expect(response.statusCode, 413);
+        } on http.ClientException {
+          // The server answers 413 and closes before the client finishes
+          // writing: that also shows it didn't read the whole body
+        }
+      },
+    );
 
     test('Should still accept a normal JSON request', () async {
       final response = await http.post(

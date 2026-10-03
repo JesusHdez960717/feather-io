@@ -39,7 +39,7 @@ void main() {
 
     test('Should return 404 for a missing bucket', () async {
       final response = await http.get(
-        server.url('/no-existe?location'),
+        server.url('/missing?location'),
         headers: server.auth(),
       );
       expect(response.statusCode, 404);

@@ -136,7 +136,7 @@ void main() {
     });
 
     test('Should create and complete with JSON (console)', () async {
-      const key = 'consola.bin';
+      const key = 'console.bin';
       final uploadId = await createId(key);
       final etags = await uploadBoth(key, uploadId);
       final completed = await completeJson(key, uploadId, [
@@ -151,7 +151,7 @@ void main() {
     });
 
     test('Should use the last upload of a repeated part', () async {
-      const key = 'repetida.bin';
+      const key = 'repeated.bin';
       final uploadId = await createId(key);
       await uploadPart(key, uploadId, 1, List<int>.filled(5 * mb, 9));
       final etags = await uploadBoth(key, uploadId);
@@ -168,7 +168,7 @@ void main() {
     });
 
     test('Should allow a single small part', () async {
-      const key = 'pequena.txt';
+      const key = 'small.txt';
       final uploadId = await createId(key);
       final part = await uploadPart(key, uploadId, 1, utf8.encode('hello'));
       final completed = await completeJson(key, uploadId, [
@@ -183,7 +183,7 @@ void main() {
     });
 
     test('Should abort and remove the parts', () async {
-      const key = 'abortada.bin';
+      const key = 'aborted.bin';
       final uploadId = await createId(key);
       await uploadPart(key, uploadId, 1, part2);
       final dir = Directory(
@@ -203,7 +203,7 @@ void main() {
     });
 
     test('Should not list the pending uploads as a bucket', () async {
-      await createId('pendiente.bin');
+      await createId('pending.bin');
       final response = await http.get(
         server.url('/'),
         headers: server.auth(json: true),
@@ -233,7 +233,7 @@ void main() {
 
   group('S3Controller - multipart errors', () {
     test('Should reject a small part that is not the last one', () async {
-      const key = 'corta.bin';
+      const key = 'short.bin';
       final uploadId = await createId(key);
       final a = await uploadPart(key, uploadId, 1, part2);
       final b = await uploadPart(key, uploadId, 2, part2);
@@ -246,7 +246,7 @@ void main() {
     });
 
     test('Should reject parts out of order', () async {
-      const key = 'desordenada.bin';
+      const key = 'unordered.bin';
       final uploadId = await createId(key);
       final etags = await uploadBoth(key, uploadId);
       final completed = await completeXml(key, uploadId, [
@@ -258,7 +258,7 @@ void main() {
     });
 
     test('Should reject a missing part or a wrong ETag', () async {
-      const key = 'incompleta.bin';
+      const key = 'incomplete.bin';
       final uploadId = await createId(key);
       final etags = await uploadBoth(key, uploadId);
 
@@ -290,12 +290,12 @@ void main() {
     });
 
     test('Should answer NoSuchUpload for unknown or foreign ids', () async {
-      final uploadId = await createId('propia.bin');
+      final uploadId = await createId('own.bin');
 
       for (final (key, id) in [
-        ('propia.bin', '0' * 32),
-        ('propia.bin', '..%2F..%2Fotro'),
-        ('ajena.bin', uploadId),
+        ('own.bin', '0' * 32),
+        ('own.bin', '..%2F..%2Fother'),
+        ('foreign.bin', uploadId),
       ]) {
         final response = await uploadPart(key, id, 1, part2);
         expect(response.statusCode, 404, reason: '$key $id');
@@ -304,7 +304,7 @@ void main() {
     });
 
     test('Should reject an invalid part number', () async {
-      const key = 'numero.bin';
+      const key = 'number.bin';
       final uploadId = await createId(key);
       for (final number in [0, 10001]) {
         final response = await uploadPart(key, uploadId, number, part2);
@@ -315,7 +315,7 @@ void main() {
 
     test('Should fail on a missing bucket or a folder key', () async {
       final noBucket = await http.post(
-        server.url('/no-existe/a.bin?uploads'),
+        server.url('/missing/a.bin?uploads'),
         headers: server.auth(),
       );
       expect(noBucket.statusCode, 404);
@@ -438,7 +438,7 @@ void main() {
 
     test('Should return 404 for a missing bucket', () async {
       final response = await http.get(
-        server.url('/no-existe?uploads'),
+        server.url('/missing?uploads'),
         headers: server.auth(),
       );
       expect(response.statusCode, 404);
@@ -578,10 +578,10 @@ void main() {
     });
 
     test('Should page with part-number-marker and max-parts (JSON)', () async {
-      final uploadId = await startWithParts('paginas.bin', [1, 2, 3]);
+      final uploadId = await startWithParts('pages.bin', [1, 2, 3]);
       final response = await http.get(
         server.url(
-          '/$partsBucket/paginas.bin?uploadId=$uploadId'
+          '/$partsBucket/pages.bin?uploadId=$uploadId'
           '&part-number-marker=1&max-parts=1',
         ),
         headers: server.auth(json: true),

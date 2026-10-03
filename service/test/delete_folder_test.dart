@@ -51,7 +51,7 @@ void main() {
     });
 
     test('Should succeed for a folder that does not exist', () async {
-      expect((await deleteFolder('no-existe/')).statusCode, 204);
+      expect((await deleteFolder('missing/')).statusCode, 204);
     });
 
     test('Should reject a prefix that is not a folder (400)', () async {
@@ -71,7 +71,7 @@ void main() {
     });
 
     test('Should return 404 for a missing bucket', () async {
-      expect((await deleteFolder('x/', target: 'no-existe')).statusCode, 404);
+      expect((await deleteFolder('x/', target: 'missing')).statusCode, 404);
     });
 
     test('Should fail without auth (401)', () async {

@@ -171,7 +171,7 @@ void main() {
 
     test('Should answer 404 on HEAD of a folder that does not exist', () async {
       final head = await http.head(
-        server.url('/$bucket/no-existe/'),
+        server.url('/$bucket/missing/'),
         headers: server.auth(),
       );
       expect(head.statusCode, 404);

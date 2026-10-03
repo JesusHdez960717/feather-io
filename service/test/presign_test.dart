@@ -60,7 +60,7 @@ void main() {
 
     test('Should return 404 for a missing object', () async {
       final response = await presign({
-        'key': 'no-existe.pdf',
+        'key': 'missing.pdf',
         'expires_in': 60,
       });
       expect(response.statusCode, 404);

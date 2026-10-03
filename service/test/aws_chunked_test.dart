@@ -51,13 +51,13 @@ void main() {
       final response = await http.put(
         server.url('/$bucket/signed.txt'),
         headers: chunkedHeaders(),
-        body: encode(['hello ', 'mundo']),
+        body: encode(['hello ', 'world']),
       );
       expect(response.statusCode, 200, reason: response.body);
-      expect(await stored('signed.txt'), 'hello mundo');
+      expect(await stored('signed.txt'), 'hello world');
       expect(
         response.headers['etag'],
-        '"${md5.convert(utf8.encode('hello mundo'))}"',
+        '"${md5.convert(utf8.encode('hello world'))}"',
       );
     });
 
@@ -132,7 +132,7 @@ void main() {
       final response = await http.put(
         server.url('/$bucket/keep.txt'),
         headers: chunkedHeaders(),
-        body: 'zz\r\nroto\r\n',
+        body: 'zz\r\nbroken\r\n',
       );
       expect(response.statusCode, 400);
       expect(await stored('keep.txt'), 'original');

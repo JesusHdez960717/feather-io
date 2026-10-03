@@ -66,13 +66,13 @@ void main() {
 
     test('Should not create the bucket if it does not exist (404)', () async {
       final response = await http.put(
-        server.url('/no-existe/file.txt'),
+        server.url('/missing/file.txt'),
         headers: server.auth(),
         body: 'data',
       );
       expect(response.statusCode, 404);
       expect(response.body, contains('<Code>NoSuchBucket</Code>'));
-      expect(await Directory('${server.storagePath}/no-existe').exists(), isFalse);
+      expect(await Directory('${server.storagePath}/missing').exists(), isFalse);
     });
 
     test('Should fail without auth (401)', () async {
@@ -213,7 +213,7 @@ void main() {
     test('Should reject a backslash in the key (400)', () async {
       // On Windows `a\b` would be another way to write `a/b`, and it would let
       // a client write the folder marker (`x\.feather-folder`)
-      for (final key in ['folder%5Cfichero.txt', 'other%5C.feather-folder']) {
+      for (final key in ['folder%5Cfile.txt', 'other%5C.feather-folder']) {
         final response = await http.put(
           server.url('/$bucket/$key'),
           headers: server.auth(),

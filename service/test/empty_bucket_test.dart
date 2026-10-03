@@ -28,7 +28,7 @@ void main() {
       final create = await http.put(
         server.url('/full-bucket'),
         headers: {...server.auth(), 'content-type': 'application/json'},
-        body: jsonEncode({'description': 'Se queda'}),
+        body: jsonEncode({'description': 'Stays'}),
       );
       expect(create.statusCode, 200);
       await server.putObject('full-bucket', 'a.txt', 'a');
@@ -53,7 +53,7 @@ void main() {
       );
       final body = jsonDecode(bucket.body);
       expect(body['object_count'], 0);
-      expect(body['description'], 'Se queda');
+      expect(body['description'], 'Stays');
 
       final rules = await http.get(
         server.url(admin('/bucket/full-bucket/anonymous-access')),

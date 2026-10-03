@@ -80,7 +80,7 @@ void main() {
 
     test('Should return 404 for a missing object', () async {
       final response = await http.get(
-        server.url('/$bucket/no-existe.txt?tagging'),
+        server.url('/$bucket/missing.txt?tagging'),
         headers: server.auth(),
       );
       expect(response.statusCode, 404);
@@ -110,7 +110,7 @@ void main() {
 
     test('Should return 404 for a missing bucket', () async {
       final response = await http.get(
-        server.url('/no-existe?versioning'),
+        server.url('/missing?versioning'),
         headers: server.auth(),
       );
       expect(response.statusCode, 404);

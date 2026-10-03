@@ -42,7 +42,7 @@ void main() {
     });
 
     test('Should ignore a manipulated Host header', () async {
-      final url = await presign(headers: {'host': 'atacante.example'});
+      final url = await presign(headers: {'host': 'attacker.example'});
       expect(Uri.parse(url).host, 's3.example.com');
     });
 
