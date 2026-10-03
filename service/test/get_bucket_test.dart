@@ -19,11 +19,11 @@ void main() {
     final create = await http.put(
       server.url('/detail-bucket'),
       headers: {...server.auth(), 'content-type': 'application/json'},
-      body: jsonEncode({'description': 'Detalle', 'color': 0xFF112233}),
+      body: jsonEncode({'description': 'Detail', 'color': 0xFF112233}),
     );
     expect(create.statusCode, 200);
     await server.putObject('detail-bucket', 'a.txt', 'abc');
-    await server.putObject('detail-bucket', 'folder/b.txt', 'de');
+    await server.putObject('detail-bucket', 'folder/b.txt', 'xy');
     final empty = await http.put(server.url('/empty-bucket'), headers: server.auth());
     expect(empty.statusCode, 200);
   });
@@ -40,7 +40,7 @@ void main() {
       expect(response.statusCode, 200);
       final body = jsonDecode(response.body);
       expect(body['name'], 'detail-bucket');
-      expect(body['description'], 'Detalle');
+      expect(body['description'], 'Detail');
       expect(body['color'], 0xFF112233);
       expect(body['object_count'], 2);
       expect(body['size_bytes'], 5);

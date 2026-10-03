@@ -1,8 +1,8 @@
 import 'package:service/feather.dart';
 
-/// Serializa las [S3Exception] como el `<Error>` de S3: XML por defecto y
-/// JSON si el cliente lo pide con `Accept` o si es la API de admin.
-/// El resto de excepciones siguen el comportamiento de Winter.
+/// Renders [S3Exception]s as the S3 `<Error>`: XML by default, JSON when the
+/// client asks for it with `Accept` or on the admin API. Any other exception
+/// follows Winter's default behavior.
 class S3ExceptionHandler extends SimpleExceptionHandler {
   final String adminPrefix = env.adminPrefix;
 

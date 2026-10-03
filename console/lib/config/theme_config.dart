@@ -2,8 +2,8 @@ import 'package:console/app_exporter.dart';
 import 'package:material_ui/material_ui.dart';
 
 class ThemeConfig {
-  ///Los widgets de Material sin estilo propio toman la paleta, no los colores
-  ///por defecto de Material 3
+  /// Material widgets without their own style take the palette, not the
+  /// Material 3 default colors
   static ThemeData get theme => ThemeData(
     scaffoldBackgroundColor: app.colors.primary.background1,
     brightness: Brightness.dark,

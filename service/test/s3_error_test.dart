@@ -39,7 +39,7 @@ void main() {
         server.url('/missing-bucket'),
         headers: server.auth(),
       );
-      //el mensaje lleva el nombre entre comillas
+      // The message has the name in quotes
       expect(response.body, contains('&quot;missing-bucket&quot;'));
     });
 
@@ -49,7 +49,7 @@ void main() {
         headers: server.auth(json: true),
       );
       expect(response.statusCode, 404);
-      //Winter marca los errores serializados como application/problem+json
+      // Winter marks serialized errors as application/problem+json
       expect(response.headers['content-type'], contains('json'));
       final body = jsonDecode(response.body);
       expect(body['code'], 'NoSuchBucket');
@@ -83,7 +83,7 @@ void main() {
         headers: server.auth(),
       );
       expect(response.statusCode, 400);
-      //Winter marca los errores serializados como application/problem+json
+      // Winter marks serialized errors as application/problem+json
       expect(response.headers['content-type'], contains('json'));
       expect(jsonDecode(response.body)['code'], 'InvalidBucketName');
     });
@@ -193,13 +193,13 @@ void main() {
     });
 
     test('Should store a body that matches the signed sha256', () async {
-      await server.createBucket('firma-cuerpo');
+      await server.createBucket('signed-body');
       final body = utf8.encode('original');
       final response = await http.put(
-        server.url('/firma-cuerpo/ok.txt'),
+        server.url('/signed-body/ok.txt'),
         headers: server.sigV4(
           'PUT',
-          '/firma-cuerpo/ok.txt',
+          '/signed-body/ok.txt',
           payloadHash: sha256.convert(body).toString(),
         ),
         body: body,
@@ -208,22 +208,22 @@ void main() {
     });
 
     test('Should reject a body that does not match the signed sha256', () async {
-      await server.putObject('firma-cuerpo', 'cambiado.txt', 'anterior');
+      await server.putObject('signed-body', 'changed.txt', 'previous');
       final response = await http.put(
-        server.url('/firma-cuerpo/cambiado.txt'),
+        server.url('/signed-body/changed.txt'),
         headers: server.sigV4(
           'PUT',
-          '/firma-cuerpo/cambiado.txt',
+          '/signed-body/changed.txt',
           payloadHash: sha256.convert(utf8.encode('original')).toString(),
         ),
-        body: 'manipulado',
+        body: 'tampered',
       );
       expect(response.statusCode, 400);
       expect(response.body, contains('<Code>XAmzContentSHA256Mismatch</Code>'));
-      //el objeto anterior sigue intacto
+      // The previous object stays intact
       expect(
-        await File('${server.storagePath}/firma-cuerpo/cambiado.txt').readAsString(),
-        'anterior',
+        await File('${server.storagePath}/signed-body/changed.txt').readAsString(),
+        'previous',
       );
     });
 

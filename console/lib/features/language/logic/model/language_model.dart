@@ -5,8 +5,8 @@ class LanguageModel {
   final SvgAsset icon;
   final String key;
 
-  ///Nombre del idioma en ese mismo idioma (`English`, `Español`): no se
-  ///traduce, para que cada cual reconozca el suyo
+  /// Name of the language in that same language (`English`, `Español`): it is
+  /// not translated, so everyone recognizes their own
   final String name;
 
   LanguageModel({required this.icon, required this.key, required this.name});

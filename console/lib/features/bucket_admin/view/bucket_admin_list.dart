@@ -1,7 +1,7 @@
 import 'package:console/app_exporter.dart';
 import 'package:material_ui/material_ui.dart';
 
-///Columna izquierda de la seccion *Buckets*: buscador, crear y la lista
+/// Left column of the *Buckets* section: search, create and the list
 class BucketAdminList extends StatefulWidget {
   static const double width = 320;
 
@@ -23,7 +23,7 @@ class BucketAdminList extends StatefulWidget {
 class _BucketAdminListState extends State<BucketAdminList> {
   final _searchController = TextEditingController();
 
-  ///Texto buscado, en minusculas
+  /// Searched text, in lowercase
   String _query = '';
 
   @override
@@ -54,7 +54,7 @@ class _BucketAdminListState extends State<BucketAdminList> {
               Expanded(
                 child: AppTextSearchField(
                   controller: _searchController,
-                  //filtra la lista ya cargada: sin espera
+                  // filters the list already loaded: no wait
                   delay: 0,
                   onSearch: (value) =>
                       setState(() => _query = value.toLowerCase()),

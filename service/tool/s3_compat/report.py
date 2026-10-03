@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
-"""Escribe RESULTADOS.md a partir de las salidas de una ejecucion completa.
+"""Writes RESULTS.md from the outputs of a full test run.
 
-Uso (desde la raiz del repo, ver "Pruebas completas" en CLAUDE.md):
+Usage (from the repo root, see "Full test run" in CLAUDE.md):
 
-    python service/tool/s3_compat/report.py [--out DIR] [--server-log FICHERO]
+    python service/tool/s3_compat/report.py [--out DIR] [--server-log FILE]
 
-Lee de --out (por defecto service/tool/s3_compat/out):
-    service_tests.jsonl   fvm dart test --reporter json (desde service/)
-    service_analyze.txt   fvm dart analyze (opcional)
-    console_analyze.txt   fvm flutter analyze (opcional)
+Reads from --out (service/tool/s3_compat/out by default):
+    service_tests.jsonl   fvm dart test --reporter json (from service/)
+    service_analyze.txt   fvm dart analyze (optional)
+    console_analyze.txt   fvm flutter analyze (optional)
     awscli.txt, rclone.txt, mint.txt, mint-logs/log.json   run.sh awscli rclone mint
 
---server-log es el log del servicio durante la ejecucion, para contar los
-errores sin capturar (opcional).
+--server-log is the service log during the run, to count the unhandled errors
+(optional).
 
-Lo que se mantiene a mano esta en las constantes de arriba: que cubre cada
-fichero de tests (TEST_DESC), por que falla cada test de Mint (REASONS) y el
-estado de cada suite (SUITE_STATUS). Un fallo de Mint sin causa conocida sale
-como **Sin clasificar** y hay que revisarlo.
+What is kept by hand lives in the constants below: what each test file covers
+(TEST_DESC), why each Mint test fails (REASONS) and the status of each suite
+(SUITE_STATUS). A Mint failure without a known cause shows up as
+**Unclassified** and has to be reviewed.
 """
 import argparse
 import collections
@@ -31,36 +31,36 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 
 TEST_DESC = {
-    'anonymous_access_test.dart': 'Reglas de acceso anónimo (CRUD admin, efecto en list/get/put/delete, prefijo sin `*` y key entera con `*`) y que multipart nunca es anónimo.',
-    'aws_chunked_test.dart': 'Cuerpos `aws-chunked` (firma por trozos y trailers), cortes a mitad de línea, errores y que una subida fallida no pisa el objeto.',
-    'body_size_test.dart': 'Límites de tamaño: objetos > 10 MB, cuerpos de 2 MB, chunked sin `Content-Length`.',
-    'copy_object_test.dart': 'CopyObject: copia, entre buckets, sobre sí mismo, errores y condiciones `x-amz-copy-source-if-*`.',
-    'cors_test.dart': 'CORS (preflight y `ETag` expuesto).',
-    'create_bucket_test.dart': 'CreateBucket: JWT y SigV4, sin cuerpo ni `Content-Length`, metadatos, validación y reservados.',
-    'create_folder_test.dart': 'Carpetas (`key/`): crear, listar, HEAD/GET y borrado como S3 (solo el marcador).',
-    'delete_bucket_test.dart': 'DeleteBucket: vacío, no vacío, inexistente, reservado, SigV4.',
-    'delete_folder_test.dart': 'Endpoint admin para borrar una carpeta con su contenido.',
-    'delete_object_test.dart': 'DeleteObject y DeleteObjects (JSON y XML de S3), borrados en paralelo y reintento en Windows.',
-    'empty_bucket_test.dart': 'Endpoint admin para vaciar un bucket.',
+    'anonymous_access_test.dart': 'Anonymous access rules (admin CRUD, effect on list/get/put/delete, a prefix without `*` and the whole key with `*`) and multipart never being anonymous.',
+    'aws_chunked_test.dart': '`aws-chunked` bodies (chunk signatures and trailers), lines split mid-way, errors, and a failed upload not overwriting the object.',
+    'body_size_test.dart': 'Size limits: objects > 10 MB, 2 MB bodies, chunked without `Content-Length`.',
+    'copy_object_test.dart': 'CopyObject: copies, across buckets, onto itself, errors and the `x-amz-copy-source-if-*` conditions.',
+    'cors_test.dart': 'CORS (preflight and the exposed `ETag`).',
+    'create_bucket_test.dart': 'CreateBucket: JWT and SigV4, no body nor `Content-Length`, metadata, validation and reserved names.',
+    'create_folder_test.dart': 'Folders (`key/`): create, list, HEAD/GET and S3-like deletion (only the marker).',
+    'delete_bucket_test.dart': 'DeleteBucket: empty, not empty, missing, reserved, SigV4.',
+    'delete_folder_test.dart': 'Admin endpoint to delete a folder with its content.',
+    'delete_object_test.dart': 'DeleteObject and DeleteObjects (JSON and S3 XML), parallel deletes and the retry on Windows.',
+    'empty_bucket_test.dart': 'Admin endpoint to empty a bucket.',
     'get_bucket_location_test.dart': 'GetBucketLocation (`?location`).',
-    'get_bucket_test.dart': 'Detalle de bucket (admin): metadatos y estadísticas.',
-    'get_object_test.dart': 'GET/HEAD: tipos, ETag, `Range` (206/416), overrides `response-*`.',
-    'list_buckets_test.dart': 'ListBuckets: JSON/XML, fechas UTC, `Owner`, estadísticas.',
-    'list_objects_test.dart': 'ListObjects V1 y V2: prefijos, paginación (token, `marker`, `start-after`), ETags, `encoding-type=url`.',
-    'login_rate_limiter_test.dart': 'Límite de intentos de login (unitario, con reloj falso): penalización, bloqueo, desbloqueo y reinicio.',
-    'login_rate_limit_test.dart': 'Límite de intentos de login contra el servidor: 429 con `Retry-After`, `X-Forwarded-For` falso, fin del bloqueo.',
-    'rate_limit_test.dart': 'Límite general por IP: cabeceras `X-RateLimit-*`, `503 SlowDown` en S3 y 429 en admin con `Retry-After`, `X-Forwarded-For` falso, nueva ventana.',
-    'login_test.dart': 'Login de la consola (JWT) y tokens manipulados: sin `exp`, caducados, con otro secreto, `alg: none`; errores sin detalles internos.',
-    'multipart_test.dart': 'Multipart: crear, partes, completar, abortar, ListMultipartUploads, ListParts, UploadPartCopy.',
-    'object_metadata_test.dart': 'Metadatos: `Content-Type`, `x-amz-meta-*`, clase de almacenamiento, en copias y multipart.',
-    'presign_public_url_test.dart': 'URLs prefirmadas con `PUBLIC_URL`: dominio público aunque el `Host` venga manipulado, válidas a través de un proxy y validación de la variable.',
-    'presign_test.dart': 'URLs prefirmadas (endpoint admin y verificación SigV4 por query).',
-    'put_object_test.dart': 'PutObject: subidas, ETag, bucket inexistente, validación de keys, path traversal y sustituir un objeto abierto (Windows).',
-    's3_controller_test.dart': 'Camino feliz completo (crear bucket → subir → listar → bajar → borrar).',
-    's3_error_test.dart': 'Errores S3 en XML/JSON y firmas SigV4: firma y clave erróneas, replay (±15 min), fecha de la credencial, sha256 del cuerpo, URL prefirmada con fecha futura.',
-    'sig_v4_signer_test.dart': 'Firma SigV4 contra el ejemplo oficial de la documentación de AWS.',
-    'unsupported_subresource_test.dart': '`501 NotImplemented` para subrecursos y las lecturas que sí se contestan (tagging, versioning).',
-    'update_bucket_test.dart': 'Editar descripción y color de un bucket (admin).',
+    'get_bucket_test.dart': 'Bucket details (admin): metadata and statistics.',
+    'get_object_test.dart': 'GET/HEAD: content types, ETag, `Range` (206/416), `response-*` overrides.',
+    'list_buckets_test.dart': 'ListBuckets: JSON/XML, UTC dates, `Owner`, statistics.',
+    'list_objects_test.dart': 'ListObjects V1 and V2: prefixes, paging (token, `marker`, `start-after`), ETags, `encoding-type=url`.',
+    'login_rate_limiter_test.dart': 'Login attempt limit (unit, fake clock): penalty, lock, unlock and reset.',
+    'login_rate_limit_test.dart': 'Login attempt limit against the server: 429 with `Retry-After`, fake `X-Forwarded-For`, end of the lock.',
+    'rate_limit_test.dart': 'General limit per IP: `X-RateLimit-*` headers, `503 SlowDown` on S3 and 429 on admin with `Retry-After`, fake `X-Forwarded-For`, next window.',
+    'login_test.dart': 'Console login (JWT) and tampered tokens: no `exp`, expired, another secret, `alg: none`; errors without internal details.',
+    'multipart_test.dart': 'Multipart: create, parts, complete, abort, ListMultipartUploads, ListParts, UploadPartCopy.',
+    'object_metadata_test.dart': 'Metadata: `Content-Type`, `x-amz-meta-*`, storage class, on copies and multipart.',
+    'presign_public_url_test.dart': 'Presigned URLs with `PUBLIC_URL`: public domain even with a tampered `Host`, valid through a proxy, and validation of the variable.',
+    'presign_test.dart': 'Presigned URLs (admin endpoint and SigV4 query verification).',
+    'put_object_test.dart': 'PutObject: uploads, ETag, missing bucket, key validation, path traversal and replacing an open object (Windows).',
+    's3_controller_test.dart': 'Full happy path (create bucket → upload → list → download → delete).',
+    's3_error_test.dart': 'S3 errors in XML/JSON and SigV4 signatures: wrong signature and key, replay (±15 min), credential date, body sha256, presigned URL dated in the future.',
+    'sig_v4_signer_test.dart': 'SigV4 signature against the official example of the AWS docs.',
+    'unsupported_subresource_test.dart': '`501 NotImplemented` for subresources and the reads that are answered anyway (tagging, versioning).',
+    'update_bucket_test.dart': 'Editing the description and color of a bucket (admin).',
 }
 
 SUITE_ORDER = ['awscli', 'aws-sdk-go', 'aws-sdk-java', 'aws-sdk-java-v2', 'aws-sdk-php',
@@ -68,90 +68,89 @@ SUITE_ORDER = ['awscli', 'aws-sdk-go', 'aws-sdk-java', 'aws-sdk-java-v2', 'aws-s
                'healthcheck', 's3select', 'versioning']
 
 SUITE_STATUS = {
-    'awscli': 'Se corta en `s3 presign` (SigV2 de la CLI v1).',
-    'aws-sdk-go': 'Se corta en el primer test: espera que una URL prefirmada valide el `x-amz-content-sha256` de una cabecera.',
-    'aws-sdk-java': 'Pasa entera.',
-    'aws-sdk-java-v2': 'Pasa entera.',
-    'aws-sdk-php': 'Se corta al abortar una subida inexistente (comportamiento de MinIO).',
-    'aws-sdk-ruby': 'Se corta en POST policy.',
-    'minio-go': 'Pasa entera con SigV4; la parte SigV2 da 401.',
-    'minio-py': 'Se corta en snowball (API de MinIO).',
-    'minio-js': 'Llega al final con fallos sueltos (cada bloque sigue tras un fallo).',
-    'minio-java': 'Llega al final con fallos sueltos.',
-    'mc': 'Se corta en POST policy.',
-    's3cmd': 'Pasa entera.',
-    'healthcheck': 'Fuera de alcance: endpoints de salud de MinIO.',
-    's3select': 'Fuera de alcance: S3 Select.',
-    'versioning': 'Fuera de alcance: versionado.',
+    'awscli': 'Stops at `s3 presign` (SigV2, from CLI v1).',
+    'aws-sdk-go': 'Stops at the first test: it expects a presigned URL to verify an `x-amz-content-sha256` header.',
+    'aws-sdk-java': 'Passes entirely.',
+    'aws-sdk-java-v2': 'Passes entirely.',
+    'aws-sdk-php': 'Stops when aborting a missing upload (MinIO behavior).',
+    'aws-sdk-ruby': 'Stops at POST policy.',
+    'minio-go': 'Passes entirely with SigV4; the SigV2 part gets 401.',
+    'minio-py': 'Stops at snowball (a MinIO API).',
+    'minio-js': 'Reaches the end with isolated failures (each block goes on after a failure).',
+    'minio-java': 'Reaches the end with isolated failures.',
+    'mc': 'Stops at POST policy.',
+    's3cmd': 'Passes entirely.',
+    'healthcheck': 'Out of scope: MinIO health endpoints.',
+    's3select': 'Out of scope: S3 Select.',
+    'versioning': 'Out of scope: versioning.',
 }
 
-# (texto que aparece en el test o su error, causa). Gana el primero que encaja
+# (text found in the test or its error, cause). The first match wins
 REASONS = [
-    ('s3 presign', 'Fuera de alcance: la CLI v1 firma `s3 presign` con SigV2.'),
-    ('XAmzContentSHA256Mismatch', 'Fuera de alcance: en una URL prefirmada no se valida el `x-amz-content-sha256` (sí con firma por cabecera).'),
-    ('PresignedPut', 'Fuera de alcance: en una URL prefirmada no se valida el `x-amz-content-sha256` (sí con firma por cabecera).'),
-    ('non-existent', 'Comportamiento de MinIO: abortar una subida inexistente da 204; AWS S3 (y feather-io) dan 404 `NoSuchUpload`.'),
-    ('presignedPost', 'Fuera de alcance: subidas con POST policy.'),
-    ('PresignedPost', 'Fuera de alcance: subidas con POST policy.'),
-    ('post_policy', 'Fuera de alcance: subidas con POST policy.'),
-    ('testFunctionalV2', 'Fuera de alcance: firma SigV2.'),
-    ('snowball', 'Fuera de alcance: snowball es una API propia de MinIO.'),
-    ('Snowball', 'Fuera de alcance: snowball es una API propia de MinIO.'),
-    ('lists 11 objects', 'En cascada: queda `datafile-1-b`, que borraban las pruebas de POST policy (fuera de alcance).'),
-    ('lists 1 objects', 'En cascada: force-delete de prefijos, propio de MinIO.'),
-    ('Force Deletion', 'En cascada: force-delete de prefijos, propio de MinIO.'),
-    ('listenBucketNotification', 'Fuera de alcance: notificaciones (minio-java además repite el parámetro `events` en la query; ver observaciones).'),
-    ('Retention', 'Fuera de alcance: retention / object lock.'),
-    ('retention', 'Fuera de alcance: retention / object lock.'),
-    ('no es válido o contiene caracteres prohibidos', 'Limitación: keys con `<>:"|?*`, que el sistema de ficheros (Windows) no admite.'),
-    ('selectObjectContent', 'Fuera de alcance: S3 Select.'),
-    ('select_object_content', 'Fuera de alcance: S3 Select.'),
-    ('post select', 'En cascada: el bucket de S3 Select no se vacía.'),
-    ('"after all" hook in "functional tests"', 'En cascada: el bucket principal se queda con objetos de pruebas que fallaron antes.'),
-    ('removeBucket', 'En cascada: el bucket de snowball no se vacía.'),
-    ('addUser', 'Fuera de alcance: API de administración de MinIO.'),
-    ('addCannedPolicy', 'Fuera de alcance: API de administración de MinIO.'),
-    ('setPolicy', 'Fuera de alcance: API de administración de MinIO.'),
-    ('getUserInfo', 'Fuera de alcance: API de administración de MinIO.'),
-    ('listUsers', 'Fuera de alcance: API de administración de MinIO.'),
-    ('listCannedPolicies', 'Fuera de alcance: API de administración de MinIO.'),
-    ('minio/health', 'Fuera de alcance: endpoint de salud propio de MinIO.'),
-    ('versioning', 'Fuera de alcance: versionado.'),
+    ('s3 presign', 'Out of scope: CLI v1 signs `s3 presign` with SigV2.'),
+    ('XAmzContentSHA256Mismatch', 'Out of scope: `x-amz-content-sha256` is not verified on presigned URLs (it is with header signatures).'),
+    ('PresignedPut', 'Out of scope: `x-amz-content-sha256` is not verified on presigned URLs (it is with header signatures).'),
+    ('non-existent', 'MinIO behavior: aborting a missing upload gives 204; AWS S3 (and feather-io) give 404 `NoSuchUpload`.'),
+    ('presignedPost', 'Out of scope: POST policy uploads.'),
+    ('PresignedPost', 'Out of scope: POST policy uploads.'),
+    ('post_policy', 'Out of scope: POST policy uploads.'),
+    ('testFunctionalV2', 'Out of scope: SigV2 signatures.'),
+    ('snowball', 'Out of scope: snowball is a MinIO API.'),
+    ('Snowball', 'Out of scope: snowball is a MinIO API.'),
+    ('lists 11 objects', 'Knock-on: `datafile-1-b` stays, the POST policy tests (out of scope) delete it.'),
+    ('lists 1 objects', "Knock-on: MinIO's own prefix force-delete."),
+    ('Force Deletion', "Knock-on: MinIO's own prefix force-delete."),
+    ('listenBucketNotification', 'Out of scope: notifications (minio-java also repeats the `events` query parameter; see the notes).'),
+    ('Retention', 'Out of scope: retention / object lock.'),
+    ('retention', 'Out of scope: retention / object lock.'),
+    ('is not valid or contains forbidden characters', 'Limitation: keys with `<>:"|?*`, which the filesystem (Windows) does not support.'),
+    ('selectObjectContent', 'Out of scope: S3 Select.'),
+    ('select_object_content', 'Out of scope: S3 Select.'),
+    ('post select', "Knock-on: the S3 Select bucket isn't emptied."),
+    ('"after all" hook in "functional tests"', 'Knock-on: the main bucket keeps objects from tests that failed before.'),
+    ('removeBucket', "Knock-on: the snowball bucket isn't emptied."),
+    ('addUser', 'Out of scope: MinIO admin API.'),
+    ('addCannedPolicy', 'Out of scope: MinIO admin API.'),
+    ('setPolicy', 'Out of scope: MinIO admin API.'),
+    ('getUserInfo', 'Out of scope: MinIO admin API.'),
+    ('listUsers', 'Out of scope: MinIO admin API.'),
+    ('listCannedPolicies', 'Out of scope: MinIO admin API.'),
+    ('minio/health', "Out of scope: MinIO's own health endpoint."),
+    ('versioning', 'Out of scope: versioning.'),
 ]
 
-UNCLASSIFIED = '**Sin clasificar: revisar**'
+UNCLASSIFIED = '**Unclassified: review it**'
 
-NOT_WORKING = """**Fuera de alcance** (en *Aparcado* del `ROADMAP.md`; responden `501 NotImplemented` o 401)
+NOT_WORKING = """**Out of scope** (under *Parked* in `ROADMAP.md`; they answer `501 NotImplemented` or 401)
 
-- Firma SigV2 (incluido `aws s3 presign` de la CLI v1).
-- Validar los checksums (`Content-MD5`, CRC de `aws-chunked`, firmas de cada trozo) y el
-  `x-amz-content-sha256` en URLs prefirmadas (con firma por cabecera sí se valida).
-- Subidas con POST policy (formularios prefirmados).
-- Versionado (solo se contesta que nunca está activado) y etiquetas (solo se contesta que no hay).
-- Bucket policies, ACL, cifrado, lifecycle, CORS por bucket, website, logging, replicación.
-- Notificaciones, S3 Select, retention / object lock / legal hold.
-- APIs propias de MinIO: admin, health, snowball, force-delete de prefijos.
-- Keys con caracteres que el sistema de ficheros no admite (`<>:"|?*` en Windows).
+- SigV2 signatures (including `aws s3 presign` from CLI v1).
+- Verifying checksums (`Content-MD5`, the `aws-chunked` CRC, each chunk's signature) and
+  `x-amz-content-sha256` on presigned URLs (it is verified with header signatures).
+- POST policy uploads (presigned forms).
+- Versioning (only answered as never enabled) and tags (only answered as none).
+- Bucket policies, ACLs, encryption, lifecycle, per-bucket CORS, website, logging, replication.
+- Notifications, S3 Select, retention / object lock / legal hold.
+- MinIO's own APIs: admin, health, snowball, prefix force-delete.
+- Keys with characters the filesystem doesn't support (`<>:"|?*` on Windows).
 
-**Observaciones**
+**Notes**
 
-- La query canónica de SigV4 guarda un solo valor por parámetro: una petición firmada que repite
-  un parámetro (`events=…&events=…`, solo lo hace `listenBucketNotification` de MinIO) da
+- The SigV4 canonical query keeps a single value per parameter: a signed request that repeats a
+  parameter (`events=…&events=…`, only MinIO's `listenBucketNotification` does) gets
   `SignatureDoesNotMatch`.
-- El test de php que aborta una subida inexistente espera el comportamiento de MinIO; el de
-  feather-io es el de AWS S3.
-- En Windows, sustituir un objeto que otra petición tiene abierto se reintenta 5 s y luego da
-  `503 ServiceUnavailable` (los clientes lo reintentan). En Linux no pasa."""
+- The php test that aborts a missing upload expects MinIO's behavior; feather-io follows AWS S3.
+- On Windows, replacing an object another request keeps open is retried for 5 s and then answers
+  `503 ServiceUnavailable` (clients retry it). It doesn't happen on Linux."""
 
-NOT_TESTED = """- **Linux**: el servicio de estas pruebas corre en Windows. Producción iría en Docker sobre Linux,
-  y el `Dockerfile` está pendiente de arreglar (fase 5 del roadmap).
-- **HTTPS**: todas las pruebas van por HTTP.
-- **Virtual-hosted style** (`bucket.host`): solo path-style.
-- **Carga y concurrencia altas**: solo la concurrencia que meten los propios clientes (subidas por
-  partes y borrados en paralelo).
-- **Consola**: no tiene tests automáticos.
-- **Otros clientes**: Cyberduck, s3fs, SDKs de .NET y de Rust, boto3 directamente (sí lo usan
-  por debajo la CLI de AWS y s3cmd)."""
+NOT_TESTED = """- **Linux**: the service of these runs is on Windows. Production would run in Docker on Linux,
+  and the `Dockerfile` still has to be fixed (roadmap phase 5).
+- **HTTPS**: every test goes over HTTP.
+- **Virtual-hosted style** (`bucket.host`): path-style only.
+- **High load and concurrency**: only the concurrency the clients add themselves (parallel uploads
+  and deletes).
+- **Console**: it has no automated tests.
+- **Other clients**: Cyberduck, s3fs, the .NET and Rust SDKs, boto3 directly (the AWS CLI and s3cmd
+  use it underneath)."""
 
 
 def md(text):
@@ -232,27 +231,27 @@ def reason(row):
 
 def analyze_summary(text, empty):
     if not text:
-        return 'No ejecutado'
+        return 'Not run'
     if 'No issues found' in text:
-        return 'Sin incidencias'
+        return 'No issues'
     found = re.search(r'(\d+) issues? found', text)
     if not found:
         return empty
     issues = int(found.group(1))
-    return f'{issues} aviso{"s" if issues != 1 else ""} (ver la salida)'
+    return f'{issues} issue{"s" if issues != 1 else ""} (see the output)'
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--out', default=str(HERE / 'out'))
     parser.add_argument('--server-log')
-    parser.add_argument('--output', default=str(HERE / 'RESULTADOS.md'))
+    parser.add_argument('--output', default=str(HERE / 'RESULTS.md'))
     args = parser.parse_args()
     out = Path(args.out)
 
     tests = load_service_tests(out / 'service_tests.jsonl')
     steps = {name: load_steps(read(out / f'{name}.txt')) for name in ('awscli', 'rclone')}
-    #solo el primer trozo: `aws-cli/2.37.9`, `rclone v1.75.1`
+    # Only the first token: `aws-cli/2.37.9`, `rclone v1.75.1`
     versions = {}
     for name in ('awscli', 'rclone'):
         found = re.search(r'^version: (.+)$', read(out / f'{name}.txt'), re.M)
@@ -271,63 +270,63 @@ def main():
 
     commit = run(['git', 'rev-parse', '--short', 'HEAD']) or '?'
     branch = run(['git', 'rev-parse', '--abbrev-ref', 'HEAD']) or '?'
-    #el propio informe y esta carpeta no cuentan como cambios del codigo probado
-    dirty = ' con cambios sin commitear' if run(
+    # The report itself and this folder don't count as changes to the tested code
+    dirty = ' with uncommitted changes' if run(
         ['git', 'status', '--porcelain', '--', 'service', 'console', ':!service/tool/s3_compat']) else ''
     total = sum(len(v) for v in tests.values())
     passed = sum(1 for v in tests.values() for t in v if t['result'] == 'success')
 
     L = []
     w = L.append
-    w('# Resultados de las pruebas (ejecución completa desde cero)')
+    w('# Test results (full run from scratch)')
     w('')
-    w(f'Ejecución del **{datetime.date.today().isoformat()}** sobre el commit `{commit}` (`{branch}`){dirty},')
-    w(f'en {platform.system()} {platform.release()} con {run(["docker", "--version"]) or "Docker ?"}.')
-    w('Generado con `service/tool/s3_compat/report.py`; cómo repetirlo: *Full test run* en `CLAUDE.md`.')
+    w(f'Run on **{datetime.date.today().isoformat()}** on commit `{commit}` (`{branch}`){dirty},')
+    w(f'on {platform.system()} {platform.release()} with {run(["docker", "--version"]) or "Docker ?"}.')
+    w('Generated with `service/tool/s3_compat/report.py`; to repeat it, see *Full test run* in `CLAUDE.md`.')
     w('')
-    w('| Qué | Resultado |')
+    w('| What | Result |')
     w('|---|---|')
-    w(f'| `dart analyze` (servicio) | {analyze_summary(read(out / "service_analyze.txt"), "Ver la salida")} |')
-    w(f'| `flutter analyze` (consola) | {analyze_summary(read(out / "console_analyze.txt"), "Ver la salida")} |')
-    w(f'| `dart test` (servicio) | **{passed}/{total}** en {len(tests)} ficheros |')
+    w(f'| `dart analyze` (service) | {analyze_summary(read(out / "service_analyze.txt"), "See the output")} |')
+    w(f'| `flutter analyze` (console) | {analyze_summary(read(out / "console_analyze.txt"), "See the output")} |')
+    w(f'| `dart test` (service) | **{passed}/{total}** in {len(tests)} files |')
     for name, label in (('awscli', 'AWS CLI v2'), ('rclone', 'rclone')):
         ok = sum(1 for s, _ in steps[name] if s == 'PASS')
         w(f'| {label} (`{versions[name]}`) | **{ok}/{len(steps[name])}** |')
     clean = [s for s in SUITE_ORDER if mint_done.get(s) and counts[s]['FAIL'] == 0]
     partial = [s for s in SUITE_ORDER if mint_done.get(s) and counts[s]['FAIL'] > 0]
     w(f'| MinIO Mint ({len([s for s in SUITE_ORDER if s in mint_done])} suites) | '
-      f'Sin ningún fallo: {", ".join(f"`{s}`" for s in clean) or "ninguna"}. '
-      f'Terminan con fallos fuera de alcance: {", ".join(f"`{s}`" for s in partial) or "ninguna"}. '
-      f'Fallos sin clasificar: **{len(unclassified)}** |')
+      f'No failures: {", ".join(f"`{s}`" for s in clean) or "none"}. '
+      f'Finish with out-of-scope failures: {", ".join(f"`{s}`" for s in partial) or "none"}. '
+      f'Unclassified failures: **{len(unclassified)}** |')
     if server_errors is not None:
-        w(f'| Errores sin capturar en el log del servicio | **{server_errors}** |')
+        w(f'| Unhandled errors in the service log | **{server_errors}** |')
     w('')
 
-    w('## 1. Tests del servicio (`dart test`)')
+    w('## 1. Service tests (`dart test`)')
     w('')
-    w('| Fichero | Tests | Qué cubre |')
+    w('| File | Tests | What it covers |')
     w('|---|---:|---|')
     for name, items in tests.items():
         ok = sum(1 for t in items if t['result'] == 'success')
-        w(f'| `{name}` | {ok}/{len(items)} | {TEST_DESC.get(name, "**Sin descripción: añadirla en report.py**")} |')
+        w(f'| `{name}` | {ok}/{len(items)} | {TEST_DESC.get(name, "**No description: add it to report.py**")} |')
     w('')
     failed_tests = [(name, t) for name, items in tests.items() for t in items
                     if t['result'] != 'success']
     if failed_tests:
-        w('Tests que no pasan:')
+        w('Failing tests:')
         w('')
         for name, t in failed_tests:
             w(f'- `{name}`: {md(t["name"])} ({t["result"]})')
         w('')
-    w('La consola no tiene tests (está en el roadmap, fase 5); solo se analiza.')
+    w('The console has no tests (it is in the roadmap, phase 5); it is only analyzed.')
     w('')
 
-    w('## 2. Clientes reales: AWS CLI v2 y rclone')
+    w('## 2. Real clients: AWS CLI v2 and rclone')
     w('')
-    w('Scripts `awscli.sh` y `rclone.sh` (qué prueba cada paso: ver los scripts). Cada paso compara')
-    w('también el contenido cuando baja algo.')
+    w('Scripts `awscli.sh` and `rclone.sh` (see the scripts for what each step checks). Every step')
+    w('that downloads something also compares the content.')
     w('')
-    w('| Cliente | Pasos | Fallan |')
+    w('| Client | Steps | Failing |')
     w('|---|---:|---|')
     for name, label in (('awscli', 'AWS CLI v2'), ('rclone', 'rclone')):
         ok = sum(1 for s, _ in steps[name] if s == 'PASS')
@@ -337,11 +336,11 @@ def main():
 
     w('## 3. MinIO Mint')
     w('')
-    w('Cada suite prueba con un SDK o herramienta. Muchas se cortan en su primer fallo; NA son tests')
-    w('que la propia suite salta. `aws-sdk-java`, `aws-sdk-java-v2` y `minio-go` solo apuntan en el')
-    w('log los fallos y los saltados: que pasan se sabe por su código de salida (*Termina bien*).')
+    w('Each suite tests with one SDK or tool. Many stop at their first failure; NA are tests the')
+    w('suite itself skips. `aws-sdk-java`, `aws-sdk-java-v2` and `minio-go` only log failures and')
+    w('skipped tests: that they pass is known from their exit code (*Finishes OK*).')
     w('')
-    w('| Suite | Termina bien | ✅ | ❌ | NA | Estado |')
+    w('| Suite | Finishes OK | ✅ | ❌ | NA | Status |')
     w('|---|:---:|---:|---:|---:|---|')
     for s in SUITE_ORDER:
         if s not in mint_done:
@@ -350,37 +349,36 @@ def main():
         ok = c['PASS'] if c['PASS'] or not mint_done.get(s) else '—'
         w(f'| `{s}` | {"✅" if mint_done.get(s) else "❌"} | {ok} | {c["FAIL"]} | {c["NA"]} | {SUITE_STATUS.get(s, "")} |')
     w('')
-    w('### Fallos y su causa')
+    w('### Failures and their cause')
     w('')
-    w('| Suite | Test | Causa |')
+    w('| Suite | Test | Cause |')
     w('|---|---|---|')
     for row in failures:
         w(f'| `{row["suite"]}` | {short(row["function"], 90)} | {md(reason(row))} |')
     w('')
 
-
-    w('## 4. Lo que no funciona')
+    w("## 4. What doesn't work")
     w('')
     if unclassified or server_errors:
-        w('**Pendiente de revisar en esta ejecución**')
+        w('**To review in this run**')
         w('')
         for row in unclassified:
             w(f'- Mint `{row["suite"]}`: {short(row["function"], 90)}')
         if server_errors:
-            w(f'- {server_errors} errores sin capturar en el log del servicio.')
+            w(f'- {server_errors} unhandled errors in the service log.')
         w('')
     w(NOT_WORKING)
     w('')
-    w('## 5. Lo que no se ha probado')
+    w("## 5. What isn't tested")
     w('')
     w(NOT_TESTED)
 
     Path(args.output).write_text('\n'.join(L) + '\n', encoding='utf-8', newline='\n')
-    print(f'Escrito {args.output}')
-    print(f'dart test {passed}/{total}; Mint: {len(failures)} fallos, {len(unclassified)} sin clasificar'
-          + (f'; {server_errors} errores en el log' if server_errors is not None else ''))
+    print(f'Wrote {args.output}')
+    print(f'dart test {passed}/{total}; Mint: {len(failures)} failures, {len(unclassified)} unclassified'
+          + (f'; {server_errors} errors in the log' if server_errors is not None else ''))
     for row in unclassified:
-        print(f'  SIN CLASIFICAR {row["suite"]}: {row["function"][:80]}')
+        print(f'  UNCLASSIFIED {row["suite"]}: {row["function"][:80]}')
 
 
 if __name__ == '__main__':

@@ -29,8 +29,8 @@ class AnonymousAccessService {
     await accessRuleRepo.deleteRule(bucketName: bucket, prefix: prefix);
   }
 
-  /// Primera regla del bucket cuyo patron coincide con [key]; null si ninguna.
-  /// El patron es un prefijo relativo al bucket donde `*` es un comodin
+  /// First rule of the bucket whose pattern matches [key], or null. See
+  /// [matches] for the pattern semantics.
   Future<AnonymousRuleModel?> findMatchingRule({
     required String bucket,
     required String key,
@@ -42,10 +42,10 @@ class AnonymousAccessService {
     return null;
   }
 
-  /// Sin `*` la regla es un prefijo (`public/` cubre todo lo que empieza
-  /// asi); con `*` tiene que encajar la key entera (`fotos/*.jpg` cubre
-  /// `fotos/a.jpg` pero no `fotos/a.jpg.zip`). `*` vale por cualquier cosa,
-  /// tambien `/`; el resto se compara literal
+  /// Without `*` the rule is a prefix (`public/` covers everything that starts
+  /// with it); with `*` the whole key must match (`photos/*.jpg` covers
+  /// `photos/a.jpg` but not `photos/a.jpg.zip`). `*` stands for any characters,
+  /// `/` included; everything else is compared literally.
   static bool matches(String pattern, String key) {
     // S3 keys don't start with '/', so we normalize the pattern
     final normalized = pattern.startsWith('/') ? pattern.substring(1) : pattern;

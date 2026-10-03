@@ -78,7 +78,7 @@ void main() {
     });
 
     test('DELETE /{bucket} - Should reject a reserved name (403)', () async {
-      //un bucket reservado que ya existe en disco (creado antes de reservar el nombre)
+      // A reserved bucket that already exists on disk (created before the name was reserved)
       await Directory('${server.storagePath}/reserved-bucket').create(recursive: true);
 
       final response = await http.delete(

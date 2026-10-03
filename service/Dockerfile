@@ -21,5 +21,5 @@ EXPOSE 8080
 CMD ["/app/lib/server"]
 
 
-#TODO: en algun lugar poner esto???  over los problemas con sqlite 3
+# TODO: the final image needs libsqlite3 (see ROADMAP.md, phase 5), e.g.:
 #sudo apt install libsqlite3-0 libsqlite3-dev

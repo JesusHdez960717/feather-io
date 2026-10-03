@@ -3,16 +3,16 @@ import 'dart:math';
 
 import 'package:service/feather.dart';
 
-/// Cuerpo `aws-chunked`: el que mandan los clientes que firman con SigV4 por
-/// trozos (`x-amz-content-sha256: STREAMING-…`, lo hacen mc y los SDKs y la
-/// CLI de AWS recientes). Cada trozo es
-/// `<tamaño en hex>[;chunk-signature=…]\r\n<datos>\r\n`, el ultimo es de tamaño
-/// 0 y le pueden seguir trailers (`x-amz-checksum-crc32:…`) y una linea vacia.
+/// `aws-chunked` body: what clients that sign with SigV4 by chunks send
+/// (`x-amz-content-sha256: STREAMING-…`; mc and recent AWS SDKs and CLI do).
+/// Each chunk is `<hex size>[;chunk-signature=…]\r\n<data>\r\n`, the last one
+/// has size 0 and may be followed by trailers (`x-amz-checksum-crc32:…`) and an
+/// empty line.
 ///
-/// Solo se quita el formato, en streaming: ni las firmas de cada trozo ni los
-/// checksums se comprueban (tampoco se valida `x-amz-content-sha256`)
+/// Only the framing is removed, while streaming: neither the chunk signatures
+/// nor the checksums are verified.
 class AwsChunkedDecoder {
-  /// Una linea de tamaño o de trailer no deberia ser mas larga
+  /// A size or trailer line shouldn't be any longer.
   static const int _maxLineLength = 8 * 1024;
 
   final List<int> _line = [];
@@ -27,9 +27,9 @@ class AwsChunkedDecoder {
       ) ||
       (request.headers['content-encoding'] ?? '').contains('aws-chunked');
 
-  /// El contenido de [body]. Si esta mal formado falla con `IncompleteBody`,
-  /// pero despues de leerlo entero: dejar de leer el cuerpo de la peticion
-  /// corta la conexion y el cliente no recibiria el error
+  /// The content of [body]. A malformed body fails with `IncompleteBody`, but
+  /// only after reading all of it: if the request body isn't read to the end,
+  /// the connection drops and the client wouldn't get the error.
   static Stream<List<int>> decode(Stream<List<int>> body) async* {
     final decoder = AwsChunkedDecoder._();
     S3Exception? error;
@@ -43,7 +43,7 @@ class AwsChunkedDecoder {
         error = e;
       }
     }
-    //sin la linea vacia final tambien vale: los trailers son opcionales
+    // Without the final empty line it is also fine: trailers are optional
     if (error == null &&
         decoder._state != _State.done &&
         decoder._state != _State.trailer) {
@@ -52,7 +52,7 @@ class AwsChunkedDecoder {
     if (error != null) throw error;
   }
 
-  /// Los datos que trae [chunk]; guarda lo que queda a medias para el siguiente
+  /// The data in [chunk]; keeps what is left halfway for the next one.
   List<List<int>> _feed(List<int> chunk) {
     final output = <List<int>>[];
     var i = 0;
@@ -85,7 +85,7 @@ class AwsChunkedDecoder {
     return output;
   }
 
-  /// Termina una linea de tamaño o de trailer
+  /// Ends a size or trailer line.
   void _endLine() {
     final text = latin1.decode(_line).trim();
     _line.clear();
@@ -101,7 +101,7 @@ class AwsChunkedDecoder {
 
   static S3Exception _malformed() => S3Exception(
     S3ErrorCode.incompleteBody,
-    message: 'El cuerpo aws-chunked está incompleto o mal formado.',
+    message: 'The aws-chunked body is incomplete or malformed.',
   );
 }
 

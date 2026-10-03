@@ -4,19 +4,20 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:service/feather.dart';
 
-/// Metadatos de los objetos (tabla `object_meta`): el ETag, que es el md5 del
-/// contenido (o el de S3 para multipart, `md5(md5 de las partes)-N`), y las
-/// cabeceras con las que se subio. Se guardan al escribir el objeto; si faltan
-/// o el fichero cambio por fuera, el ETag se calcula leyendolo y se guarda
+/// Object metadata (`object_meta` table): the ETag, which is the md5 of the
+/// content (or S3's multipart one, `md5(part md5s)-N`), and the headers it was
+/// uploaded with. They are stored when the object is written; if they are
+/// missing or the file changed outside the service, the ETag is computed by
+/// reading the file and stored.
 class ObjectMetaService {
-  /// ETag de un objeto vacio (y de las carpetas)
+  /// ETag of an empty object (and of folders).
   static final String emptyEtag = md5.convert(const []).toString();
 
   final ObjectMetaTableRepo repo;
 
   ObjectMetaService() : repo = ObjectMetaTableRepo(di.find());
 
-  /// Guarda los metadatos de [file], recien escrito en [bucketName]/[key]
+  /// Stores the metadata of [file], just written to [bucketName]/[key].
   Future<void> save({
     required String bucketName,
     required String key,
@@ -35,7 +36,7 @@ class ObjectMetaService {
     );
   }
 
-  /// Los metadatos de [file]; el ETag se calcula si no esta guardado o ya no vale
+  /// The metadata of [file]; the ETag is computed if it isn't stored or is stale.
   Future<ObjectMetaModel> metaOf({
     required String bucketName,
     required String key,
@@ -52,7 +53,7 @@ class ObjectMetaService {
     return ObjectMetaModel(etag: etag, headers: headers);
   }
 
-  /// Los ETags de varios objetos del bucket, con una sola consulta
+  /// The ETags of several objects of the bucket, with a single query.
   Future<Map<String, String>> etagsOf({
     required String bucketName,
     required Map<String, (File, FileStat)> files,
@@ -80,7 +81,7 @@ class ObjectMetaService {
   Future<void> forget(String bucketName, String key) =>
       repo.delete(bucketName, key);
 
-  /// Olvida todo lo que hay por debajo de la carpeta [prefix]
+  /// Forgets everything under the folder [prefix].
   Future<void> forgetFolder(String bucketName, String prefix) =>
       repo.deleteByPrefix(bucketName, prefix.endsWith('/') ? prefix : '$prefix/');
 
@@ -121,11 +122,11 @@ class ObjectMetaService {
   }
 }
 
-/// Calcula el md5 de un stream mientras pasa por [bind], sin guardarlo entero
+/// Computes the md5 of a stream as it goes through [bind], without buffering it.
 class Md5Tap {
-  /// Escribe [binary] en [file] y devuelve su md5. Si el stream falla, cierra
-  /// el fichero (`pipe` no lo hace, y en Windows no se puede borrar abierto),
-  /// lo borra y relanza el error
+  /// Writes [binary] to [file] and returns its md5. If the stream fails, it
+  /// closes the file (`pipe` doesn't, and on Windows an open file can't be
+  /// deleted), deletes it and rethrows the error.
   static Future<String> write(Stream<List<int>> binary, File file) async {
     final hasher = Md5Tap();
     final sink = file.openWrite();
@@ -149,14 +150,14 @@ class Md5Tap {
     return chunk;
   });
 
-  /// El md5 en hexadecimal; llamar cuando el stream ha terminado
+  /// The hex md5; call it once the stream is done.
   String close() {
     _hasher.close();
     return _digest.value.toString();
   }
 }
 
-/// Recoge el resultado de un hash por trozos
+/// Collects the result of a chunked hash.
 class _DigestSink implements Sink<Digest> {
   late Digest value;
 

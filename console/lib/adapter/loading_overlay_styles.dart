@@ -3,21 +3,21 @@ import 'dart:ui';
 import 'package:console/app_exporter.dart';
 import 'package:material_ui/material_ui.dart';
 
-///Velos de carga de la app, para [LoadingOverlay.overlayWidgetBuilder]:
-///`LoadingOverlay(overlayWidgetBuilder: LoadingOverlayStyles.table, ...)`
+/// Loading veils of the app, for [LoadingOverlay.overlayWidgetBuilder]:
+/// `LoadingOverlay(overlayWidgetBuilder: LoadingOverlayStyles.table, ...)`
 abstract final class LoadingOverlayStyles {
-  ///Pantalla completa: blur fuerte y spinner del tema
+  /// Full screen: strong blur and the theme's spinner
   static Widget global(BuildContext context) => _veil(sigma: 4.5);
 
-  ///Cajones y formularios: blur ligero, tinte negro al 8% y spinner
-  ///`primaryFaded`
+  /// Drawers and forms: light blur, 8% black tint and a `primaryFaded`
+  /// spinner
   static Widget form(BuildContext context) => _veil(
     sigma: 1.5,
     tint: app.colors.neutral.black.withValues(alpha: 0.08),
     spinnerColor: app.colors.primary.primaryFaded,
   );
 
-  ///Paneles de tabla o cuadricula: blur minimo, el contenido sigue legible
+  /// Table or grid panels: minimal blur, the content stays readable
   static Widget table(BuildContext context) => _veil(
     sigma: 0.5,
     tint: app.colors.neutral.black.withValues(alpha: 0.08),

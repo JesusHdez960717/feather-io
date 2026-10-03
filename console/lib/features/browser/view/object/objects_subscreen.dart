@@ -27,7 +27,7 @@ class ObjectsSubscreen extends StatefulWidget {
   final VoidCallback onPreviousPage;
   final ValueChanged<int> onPageSizeChanged;
 
-  ///Buckets a los que se pueden mover objetos
+  /// Buckets objects can be moved to
   final List<String> bucketNames;
 
   const ObjectsSubscreen({
@@ -58,21 +58,21 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _breadcrumbScrollController = ScrollController();
 
-  ///Carpetas y objetos de la pagina que se muestra
+  /// Folders and objects of the page shown
   List<BrowserObjectWrapper> _pageWrappers = [];
 
-  ///Carpetas y objetos de todas las paginas cargadas: la busqueda y los
-  ///filtros miran aqui
+  /// Folders and objects of every loaded page: search and filters look
+  /// here
   List<BrowserObjectWrapper> _loadedWrappers = [];
   List<BrowserObjectWrapper> _filteredWrappers = [];
   List<BrowserObjectWrapper> _selectedWrappers = [];
 
-  ///Filtro de tipo/tamaño/fecha; se mantiene al navegar por el bucket
+  /// Type/size/date filter; kept while navigating the bucket
   ObjectFilter _filter = ObjectFilter.none;
   bool _isDragging = false;
 
-  ///La URL pide una carpeta sin nada dentro. En S3 una carpeta solo existe
-  ///mientras tiene objetos, asi que para el usuario no existe
+  /// The URL asks for a folder with nothing inside, not even its own `folder/`
+  /// key (an empty folder keeps it), so for the user it doesn't exist
   bool get _isMissingFolder {
     final state = widget.state;
     final objects = state.objects;
@@ -147,7 +147,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
           fullPath: cp,
         ),
       for (final obj in objects)
-        //la propia carpeta ("fotos/") llega como un objeto sin nombre
+        // the folder itself ("photos/") arrives as an object without a name
         if (obj.key.split('/').last.isNotEmpty)
           BrowserObjectWrapper(
             name: obj.key.split('/').last,
@@ -159,7 +159,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
     ];
   }
 
-  ///Nombres ya usados en la carpeta (segun lo cargado), para no repetirlos
+  /// Names already used in the folder (by what is loaded), to avoid repeating them
   Set<String> get _usedNames => {for (final w in _loadedWrappers) w.name};
 
   void _onSelectionChanged(List<BrowserObjectWrapper> selected) {
@@ -173,8 +173,8 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
     _applyFilters();
   }
 
-  ///Aplica la busqueda y el filtro. La seleccion se queda solo con lo visible,
-  ///para no borrar ni descargar objetos que no se ven
+  /// Applies the search and the filter. The selection keeps only what is
+  /// visible, so objects that can't be seen are not deleted or downloaded
   void _applyFilters() {
     final query = _searchController.text.toLowerCase();
     final now = DateTime.now();
@@ -250,7 +250,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
     );
   }
 
-  ///Solo los objetos se pueden mover (las carpetas todavia no)
+  /// Only objects can be moved (folders not yet)
   bool get _canMoveSelection =>
       _selectedWrappers.isNotEmpty &&
       _selectedWrappers.every((w) => !w.isFolder);
@@ -503,7 +503,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                   mainAxisAlignment: .spaceBetween,
                   crossAxisAlignment: .center,
                   children: [
-                    //back button
+                    // back button
                     Row(
                       children: [
                         PrimaryButton.svgIcon(
@@ -582,7 +582,7 @@ class _ObjectsSubscreenState extends State<ObjectsSubscreen> {
                         children: [
                           AppTextSearchField(
                             controller: _searchController,
-                            //filtra la carpeta ya cargada: sin espera
+                            // filters the folder already loaded: no wait
                             delay: 0,
                             onSearch: (_) => _applyFilters(),
                             hint: app.intl.objectsSearchHint,

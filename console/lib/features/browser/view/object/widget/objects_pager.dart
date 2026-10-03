@@ -1,9 +1,9 @@
 import 'package:console/app_exporter.dart';
 import 'package:material_ui/material_ui.dart';
 
-///Pie de la lista de objetos: a la izquierda, que la busqueda y los filtros
-///solo miran las paginas ya cargadas; a la derecha, filas por pagina y
-///*‹ Pagina X de N ›*
+/// Footer of the object list: on the left, that search and filters only look
+/// at the pages already loaded; on the right, rows per page and
+/// *‹ Page X of N ›*
 class ObjectsPager extends StatelessWidget {
   final BrowserSearchState state;
   final VoidCallback onPrevious;

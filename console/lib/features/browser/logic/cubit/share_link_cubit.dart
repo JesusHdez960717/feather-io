@@ -1,7 +1,7 @@
 import 'package:console/app_exporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-///Enlace para compartir un objeto: lo genera el servicio con la caducidad elegida
+/// Link to share an object: the service generates it with the chosen expiry
 class ShareLinkCubit extends Cubit<ShareLinkState> {
   final BrowserRepo _repo;
   final AuthCubit _auth;
@@ -21,7 +21,7 @@ class ShareLinkCubit extends Cubit<ShareLinkState> {
         expiresIn: expiration.duration,
         token: _auth.auth?.accessToken,
       );
-      //si mientras tanto se eligio otra caducidad, este enlace ya no vale
+      // if another expiry was chosen meanwhile, this link is stale
       if (state.expiration != expiration) return;
       emit(ShareLinkLoadingSuccessState(expiration: expiration, link: link));
     } catch (e) {

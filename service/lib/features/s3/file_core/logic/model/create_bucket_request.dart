@@ -27,7 +27,7 @@ class CreateBucketRequest implements Serializable, Validatable {
         .size(max: maxDescriptionLength)
         .validate(description);
 
-    //color ARGB de 32 bits sin signo, como lo envia la consola (Color.toARGB32)
+    // Unsigned 32-bit ARGB color, as the console sends it (Color.toARGB32)
     cvc
         .buildValidator('color')
         .min(0)

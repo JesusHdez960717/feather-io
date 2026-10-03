@@ -14,7 +14,7 @@ void main() {
 
   setUpAll(() async {
     await server.start();
-    await server.putObject(bucket, 'a.txt', 'contenido');
+    await server.putObject(bucket, 'a.txt', 'content');
   });
   tearDownAll(server.stop);
 
@@ -35,12 +35,12 @@ void main() {
     test('Should not create a bucket with PUT ?versioning', () async {
       expectNotImplemented(
         await http.put(
-          server.url('/otro-bucket?versioning'),
+          server.url('/other-bucket?versioning'),
           headers: server.auth(),
           body: '<VersioningConfiguration/>',
         ),
       );
-      expect(await Directory('${server.storagePath}/otro-bucket').exists(), isFalse);
+      expect(await Directory('${server.storagePath}/other-bucket').exists(), isFalse);
     });
 
     test('Should not overwrite an object with PUT ?legal-hold', () async {
@@ -53,7 +53,7 @@ void main() {
       );
       expect(
         await File('${server.storagePath}/$bucket/a.txt').readAsString(),
-        'contenido',
+        'content',
       );
     });
 

@@ -6,8 +6,7 @@ import 'package:service/feather.dart';
 
 part 'database.g.dart';
 
-//Generar el codigo
-//fvm dart run build_runner build
+// Generate the code with: fvm dart run build_runner build
 
 class BucketTable extends Table {
   @override
@@ -43,10 +42,10 @@ class AnonymousRuleTable extends Table {
   List<String> get customConstraints => ['UNIQUE (bucket_name, prefix)'];
 }
 
-/// Metadatos de cada objeto, guardados al escribirlo: su ETag (md5) y las
-/// cabeceras con las que se subio (`Content-Type`, `x-amz-meta-*`…). [size] y
-/// [modified] son los del fichero en ese momento: si no coinciden con los
-/// actuales, el fichero ha cambiado por fuera y el ETag se recalcula
+/// Metadata of each object, stored when it is written: its ETag (md5) and the
+/// headers it was uploaded with (`Content-Type`, `x-amz-meta-*`…). [size] and
+/// [modified] are the file's at that moment: if they don't match the current
+/// ones, the file changed outside the service and the ETag is recomputed.
 class ObjectMetaTable extends Table {
   @override
   String get tableName => 'object_meta';
@@ -59,10 +58,10 @@ class ObjectMetaTable extends Table {
 
   IntColumn get size => integer()();
 
-  /// Fecha de modificacion del fichero en microsegundos desde epoch
+  /// File modification time, in microseconds since the epoch.
   IntColumn get modified => integer()();
 
-  /// Cabeceras del objeto en JSON (`{"content-type": "image/png", …}`)
+  /// Object headers as JSON (`{"content-type": "image/png", …}`).
   TextColumn get headers => text().withDefault(const Constant('{}'))();
 
   @override

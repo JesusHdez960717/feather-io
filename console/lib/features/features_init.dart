@@ -56,9 +56,9 @@ class FeaturesInit {
   }
 
   static List<BlocProvider> blocProviders = [
-    //AUTH
+    // AUTH
     BlocProvider<AuthCubit>(create: (context) => app.di.find<AuthCubit>()),
-    //LANGUAGE
+    // LANGUAGE
     BlocProvider<LanguageCubit>(
       create: (context) => app.di.find<LanguageCubit>(),
     ),

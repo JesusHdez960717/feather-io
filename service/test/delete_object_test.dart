@@ -38,10 +38,10 @@ void main() {
     test(
       'Should retry deleting a file that is open for a moment',
       () async {
-        const key = 'abierto.txt';
+        const key = 'open.txt';
         await server.putObject(bucket, key, 'data');
         final file = File('${server.storagePath}/$bucket/$key');
-        //en Windows un fichero abierto no se puede borrar hasta que se cierra
+        // On Windows an open file can't be deleted until it is closed
         final handle = await file.open();
         final closed = Future<void>.delayed(
           const Duration(milliseconds: 200),
@@ -60,9 +60,9 @@ void main() {
     );
 
     test('Should delete many objects of a folder in parallel', () async {
-      //como rclone purge: todas las peticiones intentan quitar la carpeta
-      //vacia a la vez, y no es un error que otra ya la haya quitado
-      final keys = [for (var i = 0; i < 20; i++) 'paralelo/x/$i.txt'];
+      // Like rclone purge: every request tries to remove the empty folder at
+      // once, and it is not an error that another one already removed it
+      final keys = [for (var i = 0; i < 20; i++) 'parallel/x/$i.txt'];
       for (final key in keys) {
         await server.putObject(bucket, key, 'data');
       }
@@ -71,10 +71,10 @@ void main() {
           http.delete(server.url('/$bucket/$key'), headers: server.auth()),
       ]);
       expect(responses.map((r) => r.statusCode), everyElement(204));
-      //quitar las carpetas vacias es solo limpieza: alguna puede quedarse,
-      //pero no se lista nada
+      // Removing empty folders is just cleanup: one may stay, but nothing is
+      // listed
       final list = await http.get(
-        server.url('/$bucket?prefix=paralelo/'),
+        server.url('/$bucket?prefix=parallel/'),
         headers: server.auth(json: true),
       );
       expect(jsonDecode(list.body)['contents'], isEmpty);

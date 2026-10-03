@@ -9,7 +9,7 @@ class AuthController {
   AuthController() : jwtService = di.find(), rateLimiter = di.find();
 
   Future<ResponseEntity> login(RequestEntity request) async {
-    //por IP; detras de proxies propios, ver TRUSTED_PROXIES
+    // Per IP; behind your own proxies, see TRUSTED_PROXIES
     final client =
         request.clientIp(trustedProxies: env.trustedProxies) ?? 'unknown';
     final locked = rateLimiter.lockedFor(client);
@@ -23,8 +23,8 @@ class AuthController {
     try {
       final loginReq = await request.body<LoginRequest>();
 
-      //las dos comparaciones siempre, y sin cortar en el primer caracter
-      //distinto: el tiempo de respuesta no da pistas
+      // Always both comparisons, without stopping at the first different
+      // character: the response time gives nothing away
       final validAccess = _sameText(loginReq.access, env.access);
       final validSecret = _sameText(loginReq.secret, env.secret);
       if (!validAccess || !validSecret) {
@@ -40,7 +40,7 @@ class AuthController {
         'sub': loginReq.access,
         'roles': ['admin'],
         'permissions': [
-          //s3 stuff
+          // S3 API
           's3.list-buckets',
           's3.create-bucket',
           's3.delete-bucket',
@@ -49,7 +49,7 @@ class AuthController {
           's3.get-object',
           's3.delete-object',
           's3.multi-delete-objects',
-          //admin stuff
+          // Admin API
           'admin.bucket.get',
           'admin.bucket.update',
           'admin.bucket.presign',
@@ -76,7 +76,7 @@ class AuthController {
     }
   }
 
-  /// Compara sin cortar en la primera diferencia
+  /// Compares without stopping at the first difference.
   static bool _sameText(String given, String expected) {
     final a = utf8.encode(given);
     final b = utf8.encode(expected);

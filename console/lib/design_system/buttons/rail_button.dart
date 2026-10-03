@@ -1,9 +1,9 @@
 import 'package:console/app_exporter.dart';
 import 'package:material_ui/material_ui.dart';
 
-///Boton cuadrado del pie del rail (transferencias, idioma, cerrar sesion):
-///44x44, `background2` con borde `grey5` y `radius-s`. [onPressed] recibe el
-///contexto del boton, para anclar a el un menu o un panel
+/// Square button of the rail footer (transfers, language, log out):
+/// 44x44, `background2` with a `grey5` border and `radius-s`. [onPressed] gets
+/// the button's context, to anchor a menu or a panel to it
 class RailButton extends StatelessWidget {
   static const double size = 44;
 
@@ -11,7 +11,7 @@ class RailButton extends StatelessWidget {
   final void Function(BuildContext context) onPressed;
   final Widget child;
 
-  ///Se pinta fuera del borde, sobre la esquina superior derecha
+  /// Painted outside the border, over the top right corner
   final Widget? badge;
 
   const RailButton({
@@ -27,8 +27,8 @@ class RailButton extends StatelessWidget {
     final radius = app.dimensions.border.borderRadius.s;
     return Tooltip(
       message: tooltip,
-      //el badge va fuera del Material: este pinta su borde por encima de lo
-      //que contiene
+      // the badge goes outside the Material: it paints its border over what
+      // it contains
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -55,7 +55,7 @@ class RailButton extends StatelessWidget {
             Positioned(
               top: -6,
               right: -6,
-              //no tapa la pulsacion del boton
+              // doesn't block the button's tap
               child: IgnorePointer(child: badge),
             ),
         ],

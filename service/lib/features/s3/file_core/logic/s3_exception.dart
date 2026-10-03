@@ -1,6 +1,6 @@
 import 'package:service/feather.dart';
 
-/// Códigos de error de AWS S3 que usa el servicio, con su status HTTP.
+/// AWS S3 error codes used by the service, with their HTTP status.
 enum S3ErrorCode {
   accessDenied('AccessDenied', 403),
   bucketAlreadyOwnedByYou('BucketAlreadyOwnedByYou', 409),
@@ -35,13 +35,13 @@ enum S3ErrorCode {
   const S3ErrorCode(this.code, this.statusCode);
 }
 
-/// Error de negocio con código S3. El controller lo serializa a XML o JSON
-/// según el `Accept` (ver `S3ExceptionHandler`).
+/// Business error with an S3 code. `S3ExceptionHandler` renders it as XML or
+/// JSON depending on `Accept`.
 class S3Exception extends ApiException implements Serializable {
   final S3ErrorCode code;
   final String message;
 
-  /// Bucket o key sobre el que falló la operación.
+  /// Bucket or key the operation failed on.
   final String? resource;
 
   S3Exception(this.code, {required this.message, this.resource})
@@ -50,28 +50,28 @@ class S3Exception extends ApiException implements Serializable {
   S3Exception.invalidBucketName(String bucketName)
     : this(
         S3ErrorCode.invalidBucketName,
-        message: 'El nombre del bucket "$bucketName" no es válido.',
+        message: 'The bucket name "$bucketName" is not valid.',
         resource: bucketName,
       );
 
   S3Exception.invalidKey(String key)
     : this(
         S3ErrorCode.invalidArgument,
-        message: 'El key "$key" no es válido o contiene caracteres prohibidos.',
+        message: 'The key "$key" is not valid or contains forbidden characters.',
         resource: key,
       );
 
   S3Exception.noSuchBucket(String bucketName)
     : this(
         S3ErrorCode.noSuchBucket,
-        message: 'El bucket "$bucketName" no existe.',
+        message: 'The bucket "$bucketName" does not exist.',
         resource: bucketName,
       );
 
   S3Exception.noSuchKey(String key)
     : this(
         S3ErrorCode.noSuchKey,
-        message: 'El archivo "$key" no existe.',
+        message: 'The key "$key" does not exist.',
         resource: key,
       );
 

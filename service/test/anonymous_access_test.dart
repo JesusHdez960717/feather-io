@@ -155,13 +155,13 @@ void main() {
     });
 
     test('Should match the whole key when the rule has *', () async {
-      //photos/*.jpg no abre photos/cat.jpg.zip
+      // photos/*.jpg doesn't open photos/cat.jpg.zip
       expect((await http.get(server.url('/$bucket/photos/cat.jpg.zip'))).statusCode, 401);
     });
 
     test('Should treat regex characters in the prefix literally', () async {
       expect((await http.get(server.url('/$bucket/a%2Bb/file.txt'))).statusCode, 200);
-      //con '+' como regex, 'aab/' coincidiria con 'a+b/'
+      // With '+' as a regex, 'aab/' would match 'a+b/'
       await server.putObject(bucket, 'aab/file.txt', 'no');
       expect((await http.get(server.url('/$bucket/aab/file.txt'))).statusCode, 401);
     });
@@ -212,13 +212,13 @@ void main() {
   });
 
   group('Anonymous access - multipart is never anonymous', () {
-    //shared/ tiene una regla readWrite: aun asi, un anonimo no puede tocar las
-    //subidas multipart (ni las de otros usuarios ni las suyas)
+    // shared/ has a readWrite rule: even so, an anonymous client can't touch
+    // the multipart uploads (neither other users' nor its own)
     late String uploadId;
 
     setUpAll(() async {
       final created = await http.post(
-        server.url('/$bucket/shared/grande.bin?uploads'),
+        server.url('/$bucket/shared/big.bin?uploads'),
         headers: server.auth(json: true),
       );
       expect(created.statusCode, 200, reason: created.body);
@@ -238,15 +238,15 @@ void main() {
 
     test('Should not list the parts of an upload (ListParts)', () async {
       expectDenied(
-        await http.get(server.url('/$bucket/shared/grande.bin?uploadId=$uploadId')),
+        await http.get(server.url('/$bucket/shared/big.bin?uploadId=$uploadId')),
       );
     });
 
     test('Should not upload a part (UploadPart)', () async {
       expectDenied(
         await http.put(
-          server.url('/$bucket/shared/grande.bin?partNumber=1&uploadId=$uploadId'),
-          body: 'intruso',
+          server.url('/$bucket/shared/big.bin?partNumber=1&uploadId=$uploadId'),
+          body: 'intruder',
         ),
       );
     });
@@ -254,19 +254,19 @@ void main() {
     test('Should not abort an upload (AbortMultipartUpload)', () async {
       expectDenied(
         await http.delete(
-          server.url('/$bucket/shared/grande.bin?uploadId=$uploadId'),
+          server.url('/$bucket/shared/big.bin?uploadId=$uploadId'),
         ),
       );
     });
 
     test('Should not start or complete an upload', () async {
       expect(
-        (await http.post(server.url('/$bucket/shared/otro.bin?uploads'))).statusCode,
+        (await http.post(server.url('/$bucket/shared/other.bin?uploads'))).statusCode,
         401,
       );
       expect(
         (await http.post(
-          server.url('/$bucket/shared/grande.bin?uploadId=$uploadId'),
+          server.url('/$bucket/shared/big.bin?uploadId=$uploadId'),
           body: '<CompleteMultipartUpload/>',
         )).statusCode,
         401,
@@ -275,14 +275,14 @@ void main() {
 
     test('Should leave the upload untouched for its owner', () async {
       final parts = await http.get(
-        server.url('/$bucket/shared/grande.bin?uploadId=$uploadId'),
+        server.url('/$bucket/shared/big.bin?uploadId=$uploadId'),
         headers: server.auth(json: true),
       );
       expect(parts.statusCode, 200, reason: parts.body);
       expect(jsonDecode(parts.body), isEmpty);
 
       final aborted = await http.delete(
-        server.url('/$bucket/shared/grande.bin?uploadId=$uploadId'),
+        server.url('/$bucket/shared/big.bin?uploadId=$uploadId'),
         headers: server.auth(),
       );
       expect(aborted.statusCode, 204);
@@ -297,12 +297,12 @@ void main() {
     });
 
     test('Should match the whole key when the rule has *', () {
-      expect(AnonymousAccessService.matches('fotos/*.jpg', 'fotos/a.jpg'), isTrue);
-      expect(AnonymousAccessService.matches('fotos/*.jpg', 'fotos/2026/a.jpg'), isTrue);
-      expect(AnonymousAccessService.matches('fotos/*.jpg', 'fotos/a.jpg.zip'), isFalse);
+      expect(AnonymousAccessService.matches('photos/*.jpg', 'photos/a.jpg'), isTrue);
+      expect(AnonymousAccessService.matches('photos/*.jpg', 'photos/2026/a.jpg'), isTrue);
+      expect(AnonymousAccessService.matches('photos/*.jpg', 'photos/a.jpg.zip'), isFalse);
       expect(AnonymousAccessService.matches('*.jpg', 'a/b/c.jpg'), isTrue);
       expect(AnonymousAccessService.matches('docs/*', 'docs/a/b.pdf'), isTrue);
-      expect(AnonymousAccessService.matches('*', 'cualquier/cosa'), isTrue);
+      expect(AnonymousAccessService.matches('*', 'any/thing'), isTrue);
     });
 
     test('Should ignore a leading slash and treat regex characters literally', () {

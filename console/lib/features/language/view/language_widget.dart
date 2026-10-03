@@ -2,8 +2,8 @@ import 'package:console/app_exporter.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-///Selector de idioma del pie del rail: la bandera del idioma actual en un
-///[RailButton]; abre un menu con los idiomas
+/// Language selector of the rail footer: the flag of the current language in a
+/// [RailButton]; it opens a menu with the languages
 class LanguageWidget extends CubitView<LanguageCubit> {
   const LanguageWidget({super.key});
 
@@ -23,7 +23,7 @@ class LanguageWidget extends CubitView<LanguageCubit> {
     );
   }
 
-  ///El menu se abre sobre el boton
+  /// The menu opens over the button
   void _showMenu(BuildContext anchor, LanguageState state) {
     final button = anchor.findRenderObject() as RenderBox;
     final overlay = Overlay.of(anchor).context.findRenderObject() as RenderBox;

@@ -1,7 +1,7 @@
 import 'package:console/app_exporter.dart';
 import 'package:mime/mime.dart';
 
-///Categoria de un objeto segun su tipo MIME (deducido del nombre)
+/// Category of an object by its MIME type (inferred from the name)
 enum ObjectTypeFilter {
   image,
   video,
@@ -42,7 +42,7 @@ enum ObjectTypeFilter {
   }
 }
 
-///Rango de tamaño: menos de 1 MB, de 1 a 100 MB, mas de 100 MB
+/// Size range: under 1 MB, from 1 to 100 MB, over 100 MB
 enum ObjectSizeFilter {
   small,
   medium,
@@ -57,7 +57,7 @@ enum ObjectSizeFilter {
   };
 }
 
-///Antigüedad de la ultima modificacion
+/// Age of the last modification
 enum ObjectDateFilter {
   last24Hours,
   last7Days,
@@ -75,9 +75,9 @@ enum ObjectDateFilter {
   }
 }
 
-///Filtro de objetos del explorador. Dentro de un grupo basta con cumplir una
-///opcion; entre grupos hay que cumplirlos todos. Las carpetas no tienen tipo,
-///tamaño ni fecha, asi que se ocultan mientras haya algun filtro activo
+/// Object filter of the browser. Within a group, matching one option is
+/// enough; across groups all of them must match. Folders have no type, size or
+/// date, so they are hidden while any filter is active
 class ObjectFilter {
   final Set<ObjectTypeFilter> types;
   final Set<ObjectSizeFilter> sizes;
@@ -91,7 +91,7 @@ class ObjectFilter {
 
   static const ObjectFilter none = ObjectFilter();
 
-  ///Opciones marcadas, para el badge del boton
+  /// Checked options, for the button's badge
   int get activeCount => types.length + sizes.length + dates.length;
 
   bool get isActive => activeCount > 0;

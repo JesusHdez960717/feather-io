@@ -1,10 +1,10 @@
 import 'package:service/feather.dart';
 
-/// Autentica como anonimo las peticiones sin credenciales que cubre una regla
-/// de acceso anonimo del bucket, con los permisos `s3.anonymous.*` de su tipo.
-/// El `AuthFilter` de cada ruta decide despues; sin regla, sigue siendo un 401.
+/// Authenticates as anonymous the requests without credentials that a rule of
+/// the bucket covers, with the `s3.anonymous.*` permissions of its type. Each
+/// route's `AuthFilter` decides afterwards; without a rule it is still a 401.
 ///
-/// El multi-delete no se abre nunca: sus keys van en el body y no en la ruta.
+/// Multi-delete is never opened: its keys come in the body, not in the path.
 class AnonymousAccessFilter extends Filter {
   static final AnonymousAccessFilter _instance = AnonymousAccessFilter._();
 
@@ -27,7 +27,7 @@ class AnonymousAccessFilter extends Filter {
     final routeKey = request.routingContext?.key;
 
     if (bucket != null && routeKey != null && _isAnonymousRoute(routeKey)) {
-      // En list-objects se evalua el prefix del query; en un objeto, su key
+      // For list-objects the query's prefix is checked; for an object, its key
       final key = routeKey == 's3.list-objects'
           ? request.queryParams['prefix'] ?? ''
           : request.pathParams['key'] ?? '';
@@ -61,7 +61,7 @@ class AnonymousAccessFilter extends Filter {
     };
   }
 
-  ///Solo si nadie se ha autenticado antes (JWT o SigV4)
+  /// Only when nobody has authenticated before (JWT or SigV4).
   @override
   bool shouldFilter(RequestEntity request) {
     return !request.securityContext.isAuthenticated;

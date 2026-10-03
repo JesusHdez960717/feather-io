@@ -1,6 +1,6 @@
 import 'package:service/feather.dart';
 
-/// Pide una URL prefirmada para descargar [key] durante [expiresIn] segundos
+/// Asks for a presigned URL to download [key] for [expiresIn] seconds.
 class PresignRequest implements Validatable {
   final String? key;
   final int? expiresIn;

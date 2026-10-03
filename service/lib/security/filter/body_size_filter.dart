@@ -1,19 +1,19 @@
 import 'package:service/feather.dart';
 
-///Limita el tamaño del cuerpo segun la ruta, mirando el `Content-Length` antes
-///de leer nada. Winter corta cualquier cuerpo por encima de
-///[ExtendedEnv.maxObjectSize] (ver `ServerConfig` en `main.dart`):
-///- Subir un objeto (`s3.put-object`) va a disco como stream: si declara mas
-///  de [ExtendedEnv.maxObjectSize], `EntityTooLarge`.
-///- El resto lee el cuerpo en memoria (JSON, XML del borrado multiple, login):
-///  como mucho [maxRequestBodySize]. Sin `Content-Length` (cuerpo vacio o
-///  chunked: shelf quita `Transfer-Encoding` y no se distinguen) el limite se
-///  comprueba mientras se lee el cuerpo
+/// Limits the body size per route, looking at `Content-Length` before reading
+/// anything. Winter cuts any body above [ExtendedEnv.maxObjectSize] (see
+/// `ServerConfig` in `main.dart`):
+/// - Uploading an object (`s3.put-object`) goes to disk as a stream: declaring
+///   more than [ExtendedEnv.maxObjectSize] is `EntityTooLarge`.
+/// - Everything else reads the body into memory (JSON, multi-delete XML,
+///   login): at most [maxRequestBodySize]. Without `Content-Length` (an empty
+///   or a chunked body: shelf drops `Transfer-Encoding`, so they look the same)
+///   the limit is checked while the body is read.
 class BodySizeFilter extends Filter {
   static const String objectRouteKey = 's3.put-object';
 
-  ///Cuerpo maximo de las peticiones que no suben un objeto (2 MB: cabe el XML
-  ///de un borrado multiple de 1000 keys de 1024 bytes)
+  /// Maximum body of the requests that don't upload an object (2 MB: enough for
+  /// the XML of a multi-delete of 1000 keys of 1024 bytes).
   static const int maxRequestBodySize = 2 * 1024 * 1024;
 
   static const Set<String> _bodyMethods = {'POST', 'PUT', 'PATCH'};
@@ -36,16 +36,16 @@ class BodySizeFilter extends Filter {
       if (length != null && length > max) {
         throw S3Exception(
           S3ErrorCode.entityTooLarge,
-          message: 'El objeto ocupa $length bytes y el máximo es $max.',
+          message: 'The object is $length bytes and the maximum is $max.',
           resource: request.pathParams['key'],
         );
       }
     } else if (length != null && length > maxRequestBodySize) {
       throw PayloadTooLargeException();
     } else if (length == null && _bodyMethods.contains(request.method)) {
-      //sin tamaño no se puede acotar antes de leerlo: se corta al leerlo (413).
-      //Asi pasa un cuerpo vacio sin cabecera, como el CreateBucket de
-      //aws-sdk-java-v2
+      // Without a size it can't be limited before reading, so it is cut while
+      // reading (413). That lets an empty body without the header through, like
+      // aws-sdk-java-v2's CreateBucket
       return await chain.doFilter(
         request.change(
           body: limitBodySize(request.read(), maxBytes: maxRequestBodySize),

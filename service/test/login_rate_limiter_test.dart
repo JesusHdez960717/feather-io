@@ -46,7 +46,7 @@ void main() {
       expect(limiter.lockedFor('1.1.1.1'), const Duration(minutes: 1));
       now = now.add(const Duration(minutes: 1));
       expect(limiter.lockedFor('1.1.1.1'), isNull);
-      //y empieza de cero
+      // and it starts from scratch
       await fail('1.1.1.1', 2);
       expect(limiter.lockedFor('1.1.1.1'), isNull);
     });

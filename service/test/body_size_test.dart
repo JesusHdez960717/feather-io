@@ -17,7 +17,7 @@ void main() {
   const mb = 1024 * 1024;
 
   setUpAll(() async {
-    //por encima de los 10 MB que Winter deja por defecto
+    // Above Winter's default 10 MB
     env.put('MAX_OBJECT_SIZE', '${12 * mb}');
     await server.start();
     await server.createBucket(bucket);
@@ -33,10 +33,10 @@ void main() {
 
   group('BodySizeFilter - objects', () {
     test('Should upload an object bigger than 10 MB', () async {
-      final response = await put('grande.bin', 11 * mb);
+      final response = await put('big.bin', 11 * mb);
       expect(response.statusCode, 200, reason: response.body);
 
-      final stored = File('${server.storagePath}/$bucket/grande.bin');
+      final stored = File('${server.storagePath}/$bucket/big.bin');
       expect(await stored.length(), 11 * mb);
     });
 
@@ -75,8 +75,8 @@ void main() {
         'POST',
         server.url('/${env.adminPrefix}/login'),
       )..headers['content-type'] = 'application/json';
-      //send() primero: el sink no se cierra hasta que alguien lee el stream.
-      //Si el servidor corta, el error llega por el futuro de send()
+      // send() first: the sink doesn't close until someone reads the stream.
+      // If the server cuts it, the error comes through send()'s future
       final sent = request.send();
       request.sink.add(body);
       unawaited(request.sink.close());
@@ -97,8 +97,8 @@ void main() {
         );
         expect(response.statusCode, 413);
       } on http.ClientException {
-        //el servidor responde 413 y cierra antes de que el cliente acabe de
-        //escribir: tambien demuestra que no leyo el cuerpo entero
+        // The server answers 413 and closes before the client finishes
+        // writing: that also shows it didn't read the whole body
       }
     });
 

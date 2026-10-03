@@ -21,7 +21,7 @@ void main() {
 
   setUpAll(() async {
     await server.start();
-    await server.putObject(bucket, 'otro.txt', 'x');
+    await server.putObject(bucket, 'other.txt', 'x');
   });
   tearDownAll(server.stop);
 
@@ -85,7 +85,7 @@ void main() {
     }),
   );
 
-  /// Sube las dos partes de prueba y devuelve sus ETags
+  /// Uploads the two test parts and returns their ETags.
   Future<List<String>> uploadBoth(String key, String uploadId) async {
     final etags = <String>[];
     for (final (number, body) in [(1, part1), (2, part2)]) {
@@ -98,7 +98,7 @@ void main() {
 
   group('S3Controller - multipart upload', () {
     test('Should create, upload parts and complete (XML)', () async {
-      const key = 'videos/grande.bin';
+      const key = 'videos/big.bin';
       final created = await create(key);
       expect(created.statusCode, 200);
       expect(created.headers['content-type'], contains('application/xml'));
@@ -129,7 +129,7 @@ void main() {
       expect(object.bodyBytes.last, 2);
       expect(object.headers['etag'], '"$expectedEtag"');
 
-      //la subida ya no existe
+      // The upload no longer exists
       final again = await uploadPart(key, uploadId, 3, [1]);
       expect(again.statusCode, 404);
       expect(again.body, contains('<Code>NoSuchUpload</Code>'));
@@ -170,7 +170,7 @@ void main() {
     test('Should allow a single small part', () async {
       const key = 'pequena.txt';
       final uploadId = await createId(key);
-      final part = await uploadPart(key, uploadId, 1, utf8.encode('hola'));
+      final part = await uploadPart(key, uploadId, 1, utf8.encode('hello'));
       final completed = await completeJson(key, uploadId, [
         (1, part.headers['etag']!),
       ]);
@@ -179,7 +179,7 @@ void main() {
         server.url('/$bucket/$key'),
         headers: server.auth(),
       );
-      expect(object.body, 'hola');
+      expect(object.body, 'hello');
     });
 
     test('Should abort and remove the parts', () async {
@@ -278,7 +278,7 @@ void main() {
     });
 
     test('Should reject a malformed part list', () async {
-      const key = 'mal.bin';
+      const key = 'bad.bin';
       final uploadId = await createId(key);
       final response = await http.post(
         server.url('/$bucket/$key?uploadId=$uploadId'),
@@ -321,7 +321,7 @@ void main() {
       expect(noBucket.statusCode, 404);
       expect(noBucket.body, contains('<Code>NoSuchBucket</Code>'));
 
-      final folder = await create('carpeta/');
+      final folder = await create('folder/');
       expect(folder.statusCode, 400);
     });
 
@@ -329,7 +329,7 @@ void main() {
       'Should reject POST on an object without ?uploads/?uploadId',
       () async {
         final response = await http.post(
-          server.url('/$bucket/otro.txt'),
+          server.url('/$bucket/other.txt'),
           headers: server.auth(),
         );
         expect(response.statusCode, 400);
@@ -346,10 +346,10 @@ void main() {
   group('S3Controller - multipart with SigV4', () {
     test('Should create an upload signed with the service keys', () async {
       final response = await http.post(
-        server.url('/$bucket/firmada.bin?uploads'),
+        server.url('/$bucket/signed.bin?uploads'),
         headers: server.sigV4(
           'POST',
-          '/$bucket/firmada.bin',
+          '/$bucket/signed.bin',
           query: const {'uploads': ''},
         ),
       );
@@ -360,7 +360,7 @@ void main() {
 
   group('BucketService - multipart cleanup', () {
     test('Should abort the pending uploads when a bucket is deleted', () async {
-      const other = 'mp-temporal';
+      const other = 'mp-temp';
       final created = await http.put(
         server.url('/$other'),
         headers: server.auth(),
@@ -400,8 +400,8 @@ void main() {
     }
 
     test('Should list the pending uploads of the bucket in XML', () async {
-      final first = await start('b/uno.bin');
-      final second = await start('a/dos.bin');
+      final first = await start('b/one.bin');
+      final second = await start('a/two.bin');
 
       final response = await http.get(
         server.url('/$listBucket?uploads'),
@@ -412,7 +412,7 @@ void main() {
       final keys = RegExp(r'<Key>(.*?)</Key>')
           .allMatches(response.body)
           .map((m) => m.group(1));
-      expect(keys, ['a/dos.bin', 'b/uno.bin']);
+      expect(keys, ['a/two.bin', 'b/one.bin']);
       expect(response.body, contains('<UploadId>$first</UploadId>'));
       expect(response.body, contains('<UploadId>$second</UploadId>'));
       expect(response.body, contains('<Initiated>'));
@@ -424,7 +424,7 @@ void main() {
         headers: server.auth(json: true),
       );
       final uploads = jsonDecode(response.body) as List;
-      expect(uploads.map((u) => u['key']), ['a/dos.bin']);
+      expect(uploads.map((u) => u['key']), ['a/two.bin']);
     });
 
     test('Should not list the uploads of other buckets nor the finished ones', () async {
@@ -433,7 +433,7 @@ void main() {
         headers: server.auth(json: true),
       );
       final keys = (jsonDecode(response.body) as List).map((u) => u['key']);
-      expect(keys, isNot(contains('b/uno.bin')));
+      expect(keys, isNot(contains('b/one.bin')));
     });
 
     test('Should return 404 for a missing bucket', () async {
@@ -448,7 +448,7 @@ void main() {
   group('S3Controller - UploadPartCopy', () {
     const copyBucket = 'mp-copy';
 
-    setUpAll(() => server.putObject(copyBucket, 'origen.txt', 'abcdefghij'));
+    setUpAll(() => server.putObject(copyBucket, 'source.txt', 'abcdefghij'));
 
     Future<String> start(String key) async {
       final created = await http.post(
@@ -468,15 +468,15 @@ void main() {
       server.url('/$copyBucket/$key?partNumber=$number&uploadId=$uploadId'),
       headers: {
         ...server.auth(),
-        'x-amz-copy-source': '/$copyBucket/origen.txt',
+        'x-amz-copy-source': '/$copyBucket/source.txt',
         'x-amz-copy-source-range': ?range,
         ...headers,
       },
     );
 
     test('Should copy a whole object as a part', () async {
-      final uploadId = await start('entera.txt');
-      final response = await copyPart('entera.txt', uploadId, 1);
+      final uploadId = await start('whole.txt');
+      final response = await copyPart('whole.txt', uploadId, 1);
       expect(response.statusCode, 200, reason: response.body);
       expect(response.body, contains('<CopyPartResult'));
       expect(
@@ -486,7 +486,7 @@ void main() {
     });
 
     test('Should copy ranges and complete the object with them', () async {
-      const key = 'rangos.txt';
+      const key = 'ranges.txt';
       final uploadId = await start(key);
       final first = await copyPart(key, uploadId, 1, range: 'bytes=0-2');
       final second = await copyPart(key, uploadId, 2, range: 'bytes=7-9');
@@ -495,8 +495,8 @@ void main() {
 
       String etag(http.Response r) =>
           RegExp(r'<ETag>(.*?)</ETag>').firstMatch(r.body)!.group(1)!;
-      //la primera parte tiene menos de 5 MiB: solo vale si es la unica, asi
-      //que se completa solo con la segunda para comprobar su contenido
+      // The first part is under 5 MiB: it is only valid as the single part,
+      // so the upload is completed with the second one to check its content
       final completed = await http.post(
         server.url('/$copyBucket/$key?uploadId=$uploadId'),
         headers: server.auth(),
@@ -511,25 +511,25 @@ void main() {
     });
 
     test('Should reject a range outside the source (416)', () async {
-      final uploadId = await start('fuera.txt');
-      final response = await copyPart('fuera.txt', uploadId, 1, range: 'bytes=5-20');
+      final uploadId = await start('outside.txt');
+      final response = await copyPart('outside.txt', uploadId, 1, range: 'bytes=5-20');
       expect(response.statusCode, 416);
       expect(response.body, contains('<Code>InvalidRange</Code>'));
     });
 
     test('Should reject a malformed range (400)', () async {
-      final uploadId = await start('mal.txt');
-      final response = await copyPart('mal.txt', uploadId, 1, range: 'bytes=5-');
+      final uploadId = await start('bad.txt');
+      final response = await copyPart('bad.txt', uploadId, 1, range: 'bytes=5-');
       expect(response.statusCode, 400);
     });
 
     test('Should check the copy conditions (412)', () async {
-      final uploadId = await start('condicion.txt');
+      final uploadId = await start('condition.txt');
       final response = await copyPart(
-        'condicion.txt',
+        'condition.txt',
         uploadId,
         1,
-        headers: {'x-amz-copy-source-if-match': '"otro-etag"'},
+        headers: {'x-amz-copy-source-if-match': '"other-etag"'},
       );
       expect(response.statusCode, 412);
       expect(response.body, contains('<Code>PreconditionFailed</Code>'));
@@ -558,9 +558,9 @@ void main() {
     }
 
     test('Should list the uploaded parts in order (XML)', () async {
-      final uploadId = await startWithParts('partes.bin', [3, 1, 2]);
+      final uploadId = await startWithParts('parts.bin', [3, 1, 2]);
       final response = await http.get(
-        server.url('/$partsBucket/partes.bin?uploadId=$uploadId'),
+        server.url('/$partsBucket/parts.bin?uploadId=$uploadId'),
         headers: server.auth(),
       );
       expect(response.statusCode, 200, reason: response.body);
@@ -600,7 +600,7 @@ void main() {
     });
 
     test('Should not let an anonymous reader list the parts (403)', () async {
-      final uploadId = await startWithParts('anonimo.bin', [1]);
+      final uploadId = await startWithParts('anonymous.bin', [1]);
       final rule = await http.post(
         server.url('/_admin/bucket/$partsBucket/anonymous-access'),
         headers: {...server.auth(json: true), 'content-type': 'application/json'},
@@ -609,7 +609,7 @@ void main() {
       expect(rule.statusCode, anyOf(200, 201), reason: rule.body);
 
       final response = await http.get(
-        server.url('/$partsBucket/anonimo.bin?uploadId=$uploadId'),
+        server.url('/$partsBucket/anonymous.bin?uploadId=$uploadId'),
       );
       expect(response.statusCode, 403);
     });

@@ -2,8 +2,8 @@ import 'package:console/app_exporter.dart';
 import 'package:material_ui/material_ui.dart';
 
 class FormDrawerTemplate extends StatelessWidget {
-  ///Se completa al cerrarse el cajon. Para impedir que se cierre (p. ej.
-  ///mientras se envia), el [child] puede envolverse en un [PopScope]
+  /// Completes when the drawer closes. To stop it from closing (e.g. while
+  /// submitting), wrap the [child] in a [PopScope]
   static Future<void> showAsDialog({
     required String title,
     required String description,
@@ -57,13 +57,13 @@ class FormDrawerTemplate extends StatelessWidget {
   final SvgAsset icon;
   final List<Widget> footerActions;
 
-  ///Accion separada de las demas, a la izquierda del pie (p. ej. *Eliminar*)
+  /// Action set apart from the others, on the left of the footer (e.g. *Delete*)
   final Widget? footerLeading;
   final Widget child;
   final double? width;
 
-  ///El cajon entero es un [LoadingOverlay]: `app.loading.show(id: loadingId)`
-  ///(o `LoadingOverlay.of(context)` desde su contenido) lo cubre con el velo de carga
+  /// The whole drawer is a [LoadingOverlay]: `app.loading.show(id: loadingId)`
+  /// (or `LoadingOverlay.of(context)` from its content) covers it with the loading veil
   final Object? loadingId;
 
   const FormDrawerTemplate({

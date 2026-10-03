@@ -11,39 +11,40 @@ class FileManagementService {
   final ObjectMetaService objectMeta;
 
   FileManagementService({
-    this.maxFileSize = 5 * 1024 * 1024 * 1024, // 5GB por defecto (límite S3)
+    this.maxFileSize = 5 * 1024 * 1024 * 1024, // 5 GiB by default (the S3 limit)
     ObjectMetaService? objectMeta,
   }) : objectMeta = objectMeta ?? ObjectMetaService();
 
   Future<bool> createBucket({required String bucketName}) async {
-    // Valido el nombre del bucket con reglas S3
+    // Bucket name with the S3 rules
     if (!S3Validator.isValidBucketName(bucketName)) {
       throw S3Exception(
         S3ErrorCode.invalidBucketName,
         message:
-            'El nombre del bucket "$bucketName" no es válido. Debe tener entre 3 y 63 caracteres, usar solo minúsculas, números, puntos o guiones, y empezar/terminar con letra o número.',
+            'The bucket name "$bucketName" is not valid. It must be 3 to 63 '
+            'characters long, use only lowercase letters, digits, dots or '
+            'hyphens, and start and end with a letter or a digit.',
         resource: bucketName,
       );
     }
 
-    //como S3, crear un bucket que ya existe es un 409
+    // As in S3, creating a bucket that already exists is a 409
     final bucketDir = Directory(_getBucketPath(bucketName));
     if (await bucketDir.exists()) {
       throw S3Exception(
         S3ErrorCode.bucketAlreadyOwnedByYou,
-        message: 'El bucket "$bucketName" ya existe.',
+        message: 'The bucket "$bucketName" already exists.',
         resource: bucketName,
       );
     }
 
-    //creo el bucket físicamente
+    // Creates the bucket on disk
     await bucketDir.create(recursive: true);
 
     return true;
   }
 
   Future<bool> deleteBucketPhysical(String bucketName) async {
-    // Valido el nombre del bucket
     if (!S3Validator.isValidBucketName(bucketName)) {
       throw S3Exception.invalidBucketName(bucketName);
     }
@@ -55,8 +56,8 @@ class FileManagementService {
       throw S3Exception.noSuchBucket(bucketName);
     }
 
-    // S3 requiere que el bucket esté vacío para ser borrado. Las carpetas
-    // vacias (solo con su marcador) no son objetos y no lo impiden
+    // S3 requires the bucket to be empty. Empty folders (with only their
+    // marker) are not objects and don't prevent it
     final hasObjects = await dir
         .list(recursive: true)
         .any(
@@ -68,7 +69,7 @@ class FileManagementService {
       throw S3Exception(
         S3ErrorCode.bucketNotEmpty,
         message:
-            'El bucket "$bucketName" no está vacío y no puede ser borrado.',
+            'The bucket "$bucketName" is not empty and cannot be deleted.',
         resource: bucketName,
       );
     }
@@ -85,7 +86,7 @@ class FileManagementService {
     return Directory(_getBucketPath(bucketName)).exists();
   }
 
-  /// Borra todo el contenido del bucket y deja la carpeta vacia
+  /// Deletes all the content of the bucket and leaves its folder empty.
   Future<void> emptyBucket(String bucketName) async {
     if (!S3Validator.isValidBucketName(bucketName)) {
       throw S3Exception.invalidBucketName(bucketName);
@@ -100,8 +101,8 @@ class FileManagementService {
     await objectMeta.forgetBucket(bucketName);
   }
 
-  /// Guarda el objeto con sus [headers] (`Content-Type`, `x-amz-meta-*`…) y
-  /// devuelve su ETag (el md5 del contenido)
+  /// Stores the object with its [headers] (`Content-Type`, `x-amz-meta-*`…) and
+  /// returns its ETag (the md5 of the content).
   Future<String> uploadFile({
     required String bucketName,
     required String key,
@@ -109,32 +110,31 @@ class FileManagementService {
     int? contentLength,
     Map<String, String> headers = const {},
   }) async {
-    // Valido el nombre del bucket
     if (!S3Validator.isValidBucketName(bucketName)) {
       throw S3Exception.invalidBucketName(bucketName);
     }
-    // Valido el key con reglas S3
     if (!S3Validator.isValidKey(key)) {
       throw S3Exception.invalidKey(key);
     }
 
-    // Validar tamaño máximo si se proporciona el content-length
+    // Maximum size, when the content length is known up front
     if (contentLength != null && contentLength > maxFileSize) {
       throw S3Exception(
         S3ErrorCode.entityTooLarge,
         message:
-            'El archivo excede el tamaño máximo permitido de ${maxFileSize / (1024 * 1024)} MB',
+            'The object exceeds the maximum allowed size of '
+            '${maxFileSize / (1024 * 1024)} MB.',
         resource: key,
       );
     }
 
-    //como en S3, el bucket tiene que existir; las subcarpetas se crean solas
+    // As in S3, the bucket must exist; the subfolders are created on the fly
     if (!await Directory(_getBucketPath(bucketName)).exists()) {
       throw S3Exception.noSuchBucket(bucketName);
     }
 
-    // Una key terminada en '/' es una carpeta, como en la consola de S3: se
-    // crea vacia con su marcador y el cuerpo (vacio) se descarta
+    // A key ending in '/' is a folder, as in the S3 console: it is created
+    // empty with its marker and the (empty) body is discarded
     if (key.endsWith('/')) {
       await binary.drain<void>();
       final folder = Directory(p.join(_getBucketPath(bucketName), key));
@@ -143,22 +143,22 @@ class FileManagementService {
       return ObjectMetaService.emptyEtag;
     }
 
-    // Transformamos el stream para contar bytes y validar el límite en tiempo real
+    // Counts the bytes as they arrive, to enforce the limit while streaming
     int bytesRead = 0;
     final monitoredStream = binary.map((chunk) {
       bytesRead += chunk.length;
       if (bytesRead > maxFileSize) {
         throw S3Exception(
           S3ErrorCode.entityTooLarge,
-          message: 'El archivo excede el tamaño máximo permitido.',
+          message: 'The object exceeds the maximum allowed size.',
           resource: key,
         );
       }
       return chunk;
     });
 
-    //se escribe aparte y se mueve al terminar: si la subida falla, el objeto
-    //que hubiera sigue intacto, y nunca se ve a medias
+    // Written aside and moved at the end: if the upload fails, the existing
+    // object stays intact, and it is never seen half-written
     final temp = await _tempFile();
     final etag = await Md5Tap.write(monitoredStream, temp);
     final file = _getFile(bucketName, key);
@@ -174,20 +174,20 @@ class FileManagementService {
     return etag;
   }
 
-  /// Carpeta de los ficheros a medio escribir. Empieza por punto, asi que no es
-  /// un bucket valido y no se lista
+  /// Folder of the files being written. It starts with a dot, so it isn't a
+  /// valid bucket and isn't listed.
   static const String tempFolderName = '.tmp';
 
   final Random _random = Random.secure();
 
-  /// Cuanto se reintenta sustituir un objeto que esta abierto (en Windows)
+  /// How long replacing an open object is retried (on Windows).
   static const Duration replaceTimeout = Duration(seconds: 5);
 
-  /// Mueve [source] (escrito aparte) a [target], sustituyendo el objeto que
-  /// hubiera, y crea sus carpetas. En Windows no se puede sustituir un fichero
-  /// abierto (una descarga de la version anterior que aun no ha terminado): se
-  /// reintenta durante [replaceTimeout] y, si sigue abierto, se borra [source]
-  /// y se responde `ServiceUnavailable` (503), que los clientes S3 reintentan
+  /// Moves [source] (written aside) to [target], replacing any existing object,
+  /// and creates its folders. On Windows an open file can't be replaced (a
+  /// download of the previous version that hasn't finished): it is retried for
+  /// [replaceTimeout] and, if it is still open, [source] is deleted and the
+  /// answer is `ServiceUnavailable` (503), which S3 clients retry.
   static Future<void> replaceFile(
     File source,
     File target, {
@@ -210,7 +210,7 @@ class FileManagementService {
         throw S3Exception(
           S3ErrorCode.serviceUnavailable,
           message:
-              'El objeto está en uso y no se puede sustituir; reinténtalo.',
+              'The object is in use and cannot be replaced; please retry.',
           resource: key,
         );
       }
@@ -227,13 +227,13 @@ class FileManagementService {
     return File(p.join(dir.path, '$id.tmp'));
   }
 
-  /// Maximo de claves por pagina en [listFiles], como en S3
+  /// Maximum keys per page in [listFiles], as in S3.
   static const int maxKeysLimit = 1000;
 
-  /// Lista los objetos del bucket ordenados por key. Con [delimiter] agrupa lo
-  /// que hay por debajo en prefijos comunes. Pagina como ListObjectsV2: como
-  /// mucho [maxKeys] claves (objetos + prefijos) y, si hay mas, un token para
-  /// pedir la pagina siguiente
+  /// Lists the objects of the bucket sorted by key. With [delimiter] it groups
+  /// what is below into common prefixes. It pages like ListObjects: at most
+  /// [maxKeys] keys (objects + prefixes) and, if there are more, a token (and
+  /// the last key, for V1's `marker`) to request the next page.
   Future<ListObjectsResponse> listFiles({
     required String bucketName,
     String? prefix,
@@ -248,11 +248,11 @@ class FileManagementService {
     if (maxKeys < 0) {
       throw S3Exception(
         S3ErrorCode.invalidArgument,
-        message: 'max-keys no puede ser negativo.',
+        message: 'max-keys cannot be negative.',
         resource: bucketName,
       );
     }
-    //el token manda sobre start-after/marker, como en ListObjectsV2
+    // The token takes precedence over start-after/marker, as in ListObjectsV2
     final after = continuationToken == null
         ? startAfter
         : _decodeContinuationToken(continuationToken);
@@ -264,7 +264,7 @@ class FileManagementService {
       throw S3Exception.noSuchBucket(bucketName);
     }
 
-    // Listamos los archivos del directorio recursivamente para soportar subcarpetas
+    // Lists the directory recursively, to include the subfolders
     final List<FileSystemEntity> entities = await dir
         .list(recursive: true)
         .toList();
@@ -277,27 +277,27 @@ class FileManagementService {
     for (var entity in entities) {
       if (entity is! File) continue;
 
-      // Obtenemos la ruta relativa al bucket para usarla como key (ej: files/test/123.jpg)
+      // The path relative to the bucket is the key (e.g. files/test/123.jpg)
       final relative = p
           .relative(entity.path, from: bucketPath)
           .replaceAll('\\', '/');
 
-      // El marcador de una carpeta creada a mano se lista como la key "carpeta/"
+      // The marker of an explicitly created folder is listed as the key "folder/"
       final isFolder = p.posix.basename(relative) == S3Validator.folderMarker;
       final folder = p.posix.dirname(relative);
       if (isFolder && folder == '.') continue;
       final key = isFolder ? '$folder/' : relative;
 
-      // Filtrar por prefijo
+      // Prefix filter
       if (!key.startsWith(normalizedPrefix)) continue;
 
       if (delimiter != null && delimiter.isNotEmpty) {
-        // Si hay delimitador, buscamos si hay uno después del prefijo
+        // With a delimiter, looks for one after the prefix
         final remainingKey = key.substring(normalizedPrefix.length);
         final delimiterIndex = remainingKey.indexOf(delimiter);
 
         if (delimiterIndex != -1) {
-          // Es una "carpeta" (Common Prefix)
+          // It is a "folder" (common prefix)
           final commonPrefix =
               normalizedPrefix + remainingKey.substring(0, delimiterIndex + 1);
           commonPrefixes.add(commonPrefix);
@@ -308,8 +308,8 @@ class FileManagementService {
       files[key] = (entity, await entity.stat());
     }
 
-    // Objetos y prefijos van juntos y ordenados, como en S3, y se pagina sobre
-    // ese orden: la pagina empieza despues de la ultima key de la anterior
+    // Objects and prefixes go together and sorted, as in S3, and pages follow
+    // that order: a page starts after the last key of the previous one
     final keys = {...files.keys, ...commonPrefixes}.toList()..sort();
     final pending = after == null
         ? keys
@@ -317,7 +317,7 @@ class FileManagementService {
     final page = pending.take(min(maxKeys, maxKeysLimit)).toList();
     final isTruncated = pending.length > page.length;
 
-    //el ETag solo de los objetos de esta pagina: si falta hay que leer el fichero
+    // ETags only for this page's objects: a missing one means reading the file
     final pageFiles = {
       for (final key in page)
         if (files[key] != null && !key.endsWith('/')) key: files[key]!,
@@ -363,17 +363,17 @@ class FileManagementService {
     } catch (_) {
       throw S3Exception(
         S3ErrorCode.invalidArgument,
-        message: 'El continuation-token no es válido.',
+        message: 'The continuation-token is not valid.',
         resource: token,
       );
     }
   }
 
-  /// Copia un objeto (CopyObject). El destino se sobrescribe si existe y se
-  /// queda con las cabeceras del origen, o con [headers] si se indican
+  /// Copies an object (CopyObject). The target is overwritten if it exists and
+  /// keeps the source's headers, or [headers] when given.
   ///
-  /// La clase de almacenamiento no se copia: es la de la peticion
-  /// ([storageClass], null para la normal), como en S3
+  /// The storage class is not copied: it is the request's ([storageClass], null
+  /// for the standard one), as in S3.
   Future<FileModel> copyFile({
     required String sourceBucket,
     required String sourceKey,
@@ -393,15 +393,15 @@ class FileManagementService {
         throw S3Exception.invalidKey(k);
       }
     }
-    //como S3, copiar un objeto sobre si mismo solo vale para cambiarle los
-    //metadatos (REPLACE) o la clase de almacenamiento
+    // As in S3, copying an object onto itself is only allowed to change its
+    // metadata (REPLACE) or its storage class
     final sameObject = sourceBucket == bucketName && sourceKey == key;
     if (sameObject && headers == null && storageClass == null) {
       throw S3Exception(
         S3ErrorCode.invalidRequest,
         message:
-            'Copiar un objeto sobre sí mismo exige cambiar sus metadatos o su '
-            'clase de almacenamiento.',
+            'Copying an object onto itself requires changing its metadata '
+            'or its storage class.',
         resource: key,
       );
     }
@@ -432,7 +432,7 @@ class FileManagementService {
     final etag = sourceMeta.etag;
     final target = _getFile(bucketName, key);
     if (!sameObject) {
-      //como las subidas: se copia aparte y se mueve al terminar
+      // Like uploads: copied aside and moved at the end
       final temp = await _tempFile();
       await source.copy(temp.path);
       await replaceFile(temp, target, key: key);
@@ -459,8 +459,8 @@ class FileManagementService {
     );
   }
 
-  /// El contenido de un objeto para copiarlo en una parte (UploadPartCopy),
-  /// entero o solo [range] (posiciones inclusivas), si cumple [conditions]
+  /// The content of an object to copy into a part (UploadPartCopy), whole or
+  /// only [range] (inclusive positions), if it meets [conditions].
   Future<Stream<List<int>>> readForCopy({
     required String sourceBucket,
     required String sourceKey,
@@ -486,7 +486,7 @@ class FileManagementService {
       throw S3Exception(
         S3ErrorCode.invalidRange,
         message:
-            'El rango $start-$end está fuera del objeto (${stat.size} bytes).',
+            'The range $start-$end is outside the object (${stat.size} bytes).',
         resource: sourceKey,
       );
     }
@@ -504,7 +504,7 @@ class FileManagementService {
       throw S3Exception.invalidKey(key);
     }
 
-    //una carpeta (`fotos/`) es su marcador: un objeto vacio
+    // A folder (`photos/`) is its marker: an empty object
     final file = key.endsWith('/')
         ? File(p.join(_getBucketPath(bucketName), key, S3Validator.folderMarker))
         : _getFile(bucketName, key);
@@ -516,7 +516,7 @@ class FileManagementService {
     return file;
   }
 
-  /// Los metadatos (ETag y cabeceras) de un objeto ya leido con [getFile]
+  /// The metadata (ETag and headers) of an object already read with [getFile].
   Future<ObjectMetaModel> metaOf({
     required String bucketName,
     required String key,
@@ -529,8 +529,8 @@ class FileManagementService {
     stat: stat,
   );
 
-  /// Genera el zip en un fichero temporal (sin cargar los objetos en memoria).
-  /// Usar [openAndDeleteTemp] para servirlo y borrarlo al terminar.
+  /// Builds the zip in a temp file (without loading the objects in memory).
+  /// Use [openAndDeleteTemp] to serve it and delete it afterwards.
   Future<File> zipObjects({
     required String bucketName,
     required List<String> keys,
@@ -584,7 +584,7 @@ class FileManagementService {
       await tempDir.delete(recursive: true);
       throw S3Exception(
         S3ErrorCode.noSuchKey,
-        message: 'No se encontraron archivos para descargar.',
+        message: 'No objects found to download.',
         resource: bucketName,
       );
     }
@@ -592,7 +592,7 @@ class FileManagementService {
     return zipFile;
   }
 
-  /// Stream del fichero temporal que lo borra (junto a su carpeta) al terminar.
+  /// Stream of the temp file that deletes it (and its folder) when done.
   Stream<List<int>> openAndDeleteTemp(File file) async* {
     try {
       yield* file.openRead();
@@ -614,10 +614,10 @@ class FileManagementService {
 
     final bucketPath = _getBucketPath(bucketName);
 
-    // Como S3, borra solo el objeto [key]: una carpeta (`fotos/`) es su
-    // marcador y lo que tenga dentro no se toca (para eso, [deleteFolder]).
-    // Borrar lo que no existe es un exito (idempotencia), y una key sin `/`
-    // que es un directorio no es un objeto
+    // As in S3, only the object [key] is deleted: a folder (`photos/`) is its
+    // marker and its content is left alone (use [deleteFolder] for that).
+    // Deleting something that doesn't exist succeeds (idempotency), and a key
+    // without `/` that is a directory is not an object
     final file = key.endsWith('/')
         ? File(p.join(bucketPath, key, S3Validator.folderMarker))
         : File(p.join(bucketPath, key));
@@ -630,8 +630,8 @@ class FileManagementService {
     return true;
   }
 
-  /// Borra la carpeta [prefix] (`fotos/`) con todo su contenido. No es una
-  /// operacion de S3: la usa la consola para borrar carpetas
+  /// Deletes the folder [prefix] (`photos/`) with all its content. Not an S3
+  /// operation: the console uses it to delete folders.
   Future<void> deleteFolder({
     required String bucketName,
     required String prefix,
@@ -655,11 +655,12 @@ class FileManagementService {
     await objectMeta.forgetFolder(bucketName, prefix);
   }
 
-  /// Borra [entity] (si es un directorio, con su contenido). En Windows no se
-  /// puede borrar un fichero abierto (una descarga que aun no lo ha cerrado, el
-  /// antivirus revisando uno recien subido): se reintenta durante unos segundos
+  /// Deletes [entity] (with its content if it is a directory). On Windows an
+  /// open file can't be deleted (a download that hasn't closed it yet, the
+  /// antivirus scanning a new file): it is retried for a few seconds.
   ///
-  /// Si ya no existe (otra peticion lo borro a la vez) no es un error
+  /// If it no longer exists (another request deleted it meanwhile) it is not
+  /// an error.
   Future<void> _delete(FileSystemEntity entity) async {
     for (var attempt = 1; ; attempt++) {
       try {
@@ -711,17 +712,17 @@ class FileManagementService {
     final currentPath = p.canonicalize(dir.path);
     final rootPath = p.canonicalize(bucketPath);
 
-    // Si el directorio actual es el bucket o está fuera de él, nos detenemos
+    // Stops at the bucket itself or outside it
     if (!currentPath.startsWith(rootPath) || currentPath == rootPath) {
       return;
     }
 
-    // Es solo limpieza (una carpeta vacia sin marcador no se lista): si falla,
-    // el objeto ya esta borrado y la carpeta se queda. Sin `recursive`, para
-    // no llevarse lo que otra peticion acabe de subir. Con borrados en
-    // paralelo puede que otra peticion ya la haya quitado o la este quitando
-    // (en Windows: acceso denegado mientras tanto, y "no vacia" mientras sus
-    // ficheros terminan de borrarse)
+    // Just cleanup (an empty folder without a marker isn't listed): if it
+    // fails, the object is already deleted and the folder stays. Not
+    // `recursive`, so it never takes what another request has just uploaded.
+    // With parallel deletes another request may have removed it already or be
+    // removing it (on Windows: access denied meanwhile, and "not empty" while
+    // its files finish being deleted)
     for (var attempt = 1; ; attempt++) {
       try {
         await dir.delete();
@@ -735,7 +736,7 @@ class FileManagementService {
         return;
       }
     }
-    // Intentamos borrar el padre
+    // Then tries the parent
     await _deleteEmptyParents(dir.parent, bucketPath);
   }
 

@@ -7,22 +7,22 @@ import 'package:cross_file/cross_file.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:web/web.dart' as web;
 
-///Cola de transferencias (subidas y descargas) en segundo plano. Vive en toda
-///la app: siguen aunque se cambie de carpeta, de bucket o de seccion. Hace
-///[maxConcurrent] subidas y otras tantas descargas a la vez y avisa con
-///[BucketChangedEvent] de las subidas que terminan
+/// Background transfer queue (uploads and downloads). It lives across the whole
+/// app: transfers keep going across folders, buckets and sections. It runs
+/// [maxConcurrent] uploads and as many downloads at a time and announces the
+/// finished uploads with [BucketChangedEvent]
 class TransferCubit extends Cubit<TransferState> {
   static const int maxConcurrent = 2;
 
-  ///Con subidas pendientes en un bucket, se avisa como mucho cada este tiempo
-  ///para no recargar el explorador por cada fichero
+  /// With uploads pending in a bucket, it announces at most once per this time,
+  /// so the browser doesn't reload for every file
   static const Duration announceInterval = Duration(seconds: 2);
 
-  ///Por encima de este tamaño se sube por partes (multipart): en web cada
-  ///peticion se carga entera en memoria, asi solo hay una parte a la vez
+  /// Above this size it uploads in parts (multipart): on web every request is
+  /// loaded whole in memory, so this way there is only one part at a time
   static const int multipartThreshold = 16 * 1024 * 1024;
 
-  ///Tamaño de cada parte (S3 pide al menos 5 MiB salvo la ultima)
+  /// Size of each part (S3 asks for at least 5 MiB except for the last one)
   static const int partSize = 8 * 1024 * 1024;
 
   final TransferRepo _repo;
@@ -30,8 +30,8 @@ class TransferCubit extends Cubit<TransferState> {
 
   final List<TransferTask> _tasks = [];
 
-  ///Ids de las transferencias desde que la cola estuvo parada por ultima vez:
-  ///el progreso total se calcula sobre ellas
+  /// Ids of the transfers since the queue was last idle: the total progress is
+  /// computed over them
   final Set<String> _batch = {};
 
   final Set<String> _unannounced = {};
@@ -43,14 +43,14 @@ class TransferCubit extends Cubit<TransferState> {
 
   TransferCubit(this._repo, this._auth) : super(const TransferInitialState());
 
-  ///Pone en cola [files] para subirlos a [prefix] de [bucket]
+  /// Queues [files] to upload them to [prefix] of [bucket]
   Future<void> upload({
     required String bucket,
     required String prefix,
     required List<XFile> files,
   }) async {
     for (final file in files) {
-      //el prefijo de una carpeta ya termina en '/' (p. ej. 'fotos/')
+      // a folder prefix already ends in '/' (e.g. 'photos/')
       final key = prefix.isEmpty || prefix.endsWith('/')
           ? '$prefix${file.name}'
           : '$prefix/${file.name}';
@@ -71,8 +71,8 @@ class TransferCubit extends Cubit<TransferState> {
     _pump();
   }
 
-  ///Pone en cola la descarga de [keys] de [bucket] en un zip llamado
-  ///[zipName] (se le añade `.zip`); sin el, se nombra por la key o la fecha
+  /// Queues the download of [keys] of [bucket] in a zip named [zipName]
+  /// (`.zip` is appended); without it, it is named after the key or the date
   void download({
     required String bucket,
     required List<String> keys,
@@ -92,7 +92,7 @@ class TransferCubit extends Cubit<TransferState> {
     _pump();
   }
 
-  ///Nombre del zip de una descarga
+  /// Zip name of a download
   static String zipFileName(List<String> keys, {String? zipName}) {
     if (zipName != null) {
       return zipName.endsWith('.zip') ? zipName : '$zipName.zip';
@@ -126,7 +126,7 @@ class TransferCubit extends Cubit<TransferState> {
     _pump();
   }
 
-  ///Quita de la lista una transferencia ya terminada
+  /// Removes a finished transfer from the list
   void remove(String id) {
     _tasks.removeWhere((t) => t.id == id && !t.status.isActive);
     _emit();
@@ -137,7 +137,7 @@ class TransferCubit extends Cubit<TransferState> {
     _emit();
   }
 
-  ///Al cerrar sesion: corta todo y vacia la lista
+  /// On log out: cuts everything and clears the list
   void reset() {
     for (final task in _tasks) {
       if (task.status.isActive) _repo.cancel(task.id);
@@ -165,7 +165,7 @@ class TransferCubit extends Cubit<TransferState> {
     _emit();
   }
 
-  ///Arranca transferencias en cola hasta llenar los huecos de cada sentido
+  /// Starts queued transfers until the free slots of each direction are filled
   void _pump() {
     for (final direction in TransferDirection.values) {
       while (_running[direction]! < maxConcurrent) {
@@ -185,7 +185,7 @@ class TransferCubit extends Cubit<TransferState> {
     }
   }
 
-  ///Guarda el progreso de [id] si sigue en curso, como mucho uno por cada 1%
+  /// Stores the progress of [id] if it is still running, at most once per 1%
   void Function(int transferred, int total) _progress(String id) {
     var last = -1;
     return (transferred, total) {
@@ -230,8 +230,8 @@ class TransferCubit extends Cubit<TransferState> {
     }
   }
 
-  ///Sube [task] por partes de [partSize], una tras otra. Si falla o se
-  ///cancela, aborta la subida en el servicio para no dejar partes sueltas
+  /// Uploads [task] in parts of [partSize], one after another. If it fails or
+  /// is cancelled, it aborts the upload on the service so no parts are left behind
   Future<void> _uploadMultipart(TransferTask task) async {
     final token = _auth.auth?.accessToken;
     final report = _progress(task.id);
@@ -246,7 +246,7 @@ class TransferCubit extends Cubit<TransferState> {
       final parts = <UploadedPart>[];
       var done = 0;
       for (var number = 1; done < task.size; number++) {
-        //cancelada entre dos partes
+        // cancelled between two parts
         if (_find(task.id)?.status != TransferStatus.running) {
           throw const _Cancelled();
         }
@@ -277,7 +277,7 @@ class TransferCubit extends Cubit<TransferState> {
     } catch (_) {
       final id = uploadId;
       if (id != null) {
-        //sin esperar: si falla, el servicio la borra al borrar el bucket
+        // not awaited: if it fails, the service deletes it when the bucket is deleted
         _repo
             .abortMultipart(
               token: token,
@@ -300,7 +300,7 @@ class TransferCubit extends Cubit<TransferState> {
         keys: task.keys,
         onProgress: _progress(task.id),
       );
-      //si la cancelaron justo al acabar, no se guarda
+      // if it was cancelled right when finishing, it is not stored
       if (_find(task.id)?.status != TransferStatus.running) return;
       _save(bytes, task.name);
       _finish(task.id, size: bytes.length);
@@ -334,7 +334,7 @@ class TransferCubit extends Cubit<TransferState> {
     );
   }
 
-  ///Entrega el fichero al navegador para que lo guarde
+  /// Hands the file to the browser to save it
   void _save(List<int> bytes, String fileName) {
     final blob = web.Blob([Uint8List.fromList(bytes).toJS].toJS);
     final url = web.URL.createObjectURL(blob);
@@ -345,8 +345,8 @@ class TransferCubit extends Cubit<TransferState> {
     web.URL.revokeObjectURL(url);
   }
 
-  ///Avisa de que [bucket] tiene objetos nuevos: al acabar su ultima subida
-  ///pendiente o, si aun quedan, cada [announceInterval]
+  /// Announces that [bucket] has new objects: when its last pending upload
+  /// ends or, if some remain, every [announceInterval]
   void _announce(String bucket, {required bool uploaded}) {
     if (uploaded) _unannounced.add(bucket);
     if (!_unannounced.contains(bucket)) return;
@@ -411,15 +411,15 @@ class TransferCubit extends Cubit<TransferState> {
     );
   }
 
-  //------------------------- AVISO AL SALIR -------------------------\\
+  //------------------------- LEAVE WARNING -------------------------\\
   bool _guarding = false;
 
   late final JSFunction _beforeUnload = ((web.Event event) {
     event.preventDefault();
   }).toJS;
 
-  ///Con transferencias en curso, el navegador pregunta antes de cerrar o
-  ///recargar la pestaña
+  /// With transfers running, the browser asks before closing or reloading the
+  /// tab
   void _guardLeave(bool on) {
     if (on == _guarding) return;
     _guarding = on;
@@ -437,7 +437,7 @@ class TransferCubit extends Cubit<TransferState> {
   }
 }
 
-///Una subida multipart cancelada entre dos partes
+/// A multipart upload cancelled between two parts
 class _Cancelled implements Exception {
   const _Cancelled();
 }
@@ -445,14 +445,14 @@ class _Cancelled implements Exception {
 abstract class TransferState {
   final List<TransferTask> tasks;
 
-  ///En cola o en curso
+  /// Queued or running
   final int activeCount;
   final int failedCount;
 
-  ///Terminadas (bien, con error o canceladas): las que se pueden quitar
+  /// Finished (successfully, with an error or cancelled): the ones that can be removed
   final int finishedCount;
 
-  ///Progreso de las transferencias desde que la cola estuvo parada, de 0 a 1
+  /// Progress of the transfers since the queue was idle, from 0 to 1
   final double progress;
 
   const TransferState({
@@ -464,13 +464,13 @@ abstract class TransferState {
   });
 }
 
-///Sin transferencias
+/// No transfers
 class TransferInitialState extends TransferState {
   const TransferInitialState();
 }
 
 //------------------------- PROCESS -------------------------\\
-///Hay transferencias en cola o en curso
+/// There are queued or running transfers
 class TransferProcessInProgressState extends TransferState {
   const TransferProcessInProgressState({
     required super.tasks,
@@ -481,7 +481,7 @@ class TransferProcessInProgressState extends TransferState {
   });
 }
 
-///Todas las transferencias han terminado; [failedCount] dice cuantas fallaron
+/// Every transfer has finished; [failedCount] says how many failed
 class TransferProcessingOKState extends TransferState {
   const TransferProcessingOKState({
     required super.tasks,

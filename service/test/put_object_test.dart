@@ -103,7 +103,7 @@ void main() {
     });
 
     test('Should fail with path traversal in key (400)', () async {
-      //con %2F el cliente no normaliza los '..' y el key llega tal cual al servidor
+      // With %2F the client doesn't normalize the '..' and the key reaches the server as is
       final response = await http.put(
         server.url('/$bucket/..%2F..%2Fescape.txt'),
         headers: server.auth(),
@@ -126,8 +126,8 @@ void main() {
   });
 
   group('S3Controller - PUT Object over an open file (Windows)', () {
-    //en Windows no se puede sustituir un fichero abierto: se reintenta un rato
-    //y, si sigue abierto, 503 (los clientes S3 lo reintentan)
+    // On Windows an open file can't be replaced: it is retried for a while
+    // and, if it stays open, 503 (S3 clients retry it)
     Future<RandomAccessFile> openFor(String key, Duration duration) async {
       final handle = await File('${server.storagePath}/$bucket/$key').open();
       unawaited(Future<void>.delayed(duration, handle.close));
@@ -137,18 +137,18 @@ void main() {
     test(
       'Should replace an object that is open for a moment',
       () async {
-        await server.putObject(bucket, 'abierto.txt', 'antes');
-        await openFor('abierto.txt', const Duration(milliseconds: 300));
+        await server.putObject(bucket, 'open.txt', 'before');
+        await openFor('open.txt', const Duration(milliseconds: 300));
 
         final response = await http.put(
-          server.url('/$bucket/abierto.txt'),
+          server.url('/$bucket/open.txt'),
           headers: server.auth(),
-          body: 'despues',
+          body: 'after',
         );
         expect(response.statusCode, 200, reason: response.body);
         expect(
-          await File('${server.storagePath}/$bucket/abierto.txt').readAsString(),
-          'despues',
+          await File('${server.storagePath}/$bucket/open.txt').readAsString(),
+          'after',
         );
       },
       testOn: 'windows',
@@ -157,21 +157,21 @@ void main() {
     test(
       'Should copy onto an object that is open for a moment',
       () async {
-        await server.putObject(bucket, 'copia-origen.txt', 'nuevo');
-        await server.putObject(bucket, 'copia-abierta.txt', 'viejo');
-        await openFor('copia-abierta.txt', const Duration(milliseconds: 300));
+        await server.putObject(bucket, 'copy-source.txt', 'new');
+        await server.putObject(bucket, 'copy-open.txt', 'old');
+        await openFor('copy-open.txt', const Duration(milliseconds: 300));
 
         final response = await http.put(
-          server.url('/$bucket/copia-abierta.txt'),
+          server.url('/$bucket/copy-open.txt'),
           headers: {
             ...server.auth(),
-            'x-amz-copy-source': '/$bucket/copia-origen.txt',
+            'x-amz-copy-source': '/$bucket/copy-source.txt',
           },
         );
         expect(response.statusCode, 200, reason: response.body);
         expect(
-          await File('${server.storagePath}/$bucket/copia-abierta.txt').readAsString(),
-          'nuevo',
+          await File('${server.storagePath}/$bucket/copy-open.txt').readAsString(),
+          'new',
         );
       },
       testOn: 'windows',
@@ -180,25 +180,25 @@ void main() {
     test(
       'Should answer 503 and keep the object if it stays open',
       () async {
-        await server.putObject(bucket, 'bloqueado.txt', 'antes');
+        await server.putObject(bucket, 'locked.txt', 'before');
         final handle = await openFor(
-          'bloqueado.txt',
+          'locked.txt',
           FileManagementService.replaceTimeout + const Duration(seconds: 3),
         );
 
         final response = await http.put(
-          server.url('/$bucket/bloqueado.txt'),
+          server.url('/$bucket/locked.txt'),
           headers: server.auth(),
-          body: 'despues',
+          body: 'after',
         );
         await handle.close();
         expect(response.statusCode, 503);
         expect(response.body, contains('<Code>ServiceUnavailable</Code>'));
         expect(
-          await File('${server.storagePath}/$bucket/bloqueado.txt').readAsString(),
-          'antes',
+          await File('${server.storagePath}/$bucket/locked.txt').readAsString(),
+          'before',
         );
-        //y no deja el fichero temporal
+        // and the temp file is gone
         expect(
           await Directory('${server.storagePath}/.tmp').list().isEmpty,
           isTrue,
@@ -211,9 +211,9 @@ void main() {
 
   group('S3Controller - PUT Object key validation', () {
     test('Should reject a backslash in the key (400)', () async {
-      //en Windows `a\b` seria otra forma de escribir `a/b`, y permitiria
-      //escribir el marcador de carpeta (`x\.feather-folder`)
-      for (final key in ['carpeta%5Cfichero.txt', 'otra%5C.feather-folder']) {
+      // On Windows `a\b` would be another way to write `a/b`, and it would let
+      // a client write the folder marker (`x\.feather-folder`)
+      for (final key in ['folder%5Cfichero.txt', 'other%5C.feather-folder']) {
         final response = await http.put(
           server.url('/$bucket/$key'),
           headers: server.auth(),
@@ -223,7 +223,7 @@ void main() {
         expect(response.body, contains('<Code>InvalidArgument</Code>'));
       }
       expect(
-        await File('${server.storagePath}/$bucket/carpeta/fichero.txt').exists(),
+        await File('${server.storagePath}/$bucket/folder/file.txt').exists(),
         isFalse,
       );
     });

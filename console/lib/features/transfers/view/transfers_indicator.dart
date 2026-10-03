@@ -2,9 +2,9 @@ import 'package:console/app_exporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
 
-///Boton de las transferencias en segundo plano, siempre visible al pie del
-///rail: un anillo con el progreso total y un badge con las que quedan (o las
-///que fallaron). Abre el [TransfersPanel]
+/// Button of the background transfers, always visible at the rail footer: a
+/// ring with the total progress and a badge with the ones left (or the ones
+/// that failed). It opens the [TransfersPanel]
 class TransfersIndicator extends StatelessWidget {
   const TransfersIndicator({super.key});
 

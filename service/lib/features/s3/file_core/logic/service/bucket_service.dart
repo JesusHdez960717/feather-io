@@ -36,10 +36,10 @@ class BucketService {
     // 1. Physical delete (checks if empty)
     await fileManagement.deleteBucketPhysical(bucketName);
 
-    // 2. Las subidas multipart que tuviera a medias
+    // 2. Its pending multipart uploads
     await MultipartService().abortAll(bucketName);
 
-    // 3. Database delete (sus reglas de acceso anonimo primero)
+    // 3. Database delete (its anonymous access rules first)
     await accessRuleRepo.deleteByBucket(bucketName);
     await bucketRepo.delete(bucketName);
   }
@@ -49,12 +49,12 @@ class BucketService {
     return _toModel(dir, await bucketRepo.findByName(bucketName));
   }
 
-  /// Borra todos los objetos; el bucket, sus metadatos y sus reglas se mantienen
+  /// Deletes every object; the bucket, its metadata and its rules stay.
   Future<void> emptyBucket({required String bucketName}) async {
     await fileManagement.emptyBucket(bucketName);
   }
 
-  /// Reemplaza la descripcion y el color de un bucket existente.
+  /// Replaces the description and color of an existing bucket.
   Future<BucketModel> updateBucket({
     required String bucketName,
     String? description,
@@ -107,7 +107,7 @@ class BucketService {
     return dir;
   }
 
-  /// Junta las estadisticas del disco con los metadatos de la BD
+  /// Joins the disk statistics with the database metadata.
   Future<BucketModel> _toModel(Directory dir, BucketTableData? dbBucket) async {
     final stat = await dir.stat();
 

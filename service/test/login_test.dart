@@ -81,7 +81,7 @@ void main() {
 
     test('Should reject a token signed with another secret', () async {
       final exp = DateTime.now().add(const Duration(hours: 1)).millisecondsSinceEpoch ~/ 1000;
-      final token = JWT({...claims, 'exp': exp}).sign(SecretKey('otro-secreto'));
+      final token = JWT({...claims, 'exp': exp}).sign(SecretKey('other-secret'));
       expect(await listWith(token), 401);
     });
 

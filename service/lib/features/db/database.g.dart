@@ -867,10 +867,10 @@ class ObjectMetaTableData extends DataClass
   final String etag;
   final int size;
 
-  /// Fecha de modificacion del fichero en microsegundos desde epoch
+  /// File modification time, in microseconds since the epoch.
   final int modified;
 
-  /// Cabeceras del objeto en JSON (`{"content-type": "image/png", …}`)
+  /// Object headers as JSON (`{"content-type": "image/png", …}`).
   final String headers;
   const ObjectMetaTableData({
     required this.bucketName,

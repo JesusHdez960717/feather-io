@@ -22,8 +22,8 @@ void main() {
   });
   tearDownAll(server.stop);
 
-  /// El cuerpo aws-chunked de [parts], con firma por trozo (`STREAMING-AWS4-…`)
-  /// o con trailers (`STREAMING-UNSIGNED-PAYLOAD-TRAILER`)
+  /// The aws-chunked body of [parts], with a signature per chunk
+  /// (`STREAMING-AWS4-…`) or with trailers (`STREAMING-UNSIGNED-PAYLOAD-TRAILER`).
   String encode(List<String> parts, {bool trailer = false}) {
     final buffer = StringBuffer();
     for (final part in [...parts, '']) {
@@ -49,15 +49,15 @@ void main() {
   group('AwsChunkedDecoder - PutObject', () {
     test('Should store the content without the chunk signatures', () async {
       final response = await http.put(
-        server.url('/$bucket/firmado.txt'),
+        server.url('/$bucket/signed.txt'),
         headers: chunkedHeaders(),
-        body: encode(['hola ', 'mundo']),
+        body: encode(['hello ', 'mundo']),
       );
       expect(response.statusCode, 200, reason: response.body);
-      expect(await stored('firmado.txt'), 'hola mundo');
+      expect(await stored('signed.txt'), 'hello mundo');
       expect(
         response.headers['etag'],
-        '"${md5.convert(utf8.encode('hola mundo'))}"',
+        '"${md5.convert(utf8.encode('hello mundo'))}"',
       );
     });
 
@@ -73,44 +73,44 @@ void main() {
 
     test('Should store an empty object', () async {
       final response = await http.put(
-        server.url('/$bucket/vacio.txt'),
+        server.url('/$bucket/empty.txt'),
         headers: chunkedHeaders(),
         body: encode([]),
       );
       expect(response.statusCode, 200, reason: response.body);
-      expect(await stored('vacio.txt'), '');
+      expect(await stored('empty.txt'), '');
     });
 
     test('Should decode a body that arrives cut at any byte', () async {
-      final bytes = utf8.encode(encode(['primer trozo, ', 'segundo trozo']));
-      final request = http.StreamedRequest('PUT', server.url('/$bucket/cortado.txt'))
+      final bytes = utf8.encode(encode(['first chunk, ', 'second chunk']));
+      final request = http.StreamedRequest('PUT', server.url('/$bucket/split.txt'))
         ..headers.addAll(chunkedHeaders())
         ..contentLength = bytes.length;
       final sent = request.send();
-      //de 3 en 3 bytes: corta las lineas de tamaño y los \r\n
+      // 3 bytes at a time: splits the size lines and the \r\n
       for (var i = 0; i < bytes.length; i += 3) {
         request.sink.add(bytes.sublist(i, i + 3 > bytes.length ? bytes.length : i + 3));
       }
       unawaited(request.sink.close());
       final response = await sent;
       expect(response.statusCode, 200);
-      expect(await stored('cortado.txt'), 'primer trozo, segundo trozo');
+      expect(await stored('split.txt'), 'first chunk, second chunk');
     });
 
     test('Should not store aws-chunked as the Content-Encoding', () async {
       await http.put(
-        server.url('/$bucket/codificado.txt'),
+        server.url('/$bucket/encoded.txt'),
         headers: {...chunkedHeaders(), 'content-encoding': 'aws-chunked,gzip'},
         body: encode(['x']),
       );
       final head = await http.head(
-        server.url('/$bucket/codificado.txt'),
+        server.url('/$bucket/encoded.txt'),
         headers: server.auth(),
       );
       expect(head.headers['content-encoding'], 'gzip');
 
       final head2 = await http.head(
-        server.url('/$bucket/firmado.txt'),
+        server.url('/$bucket/signed.txt'),
         headers: server.auth(),
       );
       expect(head2.headers['content-encoding'], isNull);
@@ -118,24 +118,24 @@ void main() {
 
     test('Should reject a malformed chunk size (400) and store nothing', () async {
       final response = await http.put(
-        server.url('/$bucket/roto.txt'),
+        server.url('/$bucket/broken.txt'),
         headers: chunkedHeaders(),
         body: 'zz;chunk-signature=$signature\r\nabc\r\n',
       );
       expect(response.statusCode, 400);
       expect(response.body, contains('<Code>IncompleteBody</Code>'));
-      expect(await File('${server.storagePath}/$bucket/roto.txt').exists(), isFalse);
+      expect(await File('${server.storagePath}/$bucket/broken.txt').exists(), isFalse);
     });
 
     test('Should keep the previous object when an upload fails', () async {
-      await server.putObject(bucket, 'conservar.txt', 'original');
+      await server.putObject(bucket, 'keep.txt', 'original');
       final response = await http.put(
-        server.url('/$bucket/conservar.txt'),
+        server.url('/$bucket/keep.txt'),
         headers: chunkedHeaders(),
         body: 'zz\r\nroto\r\n',
       );
       expect(response.statusCode, 400);
-      expect(await stored('conservar.txt'), 'original');
+      expect(await stored('keep.txt'), 'original');
     });
 
     test('Should not list the temporary folder as a bucket', () async {
@@ -150,7 +150,7 @@ void main() {
 
     test('Should reject a body without the last chunk (400)', () async {
       final response = await http.put(
-        server.url('/$bucket/corto.txt'),
+        server.url('/$bucket/short.txt'),
         headers: chunkedHeaders(),
         body: '3;chunk-signature=$signature\r\nabc\r\n',
       );
@@ -162,18 +162,18 @@ void main() {
   group('AwsChunkedDecoder - UploadPart', () {
     test('Should decode the parts of a multipart upload', () async {
       final created = await http.post(
-        server.url('/$bucket/partes.txt?uploads'),
+        server.url('/$bucket/parts.txt?uploads'),
         headers: server.auth(json: true),
       );
       final uploadId = jsonDecode(created.body)['upload_id'] as String;
 
       final part = await http.put(
-        server.url('/$bucket/partes.txt?partNumber=1&uploadId=$uploadId'),
+        server.url('/$bucket/parts.txt?partNumber=1&uploadId=$uploadId'),
         headers: chunkedHeaders(),
-        body: encode(['par', 'te']),
+        body: encode(['pa', 'rt']),
       );
       expect(part.statusCode, 200, reason: part.body);
-      expect(part.headers['etag'], '"${md5.convert(utf8.encode('parte'))}"');
+      expect(part.headers['etag'], '"${md5.convert(utf8.encode('part'))}"');
     });
   });
 }

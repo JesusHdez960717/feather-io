@@ -7,15 +7,15 @@ class BucketCubit extends Cubit<BucketState>
   final AuthCubit _auth;
 
   BucketCubit(this._repo, this._auth) : super(const BucketInitialState()) {
-    //cada seccion (explorador, Buckets) tiene su propio BucketCubit: si otro
-    //cambia los buckets, este recarga su lista
+    // each section (browser, Buckets) has its own BucketCubit: if another one
+    // changes the buckets, this one reloads its list
     onBus<BucketChangedEvent>((event) {
       if (!identical(event.source, this)) load();
     });
   }
 
-  ///Recarga la lista tras un cambio hecho desde esta seccion y avisa al resto
-  ///(las demas listas de buckets y el explorador)
+  /// Reloads the list after a change made from this section and notifies the
+  /// others (the other bucket lists and the browser)
   Future<void> reloadAfterChange({
     required BucketChange change,
     required String bucketName,
@@ -65,7 +65,7 @@ class BucketCubit extends Cubit<BucketState>
     );
   }
 
-  ///Ejecuta una accion sobre los buckets y, si sale bien, recarga el listado
+  /// Runs an action on the buckets and, if it succeeds, reloads the list
   Future<void> _process(
     Future<void> Function() action, {
     required BucketModel bucket,

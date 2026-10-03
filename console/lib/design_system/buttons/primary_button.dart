@@ -108,13 +108,13 @@ class PrimaryButton extends StatelessWidget {
   final double? w;
   final double? h;
 
-  ///Margen a cada lado del contenido; sin ancho fijo, el boton mide su
-  ///contenido mas este margen
+  /// Margin on each side of the content; without a fixed width, the button is
+  /// as wide as its content plus this margin
   final double? horizontalPadding;
   final BorderRadius? borderRadius;
 
-  ///Mientras carga, conserva tamaño y color, cambia el icono por un spinner e
-  ///ignora las pulsaciones. Quien lo usa pasa el texto en gerundio (*Creando...*)
+  /// While loading it keeps its size and color, swaps the icon for a spinner and
+  /// ignores taps. The caller passes the text in progressive form (*Creating...*)
   final bool isLoading;
 
   const PrimaryButton({

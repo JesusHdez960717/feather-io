@@ -2,7 +2,7 @@ import 'package:console/app_exporter.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
-///Pestaña *General* del detalle de un bucket: estadisticas y metadatos
+/// *General* tab of a bucket's details: statistics and metadata
 class BucketGeneralTab extends StatelessWidget {
   final BucketModel bucket;
 

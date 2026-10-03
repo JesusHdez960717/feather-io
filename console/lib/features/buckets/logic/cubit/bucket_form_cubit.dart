@@ -1,8 +1,8 @@
 import 'package:console/app_exporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-///Estado del cajon de crear/editar bucket. Vive mientras el cajon esta abierto, asi la
-///carga y los errores se muestran dentro del formulario y no en la pantalla de fondo
+/// State of the create/edit bucket drawer. It lives while the drawer is open, so
+/// loading and errors show inside the form and not on the screen behind
 class BucketFormCubit extends Cubit<BucketFormState> {
   final BucketRepo _repo;
   final AuthCubit _auth;
@@ -47,7 +47,7 @@ class BucketFormCubit extends Cubit<BucketFormState> {
     );
   }
 
-  ///[action] devuelve el bucket actualizado cuando la API lo devuelve (editar)
+  /// [action] returns the updated bucket when the API returns it (edit)
   Future<void> _process({
     required String name,
     required BucketChange change,
@@ -70,8 +70,8 @@ class BucketFormCubit extends Cubit<BucketFormState> {
     }
   }
 
-  ///Errores que se muestran en su campo: un 422 por `fieldName` y un 409 (el
-  ///bucket ya existe) en el nombre. El resto va al aviso general del formulario
+  /// Errors shown on their field: a 422 by `fieldName` and a 409 (the bucket
+  /// already exists) on the name. The rest goes to the form's general notice
   Map<String, String> _fieldErrors(GlobalException exception) {
     return switch (exception.type) {
       GlobalExceptionType.validation => switch (exception.data) {
@@ -86,7 +86,7 @@ class BucketFormCubit extends Cubit<BucketFormState> {
   }
 }
 
-///Nombres de campo del formulario, iguales a los `fieldName` que devuelve la API
+/// Field names of the form, equal to the `fieldName`s the API returns
 abstract class BucketFormField {
   static const String name = 'name';
   static const String description = 'description';
@@ -110,7 +110,7 @@ class BucketFormProcessingOKState extends BucketFormState {
   final String name;
   final BucketChange change;
 
-  ///El bucket ya actualizado, al editar
+  /// The already updated bucket, when editing
   final BucketModel? bucket;
 
   const BucketFormProcessingOKState({
@@ -123,7 +123,7 @@ class BucketFormProcessingOKState extends BucketFormState {
 class BucketFormProcessingErrorState extends BucketFormState {
   final GlobalException exception;
 
-  ///Errores por campo; si esta vacio, el error es de todo el formulario
+  /// Errors per field; if empty, the error belongs to the whole form
   final Map<String, String> fieldErrors;
 
   const BucketFormProcessingErrorState(

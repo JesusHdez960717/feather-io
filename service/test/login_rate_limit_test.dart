@@ -13,7 +13,7 @@ void main() {
   final server = TestServer(port: 8107, name: 'login_rate_limit');
 
   setUpAll(() async {
-    //limites pequeños para no esperar en el test
+    // Small limits, so the test doesn't wait
     env.put('LOGIN_MAX_FAILURES', '3');
     env.put('LOGIN_LOCK_SECONDS', '2');
     env.put('LOGIN_FAILURE_DELAY_MS', '0');
@@ -33,36 +33,36 @@ void main() {
   group('AdminController - Login rate limit', () {
     test('Should lock the IP after 3 failures, even with good credentials', () async {
       for (var i = 0; i < 3; i++) {
-        expect((await login('mal$i')).statusCode, 403);
+        expect((await login('wrong$i')).statusCode, 403);
       }
 
       final locked = await login(testSecret);
       expect(locked.statusCode, 429);
       expect(int.parse(locked.headers['retry-after']!), inInclusiveRange(1, 2));
 
-      //X-Forwarded-For no cuenta sin TRUSTED_PROXIES: no sirve para saltarselo
+      // X-Forwarded-For doesn't count without TRUSTED_PROXIES: it can't bypass the lock
       final spoofed = await login(
         testSecret,
         headers: {'x-forwarded-for': '203.0.113.7'},
       );
       expect(spoofed.statusCode, 429);
 
-      //un token ya emitido sigue valiendo durante el bloqueo
+      // A token issued before keeps working during the lock
       final list = await http.get(server.url('/'), headers: server.auth());
       expect(list.statusCode, 200);
 
-      //al acabar el bloqueo se puede entrar
+      // Once the lock ends, the login works again
       await Future<void>.delayed(const Duration(milliseconds: 2100));
       expect((await login(testSecret)).statusCode, 200);
     });
 
     test('Should forget the failures after a successful login', () async {
       for (var i = 0; i < 2; i++) {
-        expect((await login('mal$i')).statusCode, 403);
+        expect((await login('wrong$i')).statusCode, 403);
       }
       expect((await login(testSecret)).statusCode, 200);
       for (var i = 0; i < 2; i++) {
-        expect((await login('mal$i')).statusCode, 403);
+        expect((await login('wrong$i')).statusCode, 403);
       }
       expect((await login(testSecret)).statusCode, 200);
     });

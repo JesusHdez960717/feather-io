@@ -1,14 +1,13 @@
 # Feather-io
 
-S3-Compatible Storage System.
+S3-compatible storage system.
 
-## Arquitectura de API
+## API architecture
 
-El servicio backend expone dos interfaces:
+The backend service exposes two interfaces:
 
-* **S3 API**: Compatible con el protocolo S3.
-* **Admin API**: Gestión interna del sistema (vía `ADMIN_PREFIX`).
+* **S3 API**: compatible with the S3 protocol.
+* **Admin API**: internal management of the system (through `ADMIN_PREFIX`).
 
-> **Importante**: Las rutas administrativas comienzan con `_` (ej. `_admin`) para no entrar en
-> conflicto con los nombres de los buckets de S3.
- 
+> **Important**: admin routes start with `_` (e.g. `_admin`) so they don't collide with S3 bucket
+> names.

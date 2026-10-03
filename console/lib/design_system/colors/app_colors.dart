@@ -13,8 +13,8 @@ class AppColors {
   PaletteColor palette = PaletteColor();
 }
 
-///Colores que el usuario puede elegir (p. ej. el color de un bucket). Todos
-///superan 5:1 con un icono blanco encima
+/// Colors the user can pick (e.g. a bucket's color). All of them exceed 5:1
+/// with a white icon on top
 class PaletteColor {
   Color get violet => const Color(0xFF5C4999);
 
@@ -32,7 +32,7 @@ class PaletteColor {
 
   Color get slate => const Color(0xFF475569);
 
-  ///Cuñas del circulo de color personalizado, en sentido horario desde arriba
+  /// Wedges of the custom color circle, clockwise from the top
   List<Color> get wheel => const [
     Color(0xFFEF4444),
     Color(0xFFF97316),
@@ -46,7 +46,7 @@ class PaletteColor {
 }
 
 class PrimaryColor {
-  ///purple: 3D3065
+  /// purple: 3D3065
   Color get purple => const Color(0xFF3D3065);
 
   Color get backgroundForm => background1.brighten(0.05);
@@ -57,38 +57,38 @@ class PrimaryColor {
 
   Color get background3 => const Color(0xff2f2c3f);
 
-  ///light blue / purple: 9484C5
+  /// light blue / purple: 9484C5
   Color get primaryFaded => const Color(0xFF9484C5);
 
-  ///Anillo de foco de teclado: 5.4:1 sobre background2
+  /// Keyboard focus ring: 5.4:1 over background2
   Color get focusRing => primaryFaded;
 
-  ///Casillas marcadas y borde de lo seleccionado: 5.4:1 sobre background2
+  /// Checked boxes and the border of what is selected: 5.4:1 over background2
   Color get selection => primaryFaded;
 
-  ///Amarillo de marca: acento para destacar (badges, destino activo, avisos).
-  ///Encima va texto en background1 (12:1)
+  /// Brand yellow: accent to highlight (badges, active target, notices).
+  /// Text on top goes in background1 (12:1)
   Color get secondary => const Color(0xFFFDCA3C);
 
-  ///Texto, iconos y bordes de error sobre fondos oscuros: 4.7:1 sobre
-  ///backgroundForm
+  /// Error text, icons and borders over dark backgrounds: 4.7:1 over
+  /// backgroundForm
   Color get error => const Color(0xFFE95450);
 
-  ///Relleno de acciones destructivas y del snackbar de error: blanco encima
-  ///da 5.6:1
+  /// Fill of destructive actions and of the error snackbar: white on top
+  /// gives 5.6:1
   Color get errorAction => const Color(0xFFC62828);
 
-  ///Texto e iconos de exito sobre fondos oscuros: 5.9:1 sobre background2
+  /// Success text and icons over dark backgrounds: 5.9:1 over background2
   Color get green => const Color(0xFF2CAA4A);
 
-  ///Relleno del snackbar de exito: blanco encima da 5.1:1
+  /// Fill of the success snackbar: white on top gives 5.1:1
   Color get greenAction => const Color(0xFF2E7D32);
 }
 
 class NeutralColor {
   Color get grey5 => const Color(0xff575562);
 
-  ///Texto desactivado: 5.2:1 sobre background2
+  /// Disabled text: 5.2:1 over background2
   Color get grey4 => const Color(0xff8a8996);
 
   Color get grey3 => const Color(0xffafafaf);

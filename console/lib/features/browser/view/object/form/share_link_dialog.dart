@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
 
-///Dialogo para compartir un objeto con un enlace que caduca (URL prefirmada).
-///Genera el enlace al abrirse y al cambiar la caducidad
+/// Dialog to share an object with a link that expires (presigned URL).
+/// It generates the link when it opens and when the expiry changes
 class ShareLinkDialog extends StatefulWidget {
   static void show({required String bucket, required String key}) {
     DialogTemplate.open(

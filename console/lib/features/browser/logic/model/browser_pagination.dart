@@ -1,4 +1,4 @@
-///Tamaños de pagina del explorador de objetos
+/// Page sizes of the object browser
 abstract class BrowserPagination {
   static const int defaultPageSize = 50;
 

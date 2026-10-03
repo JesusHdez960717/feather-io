@@ -2,11 +2,11 @@ import 'package:console/app_exporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
 
-///Cajon para crear un bucket o, con [bucket], editar su descripcion y color
+/// Drawer to create a bucket or, with [bucket], edit its description and color
 class BucketForm extends StatefulWidget {
-  ///Abre el cajon con su propio [BucketFormCubit]: mientras se envia, el cajon
-  ///muestra su velo de carga y los errores se muestran dentro del formulario.
-  ///Al guardar, recarga el [BucketCubit] de la pantalla
+  /// Opens the drawer with its own [BucketFormCubit]: while submitting, the drawer
+  /// shows its loading veil and errors show inside the form.
+  /// On save, it reloads the screen's [BucketCubit]
   static Future<void> open(BuildContext context, {BucketModel? bucket}) async {
     final key = GlobalKey<_BucketFormState>();
     final bucketCubit = context.read<BucketCubit>();
@@ -37,10 +37,10 @@ class BucketForm extends StatefulWidget {
     await formCubit.close();
   }
 
-  ///Id del [LoadingOverlay] del cajon
+  /// Id of the drawer's [LoadingOverlay]
   static const String loadingId = 'bucket-form';
 
-  ///Bucket a editar; si es null, el cajon crea uno nuevo
+  /// Bucket to edit; if null, the drawer creates a new one
   final BucketModel? bucket;
 
   const BucketForm({super.key, this.bucket});
@@ -60,18 +60,18 @@ class _BucketFormState extends State<BucketForm> {
   final _descriptionFocus = FocusNode();
   Color? _color;
 
-  ///Tras el primer intento de envio se valida en cada cambio
+  /// After the first submit attempt it validates on every change
   bool _submitted = false;
 
-  ///Errores de la API por campo; se borran al editar ese campo
+  /// API errors per field; cleared when that field is edited
   Map<String, String> _serverErrors = const {};
 
-  ///Error de la API que no es de un campo concreto
+  /// API error that doesn't belong to a specific field
   String? _formError;
 
   late final BucketFormCubit cubit;
 
-  ///Al editar, el nombre no se puede cambiar
+  /// When editing, the name can't be changed
   bool get _isEdit => widget.bucket != null;
 
   @override
@@ -117,8 +117,8 @@ class _BucketFormState extends State<BucketForm> {
     return null;
   }
 
-  ///Lo que ya no se arregla escribiendo mas (caracteres, guion al inicio) falla
-  ///al momento; la longitud y el guion final solo tras intentar enviar
+  /// What typing more can no longer fix (characters, leading hyphen) fails at
+  /// once; the length and the trailing hyphen only after trying to submit
   List<AppValidationRule> get _nameRules {
     final name = _nameController.text;
     final lengthOk = name.length >= 3 && name.length <= _nameMaxLength;
@@ -358,8 +358,8 @@ class _BucketFormState extends State<BucketForm> {
   }
 }
 
-///Pie del cajon: *Cancelar* y *Crear bucket* (o *Guardar cambios* al editar).
-///Mientras se envia, el velo de carga del cajon los cubre
+/// Drawer footer: *Cancel* and *Create bucket* (or *Save changes* when editing).
+/// While submitting, the drawer's loading veil covers them
 class _BucketFormFooter extends StatelessWidget {
   final bool isEdit;
   final VoidCallback onSubmit;

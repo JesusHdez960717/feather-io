@@ -23,16 +23,16 @@ class AppBorder {
   }
 }
 
-///Escala de 3 pasos. Un radio interior es el exterior menos el relleno que
-///los separa (p. ej. pista `m` con 4px de relleno → segmentos `s`)
+/// 3-step scale. An inner radius is the outer one minus the padding between
+/// them (e.g. an `m` track with 4px of padding → `s` segments)
 class AppRadius {
-  ///4.0: casillas, badges y chips dentro de una barra
+  /// 4.0: checkboxes, badges and chips inside a bar
   Radius get xs => const Radius.circular(4);
 
-  ///8.0: controles (botones, inputs, buscador, menus, dialogos, segmentos)
+  /// 8.0: controls (buttons, inputs, search, menus, dialogs, segments)
   Radius get s => const Radius.circular(8);
 
-  ///12.0: tarjetas, paneles, snackbars y la pista del selector
+  /// 12.0: cards, panels, snackbars and the picker track
   Radius get m => const Radius.circular(12);
 
   Radius get def => m;
@@ -53,41 +53,41 @@ class AppBorderRadius {
 }
 
 class AppBorderWidth {
-  ///1.0
+  /// 1.0
   double get s => 1;
 
-  ///1.5
+  /// 1.5
   double get m => 1.5;
 
-  ///2.0
+  /// 2.0
   double get l => 2.0;
 
-  ///m = 1.5
+  /// m = 1.5
   double get def => m;
 }
 
 class AppPadding {
-  ///4.0
+  /// 4.0
   double get xs => 4.0;
 
-  ///8.0
+  /// 8.0
   double get s => 8.0;
 
-  ///10.0
+  /// 10.0
   double get sm => 10.0;
 
-  ///12.0
+  /// 12.0
   double get m => 12.0;
 
-  ///16.0
+  /// 16.0
   double get l => 16.0;
 
-  ///20.0
+  /// 20.0
   double get xl => 20.0;
 
-  ///24.0
+  /// 24.0
   double get xxl => 24.0;
 
-  ///medium: 12.0
+  /// medium: 12.0
   double get def => m;
 }

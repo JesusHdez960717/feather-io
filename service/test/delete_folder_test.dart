@@ -33,14 +33,14 @@ void main() {
 
   group('AdminController - Delete folder', () {
     test('Should delete the folder with all its content', () async {
-      await server.putObject(bucket, 'fotos/a.txt', 'a');
-      await server.putObject(bucket, 'fotos/2026/b.txt', 'b');
-      await server.putObject(bucket, 'otra/c.txt', 'c');
+      await server.putObject(bucket, 'photos/a.txt', 'a');
+      await server.putObject(bucket, 'photos/2026/b.txt', 'b');
+      await server.putObject(bucket, 'other/c.txt', 'c');
 
-      final response = await deleteFolder('fotos/');
+      final response = await deleteFolder('photos/');
       expect(response.statusCode, 204, reason: response.body);
-      expect(await Directory('${server.storagePath}/$bucket/fotos').exists(), isFalse);
-      expect(await File('${server.storagePath}/$bucket/otra/c.txt').exists(), isTrue);
+      expect(await Directory('${server.storagePath}/$bucket/photos').exists(), isFalse);
+      expect(await File('${server.storagePath}/$bucket/other/c.txt').exists(), isTrue);
     });
 
     test('Should delete a nested folder and clean its empty parents', () async {
@@ -55,10 +55,10 @@ void main() {
     });
 
     test('Should reject a prefix that is not a folder (400)', () async {
-      await server.putObject(bucket, 'fichero.txt', 'f');
-      final response = await deleteFolder('fichero.txt');
+      await server.putObject(bucket, 'file.txt', 'f');
+      final response = await deleteFolder('file.txt');
       expect(response.statusCode, 400);
-      expect(await File('${server.storagePath}/$bucket/fichero.txt').exists(), isTrue);
+      expect(await File('${server.storagePath}/$bucket/file.txt').exists(), isTrue);
     });
 
     test('Should reject a missing prefix and a path traversal (400)', () async {

@@ -55,14 +55,14 @@ void main() {
       );
       expect(response.statusCode, 200, reason: response.body);
       expect(await bucketExists('create-test-sigv4'), isTrue);
-      //como S3: sin cuerpo (los clientes lo leerian como XML) y con Location
+      // As in S3: no body (clients would parse it as XML) and a Location
       expect(response.body, isEmpty);
       expect(response.headers['location'], '/create-test-sigv4');
     });
 
     test('PUT /{bucket} - Should accept a request without Content-Length nor body', () async {
-      //como el CreateBucket de aws-sdk-java-v2; package:http siempre manda la
-      //cabecera, asi que va por socket
+      // Like aws-sdk-java-v2's CreateBucket; package:http always sends the
+      // header, so this goes through a raw socket
       final socket = await Socket.connect('localhost', server.port);
       socket.write(
         'PUT /create-test-no-length HTTP/1.1\r\n'
@@ -81,7 +81,7 @@ void main() {
       final response = await http.put(
         server.url('/create-test-colored'),
         headers: jsonHeaders(),
-        body: jsonEncode({'description': 'Imágenes de la web', 'color': color}),
+        body: jsonEncode({'description': 'Website images: café', 'color': color}),
       );
       expect(response.statusCode, 200);
       expect(await bucketExists('create-test-colored'), isTrue);
@@ -91,7 +91,7 @@ void main() {
       final bucket = (jsonDecode(list.body) as List).firstWhere(
         (b) => b['name'] == 'create-test-colored',
       );
-      expect(bucket['description'], 'Imágenes de la web');
+      expect(bucket['description'], 'Website images: café');
       expect(bucket['color'], color);
     });
 

@@ -1,63 +1,44 @@
-# Pruebas de compatibilidad S3
+# S3 compatibility tests
 
-Clientes S3 reales, en Docker, contra un feather-io ya arrancado. No forman parte de
-`dart test`: se lanzan a mano antes de una versión o tras tocar la API S3.
+Real S3 clients, in Docker, against a running feather-io. They are not part of `dart test`: run
+them by hand before a release or after touching the S3 API.
 
-| Objetivo | Qué es                                                                                                                                     |
-|----------|--------------------------------------------------------------------------------------------------------------------------------------------|
-| `awscli` | `awscli.sh` con la imagen `amazon/aws-cli` (CLI v2 actual: firma por trozos `aws-chunked` con CRC32, multipart, rangos, `sync`, presign…). |
-| `rclone` | `rclone.sh` con la imagen `rclone/rclone`: `copy`, `sync`, `check` por md5 (ETag), multipart, `cat` con rangos, `purge`…                   |
-| `mint`   | [MinIO Mint](https://github.com/minio/mint) (imagen `minio/mint`, de 2024): las suites de los SDKs de AWS y de MinIO, s3cmd y mc.          |
+| Target   | What it is                                                                                                                                     |
+|----------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| `awscli` | `awscli.sh` with the `amazon/aws-cli` image (current CLI v2: `aws-chunked` chunk signing with CRC32, multipart, ranges, `sync`, presign…).     |
+| `rclone` | `rclone.sh` with the `rclone/rclone` image: `copy`, `sync`, `check` by md5 (ETag), multipart, `cat` with ranges, `purge`…                       |
+| `mint`   | [MinIO Mint](https://github.com/minio/mint) (`minio/mint` image, from 2024): the AWS and MinIO SDK suites, s3cmd and mc.                       |
 
-## Uso
+## Usage
 
-Arranca el servicio (ver `service/README.md`) y, desde la raíz del repo:
-
-```bash
-ACCESS_KEY=access SECRET_KEY=secret service/tool/s3_compat/run.sh          # awscli y rclone
-ACCESS_KEY=access SECRET_KEY=secret service/tool/s3_compat/run.sh mint     # Mint (unos 5 min)
-MINT_SUITES="minio-go s3cmd" service/tool/s3_compat/run.sh mint            # solo algunas suites
-```
-
-`ACCESS_KEY`/`SECRET_KEY` son `FEATHER_ACCESS`/`FEATHER_SECRET`. `ENDPOINT` (por defecto
-`http://host.docker.internal:8080`) es el servicio visto desde los contenedores. Cada paso imprime
-`PASS` o `FAIL` (con la salida del error) y el script termina con error si algo falla. La salida de
-cada objetivo se guarda en `out/` (`awscli.txt`, `rclone.txt`, `mint.txt` y `mint-logs/log.json`;
-otra carpeta con `OUT_DIR`), que no se sube al repo.
-
-Mira también el log del servicio: los clientes reintentan, así que un error 500 puede no verse en
-la batería y sí en el servidor (`[ERROR] Unhandled error`).
-
-## Resumen de resultados
-
-`report.py` escribe [`RESULTADOS.md`](RESULTADOS.md) a partir de `out/` (más el JSON de
-`dart test` y los análisis estáticos): los totales de cada batería y solo lo que falla, con su
-causa en el caso de Mint. El procedimiento completo, paso a paso, está en *Full test run* de
-`CLAUDE.md`.
+Start the service (see `service/README.md`) and, from the repo root:
 
 ```bash
-python service/tool/s3_compat/report.py --server-log <log del servicio>
+ACCESS_KEY=access SECRET_KEY=secret service/tool/s3_compat/run.sh          # awscli and rclone
+ACCESS_KEY=access SECRET_KEY=secret service/tool/s3_compat/run.sh mint     # Mint (about 5 min)
+MINT_SUITES="minio-go s3cmd" service/tool/s3_compat/run.sh mint            # only some suites
 ```
 
-## Resultados (octubre de 2026)
+`ACCESS_KEY`/`SECRET_KEY` are `FEATHER_ACCESS`/`FEATHER_SECRET`. `ENDPOINT` (by default
+`http://host.docker.internal:8080`) is the service as seen from the containers. Each step prints
+`PASS` or `FAIL` (with the error output) and the script exits with an error if anything fails. The
+output of each target is saved in `out/` (`awscli.txt`, `rclone.txt`, `mint.txt` and
+`mint-logs/log.json`; another folder with `OUT_DIR`), which is not committed.
 
-El detalle de la última ejecución completa, test a test, está en [`RESULTADOS.md`](RESULTADOS.md).
+Check the service log too: clients retry, so a 500 error may not show in the battery but does on
+the server (`[ERROR] Unhandled error`).
 
-- Tests del servicio: 307/307. `awscli` (aws-cli 2.37.9): 34/34. `rclone` (v1.75.1): 19/19.
-- Mint: sin ningún fallo `aws-sdk-java`, `aws-sdk-java-v2` y `s3cmd`; `minio-go` y `minio-java`
-  terminan con fallos solo en funciones fuera de alcance (SigV2, APIs de MinIO, notificaciones…).
-  El resto se corta en funciones fuera de alcance:
+## Results summary
 
-| Suite          | Se corta en                                                                                    |
-|----------------|------------------------------------------------------------------------------------------------|
-| `awscli`       | `s3 presign` de la CLI v1, que firma con SigV2                                                 |
-| `aws-sdk-go`   | espera que una URL prefirmada valide el `x-amz-content-sha256` de una cabecera (con firma por cabecera sí se valida) |
-| `aws-sdk-php`  | abortar una subida inexistente: espera 204 como MinIO; S3 y feather-io dan 404                 |
-| `aws-sdk-ruby` | subida con POST policy                                                                         |
-| `minio-py`     | snowball (API propia de MinIO)                                                                 |
-| `minio-js`     | POST policy, notificaciones, S3 Select, retention, force-delete de MinIO y keys con `<>:"\|?*` |
-| `mc`           | POST policy                                                                                    |
+`report.py` writes [`RESULTS.md`](RESULTS.md) from `out/` (plus the `dart test` JSON and the static
+analyses): the totals of each battery and only what fails, with its cause for Mint. The full
+procedure, step by step, is in *Full test run* in `CLAUDE.md`.
 
-Fuera de alcance (ver *Aparcado* en `ROADMAP.md`): SigV2, POST policy, validar sha256/checksums,
-versionado, etiquetas, notificaciones, S3 Select, retention/object lock, las APIs propias de MinIO
-y las keys con caracteres que el sistema de ficheros no admite.
+```bash
+python service/tool/s3_compat/report.py --server-log <service log>
+```
+
+The details of the last full run are in [`RESULTS.md`](RESULTS.md). Out of scope (see *Parked* in
+`ROADMAP.md`): SigV2, POST policy, validating sha256/checksums, versioning, tags, notifications,
+S3 Select, retention/object lock, MinIO's own APIs and keys with characters the filesystem doesn't
+support.

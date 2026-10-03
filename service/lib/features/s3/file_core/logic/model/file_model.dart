@@ -5,7 +5,7 @@ class FileModel implements Serializable {
   final int size;
   final DateTime lastModified;
 
-  /// md5 del contenido (sin comillas), o `md5-N` si se subio por partes
+  /// md5 of the content (without quotes), or `md5-N` for a multipart upload.
   final String etag;
 
   FileModel({

@@ -6,17 +6,17 @@ import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 import 'package:service/feather.dart';
 
-/// Subidas multipart de S3: se inicia, se suben las partes (cada una a disco
-/// como stream) y al completarla se juntan en el objeto final.
+/// S3 multipart uploads: one is started, its parts are uploaded (each one to
+/// disk as a stream) and on completion they are joined into the final object.
 ///
-/// Las subidas en curso viven en `STORAGE_VOLUME_PATH/.multipart/<uploadId>/`
-/// (un nombre de bucket no puede empezar por punto, asi que no se lista):
-/// `upload.json` con el bucket y la key, y por cada parte `<n>.part` y su md5
-/// en `<n>.etag`.
+/// Pending uploads live in `STORAGE_VOLUME_PATH/.multipart/<uploadId>/` (a
+/// bucket name can't start with a dot, so it isn't listed): `upload.json` with
+/// the bucket and the key, and for each part `<n>.part` and its md5 in
+/// `<n>.etag`.
 class MultipartService {
   static const String folderName = '.multipart';
 
-  /// Tamaño minimo de cada parte salvo la ultima, como en S3 (5 MiB)
+  /// Minimum size of every part but the last one, as in S3 (5 MiB).
   static const int minPartSize = 5 * 1024 * 1024;
   static const int maxPartNumber = 10000;
 
@@ -28,8 +28,8 @@ class MultipartService {
 
   Directory get _root => Directory(p.join(env.storageVolumePath, folderName));
 
-  /// CreateMultipartUpload. Las [headers] del objeto (`Content-Type`,
-  /// `x-amz-meta-*`…) se guardan con la subida y se aplican al completarla
+  /// CreateMultipartUpload. The object's [headers] (`Content-Type`,
+  /// `x-amz-meta-*`…) are stored with the upload and applied on completion.
   Future<MultipartUploadModel> create({
     required String bucketName,
     required String key,
@@ -63,8 +63,8 @@ class MultipartService {
     );
   }
 
-  /// UploadPart: guarda la parte [partNumber] (si ya existia, la sustituye) y
-  /// devuelve su ETag (el md5 en hexadecimal)
+  /// UploadPart: stores part [partNumber] (replacing it if it already existed)
+  /// and returns its ETag (the hex md5).
   Future<String> uploadPart({
     required String bucketName,
     required String key,
@@ -75,7 +75,7 @@ class MultipartService {
     if (partNumber < 1 || partNumber > maxPartNumber) {
       throw S3Exception(
         S3ErrorCode.invalidArgument,
-        message: 'El número de parte debe estar entre 1 y $maxPartNumber.',
+        message: 'The part number must be between 1 and $maxPartNumber.',
         resource: key,
       );
     }
@@ -89,8 +89,8 @@ class MultipartService {
     return etag;
   }
 
-  /// CompleteMultipartUpload: junta [parts] (en orden) en el objeto final,
-  /// que sustituye al que hubiera, y borra la subida
+  /// CompleteMultipartUpload: joins [parts] (in order) into the final object,
+  /// which replaces any existing one, and deletes the upload.
   Future<CompletedMultipartModel> complete({
     required String bucketName,
     required String key,
@@ -102,7 +102,7 @@ class MultipartService {
     if (parts.isEmpty) {
       throw S3Exception(
         S3ErrorCode.malformedXML,
-        message: 'Hay que indicar al menos una parte.',
+        message: 'At least one part must be specified.',
         resource: key,
       );
     }
@@ -111,7 +111,7 @@ class MultipartService {
       if (parts[i].partNumber <= parts[i - 1].partNumber) {
         throw S3Exception(
           S3ErrorCode.invalidPartOrder,
-          message: 'Las partes deben ir en orden ascendente.',
+          message: 'The parts must be in ascending order.',
           resource: key,
         );
       }
@@ -127,7 +127,7 @@ class MultipartService {
       if (!await file.exists() || !await etagFile.exists()) {
         throw S3Exception(
           S3ErrorCode.invalidPart,
-          message: 'La parte $number no se ha subido.',
+          message: 'Part $number has not been uploaded.',
           resource: key,
         );
       }
@@ -136,7 +136,7 @@ class MultipartService {
       if (given.isNotEmpty && given != stored) {
         throw S3Exception(
           S3ErrorCode.invalidPart,
-          message: 'El ETag de la parte $number no coincide.',
+          message: 'The ETag of part $number does not match.',
           resource: key,
         );
       }
@@ -145,8 +145,8 @@ class MultipartService {
         throw S3Exception(
           S3ErrorCode.entityTooSmall,
           message:
-              'La parte $number ocupa $length bytes; todas salvo la última '
-              'deben tener al menos $minPartSize.',
+              'Part $number is $length bytes; every part but the last one '
+              'must be at least $minPartSize.',
           resource: key,
         );
       }
@@ -158,12 +158,12 @@ class MultipartService {
       throw S3Exception(
         S3ErrorCode.entityTooLarge,
         message:
-            'El objeto ocupa $size bytes y el máximo es ${env.maxObjectSize}.',
+            'The object is $size bytes and the maximum is ${env.maxObjectSize}.',
         resource: key,
       );
     }
 
-    //se junta dentro de la subida y se mueve: el objeto no se ve a medias
+    // Joined inside the upload folder and then moved: the object is never seen half-written
     final joined = File(p.join(dir.path, 'object.tmp'));
     final sink = joined.openWrite();
     try {
@@ -174,8 +174,8 @@ class MultipartService {
       await sink.close();
     }
     final target = File(p.join(env.storageVolumePath, bucketName, key));
-    //si no se puede sustituir (objeto abierto en Windows), la subida sigue
-    //ahi y se puede reintentar el Complete
+    // If it can't be replaced (an open object on Windows), the upload is still
+    // there and the Complete can be retried
     await FileManagementService.replaceFile(joined, target, key: key);
     await dir.delete(recursive: true);
 
@@ -200,7 +200,7 @@ class MultipartService {
     );
   }
 
-  /// ListParts: las partes ya subidas de la subida, en orden
+  /// ListParts: the parts already uploaded to the upload, in order.
   Future<List<UploadedPartModel>> listParts({
     required String bucketName,
     required String key,
@@ -228,7 +228,7 @@ class MultipartService {
     return parts;
   }
 
-  /// AbortMultipartUpload: borra la subida y sus partes
+  /// AbortMultipartUpload: deletes the upload and its parts.
   Future<void> abort({
     required String bucketName,
     required String key,
@@ -238,8 +238,8 @@ class MultipartService {
     await dir.delete(recursive: true);
   }
 
-  /// ListMultipartUploads: las subidas en curso de [bucketName] cuya key
-  /// empieza por [prefix], ordenadas por key y por fecha de inicio
+  /// ListMultipartUploads: the pending uploads of [bucketName] whose key starts
+  /// with [prefix], sorted by key and by start date.
   Future<List<MultipartUploadModel>> list({
     required String bucketName,
     String? prefix,
@@ -277,7 +277,7 @@ class MultipartService {
     return uploads;
   }
 
-  /// Borra las subidas en curso de [bucketName] (al borrar el bucket)
+  /// Deletes the pending uploads of [bucketName] (when the bucket is deleted).
   Future<void> abortAll(String bucketName) async {
     if (!await _root.exists()) return;
     await for (final entity in _root.list()) {
@@ -291,23 +291,23 @@ class MultipartService {
     if (!S3Validator.isValidBucketName(bucketName)) {
       throw S3Exception.invalidBucketName(bucketName);
     }
-    //una carpeta no se sube por partes
+    // A folder is never uploaded in parts
     if (!S3Validator.isValidKey(key) || key.endsWith('/')) {
       throw S3Exception.invalidKey(key);
     }
   }
 
-  /// La carpeta de la subida, si existe y es de [bucketName]/[key]
+  /// The upload folder, if it exists and belongs to [bucketName]/[key].
   Future<Directory> _uploadDir(
     String bucketName,
     String key,
     String uploadId,
   ) async {
     _validate(bucketName, key);
-    //el id forma parte de la ruta: solo hexadecimal, sin `..` ni barras
+    // The id is part of the path: hex only, no `..` nor slashes
     final noSuchUpload = S3Exception(
       S3ErrorCode.noSuchUpload,
-      message: 'La subida "$uploadId" no existe o ya terminó.',
+      message: 'The upload "$uploadId" does not exist or has already finished.',
       resource: key,
     );
     if (!_uploadIdPattern.hasMatch(uploadId)) throw noSuchUpload;

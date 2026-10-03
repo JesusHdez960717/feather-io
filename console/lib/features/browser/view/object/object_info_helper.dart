@@ -20,7 +20,7 @@ class ObjectInfoHelper {
       return (name: ext, icon: Icons.insert_drive_file);
     }
 
-    // 1. Categorías principales por tipo MIME
+    // 1. Main categories by MIME type
     if (mimeType.startsWith('image/')) {
       return (name: app.intl.fileTypeImage, icon: Icons.image);
     }
@@ -34,7 +34,7 @@ class ObjectInfoHelper {
       return (name: app.intl.fileTypeText, icon: Icons.description);
     }
 
-    // 2. Formatos específicos de aplicación
+    // 2. Application-specific formats
     switch (mimeType) {
       case 'application/pdf':
         return (name: 'PDF', icon: Icons.picture_as_pdf);

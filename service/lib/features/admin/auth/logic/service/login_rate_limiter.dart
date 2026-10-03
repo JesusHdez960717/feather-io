@@ -1,20 +1,22 @@
-/// Frena la fuerza bruta contra el login, por IP: cada intento fallido se
-/// responde con [failureDelay] de retraso y, tras [maxFailures] fallos
-/// seguidos, la IP queda bloqueada [lockDuration] (aunque luego acierte, si no
-/// se podria seguir probando al acabar el bloqueo). Un login correcto borra
-/// los fallos, y los fallos de hace mas de [lockDuration] ya no cuentan.
+/// Slows down brute force against the login, per IP: every failed attempt is
+/// answered after [failureDelay] and, after [maxFailures] failures in a row,
+/// the IP is locked for [lockDuration] (even if it then gets the credentials
+/// right; otherwise it could just keep trying once the lock ends). A successful
+/// login clears the failures, and failures older than [lockDuration] no longer
+/// count.
 ///
-/// Vive en memoria: con varias instancias del servicio, cada una lleva su cuenta
+/// It lives in memory: with several instances of the service, each one keeps
+/// its own count.
 class LoginRateLimiter {
   final int maxFailures;
   final Duration lockDuration;
   final Duration failureDelay;
 
-  /// Reloj y espera, cambiables en los tests
+  /// Clock and wait, replaceable in tests.
   final DateTime Function() _now;
   final Future<void> Function(Duration) _wait;
 
-  /// Por encima de este numero de IPs se olvidan las que ya no cuentan
+  /// Above this many IPs, the ones that no longer count are forgotten.
   static const int _pruneAbove = 10000;
 
   final Map<String, _Attempts> _clients = {};
@@ -28,7 +30,7 @@ class LoginRateLimiter {
   }) : _now = now ?? DateTime.now,
        _wait = wait ?? Future<void>.delayed;
 
-  /// Lo que le queda de bloqueo a [client], o null si puede intentarlo
+  /// What is left of [client]'s lock, or null if it may try.
   Duration? lockedFor(String client) {
     final until = _clients[client]?.lockedUntil;
     if (until == null) return null;
@@ -38,8 +40,8 @@ class LoginRateLimiter {
     return null;
   }
 
-  /// Apunta un intento fallido de [client] (y lo bloquea si llega al maximo)
-  /// y espera [failureDelay] antes de que se responda
+  /// Records a failed attempt of [client] (locking it when it reaches the
+  /// maximum) and waits [failureDelay] before the response is sent.
   Future<void> failed(String client) async {
     final now = _now();
     final attempts = _clients[client];
@@ -59,7 +61,7 @@ class LoginRateLimiter {
     if (failureDelay > Duration.zero) await _wait(failureDelay);
   }
 
-  /// Un login correcto: los fallos anteriores ya no cuentan
+  /// A successful login: the previous failures no longer count.
   void succeeded(String client) => _clients.remove(client);
 
   void _prune(DateTime now) {

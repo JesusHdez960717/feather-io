@@ -1,8 +1,8 @@
 import 'package:console/app_exporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-///Estado del cajon de añadir regla. Vive mientras el cajon esta abierto, asi la
-///carga y los errores se muestran dentro del formulario
+/// State of the add-rule drawer. It lives while the drawer is open, so loading
+/// and errors show inside the form
 class AnonymousRuleFormCubit extends Cubit<AnonymousRuleFormState> {
   final AnonymousAccessRepo _repo;
   final AuthCubit _auth;
@@ -39,7 +39,7 @@ class AnonymousRuleFormCubit extends Cubit<AnonymousRuleFormState> {
   }
 }
 
-///Nombres de campo del formulario, iguales a los `fieldName` que devuelve la API
+/// Field names of the form, equal to the `fieldName`s the API returns
 abstract class AnonymousRuleFormField {
   static const String prefix = 'prefix';
   static const String access = 'access';
@@ -67,7 +67,7 @@ class AnonymousRuleFormProcessingOKState extends AnonymousRuleFormState {
 class AnonymousRuleFormProcessingErrorState extends AnonymousRuleFormState {
   final GlobalException exception;
 
-  ///Errores por campo; si esta vacio, el error es de todo el formulario
+  /// Errors per field; if empty, the error belongs to the whole form
   final Map<String, String> fieldErrors;
 
   const AnonymousRuleFormProcessingErrorState(

@@ -17,7 +17,7 @@ The two packages are strictly decoupled: they share nothing but the HTTP contrac
 Scope relaxations still in force: focus on core S3 CRUD. Ignore bucket policies, MD5/checksum
 validation and advanced multipart edge cases for now.
 
-`DECISIONES.md` explains the non-obvious design decisions (rate limits and their numbers, SigV4,
+`DECISIONS.md` explains the non-obvious design decisions (rate limits and their numbers, SigV4,
 anonymous access…) with the data behind them; update it when one of them changes.
 
 `ROADMAP.md` lists the pending work in order, as checkboxes. When a change completes a roadmap task,
@@ -52,7 +52,7 @@ STORAGE_VOLUME_PATH=./uploads_local ADMIN_PREFIX=_admin fvm dart run lib/main.da
 
 Required env: `FEATHER_ACCESS`, `FEATHER_SECRET`, `JWT_SECRET`, `STORAGE_VOLUME_PATH`. Optional:
 `ADMIN_PREFIX` (default `_admin`), `RESERVED_BUCKET_NAMES` and `MAX_OBJECT_SIZE` (bytes, default 5
-GiB). See `service/README.md` (in Spanish; its endpoint table lists only some routes, so treat the
+GiB). See `service/README.md` (its endpoint table lists only some routes, so treat the
 controllers as the source of truth).
 
 The SQLite path is hardcoded in `database.dart` and does **not** follow `STORAGE_VOLUME_PATH`.
@@ -115,7 +115,7 @@ file.
   live forever. A general `RateLimitFilter` (Winter's `RateLimiter`) is the first global filter:
   `RATE_LIMIT_REQUESTS` (2000) requests per IP every `RATE_LIMIT_WINDOW_SECONDS` (60); above it the
   S3 API answers `503 SlowDown` (what S3 clients retry) and the admin API `429` (0 disables it);
-  the number comes from measured client bursts (see `DECISIONES.md`). Login
+  the number comes from measured client bursts (see `DECISIONS.md`). Login
   is rate limited per client IP by `LoginRateLimiter` (in DI): every failure
   waits `LOGIN_FAILURE_DELAY_MS` (1 s) and `LOGIN_MAX_FAILURES` (10) failures in a row lock the IP
   for `LOGIN_LOCK_SECONDS` (15 min, `429` + `Retry-After`, even with good credentials); a success
@@ -235,7 +235,7 @@ never enabled; rclone asks before a purge).
   or the path is under the admin prefix. Winter sends JSON error bodies as
   `application/problem+json`.
 - Other errors (login, admin request parsing) still throw Winter `ApiException` subclasses with
-  plain-string bodies. Messages are currently a mix of Spanish and English.
+  plain-string bodies. All messages are in English.
 - A controller that wraps a block in `try/catch` must `if (e is ApiException) rethrow;` before
   converting unknown errors.
 
@@ -352,11 +352,12 @@ and almost every incompatibility so far was found by them, not by `dart test`:
 | Before a release or after big protocol changes | also `run.sh mint`, i.e. the *Full test run* below | ~5 min |
 
 **Full test run.** When asked to run every test (or to refresh the results summary), do all of it
-from scratch and regenerate `service/tool/s3_compat/RESULTADOS.md`. Outputs go to
+from scratch and regenerate `service/tool/s3_compat/RESULTS.md`. Outputs go to
 `service/tool/s3_compat/out/` (gitignored), which is what `report.py` reads:
 
 1. Static analysis: `fvm dart analyze > tool/s3_compat/out/service_analyze.txt` from `service/`,
-   and `fvm flutter analyze > ../service/tool/s3_compat/out/console_analyze.txt` from `console/`.
+   and `fvm flutter analyze > ../service/tool/s3_compat/out/console_analyze.txt 2>&1` from `console/`
+   (it prints its summary to stderr).
 2. Service tests: from `service/`, `rm -rf uploads_test` and
    `fvm dart test --reporter json > tool/s3_compat/out/service_tests.jsonl`.
 3. A clean service: start it from an **empty scratch folder** (the SQLite path is relative, so it
@@ -367,15 +368,14 @@ from scratch and regenerate `service/tool/s3_compat/RESULTADOS.md`. Outputs go t
 4. Clients: `ACCESS_KEY=… SECRET_KEY=… service/tool/s3_compat/run.sh awscli rclone mint` from the
    repo root.
 5. Report: `python service/tool/s3_compat/report.py --server-log <service log>` rewrites
-   `RESULTADOS.md` (date, commit, versions, totals per test file, client and Mint suite, only the
+   `RESULTS.md` (date, commit, versions, totals per test file, client and Mint suite, only the
    failures, each Mint failure with its cause, what doesn't work and what isn't tested).
 6. Review before committing:
-   - Mint failures marked **Sin clasificar** and any unhandled error in the service log are new:
+   - Mint failures marked **Unclassified** and any unhandled error in the service log are new:
      investigate them; a real bug is fixed (with its test), a new out-of-scope one goes into
-     `REASONS` in `report.py` and *Aparcado* in `ROADMAP.md`.
+     `REASONS` in `report.py` and *Parked* in `ROADMAP.md`.
    - A new test file needs its line in `TEST_DESC`, and a suite whose outcome changed its text in
      `SUITE_STATUS` (both in `report.py`); `NOT_WORKING`/`NOT_TESTED` are kept by hand there too.
-   - Update the *Resultados* section of `service/tool/s3_compat/README.md` (versions and totals).
    - Stop the scratch service when done.
 
 **Tests.** Rules for new tests:

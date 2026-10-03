@@ -2,7 +2,7 @@ import 'package:console/app_exporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
 
-///Detalle del bucket seleccionado: cabecera con acciones y sus pestañas
+/// Details of the selected bucket: header with actions and its tabs
 class BucketAdminDetail extends StatelessWidget {
   final BucketModel bucket;
   final BucketAdminTab tab;
@@ -147,7 +147,7 @@ class _BucketAdminTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    //el contador de reglas solo se muestra cuando ya se han cargado
+    // the rule counter only shows once they are loaded
     final accessState = context.watch<AnonymousAccessCubit>().state;
     final ruleCount = accessState is AnonymousAccessLoadingSuccessState
         ? accessState.rules.length

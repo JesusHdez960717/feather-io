@@ -1,6 +1,6 @@
-///Una violacion de un 422, con el formato de Winter: `{fieldName, value, message}`
+/// A violation of a 422, in Winter's format: `{fieldName, value, message}`
 class ValidationError {
-  ///Campo del request que no paso la validacion (p. ej. `description`)
+  /// Request field that failed validation (e.g. `description`)
   final String source;
   final Object? invalidValue;
   final String message;

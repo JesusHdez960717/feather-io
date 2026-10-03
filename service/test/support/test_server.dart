@@ -9,13 +9,13 @@ import 'package:test/test.dart';
 const String testAccess = 'test_access';
 const String testSecret = 'test_secret';
 
-/// Servidor real para un fichero de tests: puerto propio, carpeta propia en
-/// `./uploads_test/<name>` y BD SQLite en memoria.
+/// Real server for a test file: its own port, its own folder in
+/// `./uploads_test/<name>` and an in-memory SQLite database.
 class TestServer {
   final int port;
   final String storagePath;
 
-  /// JWT obtenido en [start] con las credenciales de test.
+  /// JWT obtained in [start] with the test credentials.
   late final String token;
 
   TestServer({required this.port, required String name})
@@ -49,16 +49,16 @@ class TestServer {
 
   Uri url(String path) => Uri.parse('http://localhost:$port$path');
 
-  /// Cabeceras con el JWT; [json] añade `Accept: application/json`.
+  /// Headers with the JWT; [json] adds `Accept: application/json`.
   Map<String, String> auth({bool json = false}) => {
     'authorization': 'Bearer $token',
     if (json) 'accept': 'application/json',
   };
 
-  /// Cabeceras de un cliente S3 nativo: firma SigV4 con las claves de test.
-  /// [path] va tal cual en la URL (ya codificado). [at] cambia la fecha de la
-  /// firma (ahora por defecto) y [payloadHash] firma el sha256 del cuerpo en
-  /// vez de `UNSIGNED-PAYLOAD`.
+  /// Headers of a native S3 client: a SigV4 signature with the test keys.
+  /// [path] goes as it is in the URL (already encoded). [at] changes the
+  /// signature date (now by default) and [payloadHash] signs the body's sha256
+  /// instead of `UNSIGNED-PAYLOAD`.
   Map<String, String> sigV4(
     String method,
     String path, {
@@ -96,7 +96,7 @@ class TestServer {
     };
   }
 
-  /// Crea el bucket si no existe (un 409 es que ya estaba).
+  /// Creates the bucket unless it exists (a 409 means it was already there).
   Future<void> createBucket(String bucket) async {
     final response = await http.put(url('/$bucket'), headers: auth());
     expect(
@@ -106,9 +106,10 @@ class TestServer {
     );
   }
 
-  /// Sube un objeto (y crea el bucket si no existe). Va en bytes y sin
-  /// `Content-Type` (con un String, package:http mandaria `text/plain`), asi
-  /// que al leerlo el tipo sale de la extension. [headers] se añaden a la subida
+  /// Uploads an object (creating the bucket if needed). It goes as bytes
+  /// without `Content-Type` (with a String, package:http would send
+  /// `text/plain`), so on read the type comes from the extension. [headers] are
+  /// added to the upload.
   Future<void> putObject(
     String bucket,
     String key,

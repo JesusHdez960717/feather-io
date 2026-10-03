@@ -62,7 +62,7 @@ class LanguageCubit extends Cubit<LanguageState>
       ),
     );
 
-    ///esta es la magia que actualiza el widget tree sin tener que hacer el rebuild de cada clase
+    // this is what refreshes the widget tree without rebuilding every class
     WidgetsBinding.instance.reassembleApplication();
   }
 
@@ -79,7 +79,7 @@ class LanguageCubit extends Cubit<LanguageState>
   Locale get locale => Locale(currentSelectedLanguage.key);
 }
 
-//estados
+// states
 abstract class LanguageState {
   final LanguageModel current;
   final List<LanguageModel> allLanguages;

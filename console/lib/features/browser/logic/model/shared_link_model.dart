@@ -1,4 +1,4 @@
-///Cuanto dura un enlace compartido
+/// How long a shared link lasts
 enum ShareLinkExpiration {
   hour(Duration(hours: 1)),
   day(Duration(days: 1)),
@@ -9,7 +9,7 @@ enum ShareLinkExpiration {
   const ShareLinkExpiration(this.duration);
 }
 
-///Enlace (URL prefirmada) para descargar un objeto sin credenciales
+/// Link (presigned URL) to download an object without credentials
 class SharedLinkModel {
   final String url;
   final DateTime expiresAt;

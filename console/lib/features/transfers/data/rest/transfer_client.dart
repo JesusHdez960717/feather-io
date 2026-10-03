@@ -7,13 +7,13 @@ class TransferClient extends BaseClient {
 
   TransferClient(super.dio);
 
-  ///En web, Dio limita toda la peticion a conexion + recepcion (20 s): una
-  ///subida o una descarga larga lo superaria. Sin limite; quien la lanza puede
-  ///cancelarla
+  /// On web, Dio limits the whole request to connect + receive (20 s): a long
+  /// upload or download would exceed it. No limit; whoever starts it can
+  /// cancel it
   Options _longOptions(String? token) => options(token: token)
       .copyWith(connectTimeout: Duration.zero, receiveTimeout: Duration.zero);
 
-  ///Sube un objeto (`PUT`) avisando del progreso con [onProgress]
+  /// Uploads an object (`PUT`) reporting progress through [onProgress]
   Future<void> putObject({
     required String bucket,
     required String key,
@@ -35,7 +35,7 @@ class TransferClient extends BaseClient {
     );
   }
 
-  ///CreateMultipartUpload: devuelve el `uploadId` de la subida
+  /// CreateMultipartUpload: returns the upload's `uploadId`
   Future<String> createMultipart({
     required String bucket,
     required String key,
@@ -51,7 +51,7 @@ class TransferClient extends BaseClient {
     return CreateMultipartResponse.fromJson(response.data!).uploadId;
   }
 
-  ///UploadPart: sube la parte [partNumber] y devuelve su ETag (cabecera)
+  /// UploadPart: uploads the part [partNumber] and returns its ETag (header)
   Future<String> uploadPart({
     required String bucket,
     required String key,
@@ -77,7 +77,7 @@ class TransferClient extends BaseClient {
     return response.headers.value('etag') ?? '';
   }
 
-  ///CompleteMultipartUpload: el servicio junta las partes en el objeto
+  /// CompleteMultipartUpload: the service joins the parts into the object
   Future<void> completeMultipart({
     required String bucket,
     required String key,
@@ -86,7 +86,7 @@ class TransferClient extends BaseClient {
     required CancelToken cancelToken,
     String? token,
   }) async {
-    //juntar varios GB en el servicio puede tardar: sin limite de tiempo
+    // joining several GB on the service can take a while: no time limit
     await dio.post(
       '$baseUrl/$bucket/$key',
       queryParameters: {'uploadId': uploadId},
@@ -96,7 +96,7 @@ class TransferClient extends BaseClient {
     );
   }
 
-  ///AbortMultipartUpload: borra la subida y sus partes
+  /// AbortMultipartUpload: deletes the upload and its parts
   Future<void> abortMultipart({
     required String bucket,
     required String key,
@@ -110,8 +110,8 @@ class TransferClient extends BaseClient {
     );
   }
 
-  ///Descarga [keys] de [bucket] en un zip. [onProgress] recibe `total` -1
-  ///mientras el servicio prepara el zip y aun no ha enviado su tamaño
+  /// Downloads [keys] of [bucket] in a zip. [onProgress] gets `total` -1
+  /// while the service builds the zip and hasn't sent its size yet
   Future<List<int>> downloadZip({
     required String bucket,
     required List<String> keys,

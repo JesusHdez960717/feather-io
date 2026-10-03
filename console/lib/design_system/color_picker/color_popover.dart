@@ -4,18 +4,18 @@ import 'package:console/app_exporter.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
-///Panel para elegir un color personalizado: saturacion/brillo, tono y HEX.
-///Lo abre [AppColorPicker] anclado encima de su circulo de color personalizado
+/// Panel to pick a custom color: saturation/brightness, hue and HEX.
+/// [AppColorPicker] opens it anchored above its custom color circle
 class ColorPopover extends StatefulWidget {
   static const double width = 264;
   static const double height = 360;
 
   final Color initial;
 
-  ///Color contra el que se avisa de poco contraste (p. ej. el icono blanco)
+  /// Color checked for low contrast against (e.g. the white icon)
   final Color? contrastAgainst;
 
-  ///Icono que se dibuja sobre el color en la vista previa
+  /// Icon drawn over the color in the preview
   final SvgAsset? previewIcon;
   final ValueChanged<Color> onApply;
   final VoidCallback onCancel;
@@ -315,7 +315,7 @@ class _ColorPopoverState extends State<ColorPopover> {
   }
 }
 
-///Cuadro de saturacion (horizontal) y brillo (vertical) del tono actual
+/// Saturation (horizontal) and brightness (vertical) square of the current hue
 class _SaturationValueArea extends StatelessWidget {
   final HSVColor hsv;
   final double width;
@@ -422,7 +422,7 @@ class _SaturationValueArea extends StatelessWidget {
   }
 }
 
-///Barra de tono con el espectro completo
+/// Hue bar with the whole spectrum
 class _HueSlider extends StatelessWidget {
   static const double _height = 12;
 
@@ -514,7 +514,7 @@ class _HueSlider extends StatelessWidget {
   }
 }
 
-///Hace enfocable un control de arrastre y le pinta un anillo de foco
+/// Makes a drag control focusable and paints a focus ring on it
 class _FocusRing extends StatefulWidget {
   final Widget child;
   final FocusOnKeyEventCallback onKeyEvent;
@@ -591,7 +591,7 @@ class _Thumb extends StatelessWidget {
   }
 }
 
-///Flecha que une el popover con el control que lo abre
+/// Arrow joining the popover to the control that opens it
 class ColorPopoverArrow extends StatelessWidget {
   final bool pointsDown;
 

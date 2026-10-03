@@ -1,29 +1,29 @@
 import 'package:console/app_exporter.dart';
 
-///Nombres de las rutas y de sus parametros. Una feature navega a la pantalla
-///de otra por su nombre de ruta, sin importarla
+/// Names of the routes and their parameters. A feature navigates to another
+/// feature's screen by its route name, without importing it
 abstract class RouteNames {
   static const String login = 'login';
   static const String browser = 'browser';
   static const String buckets = 'buckets';
 
-  ///`?bucket=` de [browser]: el bucket abierto; sin el, el listado de buckets
+  /// `?bucket=` of [browser]: the open bucket; without it, the bucket list
   static const String browserBucketParam = 'bucket';
 
-  ///`?folder=` de [browser]: la carpeta abierta dentro del bucket
-  ///(`fotos/2026`, sin barra final); sin el, la raiz del bucket
+  /// `?folder=` of [browser]: the open folder inside the bucket
+  /// (`photos/2026`, without a trailing slash); without it, the bucket root
   static const String browserFolderParam = 'folder';
 
-  ///`?view_type=` de [browser]: lista o cuadricula
+  /// `?view_type=` of [browser]: list or grid
   static const String browserViewTypeParam = 'view_type';
 
-  ///`?bucket=` de [buckets]: el bucket seleccionado
+  /// `?bucket=` of [buckets]: the selected bucket
   static const String bucketsBucketParam = 'bucket';
 
-  ///`?tab=` de [buckets]: la pestaña del detalle (por defecto, la general)
+  /// `?tab=` of [buckets]: the details tab (the general one by default)
   static const String bucketsTabParam = 'tab';
 
-  ///Abre el explorador en [folder] (`fotos/2026/`, vacia para la raiz) de [bucket]
+  /// Opens the browser at [folder] (`photos/2026/`, empty for the root) of [bucket]
   static void openBrowserFolder(String bucket, String folder) {
     final path = folder.endsWith('/')
         ? folder.substring(0, folder.length - 1)
@@ -37,7 +37,7 @@ abstract class RouteNames {
     );
   }
 
-  ///Abre la seccion *Buckets* con [bucket] seleccionado, en su pestaña general
+  /// Opens the *Buckets* section with [bucket] selected, on its general tab
   static void openBucketSettings(String bucket) {
     app.navigator.go(buckets, queryParameters: {bucketsBucketParam: bucket});
   }

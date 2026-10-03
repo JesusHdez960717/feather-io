@@ -2,8 +2,8 @@ import 'package:console/app_exporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
 
-///Dialogo para mover uno o varios objetos: se elige el bucket y se navega
-///hasta la carpeta de destino. *Mover aqui* se desactiva en la carpeta de origen
+/// Dialog to move one or more objects: pick the bucket and navigate to the
+/// target folder. *Move here* is disabled in the source folder
 class MoveObjectsDialog extends StatefulWidget {
   static void show({
     required String bucket,
@@ -24,12 +24,12 @@ class MoveObjectsDialog extends StatefulWidget {
     );
   }
 
-  ///Bucket y carpeta de origen
+  /// Source bucket and folder
   final String bucket;
   final String prefix;
   final List<String> keys;
 
-  ///Buckets a los que se puede mover
+  /// Buckets objects can be moved to
   final List<String> buckets;
 
   const MoveObjectsDialog._({

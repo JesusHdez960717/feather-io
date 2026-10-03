@@ -1,9 +1,9 @@
 import 'package:service/feather.dart';
 
-/// Responde `501 NotImplemented`, como S3, a los subrecursos que el servicio no
-/// implementa (`?versioning`, `?policy`, `?tagging`…). Sin el filtro caerian en
-/// la ruta normal: `PUT /{bucket}?versioning` intentaria crear el bucket y
-/// `GET /{bucket}?policy` devolveria el listado
+/// Answers `501 NotImplemented`, like S3, to the subresources the service doesn't
+/// implement (`?versioning`, `?policy`, `?tagging`…). Without this filter they
+/// would fall into the normal routes: `PUT /{bucket}?versioning` would try to
+/// create the bucket and `GET /{bucket}?policy` would return the listing.
 class UnsupportedSubresourceFilter extends Filter {
   static final UnsupportedSubresourceFilter _instance =
       UnsupportedSubresourceFilter._();
@@ -56,7 +56,7 @@ class UnsupportedSubresourceFilter extends Filter {
     if (subresource != null) {
       throw S3Exception(
         S3ErrorCode.notImplemented,
-        message: 'El subrecurso "$subresource" no está implementado.',
+        message: 'The subresource "$subresource" is not implemented.',
         resource: request.requestedUri.path,
       );
     }
@@ -64,11 +64,11 @@ class UnsupportedSubresourceFilter extends Filter {
     return await chain.doFilter(request);
   }
 
-  /// Lecturas que si se contestan aunque no se implemente el subrecurso,
-  /// porque los clientes las piden antes de otras operaciones: las etiquetas
-  /// de un objeto (GetObjectTagging, la CLI de AWS antes de una copia
-  /// multipart; no hay ninguna) y el versionado de un bucket
-  /// (GetBucketVersioning, rclone; nunca esta activado)
+  /// Reads that are answered even though the subresource isn't implemented,
+  /// because clients ask for them before other operations: an object's tags
+  /// (GetObjectTagging, which the AWS CLI asks before a multipart copy; there
+  /// are none) and a bucket's versioning (GetBucketVersioning, which rclone
+  /// asks; it is never enabled).
   bool _readable(RequestEntity request, String subresource) {
     if (request.method != 'GET') return false;
     final hasKey = request.pathParams['key'] != null;

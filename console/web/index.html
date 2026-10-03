@@ -31,8 +31,8 @@
     <link rel="manifest" href="manifest.json">
 
     <style>
-        /* Misma fuente y paleta que la app (AppColors), para que no haya salto
-           visual al cargar Flutter */
+        /* Same font and palette as the app (AppColors), so there is no jump
+           while Flutter loads */
         @font-face {
           font-family: "DM Sans";
           src: url("assets/assets/fonts/DMSans/DMSans-Regular.ttf") format("truetype");
@@ -80,7 +80,7 @@
           transition: opacity 0.35s ease;
         }
 
-        /* Wordmark: igual que AppWordmark */
+        /* Wordmark: same as AppWordmark */
         #splash-wordmark {
           color: #ffffff;
           font-size: 56px;
@@ -159,7 +159,7 @@
 </div>
 
 <script>
-    // El texto sigue el idioma del navegador (es/en), como la app
+    // The text follows the browser language (es/en), like the app
     if ((navigator.language || "").toLowerCase().startsWith("es")) {
       document.documentElement.lang = "es";
       document.getElementById("splash-text").textContent =

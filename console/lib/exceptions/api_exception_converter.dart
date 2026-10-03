@@ -41,11 +41,11 @@ class ApiExceptionConverter {
           message: app.intl.errorBadCertificate,
         );
       case DioExceptionType.connectionError:
-        //TODO: revisar con mas detalles el error en web
+        // TODO: look at the web error in more detail
         if (kIsWeb) {
           return GlobalException(
-            //in web, dio handle 403/401 as a connection error, some weird stuff with navigator closing the connection
-            //all other status 200,404,422, work ok, only 403/401, so we gonna handle this connection error as an auth exception
+            // on web, Dio reports 403/401 as a connection error (the browser closes the connection)
+            // every other status (200, 404, 422) works, so this connection error is handled as an auth exception
             type: GlobalExceptionType.auth,
             message: app.intl.errorConnection,
           );
@@ -92,7 +92,7 @@ class ApiExceptionConverter {
     }
   }
 
-  ///Los errores S3 llegan como `{code, message, resource}`; el resto como texto plano
+  /// S3 errors arrive as `{code, message, resource}`; the rest as plain text
   static String _message(dynamic data) {
     if (data is Map && data['message'] is String) {
       return data['message'] as String;

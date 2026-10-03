@@ -17,13 +17,13 @@ class ListObjectsModel {
   final List<BrowserObjectModel> objects;
   final List<String> commonPrefixes;
 
-  ///Hay mas elementos despues de esta pagina
+  /// There are more items after this page
   final bool isTruncated;
 
-  ///Token para pedir la pagina siguiente
+  /// Token to request the next page
   final String? nextContinuationToken;
 
-  ///Elementos de la carpeta en todas las paginas
+  /// Items of the folder across all pages
   final int totalKeys;
 
   ListObjectsModel({
@@ -38,7 +38,7 @@ class ListObjectsModel {
   });
 }
 
-///Cabeceras de un objeto (`HEAD`), para su panel de detalles
+/// Headers of an object (`HEAD`), for its details panel
 class ObjectInfoModel {
   final String? contentType;
   final int? sizeBytes;
@@ -54,7 +54,7 @@ class ObjectDataModel {
   ObjectDataModel({required this.bytes, this.contentType});
 }
 
-///Item (carpeta u objeto) tal como se muestra en el explorador
+/// Item (folder or object) as shown in the browser
 class BrowserObjectWrapper {
   final String name;
   final bool isFolder;

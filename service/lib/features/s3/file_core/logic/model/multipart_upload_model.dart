@@ -1,7 +1,7 @@
 import 'package:service/feather.dart';
 
-/// Subida multipart iniciada (CreateMultipartUpload): las partes se suben con
-/// [uploadId] y se juntan al completarla
+/// A started multipart upload (CreateMultipartUpload): the parts are uploaded
+/// with [uploadId] and joined when it is completed.
 class MultipartUploadModel implements Serializable {
   final String bucket;
   final String key;
@@ -26,11 +26,11 @@ class MultipartUploadModel implements Serializable {
   }
 }
 
-/// Parte ya subida de una subida multipart (ListParts)
+/// A part already uploaded to a multipart upload (ListParts).
 class UploadedPartModel implements Serializable {
   final int partNumber;
 
-  /// md5 de la parte (sin comillas)
+  /// md5 of the part (without quotes).
   final String etag;
   final int size;
   final DateTime lastModified;
@@ -53,9 +53,9 @@ class UploadedPartModel implements Serializable {
   }
 }
 
-/// Parte copiada de otro objeto (UploadPartCopy)
+/// A part copied from another object (UploadPartCopy).
 class CopiedPartModel implements Serializable {
-  /// md5 de la parte (sin comillas)
+  /// md5 of the part (without quotes).
   final String etag;
   final DateTime lastModified;
 
@@ -67,12 +67,12 @@ class CopiedPartModel implements Serializable {
   }
 }
 
-/// Objeto resultante de completar una subida multipart
+/// Object that results from completing a multipart upload.
 class CompletedMultipartModel implements Serializable {
   final String bucket;
   final String key;
 
-  /// ETag de S3 para multipart: md5 de los md5 de las partes y el numero de partes
+  /// S3's multipart ETag: md5 of the parts' md5s and the number of parts.
   final String etag;
   final int size;
 

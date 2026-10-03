@@ -27,7 +27,7 @@ void main() {
     });
 
     test('Should match the presigned URL example of the AWS docs', () {
-      //https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-query-string-auth.html
+      // https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-query-string-auth.html
       const scope = '20130524/us-east-1/s3/aws4_request';
       final signature = SigV4Signer.signature(
         secret: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',

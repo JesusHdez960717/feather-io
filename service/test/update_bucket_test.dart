@@ -44,18 +44,18 @@ void main() {
   group('AdminController - Update Bucket', () {
     test('Should update description and color and return the bucket', () async {
       final response = await update('edit-bucket', {
-        'description': 'Nueva descripción',
+        'description': 'New description: café',
         'color': 0xFFAABBCC,
       });
       expect(response.statusCode, 200);
       final body = jsonDecode(response.body);
       expect(body['name'], 'edit-bucket');
-      expect(body['description'], 'Nueva descripción');
+      expect(body['description'], 'New description: café');
       expect(body['color'], 0xFFAABBCC);
       expect(body['object_count'], 0);
 
       final listed = await findBucket('edit-bucket');
-      expect(listed['description'], 'Nueva descripción');
+      expect(listed['description'], 'New description: café');
       expect(listed['color'], 0xFFAABBCC);
     });
 

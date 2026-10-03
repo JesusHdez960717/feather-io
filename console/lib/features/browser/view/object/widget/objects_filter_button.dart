@@ -2,8 +2,8 @@ import 'package:console/app_exporter.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
-///Boton *Filtrar* con el numero de opciones activas. Abre debajo un panel que
-///aplica cada cambio al momento
+/// *Filter* button with the number of active options. It opens a panel below
+/// that applies each change at once
 class ObjectsFilterButton extends StatefulWidget {
   final ObjectFilter filter;
   final ValueChanged<ObjectFilter> onChanged;
@@ -86,7 +86,7 @@ class _ObjectsFilterButtonState extends State<ObjectsFilterButton> {
               offset: const Offset(0, _gap),
               child: FocusScope(
                 autofocus: true,
-                //el padre reconstruye el boton con el filtro nuevo y con el, el panel
+                // the parent rebuilds the button with the new filter, and with it the panel
                 child: _ObjectsFilterPanel(
                   filter: widget.filter,
                   onChanged: widget.onChanged,

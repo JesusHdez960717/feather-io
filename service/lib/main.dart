@@ -1,22 +1,16 @@
 import 'feather.dart';
 
-//versions
-//fvm flutter pub outdated
-//fvm flutter pub upgrade --major-versions
-
-//migration
-//dart fix --dry-run
-//dart fix --apply
-//
-//fvm flutter analyze
-//
-//fvm dart run build_runner build
+// Handy commands:
+// - dependencies: fvm dart pub outdated / fvm dart pub upgrade --major-versions
+// - migrations: fvm dart fix --dry-run / fvm dart fix --apply
+// - analysis: fvm dart analyze
+// - Drift code: fvm dart run build_runner build
 void main() async {
   await FeatherIO.start();
 }
 
 class FeatherIO {
-  ///[database] permite a los tests usar una BD en memoria en vez del fichero SQLite
+  /// [database] lets the tests use an in-memory database instead of the SQLite file.
   static Future start({int port = 8080, AppDatabase? database}) async {
     //--------------- OM ---------------\\
     om.addDeserializer(
@@ -54,7 +48,7 @@ class FeatherIO {
     //--------------- Errors ---------------\\
     Winter.context.setUp(exceptionHandler: S3ExceptionHandler());
 
-    //PUBLIC_URL mal escrita falla al arrancar, no al pedir la primera URL
+    // A malformed PUBLIC_URL fails at start-up, not on the first presigned URL
     env.publicUrl;
 
     //--------------- DB ---------------\\
@@ -82,12 +76,12 @@ class FeatherIO {
     AdminController adminController = AdminController();
 
     await Winter.start(
-      //el limite global es el de un objeto, que va a disco como stream; el
-      //resto de peticiones lo acota BodySizeFilter
+      // The global limit is an object's, which goes to disk as a stream;
+      // BodySizeFilter narrows it for every other request
       config: ServerConfig(port: port, maxBodySize: env.maxObjectSize),
       globalFilterConfig: FilterConfig([
-        //el primero: corta una avalancha antes de leer cuerpos o comprobar
-        //firmas (503 SlowDown en S3, 429 en admin)
+        // First: stops a flood before reading bodies or checking signatures
+        // (503 SlowDown on S3, 429 on admin)
         if (env.rateLimitRequests > 0)
           RateLimitFilter(
             maxRequests: env.rateLimitRequests,
@@ -96,7 +90,7 @@ class FeatherIO {
         BodySizeFilter(),
         JwtFilter(),
       ]),
-      //la consola lee el ETag de cada parte de una subida multipart
+      // The console reads the ETag of each part of a multipart upload
       securityConfig: SecurityConfig(
         cors: const CorsConfig(exposedHeaders: ['ETag']),
       ),

@@ -57,8 +57,8 @@ class S3Controller {
                   hasPermission('s3.list-objects') |
                   hasPermission('s3.anonymous.list-objects'),
               shouldFilter: (request) {
-                //solo aplica este filtro si es esta misma ruta, asi no se hereda para los childs
-                //asi el get-object no tiene que tener el permiso del list-objects
+                // Only for this very route, so the child routes don't inherit
+                // it: get-object must not need the list-objects permission
                 return request.routingContext?.key == 's3.list-objects';
               },
             ),
@@ -77,7 +77,7 @@ class S3Controller {
                 ),
               ]),
             ),
-            //CreateMultipartUpload (?uploads) y CompleteMultipartUpload (?uploadId)
+            // CreateMultipartUpload (?uploads) and CompleteMultipartUpload (?uploadId)
             Route.post(
               key: 's3.post-object',
               path: '/{key|.*}',
@@ -151,7 +151,7 @@ class S3Controller {
     try {
       createRequest = await request.body<CreateBucketRequest>();
     } catch (_) {
-      // Usamos defaults si el body no es válido o está vacío
+      // Defaults when the body is empty or not valid
       createRequest = null;
     }
     createRequest?.validate().throwOnFailure();
@@ -162,7 +162,7 @@ class S3Controller {
       color: createRequest?.color,
     );
 
-    //como S3: sin cuerpo y con la ruta del bucket en Location
+    // As in S3: no body, and the bucket path in Location
     return ResponseEntity(200, headers: {'location': '/$bucketName'});
   }
 
@@ -191,16 +191,16 @@ class S3Controller {
     return ResponseEntity(200, headers: {'etag': '"$etag"'});
   }
 
-  /// El contenido de un objeto o de una parte, sin el formato `aws-chunked`
-  /// si el cliente lo manda asi
+  /// The content of an object or a part, without the `aws-chunked` framing
+  /// when the client sends it that way.
   Stream<List<int>> _objectBody(RequestEntity request) =>
       AwsChunkedDecoder.appliesTo(request)
       ? AwsChunkedDecoder.decode(request.read())
       : request.read();
 
-  /// Cabeceras de la peticion que se guardan con el objeto y se devuelven al
-  /// leerlo, como en S3: las de contenido y los metadatos `x-amz-meta-*`.
-  /// `aws-chunked` es el formato del envio, no del objeto: no se guarda
+  /// Request headers stored with the object and sent back when it is read, as
+  /// in S3: the content headers and the `x-amz-meta-*` metadata. `aws-chunked`
+  /// is the transfer format, not the object's, so it is not stored.
   Map<String, String> _objectHeaders(RequestEntity request) {
     final headers = {
       for (final MapEntry(:key, :value) in request.headers.entries)
@@ -230,11 +230,11 @@ class S3Controller {
     'expires',
   };
 
-  //x-amz-storage-class no esta en [_storedHeaders]: se valida y se añade
-  //aparte, y la normal (STANDARD) no se guarda
+  // x-amz-storage-class is not in [_storedHeaders]: it is validated and added
+  // separately, and the standard one (STANDARD) is not stored
 
-  /// La key del objeto. El parametro de ruta pierde la `/` final, que es la que
-  /// distingue una carpeta (`fotos/`) de un objeto (`fotos`): se recupera de la URL
+  /// The object key. The path parameter loses the trailing `/`, which tells a
+  /// folder (`photos/`) from an object (`photos`), so it is restored from the URL.
   String _objectKey(RequestEntity request) {
     final key = request.pathParams['key']!;
     return request.requestedUri.path.endsWith('/') && !key.endsWith('/')
@@ -242,8 +242,8 @@ class S3Controller {
         : key;
   }
 
-  /// CopyObject: `PUT` con `x-amz-copy-source: /bucket/key`. Leer el origen
-  /// exige el permiso normal de descarga; una regla anonima no basta
+  /// CopyObject: `PUT` with `x-amz-copy-source: /bucket/key`. Reading the source
+  /// requires the regular download permission; an anonymous rule is not enough.
   Future<ResponseEntity> _copyObject(
     RequestEntity request,
     String copySource,
@@ -251,7 +251,7 @@ class S3Controller {
     final bucketName = request.pathParams['bucket']!;
     final (sourceBucket, sourceKey) = _copySource(request, copySource);
 
-    //como S3: copia las cabeceras del origen salvo que se pida REPLACE
+    // As in S3: copies the source's headers unless REPLACE is requested
     final replace =
         request.headers['x-amz-metadata-directive']?.toUpperCase() == 'REPLACE';
     final copied = await fileManagement.copyFile(
@@ -273,9 +273,9 @@ class S3Controller {
     );
   }
 
-  /// El objeto de origen de una copia (`x-amz-copy-source`: `/bucket/key` o
-  /// `bucket/key`, codificado como URL y quiza con `?versionId`). Leerlo exige
-  /// el permiso normal de descarga; una regla anonima no basta
+  /// The source object of a copy (`x-amz-copy-source`: `/bucket/key` or
+  /// `bucket/key`, URL-encoded and maybe with `?versionId`). Reading it requires
+  /// the regular download permission; an anonymous rule is not enough.
   (String, String) _copySource(RequestEntity request, String copySource) {
     final permissions =
         request.securityContext.authentication?.permissions ?? const {};
@@ -283,7 +283,7 @@ class S3Controller {
       throw S3Exception(
         S3ErrorCode.accessDenied,
         message:
-            'Copiar un objeto requiere permiso de lectura sobre el origen.',
+            'Copying an object requires read permission on the source.',
         resource: copySource,
       );
     }
@@ -294,15 +294,15 @@ class S3Controller {
     if (slash <= 0 || slash == path.length - 1) {
       throw S3Exception(
         S3ErrorCode.invalidArgument,
-        message: 'x-amz-copy-source debe tener la forma /bucket/key.',
+        message: 'x-amz-copy-source must look like /bucket/key.',
         resource: copySource,
       );
     }
     return (path.substring(0, slash), path.substring(slash + 1));
   }
 
-  /// Las condiciones `x-amz-copy-source-if-*` de una copia. Una fecha que no
-  /// se entiende se ignora, como en S3
+  /// The `x-amz-copy-source-if-*` conditions of a copy. A date that can't be
+  /// parsed is ignored, as in S3.
   CopyConditions _copyConditions(RequestEntity request) {
     DateTime? date(String name) {
       final value = request.headers['x-amz-copy-source-if-$name'];
@@ -322,8 +322,8 @@ class S3Controller {
     );
   }
 
-  /// Clases de almacenamiento de S3. Todas se guardan igual: solo se recuerda
-  /// la que pidio el cliente para devolverla
+  /// S3 storage classes. All of them are stored the same way: the requested
+  /// one is only remembered to send it back.
   static const Set<String> _storageClasses = {
     'STANDARD',
     'REDUCED_REDUNDANCY',
@@ -337,23 +337,23 @@ class S3Controller {
     'EXPRESS_ONEZONE',
   };
 
-  /// La clase de `x-amz-storage-class`, o null si no viene o es la normal
-  /// (`STANDARD`, que S3 no devuelve)
+  /// The class in `x-amz-storage-class`, or null when missing or standard
+  /// (`STANDARD`, which S3 never sends back).
   String? _storageClass(RequestEntity request) {
     final value = request.headers['x-amz-storage-class']?.trim().toUpperCase();
     if (value == null || value.isEmpty || value == 'STANDARD') return null;
     if (!_storageClasses.contains(value)) {
       throw S3Exception(
         S3ErrorCode.invalidStorageClass,
-        message: 'La clase de almacenamiento "$value" no es válida.',
+        message: 'The storage class "$value" is not valid.',
         resource: request.requestedUri.path,
       );
     }
     return value;
   }
 
-  /// ListMultipartUploads (`GET /{bucket}?uploads`): las subidas en curso, sin
-  /// paginar (como mucho 1000)
+  /// ListMultipartUploads (`GET /{bucket}?uploads`): the pending uploads,
+  /// without paging (at most 1000).
   Future<ResponseEntity> _listMultipartUploads(
     RequestEntity request,
     String bucketName,
@@ -380,7 +380,7 @@ class S3Controller {
       return _listMultipartUploads(request, bucketName);
     }
     if (request.queryParams.containsKey('versioning')) {
-      //GetBucketVersioning: el versionado nunca esta activado (sin Status)
+      // GetBucketVersioning: versioning is never enabled (no Status)
       if (!await fileManagement.bucketExists(bucketName)) {
         throw S3Exception.noSuchBucket(bucketName);
       }
@@ -400,12 +400,12 @@ class S3Controller {
     if (maxKeys == null) {
       throw S3Exception(
         S3ErrorCode.invalidArgument,
-        message: 'max-keys debe ser un número entero.',
+        message: 'max-keys must be an integer.',
         resource: maxKeysParam,
       );
     }
 
-    //ListObjectsV2 con list-type=2; si no, V1 (pagina con marker)
+    // ListObjectsV2 with list-type=2; otherwise V1 (pages with marker)
     final v2 = request.queryParams['list-type'] == '2';
     final result = await fileManagement.listFiles(
       bucketName: bucketName,
@@ -431,9 +431,9 @@ class S3Controller {
     }
   }
 
-  /// GetBucketLocation (`?location`): siempre la region por defecto, que S3
-  /// devuelve como un LocationConstraint vacio. Los clientes la piden para
-  /// saber con que region firmar
+  /// GetBucketLocation (`?location`): always the default region, which S3
+  /// returns as an empty LocationConstraint. Clients ask for it to know which
+  /// region to sign with.
   Future<ResponseEntity> _bucketLocation(String bucketName) async {
     if (!await fileManagement.bucketExists(bucketName)) {
       throw S3Exception.noSuchBucket(bucketName);
@@ -452,7 +452,7 @@ class S3Controller {
     final uploadId = request.queryParams['uploadId'];
     if (uploadId != null) return _listParts(request, bucketName, key, uploadId);
     if (request.queryParams.containsKey('tagging')) {
-      //GetObjectTagging: el servicio no guarda etiquetas, el objeto no tiene
+      // GetObjectTagging: the service doesn't store tags, so there are none
       await fileManagement.getFile(bucketName: bucketName, key: key);
       return ResponseEntity.ok(
         body:
@@ -472,8 +472,8 @@ class S3Controller {
       stat: stat,
     );
 
-    //un HEAD usa esta misma ruta: Winter manda las cabeceras sin el cuerpo.
-    //Sin Content-Type guardado, el de la extension
+    // HEAD uses this same route: Winter sends the headers without the body.
+    // Without a stored Content-Type, the extension's
     final headers = {
       'content-type':
           lookupMimeType(file.path) ??
@@ -484,8 +484,8 @@ class S3Controller {
       'accept-ranges': 'bytes',
     };
 
-    //una peticion firmada puede cambiar las cabeceras de la respuesta con
-    //?response-content-type=… (S3 no lo permite a las anonimas)
+    // A signed request may override the response headers with
+    // ?response-content-type=… (S3 doesn't allow it to anonymous ones)
     final permissions =
         request.securityContext.authentication?.permissions ?? const {};
     if (permissions.contains('s3.get-object')) {
@@ -523,10 +523,11 @@ class S3Controller {
     'expires',
   ];
 
-  /// El tramo que pide la cabecera `Range` (`bytes=a-b`, `bytes=a-` o
-  /// `bytes=-n`, los ultimos n) como posiciones inclusivas. Null si no hay
-  /// cabecera o no se entiende: entonces se sirve entero, como hace S3 (que
-  /// tampoco admite varios tramos). Un tramo fuera del objeto es un 416
+  /// The range requested by the `Range` header (`bytes=a-b`, `bytes=a-` or
+  /// `bytes=-n`, the last n) as inclusive positions. Null without the header or
+  /// when it can't be parsed: the whole object is served then, as S3 does (it
+  /// doesn't support multiple ranges either). A range outside the object is a
+  /// 416.
   (int, int)? _requestedRange(RequestEntity request, int size, String key) {
     final header = request.headers['range'];
     if (header == null) return null;
@@ -549,7 +550,7 @@ class S3Controller {
     if (start >= size) {
       throw S3Exception(
         S3ErrorCode.invalidRange,
-        message: 'El rango "$header" está fuera del objeto ($size bytes).',
+        message: 'The range "$header" is outside the object ($size bytes).',
         resource: key,
       );
     }
@@ -576,7 +577,7 @@ class S3Controller {
     return ResponseEntity(204);
   }
 
-  /// `POST` sobre un objeto: solo las operaciones de multipart
+  /// `POST` on an object: only the multipart operations.
   Future<ResponseEntity> postObject(RequestEntity request) async {
     final bucketName = request.pathParams['bucket']!;
     final key = _objectKey(request);
@@ -612,28 +613,29 @@ class S3Controller {
 
     throw S3Exception(
       S3ErrorCode.invalidRequest,
-      message: 'POST sobre un objeto solo admite ?uploads o ?uploadId.',
+      message: 'POST on an object only supports ?uploads or ?uploadId.',
       resource: key,
     );
   }
 
-  /// Multipart nunca es anonimo: exige el permiso de subida normal. Hace falta
-  /// en las operaciones que van por rutas que aceptan reglas anonimas (UploadPart
-  /// por PUT, AbortMultipartUpload por DELETE, ListParts y ListMultipartUploads
-  /// por GET); Create y Complete van por POST, que ya lo exige en su ruta
+  /// Multipart is never anonymous: it requires the regular upload permission.
+  /// Needed by the operations that go through routes accepting anonymous rules
+  /// (UploadPart via PUT, AbortMultipartUpload via DELETE, ListParts and
+  /// ListMultipartUploads via GET); Create and Complete go through POST, whose
+  /// route already requires it.
   void _requireUploadPermission(RequestEntity request, String resource) {
     final permissions =
         request.securityContext.authentication?.permissions ?? const {};
     if (!permissions.contains('s3.put-object')) {
       throw S3Exception(
         S3ErrorCode.accessDenied,
-        message: 'Las subidas multipart requieren permiso de subida.',
+        message: 'Multipart uploads require the upload permission.',
         resource: resource,
       );
     }
   }
 
-  /// UploadPart: `PUT ?partNumber=N&uploadId=X`. El ETag va en la cabecera
+  /// UploadPart: `PUT ?partNumber=N&uploadId=X`. The ETag goes in the header.
   Future<ResponseEntity> _uploadPart(
     RequestEntity request,
     String uploadId,
@@ -644,7 +646,7 @@ class S3Controller {
     if (partNumber == null) {
       throw S3Exception(
         S3ErrorCode.invalidArgument,
-        message: 'Falta el número de parte (partNumber).',
+        message: 'Missing the part number (partNumber).',
         resource: key,
       );
     }
@@ -662,9 +664,9 @@ class S3Controller {
     return ResponseEntity(200, headers: {'etag': '"$etag"'});
   }
 
-  /// ListParts (`GET /{bucket}/{key}?uploadId=`): las partes ya subidas, para
-  /// reanudar una subida. Va por la ruta de descarga, pero como el resto de
-  /// multipart exige el permiso de subida
+  /// ListParts (`GET /{bucket}/{key}?uploadId=`): the parts already uploaded,
+  /// to resume an upload. It goes through the download route but, like the rest
+  /// of multipart, requires the upload permission.
   Future<ResponseEntity> _listParts(
     RequestEntity request,
     String bucketName,
@@ -727,8 +729,8 @@ class S3Controller {
     );
   }
 
-  /// UploadPartCopy: la parte es otro objeto, entero o el tramo de
-  /// `x-amz-copy-source-range: bytes=a-b`
+  /// UploadPartCopy: the part is another object, whole or the range in
+  /// `x-amz-copy-source-range: bytes=a-b`.
   Future<ResponseEntity> _uploadPartCopy(
     RequestEntity request,
     String key,
@@ -746,7 +748,7 @@ class S3Controller {
       if (match == null) {
         throw S3Exception(
           S3ErrorCode.invalidArgument,
-          message: 'x-amz-copy-source-range debe tener la forma bytes=a-b.',
+          message: 'x-amz-copy-source-range must look like bytes=a-b.',
           resource: rangeHeader,
         );
       }
@@ -783,14 +785,14 @@ class S3Controller {
     );
   }
 
-  /// Las partes de CompleteMultipartUpload: XML de S3 o JSON (la consola)
+  /// The parts of CompleteMultipartUpload: S3 XML or JSON (the console).
   Future<List<CompletedPart>> _readCompletedParts(
     RequestEntity request,
     String key,
   ) async {
     final malformed = S3Exception(
       S3ErrorCode.malformedXML,
-      message: 'La lista de partes no es válida.',
+      message: 'The part list is not valid.',
       resource: key,
     );
     final body = await utf8.decodeStream(request.read());
@@ -835,8 +837,8 @@ class S3Controller {
       throw S3Exception(
         S3ErrorCode.malformedXML,
         message:
-            'Como mucho se pueden borrar '
-            '${FileManagementService.maxKeysLimit} objetos por petición.',
+            'At most ${FileManagementService.maxKeysLimit} objects can be '
+            'deleted per request.',
         resource: bucketName,
       );
     }
@@ -853,7 +855,7 @@ class S3Controller {
     );
   }
 
-  /// DeleteObjects en JSON (la consola)
+  /// DeleteObjects in JSON (the console).
   DeleteObjectsRequest _readDeleteJson(String body, String bucketName) {
     try {
       return DeleteObjectsRequest.fromJson(jsonDecode(body));
@@ -866,13 +868,13 @@ class S3Controller {
     }
   }
 
-  /// DeleteObjects en el XML de S3:
-  /// `<Delete><Quiet>true</Quiet><Object><Key>k</Key></Object>…</Delete>`
+  /// DeleteObjects in the S3 XML:
+  /// `<Delete><Quiet>true</Quiet><Object><Key>k</Key></Object>…</Delete>`.
   DeleteObjectsRequest _readDeleteXml(String body, String bucketName) {
     if (_xmlTag(body, 'Delete') == null) {
       throw S3Exception(
         S3ErrorCode.malformedXML,
-        message: 'El cuerpo debe ser un <Delete> con los objetos a borrar.',
+        message: 'The body must be a <Delete> with the objects to delete.',
         resource: bucketName,
       );
     }
@@ -886,7 +888,7 @@ class S3Controller {
     );
   }
 
-  /// Dueño de todos los buckets en las respuestas de S3
+  /// Owner of every bucket in the S3 responses.
   static const String _ownerId = 'feather-io';
 
   bool _acceptsJson(RequestEntity request) =>
@@ -929,7 +931,7 @@ class S3Controller {
     return buffer.toString();
   }
 
-  /// Fecha de S3 en el XML: UTC con milisegundos (`2026-10-02T14:22:35.000Z`)
+  /// S3 date in the XML: UTC with milliseconds (`2026-10-02T14:22:35.000Z`).
   String _s3Date(DateTime date) {
     final utc = date.toUtc();
     return DateTime.utc(
@@ -943,8 +945,8 @@ class S3Controller {
     ).toIso8601String();
   }
 
-  /// El contenido de la primera etiqueta [name] de [xml], con las entidades ya
-  /// decodificadas, o null si no esta
+  /// The content of the first [name] tag of [xml], with the entities already
+  /// decoded, or null if it is missing.
   String? _xmlTag(String xml, String name) {
     final match = RegExp(
       '<$name(?:\\s[^>]*)?>(.*?)</$name>',
@@ -953,13 +955,13 @@ class S3Controller {
     return match == null ? null : _unescapeXml(match.group(1)!);
   }
 
-  /// El contenido en bruto de cada etiqueta [name] de [xml]
+  /// The raw content of every [name] tag of [xml].
   Iterable<String> _xmlTags(String xml, String name) => RegExp(
     '<$name(?:\\s[^>]*)?>(.*?)</$name>',
     dotAll: true,
   ).allMatches(xml).map((match) => match.group(1)!);
 
-  /// Decodifica las entidades de XML (`&amp;`, `&quot;`, `&#34;`, `&#x22;`…)
+  /// Decodes the XML entities (`&amp;`, `&quot;`, `&#34;`, `&#x22;`…).
   String _unescapeXml(String value) => value.replaceAllMapped(
     RegExp(r'&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);'),
     (match) {
@@ -1050,7 +1052,7 @@ class S3Controller {
     buffer.writeln(
       '<ListAllMyBucketsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">',
     );
-    //hay un unico usuario; algunos clientes (minio-java) exigen el Owner
+    // There is a single user; some clients (minio-java) require the Owner
     buffer.writeln('  <Owner>');
     buffer.writeln('    <ID>$_ownerId</ID>');
     buffer.writeln('    <DisplayName>$_ownerId</DisplayName>');
@@ -1091,9 +1093,9 @@ class S3Controller {
     return buffer.toString();
   }
 
-  /// ListObjects en XML: V2 (`list-type=2`, pagina con continuation-token) o
-  /// V1 (pagina con marker). Con `encoding-type=url` las keys y los prefijos
-  /// van codificados como URL (salvo `/`), y el cliente los decodifica
+  /// ListObjects in XML: V2 (`list-type=2`, pages with continuation-token) or
+  /// V1 (pages with marker). With `encoding-type=url` the keys and prefixes are
+  /// URL-encoded (except `/`), and the client decodes them.
   String _mapListObjectsToXml(
     ListObjectsResponse response, {
     required bool v2,

@@ -1,9 +1,9 @@
-///Operaciones que una regla permite sin credenciales. Los nombres son los que
-///espera la API (`readOnly`, `writeOnly`, `readWrite`)
+/// Operations a rule allows without credentials. The names are the ones the
+/// API expects (`readOnly`, `writeOnly`, `readWrite`)
 enum AnonymousAccessType { readOnly, writeOnly, readWrite }
 
-///Regla de acceso anonimo: un prefijo del bucket (con `*` como comodin)
-///accesible sin credenciales
+/// Anonymous access rule: a prefix of the bucket, or a pattern with `*` as a
+/// wildcard, reachable without credentials
 class AnonymousRuleModel {
   final String prefix;
   final AnonymousAccessType access;

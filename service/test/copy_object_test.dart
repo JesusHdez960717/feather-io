@@ -32,57 +32,57 @@ void main() {
 
   setUpAll(() async {
     await server.start();
-    await server.putObject(bucket, 'origen/informe.pdf', 'contenido');
+    await server.putObject(bucket, 'source/report.pdf', 'content');
     await server.putObject('other-bucket', 'base.txt', 'base');
   });
   tearDownAll(server.stop);
 
   group('S3Controller - CopyObject (x-amz-copy-source)', () {
     test('Should copy an object and keep the source', () async {
-      final response = await copy('destino/informe.pdf', '/$bucket/origen/informe.pdf');
+      final response = await copy('target/report.pdf', '/$bucket/source/report.pdf');
       expect(response.statusCode, 200);
       expect(response.body, contains('<CopyObjectResult'));
       expect(response.body, contains('<LastModified>'));
       expect(
         response.body,
-        contains('<ETag>&quot;${md5.convert(utf8.encode('contenido'))}&quot;</ETag>'),
+        contains('<ETag>&quot;${md5.convert(utf8.encode('content'))}&quot;</ETag>'),
       );
 
       expect(
-        await File('${server.storagePath}/$bucket/destino/informe.pdf').readAsString(),
-        'contenido',
+        await File('${server.storagePath}/$bucket/target/report.pdf').readAsString(),
+        'content',
       );
       expect(
-        await File('${server.storagePath}/$bucket/origen/informe.pdf').exists(),
+        await File('${server.storagePath}/$bucket/source/report.pdf').exists(),
         isTrue,
       );
     });
 
     test('Should answer the copied object in JSON when accepted', () async {
       final response = await copy(
-        'copia.pdf',
-        '/$bucket/origen/informe.pdf',
+        'copy.pdf',
+        '/$bucket/source/report.pdf',
         headers: server.auth(json: true),
       );
       expect(response.statusCode, 200);
       final body = jsonDecode(response.body);
-      expect(body['key'], 'copia.pdf');
-      expect(body['size_bytes'], 'contenido'.length);
+      expect(body['key'], 'copy.pdf');
+      expect(body['size_bytes'], 'content'.length);
     });
 
     test('Should copy between buckets and accept a URL-encoded source', () async {
-      final response = await copy('traido%20de%20otro.txt', 'other-bucket/base.txt');
+      final response = await copy('copied%20from%20other.txt', 'other-bucket/base.txt');
       expect(response.statusCode, 200);
       expect(
-        await File('${server.storagePath}/$bucket/traido de otro.txt').readAsString(),
+        await File('${server.storagePath}/$bucket/copied from other.txt').readAsString(),
         'base',
       );
     });
 
     test('Should overwrite an existing target', () async {
-      await server.putObject(bucket, 'pisar.txt', 'viejo');
-      expect((await copy('pisar.txt', '/other-bucket/base.txt')).statusCode, 200);
-      expect(await File('${server.storagePath}/$bucket/pisar.txt').readAsString(), 'base');
+      await server.putObject(bucket, 'overwrite.txt', 'old');
+      expect((await copy('overwrite.txt', '/other-bucket/base.txt')).statusCode, 200);
+      expect(await File('${server.storagePath}/$bucket/overwrite.txt').readAsString(), 'base');
     });
 
     test('Should return 404 for a missing source object', () async {
@@ -93,8 +93,8 @@ void main() {
 
     test('Should return 404 for a missing target bucket', () async {
       final response = await copy(
-        'copia.pdf',
-        '/$bucket/origen/informe.pdf',
+        'copy.pdf',
+        '/$bucket/source/report.pdf',
         targetBucket: 'no-existe',
       );
       expect(response.statusCode, 404);
@@ -108,16 +108,16 @@ void main() {
     });
 
     test('Should reject copying an object onto itself without changes (400)', () async {
-      final response = await copy('origen/informe.pdf', '/$bucket/origen/informe.pdf');
+      final response = await copy('source/report.pdf', '/$bucket/source/report.pdf');
       expect(response.statusCode, 400);
       expect(response.body, contains('<Code>InvalidRequest</Code>'));
     });
 
     test('Should copy an object onto itself to change its metadata', () async {
-      await server.putObject(bucket, 'mismo.txt', 'igual');
+      await server.putObject(bucket, 'same.txt', 'same');
       final response = await copy(
-        'mismo.txt',
-        '/$bucket/mismo.txt',
+        'same.txt',
+        '/$bucket/same.txt',
         headers: {
           ...server.auth(),
           'x-amz-metadata-directive': 'REPLACE',
@@ -127,33 +127,33 @@ void main() {
       expect(response.statusCode, 200, reason: response.body);
 
       final head = await http.head(
-        server.url('/$bucket/mismo.txt'),
+        server.url('/$bucket/same.txt'),
         headers: server.auth(),
       );
       expect(head.headers['content-type'], 'text/csv');
       expect(
-        await File('${server.storagePath}/$bucket/mismo.txt').readAsString(),
-        'igual',
+        await File('${server.storagePath}/$bucket/same.txt').readAsString(),
+        'same',
       );
     });
 
     test('Should copy an object onto itself to change its storage class', () async {
-      await server.putObject(bucket, 'mismo-clase.txt', 'igual');
+      await server.putObject(bucket, 'same-class.txt', 'same');
       final response = await copy(
-        'mismo-clase.txt',
-        '/$bucket/mismo-clase.txt',
+        'same-class.txt',
+        '/$bucket/same-class.txt',
         headers: {...server.auth(), 'x-amz-storage-class': 'STANDARD_IA'},
       );
       expect(response.statusCode, 200, reason: response.body);
       final head = await http.head(
-        server.url('/$bucket/mismo-clase.txt'),
+        server.url('/$bucket/same-class.txt'),
         headers: server.auth(),
       );
       expect(head.headers['x-amz-storage-class'], 'STANDARD_IA');
     });
 
     test('Should reject a malformed source (400)', () async {
-      for (final source in ['/', 'solo-bucket', '/$bucket/']) {
+      for (final source in ['/', 'only-bucket', '/$bucket/']) {
         final response = await copy('x.txt', source);
         expect(response.statusCode, 400, reason: source);
       }
@@ -165,7 +165,7 @@ void main() {
     });
 
     test('Should fail without auth (401)', () async {
-      final response = await copy('x.txt', '/$bucket/origen/informe.pdf', headers: {});
+      final response = await copy('x.txt', '/$bucket/source/report.pdf', headers: {});
       expect(response.statusCode, 401);
     });
 
@@ -177,7 +177,7 @@ void main() {
       );
       expect(rule.statusCode, 200);
 
-      final response = await copy('buzon/robado.pdf', '/$bucket/origen/informe.pdf', headers: {});
+      final response = await copy('buzon/robado.pdf', '/$bucket/source/report.pdf', headers: {});
       expect(response.statusCode, 403);
       expect(response.body, contains('<Code>AccessDenied</Code>'));
       expect(await File('${server.storagePath}/$bucket/buzon/robado.pdf').exists(), isFalse);
@@ -188,15 +188,15 @@ void main() {
     late String etag;
 
     setUpAll(() async {
-      await server.putObject(bucket, 'condiciones/origen.txt', 'condicion');
-      etag = md5.convert(utf8.encode('condicion')).toString();
+      await server.putObject(bucket, 'conditions/source.txt', 'condition');
+      etag = md5.convert(utf8.encode('condition')).toString();
     });
 
     Future<http.Response> copyIf(Map<String, String> conditions) => http.put(
-      server.url('/$bucket/condiciones/copia.txt'),
+      server.url('/$bucket/conditions/copy.txt'),
       headers: {
         ...server.auth(),
-        'x-amz-copy-source': '/$bucket/condiciones/origen.txt',
+        'x-amz-copy-source': '/$bucket/conditions/source.txt',
         ...conditions,
       },
     );
@@ -208,10 +208,10 @@ void main() {
       for (final conditions in [
         {'x-amz-copy-source-if-match': '"$etag"'},
         {'x-amz-copy-source-if-match': '*'},
-        {'x-amz-copy-source-if-none-match': '"otro"'},
+        {'x-amz-copy-source-if-none-match': '"other"'},
         {'x-amz-copy-source-if-modified-since': past},
         {'x-amz-copy-source-if-unmodified-since': future},
-        //si el if-match se cumple, el if-unmodified-since no cuenta
+        // When if-match holds, if-unmodified-since doesn't count
         {
           'x-amz-copy-source-if-match': etag,
           'x-amz-copy-source-if-unmodified-since': past,
@@ -224,7 +224,7 @@ void main() {
 
     test('Should fail with 412 when a condition does not hold', () async {
       for (final conditions in [
-        {'x-amz-copy-source-if-match': '"otro"'},
+        {'x-amz-copy-source-if-match': '"other"'},
         {'x-amz-copy-source-if-none-match': '"$etag"'},
         {'x-amz-copy-source-if-modified-since': future},
         {'x-amz-copy-source-if-unmodified-since': past},

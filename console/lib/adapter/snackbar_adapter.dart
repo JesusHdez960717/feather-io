@@ -33,19 +33,19 @@ class SnackBarAdapter {
     );
   }
 
-  ///Ancho del aviso; en pantallas mas estrechas, lo que quepa
+  /// Width of the notice; on narrower screens, whatever fits
   static const double width = 420;
 
   void _show({required BuildContext context, required Widget child}) {
-    //el overlay raiz cubre toda la pantalla; el de cada rama del shell solo
-    //el contenido, sin el rail, y el aviso perderia el ancho de este
+    // the root overlay covers the whole screen; the one of each shell branch
+    // only the content, without the rail, and the notice would lose its width
     final overlay = Overlay.of(context, rootOverlay: true);
     final screen = MediaQuery.sizeOf(overlay.context).width;
     final margin = app.dimensions.padding.l;
     showTopSnackBar(
       overlay,
       snackBarPosition: SnackBarPosition.bottom,
-      //abajo a la derecha con ancho fijo: el margen izquierdo es lo que sobra
+      // bottom right with a fixed width: the left margin is whatever is left
       padding: EdgeInsets.only(
         right: margin,
         bottom: margin,
@@ -56,7 +56,7 @@ class SnackBarAdapter {
   }
 }
 
-///Exito y error se distinguen por el icono ademas de por el color
+/// Success and error differ by the icon as well as by the color
 class _AppSnackBar extends StatelessWidget {
   final String message;
   final IconData icon;

@@ -7,28 +7,28 @@ class DateFormatter {
 
   factory DateFormatter() => _instance;
 
-  ///dd/M/yy
+  /// dd/M/yy
   DateFormat get xs => DateFormat('dd/M/yy');
 
-  ///dd/MM/yy
+  /// dd/MM/yy
   DateFormat get xss => DateFormat('dd/MM/yy');
 
-  ///dd/MM/yyyy
+  /// dd/MM/yyyy
   DateFormat get s => DateFormat('dd/MM/yyyy');
 
-  ///dd/MMM/yyyy
+  /// dd/MMM/yyyy
   DateFormat get m => DateFormat('dd/MMM/yyyy');
 
-  ///dd/MMM/yyyy hh:mm:ss a
+  /// dd/MMM/yyyy hh:mm:ss a
   DateFormat get l => DateFormat('dd/MMM/yyyy hh:mm:ss a');
 
-  ///yyyy-MM-dd
+  /// yyyy-MM-dd
   DateFormat get api => DateFormat('yyyy-MM-dd');
 
-  ///dd MMM yyyy hh:mm:ss
+  /// dd MMM yyyy hh:mm:ss
   DateFormat get logsTime => DateFormat('dd MMM yyyy hh:mm:ss a');
 
-  ///dd MMM yyyy
+  /// dd MMM yyyy
   DateFormat get logsTimeS => DateFormat('dd MMM yyyy');
 }
 

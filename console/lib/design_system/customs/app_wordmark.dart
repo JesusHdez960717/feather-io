@@ -1,8 +1,8 @@
 import 'package:console/app_exporter.dart';
 import 'package:material_ui/material_ui.dart';
 
-///Logotipo de texto: el nombre en DM Sans negrita con la ultima palabra en el
-///amarillo de marca (`Feather` en blanco, `IO` en `secondary`)
+/// Text logo: the name in bold DM Sans with the last word in the brand yellow
+/// (`Feather` in white, `IO` in `secondary`)
 class AppWordmark extends StatelessWidget {
   final String name;
   final double fontSize;

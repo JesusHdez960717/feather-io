@@ -11,7 +11,7 @@ class ObjectsTableDatasource extends StatefulWidget {
   final List<BrowserObjectWrapper> selectedWrappers;
   final TextEditingController searchController;
 
-  ///Hay un filtro de tipo/tamaño/fecha activo (cambia el mensaje de lista vacia)
+  /// A type/size/date filter is active (it changes the empty list message)
   final bool hasActiveFilter;
   final Function(String prefix) onNavigate;
   final Function(BrowserObjectModel) onSelected;
@@ -157,7 +157,7 @@ class _ObjectsTableDatasourceState extends State<ObjectsTableDatasource> {
           ),
           child: SfDataGridTheme(
             data: SfDataGridThemeData(
-              //para configurar los colores de background de una fila del hover y el selection
+              // background colors of a row on hover and selection
               selectionColor: app.colors.primary.background3.withValues(
                 alpha: 0.8,
               ),
@@ -169,7 +169,7 @@ class _ObjectsTableDatasourceState extends State<ObjectsTableDatasource> {
               data: Theme.of(context).copyWith(
                 checkboxTheme: CheckboxThemeData(
                   fillColor: WidgetStateProperty.resolveWith((states) {
-                    //para configurar el color del checkbox
+                    // checkbox color
                     if (states.contains(WidgetState.selected)) {
                       return app.colors.primary.selection;
                     }
@@ -203,8 +203,8 @@ class _ObjectsTableDatasourceState extends State<ObjectsTableDatasource> {
                   setState(() {
                     columnWidths[details.column.columnName] = details.width;
 
-                    // Si redimensionamos cualquier columna que NO sea last_modified,
-                    // ajustamos last_modified para que la tabla no se achique.
+                    // Resizing any column that is NOT last_modified adjusts
+                    // last_modified so the table doesn't shrink.
                     final othersWidth =
                         (columnWidths['name'] ?? nameWidth) +
                         (columnWidths['type'] ?? typeWidth) +

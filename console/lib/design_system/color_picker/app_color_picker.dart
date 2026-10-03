@@ -4,7 +4,7 @@ import 'package:console/app_exporter.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
-///Opcion de la paleta de [AppColorPicker]
+/// Palette option of [AppColorPicker]
 class AppColorOption {
   final Color color;
   final String label;
@@ -12,11 +12,11 @@ class AppColorOption {
   const AppColorOption({required this.color, required this.label});
 }
 
-///Selector de color generico: "sin color", una paleta y, al final, un circulo
-///de color personalizado que abre un [ColorPopover] anclado encima.
-///No guarda el valor: quien lo usa lo recibe en [onChanged] y lo devuelve en [value]
+/// Generic color picker: "no color", a palette and, at the end, a custom color
+/// circle that opens a [ColorPopover] anchored above it.
+/// It doesn't keep the value: the caller gets it in [onChanged] and passes it back in [value]
 class AppColorPicker extends StatefulWidget {
-  ///Paleta por defecto (los colores de [PaletteColor])
+  /// Default palette (the colors of [PaletteColor])
   static List<AppColorOption> get defaultPalette => [
     AppColorOption(
       color: app.colors.palette.violet,
@@ -38,10 +38,10 @@ class AppColorPicker extends StatefulWidget {
   final bool allowCustom;
   final bool enabled;
 
-  ///Color contra el que el popover avisa de poco contraste
+  /// Color the popover checks for low contrast against
   final Color? contrastAgainst;
 
-  ///Icono que el popover dibuja sobre el color en su vista previa
+  /// Icon the popover draws over the color in its preview
   final SvgAsset? previewIcon;
 
   const AppColorPicker({
@@ -74,7 +74,7 @@ class _AppColorPickerState extends State<AppColorPicker> {
 
   bool _sameColor(Color a, Color b) => a.toARGB32() == b.toARGB32();
 
-  ///Un valor que no esta en la paleta se muestra como color personalizado
+  /// A value that is not in the palette is shown as a custom color
   bool get _isCustom =>
       widget.value != null &&
       !_palette.any((o) => _sameColor(o.color, widget.value!));
@@ -246,7 +246,7 @@ class _AppColorPickerState extends State<AppColorPicker> {
   }
 }
 
-///Circulo de 28px de la fila del selector
+/// 28px circle of the picker row
 class _Swatch extends StatelessWidget {
   static const double size = 28;
 

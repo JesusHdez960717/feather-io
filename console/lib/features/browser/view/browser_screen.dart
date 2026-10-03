@@ -34,8 +34,8 @@ class BrowserScreenNavigator {
     );
   }
 
-  ///Navega al listado de buckets o, con [bucket], a su carpeta [folder]
-  ///(un prefijo como `fotos/2026/`). La URL es la fuente de verdad
+  /// Navigates to the bucket list or, with [bucket], to its folder [folder]
+  /// (a prefix such as `photos/2026/`). The URL is the source of truth
   void show({String? bucket, String folder = '', ViewType? viewType}) {
     final folderParam = _toParam(folder);
     app.navigator.go(
@@ -49,7 +49,7 @@ class BrowserScreenNavigator {
     );
   }
 
-  ///Abre el explorador en la raiz de [bucket]
+  /// Opens the browser at the root of [bucket]
   void openBucket(BucketModel bucket) => show(bucket: bucket.name);
 
   void neglectGo() {
@@ -58,27 +58,27 @@ class BrowserScreenNavigator {
     });
   }
 
-  ///`fotos/2026` (URL) → `fotos/2026/` (prefijo S3)
+  /// `photos/2026` (URL) → `photos/2026/` (S3 prefix)
   static String _toPrefix(String? folder) {
     final trimmed = (folder ?? '').replaceAll(RegExp(r'^/+|/+$'), '');
     return trimmed.isEmpty ? '' : '$trimmed/';
   }
 
-  ///`fotos/2026/` (prefijo S3) → `fotos/2026` (URL)
+  /// `photos/2026/` (S3 prefix) → `photos/2026` (URL)
   static String _toParam(String prefix) =>
       prefix.replaceAll(RegExp(r'^/+|/+$'), '');
 }
 
-///Explorador: el listado de buckets o las carpetas y objetos de uno. Lo que
-///se muestra sale de la URL (`?bucket=&folder=&view_type=`): cada navegacion
-///cambia la URL y la pantalla se ajusta a ella
+/// Browser: the bucket list or the folders and objects of one. What is shown
+/// comes from the URL (`?bucket=&folder=&view_type=`): every navigation
+/// changes the URL and the screen follows it
 class BrowserScreen extends StatefulWidget {
   static final BrowserScreenNavigator navigator = BrowserScreenNavigator();
 
-  ///Bucket abierto; null muestra el listado de buckets
+  /// Open bucket; null shows the bucket list
   final String? bucket;
 
-  ///Carpeta abierta como prefijo S3 (`fotos/2026/`); vacio es la raiz
+  /// Open folder as an S3 prefix (`photos/2026/`); empty is the root
   final String folder;
   final ViewType? viewType;
 
@@ -117,7 +117,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
     }
   }
 
-  ///El bucket de la URL, si ya se conoce la lista de buckets y existe
+  /// The bucket of the URL, if the bucket list is already known and it exists
   BucketModel? _urlBucket(BucketState state) {
     for (final bucket in state.buckets) {
       if (bucket.name == widget.bucket) return bucket;
@@ -125,8 +125,8 @@ class _BrowserScreenState extends State<BrowserScreen> {
     return null;
   }
 
-  ///Ajusta el [BrowserCubit] a la URL. Para abrir un bucket hace falta su
-  ///modelo, asi que antes se carga la lista de buckets
+  /// Matches the [BrowserCubit] to the URL. Opening a bucket needs its model,
+  /// so the bucket list is loaded first
   void _sync() {
     if (widget.bucket == null) {
       cubit.init();

@@ -8,7 +8,8 @@ class DeleteObjectsRequest {
   });
 
   factory DeleteObjectsRequest.fromJson(Map<String, dynamic> json) {
-    // Soportamos el formato estándar y uno más directo
+    // Accepts the standard shape ({"Delete": {"Object": [...]}}) and the
+    // console's lowercase one ({"delete": {"objects": [...]}})
     final delete = json['Delete'] ?? json['delete'] ?? json;
     
     final List<dynamic> objectsList = (delete is Map) 

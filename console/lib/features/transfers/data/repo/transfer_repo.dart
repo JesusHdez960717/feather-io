@@ -4,7 +4,7 @@ import 'package:dio/dio.dart';
 class TransferRepo {
   final TransferClient client;
 
-  ///Transferencias en curso por id, para poder cancelarlas
+  /// Transfers in progress by id, so they can be cancelled
   final Map<String, CancelToken> _cancelTokens = {};
 
   TransferRepo(this.client);
@@ -49,7 +49,7 @@ class TransferRepo {
     );
   }
 
-  ///Sube una parte y devuelve su ETag
+  /// Uploads a part and returns its ETag
   Future<String> uploadPart({
     required String id,
     required String bucket,
@@ -135,7 +135,7 @@ class TransferRepo {
     );
   }
 
-  ///Corta la transferencia [id] si sigue en curso; su llamada acaba con un error
+  /// Cuts the transfer [id] if it is still running; its call ends with an error
   void cancel(String id) => _cancelTokens.remove(id)?.cancel();
 
   Future<T> _track<T>(
@@ -149,7 +149,7 @@ class TransferRepo {
     } catch (e) {
       throw ExceptionConverter.parse(e);
     } finally {
-      //un reintento rapido pudo registrar ya otro con el mismo id
+      // a quick retry may already have registered another one with the same id
       if (identical(_cancelTokens[id], cancelToken)) _cancelTokens.remove(id);
     }
   }

@@ -1,18 +1,18 @@
 import 'package:get/get.dart';
 import 'package:material_ui/material_ui.dart';
 
-///La unica dependencia de Get, que es el framework por detras SOLO debe estar en esta clase
+/// The only dependency on Get, the framework underneath, must live ONLY in this class
 
-///DI stands for Dependency Injection
-///La idea del facada es reducir el acoplamiento de la app
-///con el plugin de inyeccion de dependncia que se use
-///En este caso se esta utilizando Get, pero de cambiarse a otro,
-///como get_it, es solo cambiar la implementacio del find y el put.
+/// DI stands for Dependency Injection
+/// The facade reduces the coupling of the app with the dependency injection
+/// plugin in use.
+/// Get is used here, but switching to another one, such as get_it, only means
+/// changing the implementation of `find` and `put`.
 ///
-///Si se quisiera cambiar a get_it por ejemplo sustitur la implementaciones
-///del `put` por: `getIt.registerSingleton<SomeDependency>(SomeDependency());`
-///y del `find` por: `getIt<AppModel>();`
-///o sus correspondientes en cada caso
+/// To switch to get_it, for example, replace the implementation
+/// of `put` with: `getIt.registerSingleton<SomeDependency>(SomeDependency());`
+/// and of `find` with: `getIt<AppModel>();`
+/// or their equivalents in each case
 class DI {
   static final DI _instance = DI._internal();
 
@@ -45,7 +45,7 @@ class DI {
 ///     );
 ///   }
 /// }
-///``
+/// ``
 abstract class CubitView<T> extends StatelessWidget {
   const CubitView({super.key});
 

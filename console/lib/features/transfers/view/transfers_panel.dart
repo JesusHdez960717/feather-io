@@ -4,13 +4,13 @@ import 'package:console/app_exporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
 
-///Panel flotante con la cola de transferencias, anclado a la derecha del
-///[TransfersIndicator]: progreso de cada subida o descarga, cancelar,
-///reintentar y quitar
+/// Floating panel with the transfer queue, anchored to the right of the
+/// [TransfersIndicator]: progress of each upload or download, cancel, retry
+/// and remove
 class TransfersPanel extends StatelessWidget {
   static const double width = 420;
 
-  ///Lo abre junto al widget de [anchor], alineado con su borde inferior
+  /// Opens it next to the [anchor] widget, aligned with its bottom edge
   static void show(BuildContext anchor) {
     final box = anchor.findRenderObject() as RenderBox;
     final topLeft = box.localToGlobal(Offset.zero);
@@ -39,7 +39,7 @@ class TransfersPanel extends StatelessWidget {
     );
   }
 
-  ///Resumen del estado de la cola, o null si esta vacia
+  /// Summary of the queue status, or null if it is empty
   static String? summary(TransferState state) => switch (state) {
     TransferProcessInProgressState(:final activeCount) =>
       app.intl.transfersActive(activeCount),
@@ -174,7 +174,7 @@ class _TransferRow extends StatelessWidget {
         app.intl.transferStatusQueued,
         app.colors.neutral.grey3,
       ),
-      //una descarga sin tamaño aun: el servicio esta preparando el zip
+      // a download without a size yet: the service is building the zip
       TransferStatus.running when !task.isUpload && task.size == 0 => (
         app.intl.transferStatusPreparing,
         app.colors.neutral.grey3,
@@ -251,7 +251,7 @@ class _TransferRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: app.textTheme.bodyMedium,
                 ),
-                //la carpeta abre el explorador en ella
+                // the folder opens the browser in it
                 InkWell(
                   onTap: () {
                     app.navigator.pop();
@@ -269,7 +269,7 @@ class _TransferRow extends StatelessWidget {
                 if (running) ...[
                   app.dimensions.padding.xs.gap(),
                   LinearProgressIndicator(
-                    //sin tamaño, barra indeterminada
+                    // no size, indeterminate bar
                     value: !task.isUpload && task.size == 0
                         ? null
                         : task.progress,

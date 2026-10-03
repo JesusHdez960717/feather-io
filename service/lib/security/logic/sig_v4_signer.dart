@@ -2,15 +2,15 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 
-/// Firma AWS Signature Version 4 (S3). La usan el filtro que valida las
-/// peticiones firmadas y el servicio que genera URLs prefirmadas
+/// AWS Signature Version 4 (S3). Used by the filter that verifies signed
+/// requests and by the service that builds presigned URLs.
 class SigV4Signer {
   static const String algorithm = 'AWS4-HMAC-SHA256';
   static const String region = 'us-east-1';
   static const String service = 's3';
   static const String unsignedPayload = 'UNSIGNED-PAYLOAD';
 
-  /// Parametros de la query de una URL prefirmada
+  /// Query parameters of a presigned URL.
   static const String algorithmParam = 'X-Amz-Algorithm';
   static const String credentialParam = 'X-Amz-Credential';
   static const String dateParam = 'X-Amz-Date';
@@ -18,23 +18,23 @@ class SigV4Signer {
   static const String signedHeadersParam = 'X-Amz-SignedHeaders';
   static const String signatureParam = 'X-Amz-Signature';
 
-  /// Caducidad maxima de una URL prefirmada (7 dias), como en S3
+  /// Maximum expiration of a presigned URL (7 days), as in S3.
   static const Duration maxExpiration = Duration(days: 7);
 
-  /// `20260930` de una fecha UTC
+  /// `20260930` from a UTC date.
   static String dateStamp(DateTime utc) =>
       '${utc.year.toString().padLeft(4, '0')}'
       '${utc.month.toString().padLeft(2, '0')}'
       '${utc.day.toString().padLeft(2, '0')}';
 
-  /// `20260930T184512Z` de una fecha UTC
+  /// `20260930T184512Z` from a UTC date.
   static String amzDate(DateTime utc) =>
       '${dateStamp(utc)}T'
       '${utc.hour.toString().padLeft(2, '0')}'
       '${utc.minute.toString().padLeft(2, '0')}'
       '${utc.second.toString().padLeft(2, '0')}Z';
 
-  /// Lee un `X-Amz-Date` (`20260930T184512Z`); null si no tiene ese formato
+  /// Parses an `X-Amz-Date` (`20260930T184512Z`); null if it has another format.
   static DateTime? parseAmzDate(String value) {
     final match = RegExp(r'^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$')
         .firstMatch(value);
@@ -53,9 +53,9 @@ class SigV4Signer {
   static String scope(String dateStamp, {String region = region}) =>
       '$dateStamp/$region/$service/aws4_request';
 
-  /// Codifica [value] como lo hace AWS al firmar: todo en `%XX` (bytes UTF-8)
-  /// salvo `A-Za-z0-9-_.~`. `Uri.encodeComponent` deja `!'()*` sin codificar y
-  /// la firma no coincidiria
+  /// Encodes [value] the way AWS does when signing: everything as `%XX` (UTF-8
+  /// bytes) except `A-Za-z0-9-_.~`. `Uri.encodeComponent` leaves `!'()*` alone
+  /// and the signature would not match.
   static String uriEncode(String value) {
     final buffer = StringBuffer();
     for (final byte in utf8.encode(value)) {
@@ -76,8 +76,8 @@ class SigV4Signer {
     return buffer.toString();
   }
 
-  /// La query canonica: cada nombre y valor con [uriEncode], ordenada por el
-  /// nombre ya codificado
+  /// The canonical query: every name and value through [uriEncode], sorted by
+  /// the encoded name.
   static String canonicalQuery(Map<String, String> params) {
     final encoded = [
       for (final MapEntry(:key, :value) in params.entries)
@@ -99,7 +99,7 @@ class SigV4Signer {
     return buffer.toString();
   }
 
-  /// La peticion canonica. [path] va tal cual en la URL (ya codificado)
+  /// The canonical request. [path] goes as it is in the URL (already encoded).
   static String canonicalRequest({
     required String method,
     required String path,
@@ -113,7 +113,7 @@ class SigV4Signer {
         '$signedHeaders\n$payloadHash';
   }
 
-  /// La firma en hexadecimal de [canonicalRequest]
+  /// The hex signature of [canonicalRequest].
   static String signature({
     required String secret,
     required String amzDate,
@@ -147,7 +147,7 @@ class SigV4Signer {
     return _hmac(kService, 'aws4_request');
   }
 
-  /// Compara dos firmas sin cortar en la primera diferencia
+  /// Compares two signatures without stopping at the first difference.
   static bool sameSignature(String a, String b) {
     final left = a.toLowerCase();
     final right = b.toLowerCase();

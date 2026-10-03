@@ -1,6 +1,6 @@
 import 'package:service/feather.dart';
 
-/// URL prefirmada para descargar un objeto sin credenciales hasta [expiresAt]
+/// Presigned URL to download an object without credentials until [expiresAt].
 class PresignedUrlModel implements Serializable {
   final String url;
   final DateTime expiresAt;

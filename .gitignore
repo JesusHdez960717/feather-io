@@ -46,5 +46,5 @@ service/service.iml
 brag-output/
 
 #------- S3 compatibility -------#
-# salidas de service/tool/s3_compat/run.sh
+# outputs of service/tool/s3_compat/run.sh
 service/tool/s3_compat/out/

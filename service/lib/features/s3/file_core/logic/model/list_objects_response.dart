@@ -7,28 +7,28 @@ class ListObjectsResponse implements Serializable {
   final List<FileModel> contents;
   final List<String> commonPrefixes;
 
-  /// Maximo de claves (objetos + prefijos comunes) de esta pagina
+  /// Maximum keys (objects + common prefixes) of this page.
   final int maxKeys;
 
-  /// Token con el que se pidio esta pagina, si no es la primera
+  /// Token this page was requested with, unless it is the first one.
   final String? continuationToken;
 
-  /// Key despues de la que empieza la pagina (`marker` de ListObjects V1,
-  /// `start-after` de V2), tal y como se pidio
+  /// Key the page starts after (`marker` in ListObjects V1, `start-after` in
+  /// V2), as requested.
   final String? startAfter;
 
-  /// Ultima key de esta pagina, para pedir la siguiente con `marker` (V1);
-  /// solo si [isTruncated]
+  /// Last key of this page, to request the next one with `marker` (V1); only
+  /// when [isTruncated].
   final String? nextMarker;
 
-  /// Hay mas claves despues de esta pagina
+  /// There are more keys after this page.
   final bool isTruncated;
 
-  /// Token para pedir la pagina siguiente; solo si [isTruncated]
+  /// Token to request the next page; only when [isTruncated].
   final String? nextContinuationToken;
 
-  /// Claves (objetos + prefijos comunes) de todas las paginas. No es de S3:
-  /// solo va en el JSON, para que la consola pueda mostrar "pagina X de N"
+  /// Keys (objects + common prefixes) of every page. Not part of S3: it only
+  /// goes in the JSON, so the console can show "page X of N".
   final int totalKeys;
 
   ListObjectsResponse({
@@ -46,7 +46,7 @@ class ListObjectsResponse implements Serializable {
     required this.totalKeys,
   });
 
-  /// Objetos y prefijos comunes devueltos en esta pagina
+  /// Objects and common prefixes returned in this page.
   int get keyCount => contents.length + commonPrefixes.length;
 
   @override

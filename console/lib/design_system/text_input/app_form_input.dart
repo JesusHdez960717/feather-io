@@ -2,18 +2,18 @@ import 'package:console/app_exporter.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
-///Campo de formulario con etiqueta, contador, ayuda y error.
-///Estados: normal, hover, foco, error (de [validator] o de [errorText], p. ej. un
-///422 de la API; se ven igual) y desactivado. Se valida con el [Form] que lo contiene
+/// Form field with label, counter, help and error.
+/// States: normal, hover, focus, error (from [validator] or [errorText], e.g. a
+/// 422 from the API; they look the same) and disabled. The enclosing [Form] validates it
 class AppFormInput extends StatefulWidget {
   final TextEditingController controller;
   final String? label;
   final String? hint;
 
-  ///Texto de ayuda bajo el campo; lo sustituye el error cuando lo hay
+  /// Help text under the field; the error replaces it when there is one
   final String? helperText;
 
-  ///Error externo al [validator] (p. ej. de la API). Tiene prioridad sobre el del validator
+  /// Error from outside the [validator] (e.g. from the API). It wins over the validator's
   final String? errorText;
   final int? maxLength;
   final bool showCounter;
@@ -273,8 +273,8 @@ class _AppFormInputState extends State<AppFormInput> {
     );
   }
 
-  ///Linea fija bajo el campo: el error (con icono) o la ayuda. Ocupa siempre
-  ///su alto para que el formulario no salte al aparecer un error
+  /// Fixed line under the field: the error (with an icon) or the help. It always
+  /// takes its height so the form doesn't jump when an error appears
   Widget _buildHelp(String? error) {
     final style = app.textTheme.bodySmall;
     return ConstrainedBox(

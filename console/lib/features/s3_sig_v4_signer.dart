@@ -29,7 +29,7 @@ class S3SigV4Signer {
     updatedHeaders['x-amz-date'] = amzDate;
     updatedHeaders['x-amz-content-sha256'] = payloadHash;
 
-    // El host es requerido para la firma
+    // The host is required for the signature
     updatedHeaders['host'] = uri.host + (uri.hasPort ? ':${uri.port}' : '');
 
     final sortedHeaderKeys = updatedHeaders.keys.toList()..sort();

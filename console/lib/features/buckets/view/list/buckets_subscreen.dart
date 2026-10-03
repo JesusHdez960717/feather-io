@@ -429,7 +429,7 @@ class _BucketsViewState extends State<_BucketsView> {
             Expanded(
               child: AppTextSearchField(
                 controller: _searchController,
-                //filtra la lista ya cargada: sin espera
+                // filters the list already loaded: no wait
                 delay: 0,
                 onSearch: (_) => _onSearchChanged(),
                 hint: app.intl.bucketsSearchHint,

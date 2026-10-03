@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:service/feather.dart';
 
-///Tamaño maximo por defecto de un objeto (5 GiB, el limite de un `PUT` en S3)
+/// Default maximum object size (5 GiB, the limit of a single `PUT` in S3).
 const int defaultMaxObjectSize = 5 * 1024 * 1024 * 1024;
 
 extension ExtendedEnv on Env {
@@ -15,14 +15,14 @@ extension ExtendedEnv on Env {
   String get storageVolumePath =>
       find<String>('STORAGE_VOLUME_PATH', required: true)!;
 
-  ///Tamaño maximo (en bytes) de un objeto subido con `PUT`
+  /// Maximum size (in bytes) of an object uploaded with `PUT`.
   int get maxObjectSize =>
       find<int>('MAX_OBJECT_SIZE', required: false) ?? defaultMaxObjectSize;
 
-  ///URL publica del servicio (`https://s3.example.com`), para las URLs
-  ///prefirmadas. Sin ella se usan el esquema y el `Host` de la peticion, que
-  ///detras de un proxy con HTTPS darian `http://`. Solo esquema, host y puerto:
-  ///la ruta forma parte de la firma
+  /// Public URL of the service (`https://s3.example.com`), for presigned URLs.
+  /// Without it the request's scheme and `Host` are used, which behind an HTTPS
+  /// proxy would give `http://`. Scheme, host and port only: the path is part of
+  /// the signature.
   Uri? get publicUrl {
     final raw = find<String>('PUBLIC_URL', required: false);
     if (raw == null || raw.trim().isEmpty) return null;
@@ -39,35 +39,35 @@ extension ExtendedEnv on Env {
       throw ArgumentError.value(
         raw,
         'PUBLIC_URL',
-        'tiene que ser esquema, host y puerto, sin ruta (https://s3.example.com)',
+        'must be scheme, host and port, without a path (https://s3.example.com)',
       );
     }
     return uri;
   }
 
-  ///Proxies propios delante del servicio que añaden su entrada a
-  ///`X-Forwarded-For`; con 0 (por defecto) se usa la IP de la conexion
+  /// Proxies of your own in front of the service that add their entry to
+  /// `X-Forwarded-For`; with 0 (the default) the connection's IP is used.
   int get trustedProxies => find<int>('TRUSTED_PROXIES', required: false) ?? 0;
 
-  ///Peticiones por IP en cada ventana de [rateLimitWindowSeconds] (limite
-  ///general); 0 lo desactiva. Alto por defecto: los clientes S3 mandan rafagas
-  ///(subidas por partes, `sync` de muchos ficheros)
+  /// Requests per IP in each [rateLimitWindowSeconds] window (general limit);
+  /// 0 disables it. High by default: S3 clients send bursts (parallel uploads,
+  /// `sync` of many files).
   int get rateLimitRequests =>
       find<int>('RATE_LIMIT_REQUESTS', required: false) ?? 2000;
 
-  ///Segundos de la ventana del limite general
+  /// Seconds of the general limit's window.
   int get rateLimitWindowSeconds =>
       find<int>('RATE_LIMIT_WINDOW_SECONDS', required: false) ?? 60;
 
-  ///Fallos de login seguidos que bloquean una IP
+  /// Failed logins in a row that lock an IP.
   int get loginMaxFailures =>
       find<int>('LOGIN_MAX_FAILURES', required: false) ?? 10;
 
-  ///Segundos que dura el bloqueo de una IP tras [loginMaxFailures] fallos
+  /// Seconds an IP stays locked after [loginMaxFailures] failures.
   int get loginLockSeconds =>
       find<int>('LOGIN_LOCK_SECONDS', required: false) ?? 15 * 60;
 
-  ///Milisegundos de espera antes de responder a un login fallido
+  /// Milliseconds to wait before answering a failed login.
   int get loginFailureDelayMs =>
       find<int>('LOGIN_FAILURE_DELAY_MS', required: false) ?? 1000;
 

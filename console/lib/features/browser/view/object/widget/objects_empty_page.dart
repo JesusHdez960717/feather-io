@@ -1,7 +1,7 @@
 import 'package:console/app_exporter.dart';
 import 'package:material_ui/material_ui.dart';
 
-///Lista de objetos vacia: sin objetos, sin coincidencias de la busqueda o del filtro
+/// Empty object list: no objects, or nothing matches the search or the filter
 class ObjectsEmptyPage extends StatelessWidget {
   final String query;
   final bool hasActiveFilter;

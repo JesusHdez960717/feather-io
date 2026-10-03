@@ -1,29 +1,29 @@
 import 'package:console/app_exporter.dart';
 
-///Que le ha pasado a un bucket
+/// What happened to a bucket
 enum BucketChange {
   created,
 
-  ///Cambio su descripcion o su color
+  /// Its description or color changed
   updated,
 
-  ///Se borraron todos sus objetos
+  /// All its objects were deleted
   emptied,
   deleted,
 
-  ///Se subieron o borraron objetos (cambian sus estadisticas)
+  /// Objects were uploaded or deleted (its statistics change)
   objectsChanged,
 }
 
-///Aviso por el bus global de que un bucket ha cambiado. Cada seccion
-///(explorador, *Buckets*) tiene sus propios cubits y con esto se mantienen al dia
+/// Notice on the global bus that a bucket changed. Each section (browser,
+/// *Buckets*) has its own cubits, and this keeps them up to date
 class BucketChangedEvent {
-  ///El cubit que hizo el cambio: ya se actualiza por su cuenta y lo ignora
+  /// The cubit that made the change: it already updates itself and ignores it
   final Object source;
   final BucketChange change;
   final String bucketName;
 
-  ///El bucket ya actualizado, en [BucketChange.updated]
+  /// The already updated bucket, in [BucketChange.updated]
   final BucketModel? bucket;
 
   const BucketChangedEvent({

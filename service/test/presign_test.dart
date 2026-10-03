@@ -15,7 +15,7 @@ void main() {
 
   setUpAll(() async {
     await server.start();
-    await server.putObject(bucket, 'docs/informe final.pdf', 'contenido');
+    await server.putObject(bucket, 'docs/report final.pdf', 'content');
   });
   tearDownAll(server.stop);
 
@@ -27,7 +27,7 @@ void main() {
 
   Future<String> presignedUrl({int expiresIn = 3600}) async {
     final response = await presign({
-      'key': 'docs/informe final.pdf',
+      'key': 'docs/report final.pdf',
       'expires_in': expiresIn,
     });
     expect(response.statusCode, 200, reason: response.body);
@@ -39,7 +39,7 @@ void main() {
       'Should return a URL to the same service that expires later',
       () async {
         final response = await presign({
-          'key': 'docs/informe final.pdf',
+          'key': 'docs/report final.pdf',
           'expires_in': 3600,
         });
         expect(response.statusCode, 200);
@@ -47,7 +47,7 @@ void main() {
         final url = Uri.parse(body['url']);
         expect(url.host, 'localhost');
         expect(url.port, 8099);
-        expect(url.path, '/$bucket/docs/informe%20final.pdf');
+        expect(url.path, '/$bucket/docs/report%20final.pdf');
         expect(url.queryParameters['X-Amz-Expires'], '3600');
         expect(url.queryParameters['X-Amz-Signature'], isNotEmpty);
         final expiresAt = DateTime.parse(body['expires_at']);
@@ -70,7 +70,7 @@ void main() {
     test('Should reject an expiration out of range (422)', () async {
       for (final expiresIn in [0, 7 * 24 * 3600 + 1]) {
         final response = await presign({
-          'key': 'docs/informe final.pdf',
+          'key': 'docs/report final.pdf',
           'expires_in': expiresIn,
         });
         expect(response.statusCode, 422, reason: '$expiresIn');
@@ -79,7 +79,7 @@ void main() {
 
     test('Should fail without auth (401)', () async {
       final response = await presign({
-        'key': 'docs/informe final.pdf',
+        'key': 'docs/report final.pdf',
         'expires_in': 60,
       }, auth: false);
       expect(response.statusCode, 401);
@@ -90,7 +90,7 @@ void main() {
     test('Should download the object without credentials', () async {
       final response = await http.get(Uri.parse(await presignedUrl()));
       expect(response.statusCode, 200);
-      expect(response.body, 'contenido');
+      expect(response.body, 'content');
     });
 
     test('Should reject a tampered signature (403)', () async {
@@ -104,9 +104,9 @@ void main() {
     });
 
     test('Should reject the signature on another object (403)', () async {
-      await server.putObject(bucket, 'secreto.txt', 'no');
+      await server.putObject(bucket, 'secret.txt', 'no');
       final url = Uri.parse(await presignedUrl());
-      final other = url.replace(path: '/$bucket/secreto.txt');
+      final other = url.replace(path: '/$bucket/secret.txt');
       final response = await http.get(other);
       expect(response.statusCode, 403);
     });

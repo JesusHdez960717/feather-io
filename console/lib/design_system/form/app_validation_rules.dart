@@ -10,8 +10,8 @@ class AppValidationRule {
   const AppValidationRule({required this.label, required this.state});
 }
 
-///Lista de reglas de un campo que se van cumpliendo mientras se escribe.
-///Cada estado lleva su icono, asi no depende solo del color
+/// List of a field's rules that get fulfilled while typing.
+/// Each state has its icon, so it doesn't rely on color alone
 class AppValidationRules extends StatelessWidget {
   final List<AppValidationRule> rules;
 

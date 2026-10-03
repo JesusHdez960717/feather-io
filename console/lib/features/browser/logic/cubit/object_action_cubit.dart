@@ -1,9 +1,9 @@
 import 'package:console/app_exporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-///Acciones de los dialogos del explorador: crear carpeta, renombrar y mover.
-///Vive mientras el dialogo esta abierto, asi la carga y los errores se ven en
-///el. Al terminar avisa por el bus: el explorador y las listas de buckets recargan
+/// Actions of the browser dialogs: create folder, rename and move.
+/// It lives while the dialog is open, so loading and errors show in it. When
+/// done it announces it on the bus: the browser and the bucket lists reload
 class ObjectActionCubit extends Cubit<ObjectActionState> {
   final BrowserRepo _repo;
   final AuthCubit _auth;
@@ -13,7 +13,7 @@ class ObjectActionCubit extends Cubit<ObjectActionState> {
 
   String? get _token => _auth.auth?.accessToken;
 
-  ///Crea la carpeta [name] dentro de [prefix]
+  /// Creates the folder [name] inside [prefix]
   Future<void> createFolder({
     required String bucket,
     required String prefix,
@@ -28,7 +28,7 @@ class ObjectActionCubit extends Cubit<ObjectActionState> {
     });
   }
 
-  ///Renombra [key] a [newName] en la misma carpeta: copia y borra el original
+  /// Renames [key] to [newName] in the same folder: copies and deletes the original
   Future<void> rename({
     required String bucket,
     required String key,
@@ -47,9 +47,9 @@ class ObjectActionCubit extends Cubit<ObjectActionState> {
     });
   }
 
-  ///Mueve [keys] a [targetPrefix] de [targetBucket]: copia cada uno y borra
-  ///los originales que se hayan copiado. Si una copia falla, lo ya copiado
-  ///queda movido y el error dice cuantos se movieron
+  /// Moves [keys] to [targetPrefix] of [targetBucket]: copies each one and
+  /// deletes the originals that were copied. If a copy fails, what was already
+  /// copied stays moved and the error says how many were moved
   Future<void> move({
     required String bucket,
     required List<String> keys,

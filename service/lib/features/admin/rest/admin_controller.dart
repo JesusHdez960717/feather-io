@@ -112,13 +112,13 @@ class AdminController {
   final BucketService bucketService;
   final PresignService presignService;
 
-  /// URL prefirmada para descargar un objeto. Apunta al mismo host al que
-  /// llego esta peticion, que es el que entra en la firma
+  /// Presigned URL to download an object. It points to `PUBLIC_URL` or, without
+  /// it, to the host this request arrived at; the host is part of the signature.
   Future<ResponseEntity> presignObject(RequestEntity request) async {
     final presign = await request.body<PresignRequest>();
     presign.validate().throwOnFailure();
 
-    //con PUBLIC_URL, la de fuera; si no, la de esta peticion
+    // PUBLIC_URL if set; otherwise this request's scheme and host
     final publicUrl = env.publicUrl;
     final url = await presignService.presignGet(
       scheme: publicUrl?.scheme ?? request.requestedUri.scheme,
@@ -145,15 +145,15 @@ class AdminController {
     return ResponseEntity(204);
   }
 
-  /// Borra una carpeta con todo su contenido: `?prefix=fotos/`. Con la API de
-  /// S3, borrar `fotos/` solo quita la carpeta vacia (su marcador)
+  /// Deletes a folder with all its content: `?prefix=photos/`. Through the S3
+  /// API, deleting `photos/` only removes the empty folder (its marker).
   Future<ResponseEntity> deleteFolder(RequestEntity request) async {
     final bucketName = request.pathParams['bucket']!;
     final prefix = request.queryParams['prefix'];
     if (prefix == null || prefix.isEmpty) {
       throw S3Exception(
         S3ErrorCode.invalidArgument,
-        message: 'Falta la carpeta a borrar (prefix).',
+        message: 'Missing the folder to delete (prefix).',
         resource: bucketName,
       );
     }

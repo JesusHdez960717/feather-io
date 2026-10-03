@@ -1,8 +1,8 @@
 import 'package:console/app_exporter.dart';
 import 'package:material_ui/material_ui.dart';
 
-///Lo que pide la URL del explorador no existe (un bucket o una carpeta):
-///titulo, explicacion y una accion para volver a un sitio que si existe
+/// What the browser URL asks for doesn't exist (a bucket or a folder): title,
+/// explanation and an action to go back somewhere that does exist
 class BrowserNotFoundPage extends StatelessWidget {
   final String title;
   final String description;

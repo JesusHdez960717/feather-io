@@ -263,7 +263,7 @@ void main() {
     const encBucket = 'list-encoding';
 
     setUpAll(() async {
-      await server.putObject(encBucket, 'carpeta con espacio/a+b%c.txt', 'x');
+      await server.putObject(encBucket, 'folder with space/a+b%c.txt', 'x');
     });
 
     test('Should URL-encode the keys, keeping the slashes', () async {
@@ -274,7 +274,7 @@ void main() {
       expect(response.body, contains('<EncodingType>url</EncodingType>'));
       expect(
         response.body,
-        contains('<Key>carpeta%20con%20espacio/a%2Bb%25c.txt</Key>'),
+        contains('<Key>folder%20with%20space/a%2Bb%25c.txt</Key>'),
       );
     });
 
@@ -283,7 +283,7 @@ void main() {
         server.url('/$encBucket?delimiter=/&encoding-type=url'),
         headers: server.auth(),
       );
-      expect(response.body, contains('<Prefix>carpeta%20con%20espacio/</Prefix>'));
+      expect(response.body, contains('<Prefix>folder%20with%20space/</Prefix>'));
     });
 
     test('Should not encode without encoding-type', () async {
@@ -291,7 +291,7 @@ void main() {
         server.url('/$encBucket?list-type=2'),
         headers: server.auth(),
       );
-      expect(response.body, contains('<Key>carpeta con espacio/a+b%c.txt</Key>'));
+      expect(response.body, contains('<Key>folder with space/a+b%c.txt</Key>'));
       expect(response.body, isNot(contains('<EncodingType>')));
     });
   });

@@ -9,7 +9,7 @@ class AccessRuleTableRepo {
   Future<List<AnonymousRuleTableData>> getRulesByBucket({
     required String bucket,
   }) {
-    //en orden de creacion: si varias reglas coinciden, gana la primera
+    // In creation order: when several rules match, the first one wins
     return (_db.select(_db.anonymousRuleTable)
           ..where((tbl) => tbl.bucketName.equals(bucket))
           ..orderBy([(tbl) => OrderingTerm.asc(tbl.id)]))

@@ -1,8 +1,8 @@
-///Por que un nombre de carpeta u objeto no vale
+/// Why a folder or object name is not valid
 enum ObjectNameError { empty, invalid, exists, unchanged }
 
-///Valida el nombre de una carpeta u objeto dentro de su carpeta: sin `/`, sin
-///los caracteres que el servicio rechaza y sin repetir uno de [existing]
+/// Validates the name of a folder or object inside its folder: no `/`, none of
+/// the characters the service rejects and not repeating one of [existing]
 abstract class ObjectName {
   static final RegExp _forbidden = RegExp(r'[\x00-\x1F\x7F<>:"|?*/\\]');
 

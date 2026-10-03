@@ -8,7 +8,7 @@ class BucketModel {
   final int sizeBytes;
   final DateTime creationDate;
 
-  ///Fecha del objeto modificado mas recientemente; null si esta vacio
+  /// Date of the most recently modified object; null if it is empty
   final DateTime? lastModified;
 
   BucketModel({

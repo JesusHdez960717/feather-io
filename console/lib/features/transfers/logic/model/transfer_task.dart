@@ -10,34 +10,34 @@ enum TransferStatus {
   failed,
   cancelled;
 
-  ///En cola o en curso
+  /// Queued or running
   bool get isActive => this == queued || this == running;
 }
 
-///Una subida o una descarga de la cola de transferencias
+/// An upload or a download of the transfer queue
 class TransferTask {
   final String id;
   final TransferDirection direction;
   final String bucket;
 
-  ///Nombre que se muestra: el del fichero subido o el del zip descargado
+  /// Name shown: the uploaded file's or the downloaded zip's
   final String name;
 
-  ///Carpeta de destino (subida) u origen (descarga) dentro del bucket
-  ///(`fotos/2026/`), vacia en la raiz
+  /// Target (upload) or source (download) folder inside the bucket
+  /// (`photos/2026/`), empty at the root
   final String folder;
 
-  ///Subida: la key de destino y el fichero, que se guarda para reintentar
+  /// Upload: the target key and the file, kept to retry
   final String? key;
   final XFile? file;
 
-  ///Descarga: las keys que van en el zip
+  /// Download: the keys that go in the zip
   final List<String> keys;
 
-  ///Bytes totales; en una descarga, 0 hasta que el servicio manda el zip
+  /// Total bytes; in a download, 0 until the service sends the zip
   final int size;
 
-  ///Bytes enviados o recibidos
+  /// Bytes sent or received
   final int transferred;
   final TransferStatus status;
   final GlobalException? error;
@@ -59,7 +59,7 @@ class TransferTask {
 
   bool get isUpload => direction == TransferDirection.upload;
 
-  ///De 0 a 1
+  /// From 0 to 1
   double get progress {
     if (status == TransferStatus.done) return 1;
     return size == 0 ? 0 : (transferred / size).clamp(0, 1);
@@ -88,15 +88,15 @@ class TransferTask {
     );
   }
 
-  ///Carpeta que contiene [key] (`fotos/2026/` para `fotos/2026/a.jpg` y para
-  ///la carpeta `fotos/2026/b/`)
+  /// Folder that contains [key] (`photos/2026/` for `photos/2026/a.jpg` and for
+  /// the folder `photos/2026/b/`)
   static String parentFolder(String key) {
     final path = key.endsWith('/') ? key.substring(0, key.length - 1) : key;
     return path.substring(0, path.lastIndexOf('/') + 1);
   }
 }
 
-///Parte ya subida de una subida multipart
+/// Part of a multipart upload already uploaded
 class UploadedPart {
   final int number;
   final String etag;

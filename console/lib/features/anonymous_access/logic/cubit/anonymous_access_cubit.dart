@@ -1,7 +1,7 @@
 import 'package:console/app_exporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-///Reglas de acceso anonimo del bucket que se muestra en el detalle
+/// Anonymous access rules of the bucket shown in the details
 class AnonymousAccessCubit extends Cubit<AnonymousAccessState> {
   final AnonymousAccessRepo _repo;
   final AuthCubit _auth;
@@ -10,7 +10,7 @@ class AnonymousAccessCubit extends Cubit<AnonymousAccessState> {
     : super(const AnonymousAccessInitialState());
 
   Future<void> load({required String bucket}) async {
-    //las reglas de otro bucket no se muestran mientras cargan las nuevas
+    // another bucket's rules are not shown while the new ones load
     final rules = bucket == state.bucket ? state.rules : <AnonymousRuleModel>[];
     emit(AnonymousAccessLoadingInProgressState(bucket: bucket, rules: rules));
     try {
@@ -18,7 +18,7 @@ class AnonymousAccessCubit extends Cubit<AnonymousAccessState> {
         bucket: bucket,
         token: _auth.auth?.accessToken,
       );
-      //si mientras tanto se eligio otro bucket, esta respuesta ya no vale
+      // if another bucket was picked meanwhile, this response is stale
       if (state.bucket != bucket) return;
       emit(AnonymousAccessLoadingSuccessState(bucket: bucket, rules: loaded));
     } catch (e) {

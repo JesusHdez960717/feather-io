@@ -12,14 +12,14 @@ void main() {
   const window = Duration(seconds: 2);
 
   setUpAll(() async {
-    //limite pequeño para el test: 5 peticiones cada 2 s por IP
+    // Small limit for the test: 5 requests every 2 s per IP
     env.put('RATE_LIMIT_REQUESTS', '5');
     env.put('RATE_LIMIT_WINDOW_SECONDS', '${window.inSeconds}');
     await server.start();
   });
   tearDownAll(server.stop);
 
-  /// Espera a que la ventana se vacie (el login de server.start tambien cuenta)
+  /// Waits for the window to empty (server.start's login counts too).
   Future<void> newWindow() =>
       Future<void>.delayed(window + const Duration(milliseconds: 200));
 
@@ -38,7 +38,7 @@ void main() {
       for (var i = 0; i < 6; i++) {
         statuses.add((await http.get(server.url('/'), headers: server.auth())).statusCode);
       }
-      //los clientes S3 reintentan un 503 SlowDown con espera; un 429 no
+      // S3 clients retry a 503 SlowDown with backoff; they don't retry a 429
       expect(statuses, [200, 200, 200, 200, 200, 503]);
 
       final limited = await http.get(server.url('/'), headers: server.auth());

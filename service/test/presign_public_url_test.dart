@@ -17,7 +17,7 @@ void main() {
   setUpAll(() async {
     env.put<String>('PUBLIC_URL', publicUrl);
     await server.start();
-    await server.putObject(bucket, 'informe.txt', 'contenido');
+    await server.putObject(bucket, 'report.txt', 'content');
   });
   tearDownAll(server.stop);
 
@@ -29,7 +29,7 @@ void main() {
         'content-type': 'application/json',
         ...headers,
       },
-      body: jsonEncode({'key': 'informe.txt', 'expires_in': 3600}),
+      body: jsonEncode({'key': 'report.txt', 'expires_in': 3600}),
     );
     expect(response.statusCode, 200, reason: response.body);
     return jsonDecode(response.body)['url'] as String;
@@ -38,7 +38,7 @@ void main() {
   group('PresignService - PUBLIC_URL', () {
     test('Should build the URL with PUBLIC_URL, not with the request', () async {
       final url = await presign();
-      expect(url, startsWith('$publicUrl/$bucket/informe.txt?'));
+      expect(url, startsWith('$publicUrl/$bucket/report.txt?'));
     });
 
     test('Should ignore a manipulated Host header', () async {
@@ -47,14 +47,14 @@ void main() {
     });
 
     test('Should be valid when it arrives through a proxy that keeps the Host', () async {
-      //un proxy con HTTPS reenvia por HTTP y conserva el Host publico
+      // An HTTPS proxy forwards over HTTP and keeps the public Host
       final url = Uri.parse(await presign());
       final response = await http.get(
         server.url('${url.path}?${url.query}'),
         headers: {'host': url.host},
       );
       expect(response.statusCode, 200, reason: response.body);
-      expect(response.body, 'contenido');
+      expect(response.body, 'content');
     });
   });
 

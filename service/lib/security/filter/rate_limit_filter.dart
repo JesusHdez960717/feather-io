@@ -1,13 +1,13 @@
 import 'package:service/feather.dart';
 
-/// Limite general de peticiones por IP (ventana deslizante, el [RateLimiter] de
-/// Winter). Va el primero de los filtros globales: corta una avalancha antes de
-/// leer cuerpos o comprobar firmas. Ver "Límite general" en `DECISIONES.md`.
+/// General request limit per IP (a sliding window, Winter's [RateLimiter]). It
+/// is the first global filter: it stops a flood before reading bodies or
+/// checking signatures. See "General request limit" in `DECISIONS.md`.
 ///
-/// Por encima del limite, la API S3 responde `503 SlowDown`, como S3: es lo que
-/// los SDKs y la CLI de AWS reintentan con espera (un 429 la CLI no lo
-/// reintenta y el fichero falla). La API de admin responde `429`. Todas las
-/// respuestas llevan `X-RateLimit-*`, y las rechazadas `Retry-After`
+/// Above the limit the S3 API answers `503 SlowDown`, like S3: that's what the
+/// AWS SDKs and CLI retry with backoff (the CLI doesn't retry a 429 and the
+/// file fails). The admin API answers `429`. Every response carries
+/// `X-RateLimit-*`, and the rejected ones `Retry-After`.
 class RateLimitFilter extends Filter {
   final RateLimiter rateLimiter;
   final String _adminPrefix = env.adminPrefix;
@@ -21,7 +21,7 @@ class RateLimitFilter extends Filter {
     RequestEntity request,
     FilterChain chain,
   ) async {
-    //por IP; detras de proxies propios, ver TRUSTED_PROXIES
+    // Per IP; behind your own proxies, see TRUSTED_PROXIES
     final client =
         request.clientIp(trustedProxies: env.trustedProxies) ?? 'unknown';
     final allowed = rateLimiter.allowRequest(client);
@@ -53,7 +53,7 @@ class RateLimitFilter extends Filter {
       request,
       S3Exception(
         S3ErrorCode.slowDown,
-        message: 'Demasiadas peticiones; reduce el ritmo y reinténtalo.',
+        message: 'Please reduce your request rate.',
       ),
       StackTrace.current,
     );
@@ -67,7 +67,7 @@ class RateLimitFilter extends Filter {
     return segments.isNotEmpty && segments.first == _adminPrefix;
   }
 
-  /// Redondea hacia arriba: esperando esos segundos nunca se llega antes
+  /// Rounds up, so a client waiting that long is never too early.
   static int _ceilSeconds(Duration duration) =>
       (duration.inMicroseconds / Duration.microsecondsPerSecond).ceil();
 

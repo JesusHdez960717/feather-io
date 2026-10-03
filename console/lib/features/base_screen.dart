@@ -4,7 +4,7 @@ import 'package:console/app_exporter.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
-///este es el screen base con el bottom-nav-bar
+/// Base screen with the navigation rail
 class BaseScreen extends StatefulWidget {
   /// The navigation shell and container for the branch Navigators.
   final StatefulNavigationShell navigationShell;
@@ -89,13 +89,13 @@ class _BaseScreenState extends State<BaseScreen> {
   }
 }
 
-///Pie del rail: transferencias, idioma y cerrar sesion, tres [RailButton]
-///iguales. Con el rail plegado van en columna y desplegado en fila; cada uno
-///se desliza de un sitio a otro con la animacion del propio rail
+/// Rail footer: transfers, language and log out, three identical [RailButton]s.
+/// With the rail collapsed they go in a column and expanded in a row; each one
+/// slides from one place to the other with the rail's own animation
 class _RailFooter extends StatelessWidget {
   static const double collapsedWidth = 80;
 
-  ///La fila del pie mas `padding-l` a cada lado
+  /// The footer row plus `padding-l` on each side
   static const double expandedWidth = _rowWidth + 2 * 16;
 
   static const double _gap = 12;
@@ -122,12 +122,12 @@ class _RailFooter extends StatelessWidget {
     return AnimatedBuilder(
       animation: animation,
       builder: (context, _) {
-        //con "reducir movimiento" saltan de la columna a la fila
+        // with "reduce motion" they jump from the column to the row
         final t = MediaQuery.disableAnimationsOf(context)
             ? animation.value.roundToDouble()
             : animation.value;
         final width = lerpDouble(collapsedWidth, expandedWidth, t)!;
-        //la columna mide lo mismo de alto que la fila de ancho
+        // the column is as tall as the row is wide
         final height = lerpDouble(_rowWidth, _size, t)!;
         return SizedBox(
           width: width,
@@ -153,9 +153,9 @@ class _RailFooter extends StatelessWidget {
   }
 }
 
-///Boton de desplegar/plegar el rail. El rail centra su `leading`; este ocupa
-///_todo el ancho del rail y se queda a la izquierda, en el mismo sitio que con
-///el rail plegado, para que no se mueva al desplegarlo
+/// Button to expand/collapse the rail. The rail centers its `leading`; this one
+/// takes the whole width of the rail and stays on the left, in the same place as
+/// with the rail collapsed, so it doesn't move when expanding it
 class _RailMenuButton extends StatelessWidget {
   static const double _size = 48;
 

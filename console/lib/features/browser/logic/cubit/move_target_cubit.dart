@@ -1,8 +1,8 @@
 import 'package:console/app_exporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-///Carpeta de destino que se va eligiendo en el dialogo de mover: el bucket,
-///la carpeta abierta y sus subcarpetas
+/// Target folder being picked in the move dialog: the bucket, the open folder
+/// and its subfolders
 class MoveTargetCubit extends Cubit<MoveTargetState> {
   final BrowserRepo _repo;
   final AuthCubit _auth;
@@ -10,7 +10,7 @@ class MoveTargetCubit extends Cubit<MoveTargetState> {
   MoveTargetCubit(this._repo, this._auth)
     : super(const MoveTargetInitialState());
 
-  ///Abre [prefix] de [bucket] y lista sus subcarpetas
+  /// Opens [prefix] of [bucket] and lists its subfolders
   Future<void> open({required String bucket, required String prefix}) async {
     emit(
       MoveTargetLoadingInProgressState(
@@ -29,7 +29,7 @@ class MoveTargetCubit extends Cubit<MoveTargetState> {
         delimiter: '/',
         maxKeys: 1000,
       );
-      //si mientras tanto se abrio otra carpeta, esta respuesta ya no vale
+      // if another folder was opened meanwhile, this response is stale
       if (state.bucket != bucket || state.prefix != prefix) return;
       emit(
         MoveTargetLoadingSuccessState(
@@ -54,10 +54,10 @@ class MoveTargetCubit extends Cubit<MoveTargetState> {
 abstract class MoveTargetState {
   final String? bucket;
 
-  ///Carpeta abierta como prefijo (`libros/2026/`); vacio es la raiz
+  /// Open folder as a prefix (`books/2026/`); empty is the root
   final String prefix;
 
-  ///Subcarpetas de [prefix], como prefijos completos
+  /// Subfolders of [prefix], as full prefixes
   final List<String> folders;
 
   const MoveTargetState({

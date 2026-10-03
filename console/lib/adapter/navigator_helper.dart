@@ -8,7 +8,7 @@ class NavigatorHelper {
 
   factory NavigatorHelper() => _instance;
 
-  //asumed `goNamed`
+  // assumes `goNamed`
   void go(
     String name, {
     Map<String, String> pathParameters = const <String, String>{},

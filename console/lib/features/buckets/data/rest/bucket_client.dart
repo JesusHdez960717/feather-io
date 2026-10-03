@@ -45,7 +45,7 @@ class BucketClient extends BaseClient {
     return BucketResponse.fromJson(rawResponse.data);
   }
 
-  ///Borra todos los objetos del bucket; el bucket y su configuracion se mantienen
+  /// Deletes every object of the bucket; the bucket and its settings stay
   Future<void> emptyBucket({required String name, String? token}) async {
     final admin = Environment.adminPrefix;
     await dio.delete(
@@ -75,7 +75,7 @@ class BucketCreateRequest {
 }
 
 //---------- BUCKET UPDATE REQUEST ----------
-///Reemplaza los metadatos: un campo a null se borra en el servicio
+/// Replaces the metadata: a field set to null is deleted on the service
 class BucketUpdateRequest {
   final String? description;
   final int? color;

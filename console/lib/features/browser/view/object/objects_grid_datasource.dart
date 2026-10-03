@@ -9,7 +9,7 @@ class ObjectsGridDatasource extends StatelessWidget {
   final List<BrowserObjectWrapper> selectedWrappers;
   final TextEditingController searchController;
 
-  ///Hay un filtro de tipo/tamaño/fecha activo (cambia el mensaje de lista vacia)
+  /// A type/size/date filter is active (it changes the empty list message)
   final bool hasActiveFilter;
   final Function(String prefix) onNavigate;
   final Function(BrowserObjectModel) onSelected;

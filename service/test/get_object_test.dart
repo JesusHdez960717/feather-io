@@ -18,7 +18,7 @@ void main() {
     await server.start();
     await server.putObject(bucket, 'test.txt', 'content');
     await server.putObject(bucket, 'image.png', 'png');
-    await server.putObject(bucket, 'sin-extension', 'abcdef');
+    await server.putObject(bucket, 'no-extension', 'abcdef');
   });
 
   String md5Of(String content) => md5.convert(utf8.encode(content)).toString();
@@ -112,7 +112,7 @@ void main() {
 
     test('Should answer an object without extension as octet-stream', () async {
       final response = await http.head(
-        server.url('/$bucket/sin-extension'),
+        server.url('/$bucket/no-extension'),
         headers: server.auth(),
       );
       expect(response.statusCode, 200);
@@ -146,7 +146,7 @@ void main() {
   group('S3Controller - GET Object (no extension, ETag)', () {
     test('Should download an object without extension as octet-stream', () async {
       final response = await http.get(
-        server.url('/$bucket/sin-extension'),
+        server.url('/$bucket/no-extension'),
         headers: server.auth(),
       );
       expect(response.statusCode, 200);
@@ -163,23 +163,23 @@ void main() {
     });
 
     test('Should recompute the ETag when the file changes outside', () async {
-      await server.putObject(bucket, 'cambia.txt', 'antes');
-      //otro tamaño, asi no depende de la precision de la fecha del disco
+      await server.putObject(bucket, 'changes.txt', 'before');
+      // Another size, so it doesn't depend on the disk's date precision
       await File(
-        '${server.storagePath}/$bucket/cambia.txt',
-      ).writeAsString('despues');
+        '${server.storagePath}/$bucket/changes.txt',
+      ).writeAsString('after');
 
       final response = await http.head(
-        server.url('/$bucket/cambia.txt'),
+        server.url('/$bucket/changes.txt'),
         headers: server.auth(),
       );
-      expect(response.headers['etag'], '"${md5Of('despues')}"');
+      expect(response.headers['etag'], '"${md5Of('after')}"');
     });
   });
 
   group('S3Controller - GET Object (Range)', () {
     test('Should answer a closed range with 206', () async {
-      final response = await getRange('sin-extension', 'bytes=1-3');
+      final response = await getRange('no-extension', 'bytes=1-3');
       expect(response.statusCode, 206);
       expect(response.body, 'bcd');
       expect(response.headers['content-range'], 'bytes 1-3/6');
@@ -188,42 +188,42 @@ void main() {
     });
 
     test('Should answer an open range up to the end', () async {
-      final response = await getRange('sin-extension', 'bytes=4-');
+      final response = await getRange('no-extension', 'bytes=4-');
       expect(response.statusCode, 206);
       expect(response.body, 'ef');
       expect(response.headers['content-range'], 'bytes 4-5/6');
     });
 
     test('Should answer the last bytes with a suffix range', () async {
-      final response = await getRange('sin-extension', 'bytes=-2');
+      final response = await getRange('no-extension', 'bytes=-2');
       expect(response.statusCode, 206);
       expect(response.body, 'ef');
       expect(response.headers['content-range'], 'bytes 4-5/6');
     });
 
     test('Should cut a range that goes past the end', () async {
-      final response = await getRange('sin-extension', 'bytes=2-100');
+      final response = await getRange('no-extension', 'bytes=2-100');
       expect(response.statusCode, 206);
       expect(response.body, 'cdef');
       expect(response.headers['content-range'], 'bytes 2-5/6');
     });
 
     test('Should answer the whole object for a suffix bigger than it', () async {
-      final response = await getRange('sin-extension', 'bytes=-100');
+      final response = await getRange('no-extension', 'bytes=-100');
       expect(response.statusCode, 206);
       expect(response.body, 'abcdef');
       expect(response.headers['content-range'], 'bytes 0-5/6');
     });
 
     test('Should reject a range that starts after the end (416)', () async {
-      final response = await getRange('sin-extension', 'bytes=6-');
+      final response = await getRange('no-extension', 'bytes=6-');
       expect(response.statusCode, 416);
       expect(response.body, contains('<Code>InvalidRange</Code>'));
     });
 
     test('Should ignore a malformed range and answer everything', () async {
       for (final range in ['bytes=3-1', 'bytes=0-1,3-4', 'items=0-1']) {
-        final response = await getRange('sin-extension', range);
+        final response = await getRange('no-extension', range);
         expect(response.statusCode, 200, reason: range);
         expect(response.body, 'abcdef', reason: range);
       }
@@ -231,7 +231,7 @@ void main() {
 
     test('Should send only the headers of the range on HEAD', () async {
       final response = await http.head(
-        server.url('/$bucket/sin-extension'),
+        server.url('/$bucket/no-extension'),
         headers: {...server.auth(), 'range': 'bytes=0-1'},
       );
       expect(response.statusCode, 206);

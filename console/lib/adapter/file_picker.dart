@@ -4,8 +4,8 @@ import 'dart:js_interop';
 import 'package:cross_file/cross_file.dart';
 import 'package:web/web.dart' as web;
 
-// webkitRelativePath no es parte de la API estandar de File,
-// así que se expone como extension type sobre web.File.
+// webkitRelativePath is not part of the standard File API,
+// so it is exposed as an extension type over web.File.
 extension type _FileWithRelativePath(web.File file) implements web.File {
   external String? get webkitRelativePath;
 }

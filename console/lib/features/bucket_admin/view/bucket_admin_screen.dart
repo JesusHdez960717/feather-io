@@ -30,7 +30,7 @@ class BucketAdminScreenNavigator {
     );
   }
 
-  ///Cambia el bucket o la pestaña mostrados; la URL es la fuente de verdad
+  /// Changes the bucket or tab shown; the URL is the source of truth
   void show({required String bucket, required BucketAdminTab tab}) {
     app.navigator.go(
       name,
@@ -42,14 +42,14 @@ class BucketAdminScreenNavigator {
   }
 }
 
-///Seccion *Buckets*: a la izquierda la lista de buckets y a la derecha el
-///detalle del seleccionado, con sus pestañas. El bucket y la pestaña vienen de
-///la URL (`?bucket=&tab=`): seleccionar otro o cambiar de pestaña navega
+/// *Buckets* section: the bucket list on the left and the details of the
+/// selected one, with its tabs, on the right. The bucket and the tab come from
+/// the URL (`?bucket=&tab=`): selecting another one or switching tabs navigates
 class BucketAdminScreen extends StatefulWidget {
   static final BucketAdminScreenNavigator navigator =
       BucketAdminScreenNavigator();
 
-  ///Bucket seleccionado; si es null o ya no existe, se muestra el primero
+  /// Selected bucket; if null or it no longer exists, the first one is shown
   final String? bucket;
   final BucketAdminTab tab;
 
@@ -76,7 +76,7 @@ class _BucketAdminScreenState extends State<BucketAdminScreen> {
     if (widget.bucket != oldWidget.bucket) _syncRules(cubit.state.buckets);
   }
 
-  ///El de la URL o, si no hay o ya no existe (p. ej. se acaba de borrar), el primero
+  /// The one in the URL or, if there is none or it no longer exists (e.g. just deleted), the first
   BucketModel? _selected(List<BucketModel> buckets) {
     if (buckets.isEmpty) return null;
     return buckets.firstWhere(
@@ -85,7 +85,7 @@ class _BucketAdminScreenState extends State<BucketAdminScreen> {
     );
   }
 
-  ///Carga las reglas del bucket mostrado (para el contador de su pestaña)
+  /// Loads the rules of the shown bucket (for its tab's counter)
   void _syncRules(List<BucketModel> buckets) {
     final selected = _selected(buckets);
     if (selected != null && accessCubit.state.bucket != selected.name) {

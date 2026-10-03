@@ -2,8 +2,8 @@ import 'package:console/app_exporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
 
-///Pestaña *Acceso anonimo* del detalle de un bucket: sus reglas, añadir y borrar.
-///Necesita un [AnonymousAccessCubit] por encima
+/// *Anonymous access* tab of a bucket's details: its rules, add and delete.
+/// Needs an [AnonymousAccessCubit] above it
 class AnonymousAccessTab extends StatefulWidget {
   final String bucket;
 
@@ -252,7 +252,7 @@ class _PrefixChip extends StatelessWidget {
   }
 }
 
-///Etiqueta de color con el tipo de acceso de una regla
+/// Colored tag with the access type of a rule
 class AnonymousAccessBadge extends StatelessWidget {
   final AnonymousAccessType access;
 
@@ -278,7 +278,7 @@ class AnonymousAccessBadge extends StatelessWidget {
   }
 }
 
-///Estado vacio: sin reglas, todo el bucket necesita credenciales
+/// Empty state: no rules, the whole bucket needs credentials
 class _PrivateBucketPage extends StatelessWidget {
   const _PrivateBucketPage();
 
@@ -338,7 +338,7 @@ extension AnonymousAccessTypeView on AnonymousAccessType {
     AnonymousAccessType.readWrite => app.intl.anonymousAccessReadWrite,
   };
 
-  ///Lo que se puede hacer sin credenciales
+  /// What can be done without credentials
   String get operations => switch (this) {
     AnonymousAccessType.readOnly => app.intl.anonymousAccessReadOnlyOps,
     AnonymousAccessType.writeOnly => app.intl.anonymousAccessWriteOnlyOps,

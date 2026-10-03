@@ -92,8 +92,8 @@ class _BucketsTableDatasourceState extends State<BucketsTableDatasource> {
               setState(() {
                 columnWidths[details.column.columnName] = details.width;
 
-                // Si redimensionamos cualquier columna que NO sea last_modified,
-                // ajustamos last_modified para que la tabla no se achique.
+                // Resizing any column that is NOT last_modified adjusts
+                // last_modified so the table doesn't shrink.
                 final othersWidth =
                     (columnWidths['name'] ?? nameWidth) +
                     (columnWidths['objects'] ?? objectsWidth) +

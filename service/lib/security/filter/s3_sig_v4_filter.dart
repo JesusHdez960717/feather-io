@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:service/feather.dart';
 
-/// Autentica a los clientes S3 nativos con AWS Signature Version 4, venga la
-/// firma en la cabecera `Authorization` o en la query (URL prefirmada)
+/// Authenticates native S3 clients with AWS Signature Version 4, whether the
+/// signature comes in the `Authorization` header or in the query (presigned URL).
 class S3SigV4Filter extends Filter {
   static final S3SigV4Filter _instance = S3SigV4Filter._();
 
@@ -35,7 +35,7 @@ class S3SigV4Filter extends Filter {
       SigV4Signer.signatureParam,
     );
 
-    //sin firma SigV4 no hay nada que validar: el AuthFilter de cada ruta decide (401)
+    // Without a SigV4 signature there is nothing to verify: each route's AuthFilter decides (401)
     if (!isHeaderSigned && !isPresigned) {
       return await chain.doFilter(request);
     }
@@ -53,15 +53,15 @@ class S3SigV4Filter extends Filter {
       );
     } catch (e) {
       if (e is S3Exception) rethrow;
-      //sin detalles internos en la respuesta
+      // No internal details in the response
       throw S3Exception(
         S3ErrorCode.accessDenied,
-        message: 'La firma de la petición no es válida.',
+        message: 'The request signature is not valid.',
       );
     }
 
-    //si el cliente firmo el sha256 del cuerpo, el cuerpo tiene que ser ese:
-    //si no, una peticion capturada se podria repetir con otro contenido
+    // If the client signed the body's sha256, the body must be that one;
+    // otherwise a captured request could be replayed with another content
     final payloadHash = request.headers['x-amz-content-sha256'];
     if (isHeaderSigned &&
         payloadHash != null &&
@@ -75,15 +75,15 @@ class S3SigV4Filter extends Filter {
     return await chain.doFilter(request);
   }
 
-  /// Desfase maximo entre la fecha de la firma y la del servidor, como en S3:
-  /// fuera de el una peticion firmada ya no vale (no se puede repetir despues)
+  /// Maximum skew between the signature's date and the server's, as in S3:
+  /// outside it a signed request is no longer valid (it can't be replayed later).
   static const Duration maxClockSkew = Duration(minutes: 15);
 
   static final RegExp _sha256Pattern = RegExp(r'^[0-9a-fA-F]{64}$');
 
-  /// Deja pasar [body] calculando su sha256 y, al terminar, falla si no es
-  /// [expected]. Se lee entero antes de fallar: cortar la lectura del cuerpo
-  /// cerraria la conexion sin mandar el error
+  /// Lets [body] through computing its sha256 and, at the end, fails if it is
+  /// not [expected]. It is read entirely before failing: stopping in the middle
+  /// would close the connection without sending the error.
   static Stream<List<int>> _checkSha256(
     Stream<List<int>> body,
     String expected,
@@ -98,12 +98,12 @@ class S3SigV4Filter extends Filter {
     if (digest.value.toString() != expected) {
       throw S3Exception(
         S3ErrorCode.xAmzContentSHA256Mismatch,
-        message: 'El cuerpo no coincide con el x-amz-content-sha256 firmado.',
+        message: 'The body does not match the signed x-amz-content-sha256.',
       );
     }
   }
 
-  /// La fecha de una firma, que tiene que estar a menos de [maxClockSkew]
+  /// Checks that a signature's date is within [maxClockSkew].
   static void _checkClockSkew(DateTime? signedAt) {
     final now = DateTime.now().toUtc();
     if (signedAt == null ||
@@ -112,15 +112,15 @@ class S3SigV4Filter extends Filter {
       throw S3Exception(
         S3ErrorCode.requestTimeTooSkewed,
         message:
-            'La fecha de la firma está a más de '
-            '${maxClockSkew.inMinutes} minutos de la del servidor.',
+            'The signature date is more than ${maxClockSkew.inMinutes} '
+            "minutes away from the server's time.",
       );
     }
   }
 
   /// `Authorization: AWS4-HMAC-SHA256 Credential=…, SignedHeaders=…, Signature=…`
   String _verifyHeader(RequestEntity request, String authHeader) {
-    //los campos van separados por comas, con o sin espacio (s3cmd no lo pone)
+    // Fields are separated by commas, with or without a space (s3cmd adds none)
     String? field(String name) =>
         RegExp('[\\s,]$name=([^,\\s]+)').firstMatch(authHeader)?.group(1);
     final credential = field('Credential');
@@ -149,7 +149,7 @@ class S3SigV4Filter extends Filter {
     );
   }
 
-  /// URL prefirmada: la firma y sus datos van en la query y caduca
+  /// Presigned URL: the signature and its data come in the query, and it expires.
   String _verifyQuery(RequestEntity request) {
     final params = request.queryParams;
     String param(String name) {
@@ -181,11 +181,11 @@ class S3SigV4Filter extends Filter {
         message: 'Invalid X-Amz-Date or X-Amz-Expires',
       );
     }
-    //una fecha futura alargaria la URL mas alla de su caducidad maxima
+    // A future date would stretch the URL past its maximum expiration
     if (signedAt.isAfter(DateTime.now().toUtc().add(maxClockSkew))) {
       throw S3Exception(
         S3ErrorCode.accessDenied,
-        message: 'La URL prefirmada todavía no es válida.',
+        message: 'The presigned URL is not valid yet.',
       );
     }
     if (DateTime.now().toUtc().isAfter(
@@ -203,7 +203,7 @@ class S3SigV4Filter extends Filter {
       amzDate: amzDate,
       signedHeaders: param(SigV4Signer.signedHeadersParam),
       signature: param(SigV4Signer.signatureParam),
-      //la firma no se firma a si misma
+      // The signature doesn't sign itself
       query: {
         for (final entry in params.entries)
           if (entry.key != SigV4Signer.signatureParam) entry.key: entry.value,
@@ -212,7 +212,7 @@ class S3SigV4Filter extends Filter {
     );
   }
 
-  /// Comprueba la clave de acceso y la firma; devuelve la clave de acceso
+  /// Checks the access key and the signature; returns the access key.
   String _verifySignature(
     RequestEntity request, {
     required String credential,
@@ -235,7 +235,7 @@ class S3SigV4Filter extends Filter {
     if (signedAt == null || SigV4Signer.dateStamp(signedAt) != parts[1]) {
       throw S3Exception(
         S3ErrorCode.signatureDoesNotMatch,
-        message: 'La fecha de la credencial no es la de la firma.',
+        message: "The credential's date is not the signature's date.",
       );
     }
     if (accessKey != env.access) {
@@ -268,7 +268,7 @@ class S3SigV4Filter extends Filter {
     return accessKey;
   }
 
-  /// `X-Amz-Date` (`20260930T184512Z`) o, si no viene, la cabecera `Date` (HTTP)
+  /// `X-Amz-Date` (`20260930T184512Z`) or, without it, the `Date` header (HTTP).
   static DateTime? _parseRequestDate(String value) {
     final amz = SigV4Signer.parseAmzDate(value);
     if (amz != null) return amz;
@@ -279,7 +279,7 @@ class S3SigV4Filter extends Filter {
     }
   }
 
-  ///Solo filtro si NO esta autenticado aun (por si ya paso por el jwt)
+  /// Only runs while the request is not authenticated yet (the JWT filter runs first).
   @override
   bool shouldFilter(RequestEntity request) {
     return !request.securityContext.isAuthenticated;
@@ -291,7 +291,7 @@ class S3SigV4Filter extends Filter {
   }
 }
 
-/// Recoge el resultado de un hash por trozos
+/// Collects the result of a chunked hash.
 class _Sha256Sink implements Sink<Digest> {
   late Digest value;
 

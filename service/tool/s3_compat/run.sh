@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# Pruebas de compatibilidad contra un feather-io ya arrancado, con clientes S3
-# reales en Docker. Uso (desde cualquier carpeta):
+# Compatibility tests against a running feather-io, with real S3 clients in
+# Docker. Usage (from any folder):
 #
 #   service/tool/s3_compat/run.sh [awscli|rclone|mint ...]
 #
-# Sin argumentos ejecuta awscli y rclone. Variables (con sus valores por defecto):
-#   ENDPOINT=http://host.docker.internal:8080   (el servicio visto desde Docker)
+# Without arguments it runs awscli and rclone. Variables (with their defaults):
+#   ENDPOINT=http://host.docker.internal:8080   (the service as seen from Docker)
 #   ACCESS_KEY=access  SECRET_KEY=secret         (FEATHER_ACCESS / FEATHER_SECRET)
-#   MINT_SUITES="awscli aws-sdk-go ..."          (suites de Mint; ver README)
-#   OUT_DIR=service/tool/s3_compat/out           (salidas para report.py; gitignored)
+#   MINT_SUITES="awscli aws-sdk-go ..."          (Mint suites; see the README)
+#   OUT_DIR=service/tool/s3_compat/out           (outputs for report.py; gitignored)
 #
-# Cada objetivo deja su salida en OUT_DIR (<objetivo>.txt, y Mint ademas
-# mint-logs/log.json), que es lo que lee report.py para escribir RESULTADOS.md
+# Each target leaves its output in OUT_DIR (<target>.txt, plus Mint's
+# mint-logs/log.json), which report.py reads to write RESULTS.md
 set -u
 
 DIR=$(cd "$(dirname "$0")" && pwd)
@@ -23,7 +23,7 @@ OUT_DIR=${OUT_DIR:-$DIR/out}
 mkdir -p "$OUT_DIR"
 OUT_DIR=$(cd "$OUT_DIR" && pwd)
 
-# en Git Bash (Windows) las rutas de los volumenes no se deben convertir
+# In Git Bash (Windows) the volume paths must not be converted
 export MSYS_NO_PATHCONV=1
 host_path() { if command -v cygpath >/dev/null; then cygpath -w "$1"; else echo "$1"; fi; }
 
@@ -41,7 +41,7 @@ run_rclone() {
 }
 
 run_mint() {
-  # Mint espera host:puerto, sin esquema
+  # Mint expects host:port, without a scheme
   local server=${ENDPOINT#*://}
   rm -rf "$OUT_DIR/mint-logs" && mkdir -p "$OUT_DIR/mint-logs"
   # shellcheck disable=SC2086
@@ -60,7 +60,7 @@ for target in "${targets[@]}"; do
       "run_$target" 2>&1 | tee "$OUT_DIR/$target.txt"
       [ "${PIPESTATUS[0]}" -eq 0 ] || status=1
       ;;
-    *) echo "Desconocido: $target (awscli, rclone o mint)"; status=1 ;;
+    *) echo "Unknown target: $target (awscli, rclone or mint)"; status=1 ;;
   esac
   echo
 done

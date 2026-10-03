@@ -36,40 +36,40 @@ void main() {
 
   group('S3Controller - Create folder (PUT key/)', () {
     test('Should create an empty folder listed as a common prefix', () async {
-      expect((await createFolder('fotos/')).statusCode, 200);
+      expect((await createFolder('photos/')).statusCode, 200);
       expect(
-        await Directory('${server.storagePath}/$bucket/fotos').exists(),
+        await Directory('${server.storagePath}/$bucket/photos').exists(),
         isTrue,
       );
 
       final root = await list();
-      expect(root['common_prefixes'], ['fotos/']);
+      expect(root['common_prefixes'], ['photos/']);
       expect(root['contents'], isEmpty);
     });
 
     test('Should list the folder itself as a 0 byte key inside it', () async {
-      final inside = await list(prefix: 'fotos/');
+      final inside = await list(prefix: 'photos/');
       final contents = inside['contents'] as List;
-      expect(contents.single['key'], 'fotos/');
+      expect(contents.single['key'], 'photos/');
       expect(contents.single['size_bytes'], 0);
     });
 
     test('Should create nested folders', () async {
-      expect((await createFolder('docs/2026/facturas/')).statusCode, 200);
+      expect((await createFolder('docs/2026/invoices/')).statusCode, 200);
       final docs = await list(prefix: 'docs/');
       expect(docs['common_prefixes'], ['docs/2026/']);
     });
 
     test('Should keep the folder after deleting its last object', () async {
-      await server.putObject(bucket, 'fotos/gato.jpg', 'jpg');
+      await server.putObject(bucket, 'photos/cat.jpg', 'jpg');
       final delete = await http.delete(
-        server.url('/$bucket/fotos/gato.jpg'),
+        server.url('/$bucket/photos/cat.jpg'),
         headers: server.auth(),
       );
       expect(delete.statusCode, 204);
 
       final root = await list();
-      expect(root['common_prefixes'], contains('fotos/'));
+      expect(root['common_prefixes'], contains('photos/'));
     });
 
     test('Should not count the folder as an object in the bucket stats', () async {
@@ -81,43 +81,43 @@ void main() {
     });
 
     test('Should only delete the folder marker, like S3, keeping its content', () async {
-      await createFolder('borrar/');
-      await server.putObject(bucket, 'borrar/a.txt', 'a');
+      await createFolder('delete/');
+      await server.putObject(bucket, 'delete/a.txt', 'a');
       final delete = await http.delete(
-        server.url('/$bucket/borrar/'),
+        server.url('/$bucket/delete/'),
         headers: server.auth(),
       );
       expect(delete.statusCode, 204);
       expect(
-        await File('${server.storagePath}/$bucket/borrar/a.txt').exists(),
+        await File('${server.storagePath}/$bucket/delete/a.txt').exists(),
         isTrue,
       );
-      final keys = (await list(prefix: 'borrar/'))['contents'] as List;
-      expect(keys.map((o) => o['key']), ['borrar/a.txt']);
+      final keys = (await list(prefix: 'delete/'))['contents'] as List;
+      expect(keys.map((o) => o['key']), ['delete/a.txt']);
     });
 
     test('Should delete an empty folder', () async {
-      await createFolder('vacia-borrar/');
+      await createFolder('empty-delete/');
       final delete = await http.delete(
-        server.url('/$bucket/vacia-borrar/'),
+        server.url('/$bucket/empty-delete/'),
         headers: server.auth(),
       );
       expect(delete.statusCode, 204);
       expect(
-        await Directory('${server.storagePath}/$bucket/vacia-borrar').exists(),
+        await Directory('${server.storagePath}/$bucket/empty-delete').exists(),
         isFalse,
       );
     });
 
     test('Should not delete a directory addressed without the slash', () async {
-      await server.putObject(bucket, 'sin-barra/a.txt', 'a');
+      await server.putObject(bucket, 'no-slash/a.txt', 'a');
       final delete = await http.delete(
-        server.url('/$bucket/sin-barra'),
+        server.url('/$bucket/no-slash'),
         headers: server.auth(),
       );
       expect(delete.statusCode, 204);
       expect(
-        await File('${server.storagePath}/$bucket/sin-barra/a.txt').exists(),
+        await File('${server.storagePath}/$bucket/no-slash/a.txt').exists(),
         isTrue,
       );
     });
@@ -139,7 +139,7 @@ void main() {
 
     test('Should reject the folder marker name as a key (400)', () async {
       final response = await http.put(
-        server.url('/$bucket/fotos/.feather-folder'),
+        server.url('/$bucket/photos/.feather-folder'),
         headers: server.auth(),
         body: 'x',
       );
@@ -147,14 +147,14 @@ void main() {
     });
 
     test('Should fail without auth (401)', () async {
-      expect((await createFolder('sin-auth/', auth: false)).statusCode, 401);
+      expect((await createFolder('no-auth/', auth: false)).statusCode, 401);
     });
 
     test('Should answer HEAD and GET on the folder as an empty object', () async {
-      expect((await createFolder('cabecera/')).statusCode, 200);
+      expect((await createFolder('header/')).statusCode, 200);
 
       final head = await http.head(
-        server.url('/$bucket/cabecera/'),
+        server.url('/$bucket/header/'),
         headers: server.auth(),
       );
       expect(head.statusCode, 200);
@@ -162,7 +162,7 @@ void main() {
       expect(head.headers['etag'], '"d41d8cd98f00b204e9800998ecf8427e"');
 
       final get = await http.get(
-        server.url('/$bucket/cabecera/'),
+        server.url('/$bucket/header/'),
         headers: server.auth(),
       );
       expect(get.statusCode, 200);
@@ -181,7 +181,7 @@ void main() {
       final create = await http.put(server.url('/only-folders'), headers: server.auth());
       expect(create.statusCode, 200);
       final folder = await http.put(
-        server.url('/only-folders/vacia/'),
+        server.url('/only-folders/empty/'),
         headers: server.auth(),
       );
       expect(folder.statusCode, 200);

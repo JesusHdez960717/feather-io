@@ -1,9 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 
-///Hace seleccionable con el raton todo el texto de la app. Va en el `builder`
-///de `MaterialApp`, por encima del `Navigator`, asi cubre pantallas, dialogos y
-///cajones. Lleva su propio [Overlay] porque ahi aun no hay uno donde pintar el
-///menu contextual de la seleccion
+/// Makes all the text of the app selectable with the mouse. It goes in the
+/// `builder` of `MaterialApp`, above the `Navigator`, so it covers screens,
+/// dialogs and drawers. It has its own [Overlay] because there is none there yet
+/// to paint the selection's context menu
 class AppSelectionArea extends StatefulWidget {
   final Widget child;
 

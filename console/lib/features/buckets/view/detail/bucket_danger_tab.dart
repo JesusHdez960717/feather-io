@@ -1,8 +1,8 @@
 import 'package:console/app_exporter.dart';
 import 'package:material_ui/material_ui.dart';
 
-///Pestaña *Zona de peligro* del detalle de un bucket: vaciarlo y eliminarlo.
-///Como en S3, solo se puede eliminar un bucket vacio
+/// *Danger zone* tab of a bucket's details: empty it and delete it.
+/// As in S3, only an empty bucket can be deleted
 class BucketDangerTab extends StatelessWidget {
   final BucketModel bucket;
   final VoidCallback onEmpty;
@@ -56,7 +56,7 @@ class _DangerCard extends StatelessWidget {
   final String action;
   final VoidCallback? onPressed;
 
-  ///Boton relleno en rojo (eliminar) en vez de solo con borde (vaciar)
+  /// Button filled in red (delete) instead of only outlined (empty)
   final bool filled;
 
   const _DangerCard({

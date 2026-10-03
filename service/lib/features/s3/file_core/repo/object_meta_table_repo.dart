@@ -52,7 +52,7 @@ class ObjectMetaTableRepo {
         .go();
   }
 
-  /// Borra los de todas las keys que empiezan por [prefix] (una carpeta)
+  /// Deletes the rows of every key that starts with [prefix] (a folder).
   Future<void> deleteByPrefix(String bucketName, String prefix) async {
     await (_db.delete(_db.objectMetaTable)..where(
           (tbl) =>

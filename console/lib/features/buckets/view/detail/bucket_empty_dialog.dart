@@ -1,7 +1,7 @@
 import 'package:console/app_exporter.dart';
 import 'package:material_ui/material_ui.dart';
 
-///Confirmacion de vaciar un bucket: el boton solo se activa al escribir su nombre
+/// Confirmation to empty a bucket: the button is only enabled after typing its name
 class BucketEmptyDialog extends StatefulWidget {
   static void show({
     required BucketModel bucket,

@@ -9,36 +9,36 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 final String loadingOverlayGlobalId = 'app-global-loading';
 
-///Los textos de la app y los de `material_ui`. Los que genera gen-l10n
-///(`AppLocalizations.localizationsDelegates`) traen los Material de
-///`flutter_localizations`, que los widgets de `material_ui` no ven: fuera del
-///ingles (que `material_ui` trae por defecto) fallarian con "No
-///MaterialLocalizations found"
+/// The texts of the app and those of `material_ui`. The ones gen-l10n generates
+/// (`AppLocalizations.localizationsDelegates`) bring the Material ones of
+/// `flutter_localizations`, which `material_ui` widgets can't see: outside
+/// English (which `material_ui` ships by default) they would fail with "No
+/// MaterialLocalizations found"
 const List<LocalizationsDelegate<dynamic>> _localizationsDelegates = [
   AppLocalizations.delegate,
   ...GlobalMaterialLocalizations.delegates,
 ];
 
-//generate code
-//fvm flutter pub run build_runner build --delete-conflicting-outputs
-//fvm flutter gen-l10n
+// generate code
+// fvm flutter pub run build_runner build --delete-conflicting-outputs
+// fvm flutter gen-l10n
 
-//versions
-//fvm flutter pub outdated
-//fvm flutter pub upgrade --major-versions
+// versions
+// fvm flutter pub outdated
+// fvm flutter pub upgrade --major-versions
 
-//migration
-//fvm dart fix --dry-run
-//fvm dart fix --apply
+// migration
+// fvm dart fix --dry-run
+// fvm dart fix --apply
 //
-//fvm flutter analyze
+// fvm flutter analyze
 class Init {
   Init._();
 
   static final instance = Init._();
 
   Future initialize() async {
-    ///para que salga el splash, si no es muy rapido
+    // so the splash shows instead of flashing by
     await Future.delayed(const Duration(seconds: 1));
 
     await FeaturesInit.init();
@@ -46,12 +46,12 @@ class Init {
 }
 
 void main() {
-  ///add this option so the .push method ono go-router can override url
+  // so the .push method of go_router updates the URL
   GoRouter.optionURLReflectsImperativeAPIs = true;
 
   WidgetsFlutterBinding.ensureInitialized();
 
-  //manejo de errores
+  // error handling
   /*FlutterError.onError = (errorDetails) {
     app.logger.e('------------------- error 1 -------------------');
     app.logger.e(errorDetails.exception);

@@ -1,36 +1,35 @@
 import 'package:path/path.dart' as p;
 
 class S3Validator {
-  /// Fichero oculto que marca una carpeta creada a mano (`PUT carpeta/`), para
-  /// que exista aunque este vacia. Ninguna key puede usar este nombre
+  /// Hidden file that marks a folder created explicitly (`PUT folder/`), so it
+  /// exists even when empty. No key may use this name.
   static const String folderMarker = '.feather-folder';
 
-  /// Valida el nombre del bucket según reglas de AWS S3.
+  /// Validates the bucket name with the AWS S3 rules.
   static bool isValidBucketName(String name) {
     if (name.length < 3 || name.length > 63) return false;
 
-    // Solo minúsculas, números, puntos y guiones.
-    // Debe empezar y terminar con letra o número.
+    // Only lowercase letters, digits, dots and hyphens,
+    // starting and ending with a letter or a digit
     final regExp = RegExp(r'^[a-z0-9]([a-z0-9.-]{1,61}[a-z0-9])?$');
     if (!regExp.hasMatch(name)) return false;
 
-    // No puede contener puntos consecutivos (..)
+    // No consecutive dots (..)
     if (name.contains('..')) return false;
 
-    // No puede parecer una dirección IP
+    // It can't look like an IP address
     final ipRegExp = RegExp(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$');
     if (ipRegExp.hasMatch(name)) return false;
 
     return true;
   }
 
-  /// Valida el Key (objeto) según reglas de AWS S3 y seguridad local.
+  /// Validates an object key with the AWS S3 rules and local safety checks.
   static bool isValidKey(String key) {
     if (key.isEmpty || key.length > 1024) return false;
     if (key.split('/').contains(folderMarker)) return false;
 
-    // Caracteres seguros recomendados por S3: 0-9a-zA-Z!-_.*'()/
-    // También bloqueamos secuencias de Path Traversal por seguridad.
+    // Blocks path traversal sequences and NUL bytes
     if (key.contains('..') ||
         key.contains(r'..\') ||
         key.contains('\x00') ||
@@ -38,9 +37,9 @@ class S3Validator {
       return false;
     }
 
-    // Caracteres prohibidos comunes (que S3 recomienda evitar o que causan problemas en FS)
-    // Bloqueamos caracteres de control, >, <, :, ", |, ?, * y \ (separador de
-    // carpetas en Windows: `a\b` seria otra forma de escribir `a/b`)
+    // Characters S3 recommends avoiding or that break the filesystem: control
+    // characters, >, <, :, ", |, ?, * and \ (a folder separator on Windows,
+    // where `a\b` would be another way to write `a/b`)
     final invalidChars = RegExp(r'[\x00-\x1F\x7F<>:"|?*\\]');
     if (invalidChars.hasMatch(key)) return false;
 
@@ -52,7 +51,7 @@ class S3Validator {
         if (segment == '.' || segment == '..') return false;
       }
 
-      // Verificación de Path Traversal física
+      // Path traversal check on the resolved path
       const fakeRoot = '/safe_root';
       final fullPath = p.join(fakeRoot, key);
       final canonicalRoot = p.canonicalize(fakeRoot);

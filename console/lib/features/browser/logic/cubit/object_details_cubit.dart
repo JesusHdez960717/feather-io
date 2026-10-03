@@ -2,10 +2,10 @@ import 'package:console/app_exporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mime/mime.dart';
 
-///Datos del cajon de detalles de un objeto: sus cabeceras (`HEAD`) y, si es
-///una imagen pequeña, sus bytes para la miniatura
+/// Data of an object's details drawer: its headers (`HEAD`) and, if it is a
+/// small image, its bytes for the thumbnail
 class ObjectDetailsCubit extends Cubit<ObjectDetailsState> {
-  ///Por encima de este tamaño no se descarga la imagen para la miniatura
+  /// Above this size the image is not downloaded for the thumbnail
   static const int maxThumbnailBytes = 5 * 1024 * 1024;
 
   final BrowserRepo _repo;
@@ -59,7 +59,7 @@ class ObjectDetailsLoadingInProgressState extends ObjectDetailsState {
 class ObjectDetailsLoadingSuccessState extends ObjectDetailsState {
   final ObjectInfoModel info;
 
-  ///Bytes de la imagen para la miniatura; null si no es imagen o es grande
+  /// Image bytes for the thumbnail; null if it is not an image or it is big
   final List<int>? thumbnail;
 
   const ObjectDetailsLoadingSuccessState({required this.info, this.thumbnail});

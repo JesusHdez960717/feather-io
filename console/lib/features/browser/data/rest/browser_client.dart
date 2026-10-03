@@ -43,8 +43,8 @@ class BrowserClient extends BaseClient {
     );
   }
 
-  ///Borra una carpeta con todo su contenido. Con la API de S3, borrar la key
-  ///`carpeta/` solo quita la carpeta vacia
+  /// Deletes a folder with all its content. With the S3 API, deleting the key
+  /// `folder/` only removes the empty folder
   Future<void> deleteFolder({
     required String bucket,
     required String prefix,
@@ -57,7 +57,7 @@ class BrowserClient extends BaseClient {
     );
   }
 
-  ///Crea una carpeta vacia: un `PUT` de la key terminada en `/` sin cuerpo
+  /// Creates an empty folder: a `PUT` of the key ending in `/` without a body
   Future<void> createFolder({
     required String bucket,
     required String key,
@@ -66,7 +66,7 @@ class BrowserClient extends BaseClient {
     await dio.put('$baseUrl/$bucket/$key', options: options(token: token));
   }
 
-  ///CopyObject: copia `sourceBucket/sourceKey` en `bucket/key`
+  /// CopyObject: copies `sourceBucket/sourceKey` to `bucket/key`
   Future<void> copyObject({
     required String sourceBucket,
     required String sourceKey,
@@ -80,7 +80,7 @@ class BrowserClient extends BaseClient {
     await dio.put('$baseUrl/$bucket/$key', options: requestOptions);
   }
 
-  ///Cabeceras del objeto sin descargarlo (`HEAD`)
+  /// Headers of the object without downloading it (`HEAD`)
   Future<ObjectInfoResponse> headObject({
     required String bucket,
     required String key,
@@ -108,7 +108,7 @@ class BrowserClient extends BaseClient {
     );
   }
 
-  ///URL prefirmada para descargar [key] sin credenciales durante [expiresIn]
+  /// Presigned URL to download [key] without credentials for [expiresIn]
   Future<PresignResponse> presign({
     required String bucket,
     required String key,
@@ -239,7 +239,7 @@ class ObjectInfoResponse {
     final modified = headers.value('last-modified');
     DateTime? lastModified;
     try {
-      //fecha HTTP (RFC 7231): "Tue, 29 Sep 2026 18:04:51 GMT"
+      // HTTP date (RFC 7231): "Tue, 29 Sep 2026 18:04:51 GMT"
       lastModified = modified == null
           ? null
           : DateFormat(

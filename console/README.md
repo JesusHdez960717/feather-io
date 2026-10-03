@@ -1,11 +1,11 @@
-## Integracion
+## Integration
 
-Por ahora la consola SIEMPRE utiliza content negotiation a json y jwt para todas las operaciones,
-incluyendo las de S# que soportan sigv4
+For now the console ALWAYS uses JSON content negotiation and JWT for every operation, including the
+S3 ones that support SigV4.
 
 ## Env (Console)
 
-| Variable       | Requerido | Por defecto | Descripción                                                                    |
-|:---------------|:---------:|:-----------:|:-------------------------------------------------------------------------------|
-| `SERVICE_URL`  |  **Sí**   |      -      | URL del servicio backend.                                                      |
-| `ADMIN_PREFIX` |    No     |  `_admin`   | Prefijo para la consola de administración (debe coincidir con el del service). |
+| Variable       | Required | Default  | Description                                                    |
+|:---------------|:--------:|:--------:|:---------------------------------------------------------------|
+| `SERVICE_URL`  | **Yes**  |    -     | URL of the backend service.                                    |
+| `ADMIN_PREFIX` |    No    | `_admin` | Prefix of the admin API (it must match the service's).         |

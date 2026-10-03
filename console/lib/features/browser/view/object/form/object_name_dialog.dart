@@ -2,11 +2,11 @@ import 'package:console/app_exporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
 
-///Dialogo con un nombre: crear una carpeta o renombrar un objeto. Valida el
-///nombre en el cliente (vacio, caracteres, repetido en la carpeta) y hace la
-///accion con su propio [ObjectActionCubit]
+/// Dialog with a name: create a folder or rename an object. It validates the
+/// name on the client (empty, characters, repeated in the folder) and runs the
+/// action with its own [ObjectActionCubit]
 class ObjectNameDialog extends StatefulWidget {
-  ///Crea una carpeta en [prefix] de [bucket]
+  /// Creates a folder in [prefix] of [bucket]
   static void createFolder({
     required String bucket,
     required String prefix,
@@ -32,7 +32,7 @@ class ObjectNameDialog extends StatefulWidget {
     );
   }
 
-  ///Renombra el objeto [key] de [bucket] dentro de su carpeta
+  /// Renames the object [key] of [bucket] inside its folder
   static void rename({
     required String bucket,
     required String key,
@@ -95,14 +95,14 @@ class _ObjectNameDialogState extends State<ObjectNameDialog> {
   );
   final _focus = FocusNode();
 
-  ///Tras el primer intento de envio se valida en cada cambio
+  /// After the first submit attempt it validates on every change
   bool _submitted = false;
 
   @override
   void initState() {
     super.initState();
     _controller.addListener(() => setState(() {}));
-    //al renombrar se selecciona el nombre sin la extension
+    // when renaming, the name without the extension is selected
     final value = widget.initialValue;
     if (value != null) {
       final dot = value.lastIndexOf('.');

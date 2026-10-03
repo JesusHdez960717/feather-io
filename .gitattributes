@@ -1,2 +1,2 @@
-# los scripts se ejecutan en contenedores Linux: siempre con LF
+# the scripts run in Linux containers: always LF
 *.sh text eol=lf

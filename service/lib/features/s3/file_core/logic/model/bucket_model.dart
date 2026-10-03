@@ -6,7 +6,7 @@ class BucketModel implements Serializable {
   final int size;
   final DateTime creationDate;
 
-  /// Fecha del objeto modificado mas recientemente; null si el bucket esta vacio
+  /// Date of the most recently modified object; null if the bucket is empty.
   final DateTime? lastModified;
   final String? description;
   final int? color;

@@ -15,8 +15,8 @@ class JwtService {
     return jwt.sign(_secretKey);
   }
 
-  /// El payload de [token] si su firma es buena y no ha caducado. Sin `exp`
-  /// no vale: los tokens que se emiten siempre caducan
+  /// The payload of [token] if its signature is valid and it hasn't expired.
+  /// A token without `exp` is rejected: the issued tokens always expire.
   Map<String, dynamic>? verifyToken(String token) {
     try {
       final jwt = JWT.verify(token, _secretKey);

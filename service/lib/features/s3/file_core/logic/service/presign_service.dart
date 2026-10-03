@@ -1,14 +1,14 @@
 import 'package:service/feather.dart';
 
-/// Genera URLs prefirmadas (SigV4 en la query) con las credenciales del
-/// servicio, para que la consola pueda compartir un objeto sin conocerlas
+/// Builds presigned URLs (SigV4 in the query) with the service credentials, so
+/// the console can share an object without knowing them.
 class PresignService {
   final FileManagementService fileManagement;
 
   PresignService() : fileManagement = di.find();
 
-  /// URL `GET` de [key] valida durante [expiresIn]. [host] y [scheme] son los
-  /// de `PUBLIC_URL` o, sin ella, los de la peticion: la firma incluye el host
+  /// `GET` URL of [key] valid for [expiresIn]. [host] and [scheme] come from
+  /// `PUBLIC_URL` or, without it, from the request; the signature includes the host.
   Future<PresignedUrlModel> presignGet({
     required String scheme,
     required String host,
@@ -19,11 +19,11 @@ class PresignService {
     if (expiresIn.inSeconds < 1 || expiresIn > SigV4Signer.maxExpiration) {
       throw S3Exception(
         S3ErrorCode.invalidArgument,
-        message: 'La caducidad debe estar entre 1 segundo y 7 días.',
+        message: 'The expiration must be between 1 second and 7 days.',
         resource: key,
       );
     }
-    //valida el bucket y la key y comprueba que el objeto existe
+    // Validates the bucket and the key and checks that the object exists
     await fileManagement.getFile(bucketName: bucketName, key: key);
 
     final now = DateTime.now().toUtc();

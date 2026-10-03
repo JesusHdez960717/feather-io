@@ -14,7 +14,7 @@ extension EnvConfigExtension on EnvConfig {
   external String? get ADMIN_PREFIX;
 }
 
-///use it like this
+/// use it like this
 class Environment {
   static String get serviceUrl => env.SERVICE_URL.startsWith('http')
       ? env.SERVICE_URL

@@ -28,7 +28,7 @@ class BrowserRepo {
     }
   }
 
-  ///Borra objetos y carpetas (keys terminadas en `/`) con todo su contenido
+  /// Deletes objects and folders (keys ending in `/`) with all their content
   Future<void> deleteObjects({
     required String bucket,
     required List<String> keys,

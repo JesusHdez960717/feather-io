@@ -5,8 +5,9 @@ import 'package:material_ui/material_ui.dart';
 
 import '../object_info_helper.dart';
 
-///Cajon con los detalles de un objeto: miniatura si es una imagen, key, tipo,
-///tamaño, fecha y URL, y al pie sus acciones. Cada accion cierra el cajon antes
+/// Drawer with the details of an object: a thumbnail if it is an image, key,
+/// type, size, date and URL, and its actions in the footer. Each action closes
+/// the drawer first
 class ObjectDetailsDrawer extends StatefulWidget {
   static Future<void> show({
     required String bucket,

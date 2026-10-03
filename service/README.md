@@ -1,33 +1,32 @@
 # Feather-io Service
 
-## Arquitectura de API
+## API architecture
 
-El servicio expone dos APIs principales:
+The service exposes two APIs:
 
-* **S3 API**: Proporciona compatibilidad con el protocolo S3 para la gestión de buckets y objetos.
-* **Admin API**: Rutas reservadas para la administración del sistema (accesibles mediante el prefijo
-  configurado en `ADMIN_PREFIX`). Esta API **siempre responde en formato JSON**.
+* **S3 API**: S3 protocol compatibility for managing buckets and objects.
+* **Admin API**: routes reserved for administering the system (reached through the prefix set in
+  `ADMIN_PREFIX`). This API **always answers in JSON**.
 
-> **Nota**: Los recursos de administración deben utilizar el prefijo `_` (ej. `_admin`, que es el
-> valor por
-> defecto de `ADMIN_PREFIX`) para evitar conflictos de colisión con los nombres de los buckets en la
-> raíz de la API S3.
+> **Note**: admin resources must use the `_` prefix (e.g. `_admin`, the default value of
+> `ADMIN_PREFIX`) so they don't collide with bucket names at the root of the S3 API.
 
-## Content Negotiation (S3 API)
+## Content negotiation (S3 API)
 
-La API de S3 soporta negociación de contenido basada en la cabecera `Accept`:
+The S3 API supports content negotiation based on the `Accept` header:
 
-* **`Accept: application/json`**: El servicio responderá con un cuerpo JSON.
-* **Otros / Por defecto**: El servicio responderá en **XML** para mantener la compatibilidad con el
-  estándar de S3.
-* **Solo aplica a S3**: esto solo aplica a la api de s3, la api de admin siempre devuelve json
+* **`Accept: application/json`**: the service answers with a JSON body.
+* **Anything else / default**: the service answers in **XML**, to stay compatible with the S3
+  standard.
+* This only applies to the S3 API; the admin API always returns JSON.
 
-## Configurar clientes S3
+## Configuring S3 clients
 
-Cualquier cliente S3 vale con estas opciones: el endpoint del servicio, **path-style** (el bucket
-va en la ruta, no en el host), región `us-east-1` y las claves `FEATHER_ACCESS` /
-`FEATHER_SECRET`. Probados: AWS CLI v2, rclone, s3cmd, mc y los SDKs de AWS (Java, PHP, Ruby) y de
-MinIO (Go, Java, JS, Python). Las pruebas están en `tool/s3_compat/`.
+
+Any S3 client works with these options: the service endpoint, **path-style** (the bucket goes in
+the path, not in the host), region `us-east-1` and the keys `FEATHER_ACCESS` / `FEATHER_SECRET`.
+Tested: AWS CLI v2, rclone, s3cmd, mc and the AWS (Java, PHP, Ruby) and MinIO (Go, Java, JS,
+Python) SDKs. The tests live in `tool/s3_compat/`.
 
 **AWS CLI**
 
@@ -71,16 +70,17 @@ s3 = boto3.client(
 )
 ```
 
-No están soportados: SigV2, subidas con POST policy, versionado, etiquetas, políticas de bucket,
-notificaciones ni S3 Select (los subrecursos sin implementar responden `501 NotImplemented`).
+Not supported: SigV2, POST policy uploads, versioning, tags, bucket policies, notifications or
+S3 Select (the unimplemented subresources answer `501 NotImplemented`).
 
-## Endpoints y Permisos
+## Endpoints and permissions
 
-Resumen de las acciones disponibles, su método de autenticación y el permiso requerido.
+Summary of some of the available actions, their authentication method and the required permission
+(the controllers are the full reference).
 
-### S3 API (Path: `/`)
+### S3 API (path: `/`)
 
-| Acción          | Método | Ruta              | Auth        | Permiso                   |
+| Action          | Method | Path              | Auth        | Permission                |
 |:----------------|:-------|:------------------|:------------|:--------------------------|
 | `list-buckets`  | GET    | `/`               | JWT / SigV4 | `s3.list-buckets`         |
 | `list-objects`  | GET    | `/{bucket}`       | JWT / SigV4 | `s3.list-objects`         |
@@ -89,33 +89,33 @@ Resumen de las acciones disponibles, su método de autenticación y el permiso r
 | `delete-object` | DELETE | `/{bucket}/{key}` | JWT / SigV4 | `s3.delete-object`        |
 | `multi-delete`  | POST   | `/{bucket}`       | JWT / SigV4 | `s3.multi-delete-objects` |
 
-### Admin API (Path: `/{ADMIN_PREFIX}`)
+### Admin API (path: `/{ADMIN_PREFIX}`)
 
-| Acción            | Método | Ruta                        | Auth         | Permiso                 |
+| Action            | Method | Path                        | Auth         | Permission              |
 |:------------------|:-------|:----------------------------|:-------------|:------------------------|
 | `login`           | POST   | `/login`                    | ***Public*** | -                       |
 | `bucket.download` | POST   | `/bucket/{bucket}/download` | JWT          | `admin.bucket.download` |
 
-*\*El login valida directamente contra las credenciales de entorno `FEATHER_ACCESS`
-y `FEATHER_SECRET`.*
+*\*The login checks directly against the `FEATHER_ACCESS` and `FEATHER_SECRET` environment
+credentials.*
 
 ## Env
 
-Sección de variables de entorno configurables para el servicio.
+Environment variables of the service.
 
-| Variable                | Requerido |    Por defecto     | Descripción                                                                                         |
-|:------------------------|:---------:|:------------------:|:----------------------------------------------------------------------------------------------------|
-| `FEATHER_SECRET`        |  **Sí**   |         -          | Clave secreta para la autenticación de las peticiones.                                              |
-| `FEATHER_ACCESS`        |  **Sí**   |         -          | Clave de acceso para la autenticación de las peticiones.                                            |
-| `STORAGE_VOLUME_PATH`   |  **Sí**   |         -          | Ruta local en el volumen donde se almacenarán los buckets y objetos.                                |
-| `ADMIN_PREFIX`          |    No     |      `_admin`      | Prefijo utilizado para la consola de administración y rutas reservadas del sistema.                 |
-| `RESERVED_BUCKET_NAMES` |    No     | ***(empty list)*** | Lista (separada por comas) de nombres de buckets reservados que no pueden ser creados por usuarios. |
-| `MAX_OBJECT_SIZE`       |    No     |  `5368709120`  | Tamaño máximo en bytes de un objeto subido con `PUT` (5 GiB por defecto); por encima responde `EntityTooLarge`. |
-| `JWT_SECRET`            |  **SI**   |         -          | Clave secreta para firmar los jwt.                                                                  |
-| `PUBLIC_URL`            |    No     |         -          | URL pública del servicio (`https://s3.example.com`, sin ruta) para las URLs prefirmadas; sin ella se usan el esquema y el `Host` de la petición. El proxy debe reenviar el `Host` original. |
-| `RATE_LIMIT_REQUESTS`   |    No     |       `2000`       | Peticiones por IP en cada ventana (límite general; por encima, `503 SlowDown` en S3 y `429` en admin); `0` lo desactiva. Ver `DECISIONES.md`. |
-| `RATE_LIMIT_WINDOW_SECONDS` | No    |        `60`        | Segundos de la ventana del límite general.                                                          |
-| `LOGIN_MAX_FAILURES`    |    No     |        `10`        | Logins fallidos seguidos que bloquean una IP.                                                       |
-| `LOGIN_LOCK_SECONDS`    |    No     |       `900`        | Segundos que dura el bloqueo de una IP (responde `429` con `Retry-After`).                          |
-| `LOGIN_FAILURE_DELAY_MS`|    No     |       `1000`       | Espera antes de responder a cada login fallido.                                                     |
-| `TRUSTED_PROXIES`       |    No     |        `0`         | Proxies propios delante del servicio; con 0 se usa la IP de la conexión y se ignora `X-Forwarded-For`. |
+| Variable                    | Required |      Default       | Description                                                                                                       |
+|:----------------------------|:--------:|:------------------:|:------------------------------------------------------------------------------------------------------------------|
+| `FEATHER_SECRET`            | **Yes**  |         -          | Secret key used to authenticate requests.                                                                         |
+| `FEATHER_ACCESS`            | **Yes**  |         -          | Access key used to authenticate requests.                                                                         |
+| `STORAGE_VOLUME_PATH`       | **Yes**  |         -          | Local path of the volume where buckets and objects are stored.                                                    |
+| `JWT_SECRET`                | **Yes**  |         -          | Secret key used to sign the JWTs.                                                                                 |
+| `ADMIN_PREFIX`              |    No    |      `_admin`      | Prefix of the admin API and the system's reserved routes.                                                         |
+| `RESERVED_BUCKET_NAMES`     |    No    | ***(empty list)*** | Comma-separated list of reserved bucket names that users cannot create.                                           |
+| `MAX_OBJECT_SIZE`           |    No    |    `5368709120`    | Maximum size in bytes of an object uploaded with `PUT` (5 GiB by default); above it the answer is `EntityTooLarge`. |
+| `PUBLIC_URL`                |    No    |         -          | Public URL of the service (`https://s3.example.com`, no path) for presigned URLs; without it the scheme and `Host` of the request are used. The proxy must forward the original `Host`. |
+| `RATE_LIMIT_REQUESTS`       |    No    |       `2000`       | Requests per IP in each window (general limit; above it, `503 SlowDown` on S3 and `429` on admin); `0` disables it. See `DECISIONS.md`. |
+| `RATE_LIMIT_WINDOW_SECONDS` |    No    |        `60`        | Seconds of the general limit window.                                                                              |
+| `LOGIN_MAX_FAILURES`        |    No    |        `10`        | Failed logins in a row that lock an IP.                                                                           |
+| `LOGIN_LOCK_SECONDS`        |    No    |       `900`        | Seconds an IP stays locked (answers `429` with `Retry-After`).                                                    |
+| `LOGIN_FAILURE_DELAY_MS`    |    No    |       `1000`       | Delay before answering each failed login.                                                                         |
+| `TRUSTED_PROXIES`           |    No    |        `0`         | Own proxies in front of the service; with 0 the connection IP is used and `X-Forwarded-For` is ignored.           |

@@ -38,7 +38,8 @@ class JwtFilter extends Filter {
     return await chain.doFilter(request);
   }
 
-  ///Solo filtro si NO esta autenticado aun (por si ya paso por el s3-sig-v4 o el publico de get-object)
+  /// Only runs while the request is not authenticated yet: it is registered
+  /// globally and again on both parents, so it must not run twice.
   @override
   bool shouldFilter(RequestEntity request) {
     return !request.securityContext.isAuthenticated;

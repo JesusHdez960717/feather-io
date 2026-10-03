@@ -1,11 +1,11 @@
 import 'package:material_ui/material_ui.dart';
 
 extension ColorHexExtension on Color {
-  ///Color en formato `#RRGGBB`, sin canal alfa
+  /// Color as `#RRGGBB`, without the alpha channel
   String toHex() =>
       '#${(toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
 
-  ///Ratio de contraste WCAG entre este color y [other] (de 1 a 21)
+  /// WCAG contrast ratio between this color and [other] (from 1 to 21)
   double contrastWith(Color other) {
     final a = computeLuminance();
     final b = other.computeLuminance();
@@ -15,7 +15,7 @@ extension ColorHexExtension on Color {
   }
 }
 
-///Convierte `#RRGGBB` o `RRGGBB` en un [Color] opaco; null si no es valido
+/// Turns `#RRGGBB` or `RRGGBB` into an opaque [Color]; null if it is not valid
 Color? colorFromHex(String text) {
   final hex = text.trim().replaceFirst('#', '');
   if (!RegExp(r'^[0-9a-fA-F]{6}$').hasMatch(hex)) return null;

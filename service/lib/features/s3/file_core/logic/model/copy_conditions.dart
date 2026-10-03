@@ -1,10 +1,10 @@
 import 'package:service/feather.dart';
 
-/// Condiciones de una copia sobre el objeto de origen (cabeceras
-/// `x-amz-copy-source-if-*` de CopyObject y UploadPartCopy). Si no se cumplen,
-/// la copia falla con `PreconditionFailed`
+/// Conditions of a copy on the source object (the `x-amz-copy-source-if-*`
+/// headers of CopyObject and UploadPartCopy). If they don't hold, the copy fails
+/// with `PreconditionFailed`.
 class CopyConditions {
-  /// ETags (con o sin comillas, separados por comas) o `*`
+  /// ETags (with or without quotes, comma separated) or `*`.
   final String? ifMatch;
   final String? ifNoneMatch;
   final DateTime? ifModifiedSince;
@@ -19,15 +19,15 @@ class CopyConditions {
 
   static const CopyConditions none = CopyConditions();
 
-  /// Comprueba las condiciones contra el origen ([etag] y [modified]). Como
-  /// en S3, si se cumple el if-match se ignora el if-unmodified-since, y si se
-  /// cumple el if-none-match se ignora el if-modified-since
+  /// Checks the conditions against the source ([etag] and [modified]). As in
+  /// S3, a matching if-match overrides if-unmodified-since, and a non-matching
+  /// if-none-match overrides if-modified-since.
   void check({
     required String etag,
     required DateTime modified,
     required String resource,
   }) {
-    //las fechas HTTP no tienen fracciones de segundo
+    // HTTP dates have no fractions of a second
     final seconds = DateTime.fromMillisecondsSinceEpoch(
       modified.millisecondsSinceEpoch ~/ 1000 * 1000,
       isUtc: true,
@@ -42,7 +42,7 @@ class CopyConditions {
     if (failed) {
       throw S3Exception(
         S3ErrorCode.preconditionFailed,
-        message: 'El objeto de origen no cumple las condiciones de la copia.',
+        message: 'The source object does not meet the copy conditions.',
         resource: resource,
       );
     }

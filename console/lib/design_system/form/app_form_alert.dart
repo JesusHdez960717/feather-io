@@ -1,8 +1,8 @@
 import 'package:console/app_exporter.dart';
 import 'package:material_ui/material_ui.dart';
 
-///Aviso de error de todo un formulario, para los fallos que no son de un
-///campo concreto (red, 5xx, 409...). Va arriba del formulario
+/// Error notice for a whole form, for failures that don't belong to a
+/// specific field (network, 5xx, 409...). It goes at the top of the form
 class AppFormAlert extends StatelessWidget {
   final String title;
   final String message;

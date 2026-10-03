@@ -2,10 +2,10 @@ import 'package:console/app_exporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
 
-///Cajon para añadir una regla de acceso anonimo a un bucket
+/// Drawer to add an anonymous access rule to a bucket
 class AnonymousRuleForm extends StatefulWidget {
-  ///Abre el cajon con su propio [AnonymousRuleFormCubit]. Al guardar, recarga
-  ///el [AnonymousAccessCubit] de la pantalla
+  /// Opens the drawer with its own [AnonymousRuleFormCubit]. On save, it reloads
+  /// the screen's [AnonymousAccessCubit]
   static Future<void> open(BuildContext context, {required String bucket}) async {
     final key = GlobalKey<_AnonymousRuleFormState>();
     final accessCubit = context.read<AnonymousAccessCubit>();
@@ -30,7 +30,7 @@ class AnonymousRuleForm extends StatefulWidget {
     await formCubit.close();
   }
 
-  ///Id del [LoadingOverlay] del cajon
+  /// Id of the drawer's [LoadingOverlay]
   static const String loadingId = 'anonymous-rule-form';
 
   final String bucket;
@@ -49,13 +49,13 @@ class _AnonymousRuleFormState extends State<AnonymousRuleForm> {
   final _prefixFocus = FocusNode();
   AnonymousAccessType _access = AnonymousAccessType.readOnly;
 
-  ///Tras el primer intento de envio se valida en cada cambio
+  /// After the first submit attempt it validates on every change
   bool _submitted = false;
 
-  ///Errores de la API por campo; se borran al editar ese campo
+  /// API errors per field; cleared when that field is edited
   Map<String, String> _serverErrors = const {};
 
-  ///Error de la API que no es de un campo concreto
+  /// API error that doesn't belong to a specific field
   String? _formError;
 
   late final AnonymousRuleFormCubit cubit;
@@ -239,7 +239,7 @@ class _AnonymousRuleFormState extends State<AnonymousRuleForm> {
   }
 }
 
-///Tarjeta seleccionable con un tipo de acceso, su descripcion y su uso tipico
+/// Selectable card with an access type, its description and its typical use
 class _AccessOption extends StatelessWidget {
   final AnonymousAccessType access;
   final bool selected;
@@ -334,7 +334,7 @@ class _AccessOption extends StatelessWidget {
   }
 }
 
-///Pie del cajon: *Cancelar* y *Añadir regla*
+/// Drawer footer: *Cancel* and *Add rule*
 class _AnonymousRuleFormFooter extends StatelessWidget {
   final VoidCallback onSubmit;
 
