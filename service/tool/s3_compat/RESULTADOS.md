@@ -1,15 +1,15 @@
 # Resultados de las pruebas (ejecución completa desde cero)
 
-Ejecución del **2026-10-02** sobre el commit `8b0de8f` (`feature/poc`) con cambios sin commitear,
+Ejecución del **2026-10-02** sobre el commit `3a05004` (`feature/poc`),
 en Windows 11 con Docker version 29.4.1, build 055a478.
-Generado con `service/tool/s3_compat/report.py`; cómo repetirlo: "Pruebas completas" en `CLAUDE.md`.
+Generado con `service/tool/s3_compat/report.py`; cómo repetirlo: *Full test run* en `CLAUDE.md`.
 
 | Qué | Resultado |
 |---|---|
 | `dart analyze` (servicio) | Sin incidencias |
-| `flutter analyze` (consola) | 1 avisos (ver la salida) |
+| `flutter analyze` (consola) | 1 aviso (ver la salida) |
 | `dart test` (servicio) | **288/288** en 26 ficheros |
-| AWS CLI v2 (`aws-cli/2.37.9 Python/3.14.6 Linux/6.6.87.2-microsoft-standard-WSL2 docker/x86_64.amzn.2023`) | **34/34** |
+| AWS CLI v2 (`aws-cli/2.37.9`) | **34/34** |
 | rclone (`rclone v1.75.1`) | **19/19** |
 | MinIO Mint (15 suites) | Sin ningún fallo: `aws-sdk-java`, `aws-sdk-java-v2`, `s3cmd`. Terminan con fallos fuera de alcance: `minio-go`, `minio-java`. Fallos sin clasificar: **0** |
 | Errores sin capturar en el log del servicio | **0** |
@@ -421,7 +421,7 @@ La consola no tiene tests (está en el roadmap, fase 5); solo se analiza.
 
 Scripts `awscli.sh` y `rclone.sh`. Cada paso compara también el contenido cuando baja algo.
 
-### AWS CLI v2 (`aws-cli/2.37.9 Python/3.14.6 Linux/6.6.87.2-microsoft-standard-WSL2 docker/x86_64.amzn.2023`): 34/34
+### AWS CLI v2 (`aws-cli/2.37.9`): 34/34
 
 - ✅ s3 mb
 - ✅ s3 ls (buckets)
