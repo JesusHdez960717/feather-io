@@ -49,7 +49,10 @@ class UnsupportedSubresourceFilter extends Filter {
     FilterChain chain,
   ) async {
     final params = request.queryParams.keys;
-    final subresource = params.where(_unsupported.contains).firstOrNull;
+    final subresource = params
+        .where(_unsupported.contains)
+        .where((p) => !_readable(request, p))
+        .firstOrNull;
     if (subresource != null) {
       throw S3Exception(
         S3ErrorCode.notImplemented,
@@ -59,6 +62,18 @@ class UnsupportedSubresourceFilter extends Filter {
     }
 
     return await chain.doFilter(request);
+  }
+
+  /// Lecturas que si se contestan aunque no se implemente el subrecurso,
+  /// porque los clientes las piden antes de otras operaciones: las etiquetas
+  /// de un objeto (GetObjectTagging, la CLI de AWS antes de una copia
+  /// multipart; no hay ninguna) y el versionado de un bucket
+  /// (GetBucketVersioning, rclone; nunca esta activado)
+  bool _readable(RequestEntity request, String subresource) {
+    if (request.method != 'GET') return false;
+    final hasKey = request.pathParams['key'] != null;
+    return (subresource == 'tagging' && hasKey) ||
+        (subresource == 'versioning' && !hasKey);
   }
 
   @override

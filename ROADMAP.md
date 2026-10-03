@@ -76,7 +76,13 @@ terminarla.
   subidas avisan con `BucketChangedEvent` para que el explorador se recargue solo.
 - [x] Multipart upload: crear, subir partes, completar y abortar (sin ListParts ni
   ListMultipartUploads). La consola sube por partes de 8 MiB los ficheros de más de 16 MiB.
-- [ ] Pruebas contra clientes reales (aws cli, rclone, SDKs).
+- [x] Pruebas contra clientes reales: AWS CLI v2 y rclone pasan enteros, y en Mint los SDKs de
+  AWS y MinIO, s3cmd y mc llegan hasta lo que queda fuera de alcance (ver *Aparcado*). Las
+  baterías están en `service/tool/s3_compat/`. Arreglos que salieron: SigV4 (permisos de buckets,
+  cabecera sin espacios, codificación de la query), `aws-chunked`, `Range`, ETags y metadatos
+  reales, DeleteObjects en XML, ListObjects V1 y `encoding-type=url`, GetBucketLocation,
+  ListMultipartUploads, ListParts, UploadPartCopy, condiciones de copia, clase de almacenamiento,
+  `501` para los subrecursos sin implementar y borrados de carpetas como en S3.
 
 ## Fase 5: Operación y producción
 
@@ -99,3 +105,9 @@ No entran en la 1.0; se harán más adelante.
 
 - Tema claro de la consola.
 - Bucket policies, validación MD5/checksum y casos avanzados de multipart.
+- Compatibilidad S3 que no entra (sale en Mint): firma SigV2 (incluido `s3 presign` de la CLI v1),
+  validar `x-amz-content-sha256` y los checksums de `aws-chunked`, subidas con POST policy,
+  versionado y etiquetas (solo se contesta que no hay), notificaciones, S3 Select,
+  retention/object lock y las APIs propias de MinIO (admin, snowball, force-delete).
+- Keys con caracteres que el sistema de ficheros no admite (`<>:"|?*` en Windows): habría que
+  codificar las keys en disco.

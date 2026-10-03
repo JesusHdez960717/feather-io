@@ -25,7 +25,7 @@ void main() {
 
   group('UnsupportedSubresourceFilter', () {
     test('Should answer 501 to bucket subresources', () async {
-      for (final sub in ['versioning', 'policy', 'tagging', 'encryption', 'acl']) {
+      for (final sub in ['policy', 'tagging', 'encryption', 'acl', 'lifecycle']) {
         expectNotImplemented(
           await http.get(server.url('/$bucket?$sub'), headers: server.auth()),
         );
@@ -65,6 +65,55 @@ void main() {
         headers: server.auth(),
       );
       expect(create.statusCode, 200);
+    });
+  });
+
+  group('S3Controller - GetObjectTagging', () {
+    test('Should answer an empty TagSet for an existing object', () async {
+      final response = await http.get(
+        server.url('/$bucket/a.txt?tagging'),
+        headers: server.auth(),
+      );
+      expect(response.statusCode, 200);
+      expect(response.body, contains('<TagSet></TagSet>'));
+    });
+
+    test('Should return 404 for a missing object', () async {
+      final response = await http.get(
+        server.url('/$bucket/no-existe.txt?tagging'),
+        headers: server.auth(),
+      );
+      expect(response.statusCode, 404);
+    });
+
+    test('Should still answer 501 to writing tags', () async {
+      expectNotImplemented(
+        await http.put(
+          server.url('/$bucket/a.txt?tagging'),
+          headers: server.auth(),
+          body: '<Tagging><TagSet/></Tagging>',
+        ),
+      );
+    });
+  });
+
+  group('S3Controller - GetBucketVersioning', () {
+    test('Should answer that versioning was never enabled', () async {
+      final response = await http.get(
+        server.url('/$bucket?versioning'),
+        headers: server.auth(),
+      );
+      expect(response.statusCode, 200);
+      expect(response.body, contains('<VersioningConfiguration'));
+      expect(response.body, isNot(contains('<Status>')));
+    });
+
+    test('Should return 404 for a missing bucket', () async {
+      final response = await http.get(
+        server.url('/no-existe?versioning'),
+        headers: server.auth(),
+      );
+      expect(response.statusCode, 404);
     });
   });
 }

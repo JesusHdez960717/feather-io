@@ -22,6 +22,58 @@ La API de S3 soporta negociación de contenido basada en la cabecera `Accept`:
   estándar de S3.
 * **Solo aplica a S3**: esto solo aplica a la api de s3, la api de admin siempre devuelve json
 
+## Configurar clientes S3
+
+Cualquier cliente S3 vale con estas opciones: el endpoint del servicio, **path-style** (el bucket
+va en la ruta, no en el host), región `us-east-1` y las claves `FEATHER_ACCESS` /
+`FEATHER_SECRET`. Probados: AWS CLI v2, rclone, s3cmd, mc y los SDKs de AWS (Java, PHP, Ruby) y de
+MinIO (Go, Java, JS, Python). Las pruebas están en `tool/s3_compat/`.
+
+**AWS CLI**
+
+```ini
+# ~/.aws/config
+[profile feather]
+region = us-east-1
+endpoint_url = http://localhost:8080
+s3 =
+  addressing_style = path
+```
+
+```bash
+AWS_ACCESS_KEY_ID=access AWS_SECRET_ACCESS_KEY=secret aws --profile feather s3 ls
+```
+
+**rclone**
+
+```ini
+# rclone.conf
+[feather]
+type = s3
+provider = Other
+access_key_id = access
+secret_access_key = secret
+endpoint = http://localhost:8080
+region = us-east-1
+force_path_style = true
+```
+
+**boto3**
+
+```python
+s3 = boto3.client(
+    "s3",
+    endpoint_url="http://localhost:8080",
+    aws_access_key_id="access",
+    aws_secret_access_key="secret",
+    region_name="us-east-1",
+    config=botocore.config.Config(s3={"addressing_style": "path"}),
+)
+```
+
+No están soportados: SigV2, subidas con POST policy, versionado, etiquetas, políticas de bucket,
+notificaciones ni S3 Select (los subrecursos sin implementar responden `501 NotImplemented`).
+
 ## Endpoints y Permisos
 
 Resumen de las acciones disponibles, su método de autenticación y el permiso requerido.

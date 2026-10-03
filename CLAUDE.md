@@ -195,7 +195,10 @@ goes through `_escapeXml`.
 `UnsupportedSubresourceFilter` (S3 parent) answers `501 NotImplemented` to the subresources the
 service does not implement (`?versioning`, `?policy`, `?tagging`, `?acl`, `?legal-hold`…). Without it they would fall into
 the normal routes (`PUT /{bucket}?versioning` would create the bucket). A newly implemented
-subresource must be removed from its list.
+subresource must be removed from its list. Two reads are answered anyway, because clients ask for
+them before other operations: GetObjectTagging (`GET /{bucket}/{key}?tagging`, an empty `TagSet`;
+the AWS CLI asks before a multipart copy) and GetBucketVersioning (`GET /{bucket}?versioning`,
+never enabled; rclone asks before a purge).
 
 **Errors.**
 
@@ -221,7 +224,10 @@ otherwise); only the subfolders of the key are created on the fly. PutObject wri
 upload ends, so a failed upload keeps the previous object; `Md5Tap.write` closes and deletes the file
 when the stream fails (`pipe` does not close the sink). Deletes go through
 `FileManagementService._delete`, which on Windows retries for a few seconds while the file is open
-(a download not yet closed, the antivirus scanning a new file). Clients that sign by chunks
+(a download not yet closed, the antivirus scanning a new file). Removing the empty parents of a
+deleted object is best-effort and never recursive (`_deleteEmptyParents`): parallel deletes race
+for the same folder, and an upload may land in it meanwhile; a leftover empty folder without marker
+is not listed. Clients that sign by chunks
 (`x-amz-content-sha256: STREAMING-…` or `Content-Encoding: aws-chunked`: mc and recent AWS SDKs/CLI)
 send `aws-chunked` bodies; `AwsChunkedDecoder` (controller layer) strips the framing in streaming
 for PutObject and UploadPart, without checking chunk signatures or trailing checksums, and answers
@@ -297,6 +303,11 @@ aborts its uploads. The upload id is validated as 32 hex chars before it touches
 pending uploads of the bucket, sorted and without paging. UploadPartCopy (`PUT ?partNumber&uploadId`
 with `x-amz-copy-source` and optionally `x-amz-copy-source-range: bytes=a-b`) feeds UploadPart with
 `FileManagementService.readForCopy`. CORS exposes `ETag` so the console can read it.
+
+**S3 compatibility.** `service/tool/s3_compat/` runs real clients in Docker against a running
+service (`run.sh`: AWS CLI v2 and rclone batteries, and MinIO Mint with `run.sh mint`); its README
+lists the latest results and what is out of scope. Run it after touching the S3 API and check the
+service log too: clients retry, so a 500 may only show up there.
 
 **Tests.** Rules for new tests:
 

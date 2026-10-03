@@ -59,6 +59,28 @@ void main() {
       testOn: 'windows',
     );
 
+    test('Should delete many objects of a folder in parallel', () async {
+      //como rclone purge: todas las peticiones intentan quitar la carpeta
+      //vacia a la vez, y no es un error que otra ya la haya quitado
+      final keys = [for (var i = 0; i < 20; i++) 'paralelo/x/$i.txt'];
+      for (final key in keys) {
+        await server.putObject(bucket, key, 'data');
+      }
+      final responses = await Future.wait([
+        for (final key in keys)
+          http.delete(server.url('/$bucket/$key'), headers: server.auth()),
+      ]);
+      expect(responses.map((r) => r.statusCode), everyElement(204));
+      //quitar las carpetas vacias es solo limpieza: alguna puede quedarse,
+      //pero no se lista nada
+      final list = await http.get(
+        server.url('/$bucket?prefix=paralelo/'),
+        headers: server.auth(json: true),
+      );
+      expect(jsonDecode(list.body)['contents'], isEmpty);
+      expect(jsonDecode(list.body)['common_prefixes'], isEmpty);
+    });
+
     test('Should clean up empty parent folders after delete', () async {
       const key = 'a/b/c/file.txt';
       await server.putObject(bucket, key, 'data');

@@ -378,6 +378,18 @@ class S3Controller {
     if (request.queryParams.containsKey('uploads')) {
       return _listMultipartUploads(request, bucketName);
     }
+    if (request.queryParams.containsKey('versioning')) {
+      //GetBucketVersioning: el versionado nunca esta activado (sin Status)
+      if (!await fileManagement.bucketExists(bucketName)) {
+        throw S3Exception.noSuchBucket(bucketName);
+      }
+      return ResponseEntity.ok(
+        body:
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<VersioningConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"/>\n',
+        headers: {'content-type': 'application/xml'},
+      );
+    }
     final prefix = request.queryParams['prefix'];
     final delimiter = request.queryParams['delimiter'];
     final maxKeysParam = request.queryParams['max-keys'];
@@ -438,6 +450,17 @@ class S3Controller {
     final key = _objectKey(request);
     final uploadId = request.queryParams['uploadId'];
     if (uploadId != null) return _listParts(request, bucketName, key, uploadId);
+    if (request.queryParams.containsKey('tagging')) {
+      //GetObjectTagging: el servicio no guarda etiquetas, el objeto no tiene
+      await fileManagement.getFile(bucketName: bucketName, key: key);
+      return ResponseEntity.ok(
+        body:
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<Tagging xmlns="http://s3.amazonaws.com/doc/2006-03-01/">'
+            '<TagSet></TagSet></Tagging>\n',
+        headers: {'content-type': 'application/xml'},
+      );
+    }
 
     final file = await fileManagement.getFile(bucketName: bucketName, key: key);
     final stat = await file.stat();

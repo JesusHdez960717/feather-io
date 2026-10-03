@@ -620,10 +620,14 @@ class FileManagementService {
   /// Borra [entity] (si es un directorio, con su contenido). En Windows no se
   /// puede borrar un fichero abierto (una descarga que aun no lo ha cerrado, el
   /// antivirus revisando uno recien subido): se reintenta durante unos segundos
+  ///
+  /// Si ya no existe (otra peticion lo borro a la vez) no es un error
   Future<void> _delete(FileSystemEntity entity) async {
     for (var attempt = 1; ; attempt++) {
       try {
         await entity.delete(recursive: true);
+        return;
+      } on PathNotFoundException {
         return;
       } on PathAccessException {
         if (!Platform.isWindows || attempt == 10) rethrow;
@@ -674,14 +678,27 @@ class FileManagementService {
       return;
     }
 
-    if (await dir.exists()) {
-      final entities = await dir.list().toList();
-      if (entities.isEmpty) {
-        await _delete(dir);
-        // Intentamos borrar el padre recursivamente
-        await _deleteEmptyParents(dir.parent, bucketPath);
+    // Es solo limpieza (una carpeta vacia sin marcador no se lista): si falla,
+    // el objeto ya esta borrado y la carpeta se queda. Sin `recursive`, para
+    // no llevarse lo que otra peticion acabe de subir. Con borrados en
+    // paralelo puede que otra peticion ya la haya quitado o la este quitando
+    // (en Windows: acceso denegado mientras tanto, y "no vacia" mientras sus
+    // ficheros terminan de borrarse)
+    for (var attempt = 1; ; attempt++) {
+      try {
+        await dir.delete();
+        break;
+      } on PathAccessException {
+        if (!Platform.isWindows || attempt == 10 || !await dir.exists()) {
+          return;
+        }
+        await Future<void>.delayed(Duration(milliseconds: 20 * attempt));
+      } on FileSystemException {
+        return;
       }
     }
+    // Intentamos borrar el padre
+    await _deleteEmptyParents(dir.parent, bucketPath);
   }
 
   String _getBucketPath(String bucketName) {
