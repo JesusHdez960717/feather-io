@@ -38,6 +38,7 @@ TEST_DESC = {
     'cors_test.dart': 'CORS (preflight and the exposed `ETag`).',
     'create_bucket_test.dart': 'CreateBucket: JWT and SigV4, no body nor `Content-Length`, metadata, validation and reserved names.',
     'create_folder_test.dart': 'Folders (`key/`): create, list, HEAD/GET and S3-like deletion (only the marker).',
+    'database_path_test.dart': 'SQLite file inside `STORAGE_VOLUME_PATH/.db/`, not listed as a bucket.',
     'delete_bucket_test.dart': 'DeleteBucket: empty, not empty, missing, reserved, SigV4.',
     'delete_folder_test.dart': 'Admin endpoint to delete a folder with its content.',
     'delete_object_test.dart': 'DeleteObject and DeleteObjects (JSON and S3 XML), parallel deletes and the retry on Windows.',

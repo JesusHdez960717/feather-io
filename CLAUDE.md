@@ -31,8 +31,8 @@ packages need Dart SDK ^3.13.0. The system `dart` on PATH may be older, so prefi
 
 ### Service (run from `service/`)
 
-The SQLite path is relative to the working directory (`./uploads_local/feather-io.sqlite`), so
-always run from `service/`.
+Relative paths in the env (`STORAGE_VOLUME_PATH=./uploads_local`) resolve against the working
+directory, so always run from `service/`.
 
 ```bash
 fvm dart pub get
@@ -54,8 +54,6 @@ Required env: `FEATHER_ACCESS`, `FEATHER_SECRET`, `JWT_SECRET`, `STORAGE_VOLUME_
 `ADMIN_PREFIX` (default `_admin`), `RESERVED_BUCKET_NAMES` and `MAX_OBJECT_SIZE` (bytes, default 5
 GiB). See `service/README.md` (its endpoint table lists only some routes, so treat the
 controllers as the source of truth).
-
-The SQLite path is hardcoded in `database.dart` and does **not** follow `STORAGE_VOLUME_PATH`.
 
 `service/Dockerfile` builds from `dart:3.12.2`, which is older than the `^3.13.0` SDK constraint. It
 also runs on a `scratch` image that has no `libsqlite3`.
@@ -240,7 +238,9 @@ never enabled; rclone asks before a purge).
   converting unknown errors.
 
 **Storage & performance.** Buckets are directories under `STORAGE_VOLUME_PATH`. Bucket metadata (
-description, color, timestamps), anonymous rules and object ETags live in SQLite via Drift. The
+description, color, timestamps), anonymous rules and object ETags live in SQLite via Drift, in
+`STORAGE_VOLUME_PATH/.db/feather-io.sqlite` (`AppDatabase.defaultPath`; a dot folder, never listed
+as a bucket), so the metadata lives in the same volume as the objects. The
 schema has no migrations while in development: when it changes, delete the SQLite file and let it be
 recreated. PutObject, CopyObject and CreateMultipartUpload need an existing bucket (`NoSuchBucket`
 otherwise); only the subfolders of the key are created on the fly. PutObject writes into
@@ -360,8 +360,8 @@ from scratch and regenerate `service/tool/s3_compat/RESULTS.md`. Outputs go to
    (it prints its summary to stderr).
 2. Service tests: from `service/`, `rm -rf uploads_test` and
    `fvm dart test --reporter json > tool/s3_compat/out/service_tests.jsonl`.
-3. A clean service: start it from an **empty scratch folder** (the SQLite path is relative, so it
-   doesn't touch `service/uploads_local`) with `STORAGE_VOLUME_PATH=./uploads_local`, the access
+3. A clean service: start it from an **empty scratch folder** with
+   `STORAGE_VOLUME_PATH=./uploads_local` (relative, so it doesn't touch `service/uploads_local`), the access
    keys you will pass below, and its output in a log file. Outside `service/` `fvm` falls back to
    the global SDK, so call the pinned one: `<repo>/service/.fvm/flutter_sdk/bin/dart run
    <repo>/service/lib/main.dart`. Docker Desktop must be running.
@@ -386,12 +386,13 @@ from scratch and regenerate `service/tool/s3_compat/RESULTS.md`. Outputs go to
 - Use `TestServer` (`test/support/test_server.dart`): `TestServer(port: …, name: …)`, then
   `setUpAll(server.start)` / `tearDownAll(server.stop)`. It sets the env, starts the real server
   with an in-memory SQLite (`FeatherIO.start(database: …)`), logs in to get `server.token`, and
-  creates and deletes `./uploads_test/<name>` (gitignored). Helpers: `server.url(path)`,
+  creates and deletes `./uploads_test/<name>` (gitignored); `fileDatabase: true` uses the real
+  SQLite file inside that folder instead. Helpers: `server.url(path)`,
   `server.auth(json: …)`, `server.createBucket(…)` (tolerates an existing one),
   `server.putObject(…, headers: …)` (creates the bucket first and sends bytes without
   `Content-Type`, so reads fall back to the extension) and `server.sigV4(method, path, query: …)`, the
   headers of a native client signed with SigV4. Uploading with `http.put` needs the bucket created.
-- Use one distinct port per file so files run in parallel. Ports in use: 8082–8109.
+- Use one distinct port per file so files run in parallel. Ports in use: 8082–8110.
 - Cover auth (missing or invalid token → 401, wrong login credentials → 403), validation (bad bucket
   names, path traversal, forbidden chars → 400), content negotiation (JSON vs XML, including the S3
   error code) and edge cases (404, empty lists).

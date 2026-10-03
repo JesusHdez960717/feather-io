@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:path/path.dart' as p;
 import 'package:service/feather.dart';
 
 part 'database.g.dart';
@@ -75,9 +76,21 @@ class AppDatabase extends _$AppDatabase {
   @override
   int get schemaVersion => 1;
 
+  /// Folder of the database inside `STORAGE_VOLUME_PATH`. It starts with a
+  /// dot, so it isn't a valid bucket and isn't listed.
+  static const String folderName = '.db';
+
+  static const String fileName = 'feather-io.sqlite';
+
+  /// `STORAGE_VOLUME_PATH/.db/feather-io.sqlite`: the metadata lives in the
+  /// same volume as the objects it describes.
+  static String get defaultPath =>
+      p.join(env.storageVolumePath, folderName, fileName);
+
   static QueryExecutor _openConnection() {
-    return NativeDatabase.createInBackground(
-      File('./uploads_local/feather-io.sqlite'),
-    );
+    final file = File(defaultPath);
+    // SQLite creates the file but not its folder
+    file.parent.createSync(recursive: true);
+    return NativeDatabase.createInBackground(file);
   }
 }

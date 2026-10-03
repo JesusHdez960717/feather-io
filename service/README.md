@@ -107,7 +107,7 @@ Environment variables of the service.
 |:----------------------------|:--------:|:------------------:|:------------------------------------------------------------------------------------------------------------------|
 | `FEATHER_SECRET`            | **Yes**  |         -          | Secret key used to authenticate requests.                                                                         |
 | `FEATHER_ACCESS`            | **Yes**  |         -          | Access key used to authenticate requests.                                                                         |
-| `STORAGE_VOLUME_PATH`       | **Yes**  |         -          | Local path of the volume where buckets and objects are stored.                                                    |
+| `STORAGE_VOLUME_PATH`       | **Yes**  |         -          | Local path of the volume where buckets, objects and the SQLite database (`.db/feather-io.sqlite`) are stored. |
 | `JWT_SECRET`                | **Yes**  |         -          | Secret key used to sign the JWTs.                                                                                 |
 | `ADMIN_PREFIX`              |    No    |      `_admin`      | Prefix of the admin API and the system's reserved routes.                                                         |
 | `RESERVED_BUCKET_NAMES`     |    No    | ***(empty list)*** | Comma-separated list of reserved bucket names that users cannot create.                                           |

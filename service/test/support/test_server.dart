@@ -10,16 +10,21 @@ const String testAccess = 'test_access';
 const String testSecret = 'test_secret';
 
 /// Real server for a test file: its own port, its own folder in
-/// `./uploads_test/<name>` and an in-memory SQLite database.
+/// `./uploads_test/<name>` and an in-memory SQLite database (or, with
+/// [fileDatabase], the real one inside that folder).
 class TestServer {
   final int port;
   final String storagePath;
+  final bool fileDatabase;
 
   /// JWT obtained in [start] with the test credentials.
   late final String token;
 
-  TestServer({required this.port, required String name})
-    : storagePath = './uploads_test/$name';
+  TestServer({
+    required this.port,
+    required String name,
+    this.fileDatabase = false,
+  }) : storagePath = './uploads_test/$name';
 
   Future<void> start() async {
     env.put('FEATHER_ACCESS', testAccess);
@@ -30,7 +35,7 @@ class TestServer {
     await _deleteStorage();
     await FeatherIO.start(
       port: port,
-      database: AppDatabase(NativeDatabase.memory()),
+      database: fileDatabase ? null : AppDatabase(NativeDatabase.memory()),
     );
 
     final login = await http.post(
@@ -44,6 +49,8 @@ class TestServer {
 
   Future<void> stop() async {
     await Winter.close(force: true);
+    // On Windows an open file can't be deleted
+    if (fileDatabase) await di.find<AppDatabase>().close();
     await _deleteStorage();
   }
 

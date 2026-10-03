@@ -87,10 +87,30 @@ is done.
 ## Phase 5: Operations and production
 
 - [ ] Access key management with permissions, with its admin screen in the console.
-- [ ] SQLite path based on `STORAGE_VOLUME_PATH`.
+- [x] SQLite path based on `STORAGE_VOLUME_PATH` (`STORAGE_VOLUME_PATH/.db/feather-io.sqlite`).
 - [ ] i18n of the service error messages.
 - [ ] Dockerfile: Dart version `^3.13` and `libsqlite3` in the final image.
 - [ ] Console tests (cubits and repos).
+- [ ] Console: drop `MaterialUiCompatibilityBridge` (`main.dart`, deprecated; the only
+  `flutter analyze` notice) once the dependencies have moved to `material_ui`.
+
+## Open source release
+
+A session of its own, before publishing the repo.
+
+- [ ] Publish Winter and depend on its released version instead of the local path
+  (`../../winter`): until then nobody else can build the service.
+- [ ] Root `README.md`: what it is, what is supported (and what isn't, see *Parked*), how to run
+  the service and the console (local and Docker), how to configure S3 clients, screenshots, and
+  what comes next.
+- [ ] `LICENSE` at the root (each package has its own Apache 2.0 `LICENSE.md`; decide whether one
+  at the root covers both and fill in its copyright notice).
+- [ ] `CONTRIBUTING.md`: setup with FVM, code rules (from `CLAUDE.md`), tests and which batteries
+  to run, commit format.
+- [ ] `SECURITY.md`: how to report a vulnerability, plus the security decisions of
+  `DECISIONS.md`.
+- [ ] Review `CHANGELOG.md` in both packages (they still say *POC*) and the versions in
+  `pubspec.yaml`.
 
 ## After 1.0 (future improvements)
 
@@ -122,6 +142,4 @@ Not part of 1.0; they will be done later.
   `toJson` or `toXml` its own way.
 - [ ] Shrink `S3Controller`, which has more than 1000 lines.
 - [ ] Performance tests/benchmarks, maybe with MinIO warp?
-- [ ] A decent README, with basic but clear documentation: what is supported, what comes next, how
-  to run it…
 - [ ] A visual identity/icon like Brag's, and a promo video with real screenshots of the design.
