@@ -221,7 +221,10 @@ schema has no migrations while in development: when it changes, delete the SQLit
 recreated. PutObject, CopyObject and CreateMultipartUpload need an existing bucket (`NoSuchBucket`
 otherwise); only the subfolders of the key are created on the fly. PutObject writes into
 `STORAGE_VOLUME_PATH/.tmp/` (a dot folder, never listed) and renames the file into place when the
-upload ends, so a failed upload keeps the previous object; `Md5Tap.write` closes and deletes the file
+upload ends, so a failed upload keeps the previous object (CopyObject and
+CompleteMultipartUpload also end with `FileManagementService.replaceFile`; on Windows an open
+target can't be replaced, so it retries for `replaceTimeout` (5 s) and then answers
+`503 ServiceUnavailable`, which S3 clients retry); `Md5Tap.write` closes and deletes the file
 when the stream fails (`pipe` does not close the sink). Deletes go through
 `FileManagementService._delete`, which on Windows retries for a few seconds while the file is open
 (a download not yet closed, the antivirus scanning a new file). Removing the empty parents of a
@@ -304,10 +307,37 @@ pending uploads of the bucket, sorted and without paging. UploadPartCopy (`PUT ?
 with `x-amz-copy-source` and optionally `x-amz-copy-source-range: bytes=a-b`) feeds UploadPart with
 `FileManagementService.readForCopy`. CORS exposes `ETag` so the console can read it.
 
-**S3 compatibility.** `service/tool/s3_compat/` runs real clients in Docker against a running
-service (`run.sh`: AWS CLI v2 and rclone batteries, and MinIO Mint with `run.sh mint`); its README
-lists the latest results and what is out of scope. Run it after touching the S3 API and check the
-service log too: clients retry, so a 500 may only show up there.
+**S3 compatibility.** `service/tool/s3_compat/` runs real S3 clients in Docker against a running
+service: `run.sh` (AWS CLI v2 and rclone batteries, `awscli.sh`/`rclone.sh`) and `run.sh mint`
+(MinIO Mint, 15 suites of AWS/MinIO SDKs, s3cmd and mc, ~5 min). Run at least `run.sh` after
+touching the S3 API, and check the service log too: clients retry, so a 500 may only show up there.
+
+**Full test run.** When asked to run every test (or to refresh the results summary), do all of it
+from scratch and regenerate `service/tool/s3_compat/RESULTADOS.md`. Outputs go to
+`service/tool/s3_compat/out/` (gitignored), which is what `report.py` reads:
+
+1. Static analysis: `fvm dart analyze > tool/s3_compat/out/service_analyze.txt` from `service/`,
+   and `fvm flutter analyze > ../service/tool/s3_compat/out/console_analyze.txt` from `console/`.
+2. Service tests: from `service/`, `rm -rf uploads_test` and
+   `fvm dart test --reporter json > tool/s3_compat/out/service_tests.jsonl`.
+3. A clean service: start it from an **empty scratch folder** (the SQLite path is relative, so it
+   doesn't touch `service/uploads_local`) with `STORAGE_VOLUME_PATH=./uploads_local`, the access
+   keys you will pass below, and its output in a log file. Outside `service/` `fvm` falls back to
+   the global SDK, so call the pinned one: `<repo>/service/.fvm/flutter_sdk/bin/dart run
+   <repo>/service/lib/main.dart`. Docker Desktop must be running.
+4. Clients: `ACCESS_KEY=… SECRET_KEY=… service/tool/s3_compat/run.sh awscli rclone mint` from the
+   repo root.
+5. Report: `python service/tool/s3_compat/report.py --server-log <service log>` rewrites
+   `RESULTADOS.md` (date, commit, versions, every service test, every client step, every Mint
+   result with its cause, what doesn't work and what isn't tested).
+6. Review before committing:
+   - Mint failures marked **Sin clasificar** and any unhandled error in the service log are new:
+     investigate them; a real bug is fixed (with its test), a new out-of-scope one goes into
+     `REASONS` in `report.py` and *Aparcado* in `ROADMAP.md`.
+   - A new test file needs its line in `TEST_DESC`, and a suite whose outcome changed its text in
+     `SUITE_STATUS` (both in `report.py`); `NOT_WORKING`/`NOT_TESTED` are kept by hand there too.
+   - Update the *Resultados* section of `service/tool/s3_compat/README.md` (versions and totals).
+   - Stop the scratch service when done.
 
 **Tests.** Rules for new tests:
 

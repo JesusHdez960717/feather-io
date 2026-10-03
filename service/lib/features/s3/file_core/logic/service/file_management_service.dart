@@ -162,8 +162,7 @@ class FileManagementService {
     final temp = await _tempFile();
     final etag = await Md5Tap.write(monitoredStream, temp);
     final file = _getFile(bucketName, key);
-    await file.parent.create(recursive: true);
-    await temp.rename(file.path);
+    await replaceFile(temp, file, key: key);
 
     await objectMeta.save(
       bucketName: bucketName,
@@ -180,6 +179,43 @@ class FileManagementService {
   static const String tempFolderName = '.tmp';
 
   final Random _random = Random.secure();
+
+  /// Cuanto se reintenta sustituir un objeto que esta abierto (en Windows)
+  static const Duration replaceTimeout = Duration(seconds: 5);
+
+  /// Mueve [source] (escrito aparte) a [target], sustituyendo el objeto que
+  /// hubiera, y crea sus carpetas. En Windows no se puede sustituir un fichero
+  /// abierto (una descarga de la version anterior que aun no ha terminado): se
+  /// reintenta durante [replaceTimeout] y, si sigue abierto, se borra [source]
+  /// y se responde `ServiceUnavailable` (503), que los clientes S3 reintentan
+  static Future<void> replaceFile(
+    File source,
+    File target, {
+    required String key,
+  }) async {
+    await target.parent.create(recursive: true);
+    final deadline = DateTime.now().add(replaceTimeout);
+    for (var attempt = 1; ; attempt++) {
+      try {
+        await source.rename(target.path);
+        return;
+      } on PathAccessException {
+        if (Platform.isWindows && DateTime.now().isBefore(deadline)) {
+          await Future<void>.delayed(
+            Duration(milliseconds: min(50 * attempt, 500)),
+          );
+          continue;
+        }
+        if (await source.exists()) await source.delete();
+        throw S3Exception(
+          S3ErrorCode.serviceUnavailable,
+          message:
+              'El objeto está en uso y no se puede sustituir; reinténtalo.',
+          resource: key,
+        );
+      }
+    }
+  }
 
   Future<File> _tempFile() async {
     final dir = Directory(p.join(env.storageVolumePath, tempFolderName));
@@ -396,8 +432,10 @@ class FileManagementService {
     final etag = sourceMeta.etag;
     final target = _getFile(bucketName, key);
     if (!sameObject) {
-      await target.parent.create(recursive: true);
-      await source.copy(target.path);
+      //como las subidas: se copia aparte y se mueve al terminar
+      final temp = await _tempFile();
+      await source.copy(temp.path);
+      await replaceFile(temp, target, key: key);
     }
     await objectMeta.save(
       bucketName: bucketName,

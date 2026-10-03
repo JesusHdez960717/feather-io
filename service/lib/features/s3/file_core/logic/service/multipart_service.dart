@@ -174,8 +174,9 @@ class MultipartService {
       await sink.close();
     }
     final target = File(p.join(env.storageVolumePath, bucketName, key));
-    await target.parent.create(recursive: true);
-    await joined.rename(target.path);
+    //si no se puede sustituir (objeto abierto en Windows), la subida sigue
+    //ahi y se puede reintentar el Complete
+    await FileManagementService.replaceFile(joined, target, key: key);
     await dir.delete(recursive: true);
 
     final etag = '${md5.convert(digests)}-${parts.length}';

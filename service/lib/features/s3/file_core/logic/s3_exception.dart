@@ -23,6 +23,7 @@ enum S3ErrorCode {
   noSuchUpload('NoSuchUpload', 404),
   notImplemented('NotImplemented', 501),
   preconditionFailed('PreconditionFailed', 412),
+  serviceUnavailable('ServiceUnavailable', 503),
   signatureDoesNotMatch('SignatureDoesNotMatch', 403);
 
   final String code;

@@ -33,6 +33,8 @@ step() {
   fi
 }
 
+echo "version: $(rclone version | head -n 1)"
+
 # --- datos ---
 mkdir -p "$WORK/up/sub/deep" "$WORK/down"
 head -c 1024 /dev/urandom > "$WORK/up/small.txt"

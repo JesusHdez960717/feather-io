@@ -12,10 +12,8 @@ class JwtFilter extends Filter {
   factory JwtFilter() => _instance;
 
   @override
-  Future<ResponseEntity> doFilter(
-    RequestEntity request,
-    FilterChain chain,
-  ) async {
+  Future<ResponseEntity> doFilter(RequestEntity request,
+      FilterChain chain,) async {
     final authHeader = request.headers[HttpHeader.authorization];
 
     if (authHeader != null && authHeader.startsWith('Bearer ')) {
@@ -34,8 +32,7 @@ class JwtFilter extends Filter {
         request.securityContext.clearContext();
       }
     } else {
-      request.securityContext
-          .clearContext(); //TODO: aqui deberia ir el anonimo para las url publicas, y luego la validacion en el endpoint
+      request.securityContext.clearContext();
     }
 
     return await chain.doFilter(request);

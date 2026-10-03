@@ -34,6 +34,8 @@ same_file() { [ "$(md5sum < "$1")" = "$(md5sum < "$2")" ]; }
 tree_hash() { (cd "$1" && find . -type f -exec md5sum {} + | sort); }
 same_tree() { [ "$(tree_hash "$1")" = "$(tree_hash "$2")" ]; }
 
+echo "version: $(aws --version 2>&1)"
+
 # --- datos ---
 mkdir -p "$WORK/up/sub" "$WORK/down"
 head -c 1024 /dev/urandom > "$WORK/up/small.txt"
