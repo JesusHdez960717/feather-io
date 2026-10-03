@@ -333,8 +333,19 @@ with `x-amz-copy-source` and optionally `x-amz-copy-source-range: bytes=a-b`) fe
 
 **S3 compatibility.** `service/tool/s3_compat/` runs real S3 clients in Docker against a running
 service: `run.sh` (AWS CLI v2 and rclone batteries, `awscli.sh`/`rclone.sh`) and `run.sh mint`
-(MinIO Mint, 15 suites of AWS/MinIO SDKs, s3cmd and mc, ~5 min). Run at least `run.sh` after
-touching the S3 API, and check the service log too: clients retry, so a 500 may only show up there.
+(MinIO Mint, 15 suites of AWS/MinIO SDKs, s3cmd and mc, ~5 min). Check the service log too:
+clients retry, so a 500 may only show up there.
+
+**Which tests to run.** `dart test` catches regressions in what already works (every endpoint,
+its edge cases and every bug found so far), but it checks responses against our reading of the S3
+spec. Real clients parse the XML strictly, sign in their own way and chain calls nobody expects,
+and almost every incompatibility so far was found by them, not by `dart test`:
+
+| When | Run | Time |
+|---|---|---|
+| Every change | `fvm dart test` (from `service/`) | ~11 s |
+| Touching the S3 API (controller, filters, signatures, XML, headers) | also `service/tool/s3_compat/run.sh` (AWS CLI and rclone) | ~1–2 min |
+| Before a release or after big protocol changes | also `run.sh mint`, i.e. the *Full test run* below | ~5 min |
 
 **Full test run.** When asked to run every test (or to refresh the results summary), do all of it
 from scratch and regenerate `service/tool/s3_compat/RESULTADOS.md`. Outputs go to
