@@ -358,6 +358,7 @@ class S3Controller {
     RequestEntity request,
     String bucketName,
   ) async {
+    _requireUploadPermission(request, bucketName);
     final prefix = request.queryParams['prefix'];
     final uploads = (await multipart.list(
       bucketName: bucketName,
@@ -558,6 +559,7 @@ class S3Controller {
   Future<ResponseEntity> deleteFile(RequestEntity request) async {
     final uploadId = request.queryParams['uploadId'];
     if (uploadId != null) {
+      _requireUploadPermission(request, _objectKey(request));
       await multipart.abort(
         bucketName: request.pathParams['bucket']!,
         key: _objectKey(request),
@@ -615,12 +617,29 @@ class S3Controller {
     );
   }
 
+  /// Multipart nunca es anonimo: exige el permiso de subida normal. Hace falta
+  /// en las operaciones que van por rutas que aceptan reglas anonimas (UploadPart
+  /// por PUT, AbortMultipartUpload por DELETE, ListParts y ListMultipartUploads
+  /// por GET); Create y Complete van por POST, que ya lo exige en su ruta
+  void _requireUploadPermission(RequestEntity request, String resource) {
+    final permissions =
+        request.securityContext.authentication?.permissions ?? const {};
+    if (!permissions.contains('s3.put-object')) {
+      throw S3Exception(
+        S3ErrorCode.accessDenied,
+        message: 'Las subidas multipart requieren permiso de subida.',
+        resource: resource,
+      );
+    }
+  }
+
   /// UploadPart: `PUT ?partNumber=N&uploadId=X`. El ETag va en la cabecera
   Future<ResponseEntity> _uploadPart(
     RequestEntity request,
     String uploadId,
   ) async {
     final key = _objectKey(request);
+    _requireUploadPermission(request, key);
     final partNumber = int.tryParse(request.queryParams['partNumber'] ?? '');
     if (partNumber == null) {
       throw S3Exception(
@@ -652,15 +671,7 @@ class S3Controller {
     String key,
     String uploadId,
   ) async {
-    final permissions =
-        request.securityContext.authentication?.permissions ?? const {};
-    if (!permissions.contains('s3.put-object')) {
-      throw S3Exception(
-        S3ErrorCode.accessDenied,
-        message: 'Listar las partes de una subida requiere permiso de subida.',
-        resource: key,
-      );
-    }
+    _requireUploadPermission(request, key);
     final marker =
         int.tryParse(request.queryParams['part-number-marker'] ?? '') ?? 0;
     final maxParts =

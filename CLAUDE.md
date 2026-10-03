@@ -295,7 +295,10 @@ page. Deleting an object, a folder or a bucket, or emptying a bucket, deletes it
 `POST /{bucket}/{key}?uploads`, route `s3.post-object`), UploadPart (`PUT ?partNumber=&uploadId=`,
 on `s3.put-object`, `ETag` header = md5 of the part), CompleteMultipartUpload (`POST ?uploadId=`, S3
 XML or JSON `{"parts": [{"part_number", "etag"}]}`) and AbortMultipartUpload (`DELETE ?uploadId=`).
-All need `s3.put-object` (no anonymous multipart). Pending uploads live in
+All need `s3.put-object` (no anonymous multipart): Create and Complete get it from the POST route,
+but UploadPart, Abort, ListParts and ListMultipartUploads go through PUT/DELETE/GET routes that
+accept anonymous rules, so their handlers call `_requireUploadPermission` (an anonymous writer
+could otherwise list, overwrite parts of or abort other users' uploads). Pending uploads live in
 `STORAGE_VOLUME_PATH/.multipart/<uploadId>/` (`upload.json` + `<n>.part`/`<n>.etag`); a dot folder
 is not a valid bucket, so it isn't listed. Complete checks ascending order, ETags and the 5 MiB
 minimum of every part but the last, joins the parts inside the upload folder and moves the result,

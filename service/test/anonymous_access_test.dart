@@ -204,4 +204,82 @@ void main() {
       expect(jsonDecode(rules.body), isEmpty);
     });
   });
+
+  group('Anonymous access - multipart is never anonymous', () {
+    //shared/ tiene una regla readWrite: aun asi, un anonimo no puede tocar las
+    //subidas multipart (ni las de otros usuarios ni las suyas)
+    late String uploadId;
+
+    setUpAll(() async {
+      final created = await http.post(
+        server.url('/$bucket/shared/grande.bin?uploads'),
+        headers: server.auth(json: true),
+      );
+      expect(created.statusCode, 200, reason: created.body);
+      uploadId = jsonDecode(created.body)['upload_id'] as String;
+    });
+
+    void expectDenied(http.Response response) {
+      expect(response.statusCode, 403, reason: response.body);
+      expect(response.body, contains('AccessDenied'));
+    }
+
+    test('Should not list the pending uploads (ListMultipartUploads)', () async {
+      expectDenied(
+        await http.get(server.url('/$bucket?uploads&prefix=shared/')),
+      );
+    });
+
+    test('Should not list the parts of an upload (ListParts)', () async {
+      expectDenied(
+        await http.get(server.url('/$bucket/shared/grande.bin?uploadId=$uploadId')),
+      );
+    });
+
+    test('Should not upload a part (UploadPart)', () async {
+      expectDenied(
+        await http.put(
+          server.url('/$bucket/shared/grande.bin?partNumber=1&uploadId=$uploadId'),
+          body: 'intruso',
+        ),
+      );
+    });
+
+    test('Should not abort an upload (AbortMultipartUpload)', () async {
+      expectDenied(
+        await http.delete(
+          server.url('/$bucket/shared/grande.bin?uploadId=$uploadId'),
+        ),
+      );
+    });
+
+    test('Should not start or complete an upload', () async {
+      expect(
+        (await http.post(server.url('/$bucket/shared/otro.bin?uploads'))).statusCode,
+        401,
+      );
+      expect(
+        (await http.post(
+          server.url('/$bucket/shared/grande.bin?uploadId=$uploadId'),
+          body: '<CompleteMultipartUpload/>',
+        )).statusCode,
+        401,
+      );
+    });
+
+    test('Should leave the upload untouched for its owner', () async {
+      final parts = await http.get(
+        server.url('/$bucket/shared/grande.bin?uploadId=$uploadId'),
+        headers: server.auth(json: true),
+      );
+      expect(parts.statusCode, 200, reason: parts.body);
+      expect(jsonDecode(parts.body), isEmpty);
+
+      final aborted = await http.delete(
+        server.url('/$bucket/shared/grande.bin?uploadId=$uploadId'),
+        headers: server.auth(),
+      );
+      expect(aborted.statusCode, 204);
+    });
+  });
 }
