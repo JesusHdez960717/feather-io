@@ -112,9 +112,10 @@ file.
 
 - The global filter is `JwtFilter`. It populates the `securityContext` from a `Bearer` token issued
   by `POST /{admin}/login`; `JwtService.verifyToken` also requires an `exp` claim, so no token can
-  live forever. A general `RateLimiterFilter` (Winter) is the first global filter:
-  `RATE_LIMIT_REQUESTS` (2000) requests per IP every `RATE_LIMIT_WINDOW_SECONDS` (60), `429`
-  above (0 disables it); the number comes from measured client bursts (see `DECISIONES.md`). Login
+  live forever. A general `RateLimitFilter` (Winter's `RateLimiter`) is the first global filter:
+  `RATE_LIMIT_REQUESTS` (2000) requests per IP every `RATE_LIMIT_WINDOW_SECONDS` (60); above it the
+  S3 API answers `503 SlowDown` (what S3 clients retry) and the admin API `429` (0 disables it);
+  the number comes from measured client bursts (see `DECISIONES.md`). Login
   is rate limited per client IP by `LoginRateLimiter` (in DI): every failure
   waits `LOGIN_FAILURE_DELAY_MS` (1 s) and `LOGIN_MAX_FAILURES` (10) failures in a row lock the IP
   for `LOGIN_LOCK_SECONDS` (15 min, `429` + `Retry-After`, even with good credentials); a success

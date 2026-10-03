@@ -84,14 +84,11 @@ class FeatherIO {
       config: ServerConfig(port: port, maxBodySize: env.maxObjectSize),
       globalFilterConfig: FilterConfig([
         //el primero: corta una avalancha antes de leer cuerpos o comprobar
-        //firmas. Por IP (detras de proxies propios, ver TRUSTED_PROXIES)
+        //firmas (503 SlowDown en S3, 429 en admin)
         if (env.rateLimitRequests > 0)
-          RateLimiterFilter(
+          RateLimitFilter(
             maxRequests: env.rateLimitRequests,
             window: Duration(seconds: env.rateLimitWindowSeconds),
-            onRequest: (request) =>
-                request.clientIp(trustedProxies: env.trustedProxies) ??
-                'unknown',
           ),
         BodySizeFilter(),
         JwtFilter(),

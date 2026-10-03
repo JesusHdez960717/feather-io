@@ -44,10 +44,12 @@ comparten la IP del proxy y el bloqueo de uno bloquea a todos.
 
 ## 2. Límite general de peticiones
 
-**Qué hace.** El `RateLimiterFilter` de Winter, registrado como **primer filtro global** en
-`main.dart`: como mucho **`RATE_LIMIT_REQUESTS` peticiones (2000) por IP en cada ventana deslizante
-de `RATE_LIMIT_WINDOW_SECONDS` (60 s)**. Por encima responde `429` con `Retry-After`, y todas las
-respuestas llevan `X-RateLimit-Limit`, `X-RateLimit-Remaining` y `X-RateLimit-Reset`. Con
+**Qué hace.** `RateLimitFilter` (`security/filter/`), registrado como **primer filtro global** en
+`main.dart`, con el `RateLimiter` de Winter (ventana deslizante): como mucho
+**`RATE_LIMIT_REQUESTS` peticiones (2000) por IP en cada ventana de `RATE_LIMIT_WINDOW_SECONDS`
+(60 s)**. Por encima, la **API S3 responde `503 SlowDown`** con el `<Error>` de S3 (XML, o JSON con
+`Accept`), como S3, y la **API de admin `429`**; las dos con `Retry-After`. Todas las respuestas
+llevan `X-RateLimit-Limit`, `X-RateLimit-Remaining` y `X-RateLimit-Reset`. Con
 `RATE_LIMIT_REQUESTS=0` se desactiva. La IP se calcula como en el login (`TRUSTED_PROXIES`).
 
 **Por qué hace falta.** Sin él, cualquiera que llegue al servicio (incluido un cliente anónimo, o
@@ -79,15 +81,20 @@ Para fijar el número se midió el tráfico real con un proxy delante del servic
   script en bucle hace miles de peticiones por segundo.
 - **1000 se quedaría corto:** el `sync` de 1000 ficheros lo pasaría.
 
+**Por qué `503 SlowDown` en la API S3 y no `429`.** Es lo que responde S3 cuando un cliente va
+demasiado deprisa, y lo que los SDKs y la CLI de AWS reconocen como "espera y reintenta". La consola
+no es un cliente S3 y va por la API de admin, que sigue con `429`.
+
 **Qué le pasa a un cliente que llega al límite** (medido con el límite bajado a 100/min):
 
-| Cliente | Resultado |
-|---|---|
-| AWS CLI v2 (`s3 sync` de 200 ficheros) | **No reintenta los 429**: 102 ficheros fallaron con `Too Many Requests` y el `sync` acabó con error |
-| rclone (`copy` de 200 ficheros) | Reintenta los 429 (303 reintentos), pero va muy lento |
+| Cliente | Con `429` (antes) | Con `503 SlowDown` (ahora) |
+|---|---|---|
+| AWS CLI v2 (`s3 sync` de 200 ficheros) | **No lo reintenta**: 102 ficheros fallan al momento con `Too Many Requests` | **Lo reintenta** (2 veces, con unos segundos de espera), pero con una ventana de 60 s no da tiempo: fallan los mismos 102 (`reached max retries: 2`) |
+| rclone (`copy` de 200 ficheros) | Lo reintenta, muy lento | — |
 
-Por eso el límite tiene que estar **por encima de cualquier uso legítimo**: no es un regulador de
-caudal, es un freno de emergencia contra abusos.
+Con `503 SlowDown` los clientes se portan como con S3, pero sus reintentos esperan segundos y la
+ventana dura un minuto: **el límite no hace de regulador de caudal**. Por eso tiene que estar **por
+encima de cualquier uso legítimo**: es un freno de emergencia contra abusos.
 
 **Cuidado al ajustarlo.** Las medidas son en Windows, donde cada subida es lenta (Defender, SQLite).
 En un servidor Linux rápido el mismo `sync` iría más deprisa y podría superar 2000/min. Si se
@@ -122,9 +129,6 @@ subirlo, o desactivarlo para las IPs de esos procesos. Pendiente de decidir (ver
 
 ## Pendiente de decidir
 
-- **Responder `503 SlowDown` en vez de `429` en la API S3** cuando se pasa el límite general: es lo que
-  hace S3 y lo que los SDKs y la CLI de AWS reintentan con espera (el 429 la CLI no lo reintenta, ver
-  la tabla de arriba). No evita del todo los fallos con una ventana de 60 s, pero los suaviza.
 - **Subir el límite general por defecto** si se despliega en un servidor rápido o para cargas masivas
   (ver *Cuidado al ajustarlo*).
 - Revisión de seguridad: límite más bajo para el tráfico anónimo, servir como descarga el HTML/JS que

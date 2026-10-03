@@ -26,6 +26,7 @@ enum S3ErrorCode {
   requestTimeTooSkewed('RequestTimeTooSkewed', 403),
   serviceUnavailable('ServiceUnavailable', 503),
   signatureDoesNotMatch('SignatureDoesNotMatch', 403),
+  slowDown('SlowDown', 503),
   xAmzContentSHA256Mismatch('XAmzContentSHA256Mismatch', 400);
 
   final String code;

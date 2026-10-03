@@ -32,18 +32,38 @@ void main() {
       expect(response.headers['x-ratelimit-remaining'], '4');
     });
 
-    test('Should answer 429 with Retry-After over the limit', () async {
+    test('Should answer 503 SlowDown on the S3 API, like S3', () async {
       await newWindow();
       final statuses = <int>[];
       for (var i = 0; i < 6; i++) {
         statuses.add((await http.get(server.url('/'), headers: server.auth())).statusCode);
       }
-      expect(statuses, [200, 200, 200, 200, 200, 429]);
+      //los clientes S3 reintentan un 503 SlowDown con espera; un 429 no
+      expect(statuses, [200, 200, 200, 200, 200, 503]);
 
       final limited = await http.get(server.url('/'), headers: server.auth());
-      expect(limited.statusCode, 429);
+      expect(limited.statusCode, 503);
+      expect(limited.headers['content-type'], contains('application/xml'));
+      expect(limited.body, contains('<Code>SlowDown</Code>'));
       expect(int.parse(limited.headers['retry-after']!), inInclusiveRange(1, 2));
       expect(limited.headers['x-ratelimit-remaining'], '0');
+
+      final json = await http.get(server.url('/'), headers: server.auth(json: true));
+      expect(json.statusCode, 503);
+      expect(json.body, contains('"SlowDown"'));
+    });
+
+    test('Should answer 429 on the admin API (the console)', () async {
+      await newWindow();
+      for (var i = 0; i < 5; i++) {
+        await http.get(server.url('/'), headers: server.auth());
+      }
+      final admin = await http.get(
+        server.url('/${env.adminPrefix}/bucket/x'),
+        headers: server.auth(),
+      );
+      expect(admin.statusCode, 429);
+      expect(admin.headers['retry-after'], isNotNull);
     });
 
     test('Should limit every kind of request: anonymous, admin and login', () async {
@@ -51,7 +71,7 @@ void main() {
       for (var i = 0; i < 5; i++) {
         await http.get(server.url('/'));
       }
-      expect((await http.get(server.url('/'))).statusCode, 429);
+      expect((await http.get(server.url('/'))).statusCode, 503);
       expect(
         (await http.get(
           server.url('/${env.adminPrefix}/bucket/x'),
@@ -74,7 +94,7 @@ void main() {
         server.url('/'),
         headers: {...server.auth(), 'x-forwarded-for': '203.0.113.7'},
       );
-      expect(spoofed.statusCode, 429);
+      expect(spoofed.statusCode, 503);
     });
 
     test('Should allow requests again in the next window', () async {
