@@ -31,7 +31,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 
 TEST_DESC = {
-    'anonymous_access_test.dart': 'Reglas de acceso anónimo por prefijo (CRUD admin y efecto en list/get/put/delete).',
+    'anonymous_access_test.dart': 'Reglas de acceso anónimo por prefijo (CRUD admin y efecto en list/get/put/delete) y que multipart nunca es anónimo.',
     'aws_chunked_test.dart': 'Cuerpos `aws-chunked` (firma por trozos y trailers), cortes a mitad de línea, errores y que una subida fallida no pisa el objeto.',
     'body_size_test.dart': 'Límites de tamaño: objetos > 10 MB, cuerpos de 2 MB, chunked sin `Content-Length`.',
     'copy_object_test.dart': 'CopyObject: copia, entre buckets, sobre sí mismo, errores y condiciones `x-amz-copy-source-if-*`.',

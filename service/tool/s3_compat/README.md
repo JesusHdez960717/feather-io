@@ -43,9 +43,10 @@ python service/tool/s3_compat/report.py --server-log <log del servicio>
 
 El detalle de la última ejecución completa, test a test, está en [`RESULTADOS.md`](RESULTADOS.md).
 
-- `awscli` (aws-cli 2.37.9): 34/34. `rclone` (v1.75.1): 19/19.
-- Mint: pasan enteras `aws-sdk-java`, `aws-sdk-java-v2`, `minio-java`, `minio-go` (sin SigV2) y
-  `s3cmd`. El resto se corta en funciones fuera de alcance:
+- Tests del servicio: 294/294. `awscli` (aws-cli 2.37.9): 34/34. `rclone` (v1.75.1): 19/19.
+- Mint: sin ningún fallo `aws-sdk-java`, `aws-sdk-java-v2` y `s3cmd`; `minio-go` y `minio-java`
+  terminan con fallos solo en funciones fuera de alcance (SigV2, APIs de MinIO, notificaciones…).
+  El resto se corta en funciones fuera de alcance:
 
 | Suite          | Se corta en                                                                                    |
 |----------------|------------------------------------------------------------------------------------------------|

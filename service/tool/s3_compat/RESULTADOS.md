@@ -1,6 +1,6 @@
 # Resultados de las pruebas (ejecución completa desde cero)
 
-Ejecución del **2026-10-02** sobre el commit `3a05004` (`feature/poc`),
+Ejecución del **2026-10-02** sobre el commit `08a979e` (`feature/poc`),
 en Windows 11 con Docker version 29.4.1, build 055a478.
 Generado con `service/tool/s3_compat/report.py`; cómo repetirlo: *Full test run* en `CLAUDE.md`.
 
@@ -8,7 +8,7 @@ Generado con `service/tool/s3_compat/report.py`; cómo repetirlo: *Full test run
 |---|---|
 | `dart analyze` (servicio) | Sin incidencias |
 | `flutter analyze` (consola) | 1 aviso (ver la salida) |
-| `dart test` (servicio) | **288/288** en 26 ficheros |
+| `dart test` (servicio) | **294/294** en 26 ficheros |
 | AWS CLI v2 (`aws-cli/2.37.9`) | **34/34** |
 | rclone (`rclone v1.75.1`) | **19/19** |
 | MinIO Mint (15 suites) | Sin ningún fallo: `aws-sdk-java`, `aws-sdk-java-v2`, `s3cmd`. Terminan con fallos fuera de alcance: `minio-go`, `minio-java`. Fallos sin clasificar: **0** |
@@ -18,7 +18,7 @@ Generado con `service/tool/s3_compat/report.py`; cómo repetirlo: *Full test run
 
 | Fichero | Tests | Qué cubre |
 |---|---:|---|
-| `anonymous_access_test.dart` | 19/19 | Reglas de acceso anónimo por prefijo (CRUD admin y efecto en list/get/put/delete). |
+| `anonymous_access_test.dart` | 25/25 | Reglas de acceso anónimo por prefijo (CRUD admin y efecto en list/get/put/delete) y que multipart nunca es anónimo. |
 | `aws_chunked_test.dart` | 10/10 | Cuerpos `aws-chunked` (firma por trozos y trailers), cortes a mitad de línea, errores y que una subida fallida no pisa el objeto. |
 | `body_size_test.dart` | 7/7 | Límites de tamaño: objetos > 10 MB, cuerpos de 2 MB, chunked sin `Content-Length`. |
 | `copy_object_test.dart` | 17/17 | CopyObject: copia, entre buckets, sobre sí mismo, errores y condiciones `x-amz-copy-source-if-*`. |
@@ -68,6 +68,12 @@ Generado con `service/tool/s3_compat/report.py`; cómo repetirlo: *Full test run
 - ✅ Anonymous access - S3 requests without credentials Should not apply the rules of one bucket to another
 - ✅ Anonymous access - S3 requests without credentials Should stop working once the rule is deleted
 - ✅ Anonymous access - Bucket lifecycle Should drop the rules when the bucket is deleted
+- ✅ Anonymous access - multipart is never anonymous Should not list the pending uploads (ListMultipartUploads)
+- ✅ Anonymous access - multipart is never anonymous Should not list the parts of an upload (ListParts)
+- ✅ Anonymous access - multipart is never anonymous Should not upload a part (UploadPart)
+- ✅ Anonymous access - multipart is never anonymous Should not abort an upload (AbortMultipartUpload)
+- ✅ Anonymous access - multipart is never anonymous Should not start or complete an upload
+- ✅ Anonymous access - multipart is never anonymous Should leave the upload untouched for its owner
 
 **aws_chunked_test.dart**
 
@@ -548,15 +554,15 @@ log los fallos y los saltados: que pasan se sabe por su código de salida (*Term
 **awscli** (10)
 
 - make_bucket
-- aws --endpoint-url http://host.docker.internal:8080 s3api get-object --bucket awscli-mint-test-bucket-936 --k…
-- aws --endpoint-url http://host.docker.internal:8080 s3api head-object --bucket awscli-mint-test-bucket-26426 …
-- aws --endpoint-url http://host.docker.internal:8080 s3api list-objects --bucket awscli-mint-test-bucket-16185…
-- aws --endpoint-url http://host.docker.internal:8080 s3api get-object --bucket awscli-mint-test-bucket-11917 -…
+- aws --endpoint-url http://host.docker.internal:8080 s3api get-object --bucket awscli-mint-test-bucket-18129 -…
+- aws --endpoint-url http://host.docker.internal:8080 s3api head-object --bucket awscli-mint-test-bucket-23226 …
+- aws --endpoint-url http://host.docker.internal:8080 s3api list-objects --bucket awscli-mint-test-bucket-22054…
+- aws --endpoint-url http://host.docker.internal:8080 s3api get-object --bucket awscli-mint-test-bucket-14016 -…
 - aws --endpoint-url http://host.docker.internal:8080 s3api create-multipart-upload --bucket awscli-mint-test-b…
-- aws --endpoint-url http://host.docker.internal:8080 s3api list-objects-v2 --bucket awscli-mint-test-bucket-95…
-- aws --endpoint-url http://host.docker.internal:8080 s3api copy-object --bucket awscli-mint-test-bucket-22273 …
-- aws --endpoint-url http://host.docker.internal:8080 s3api head-object --bucket awscli-mint-test-bucket-11167 …
-- aws --endpoint-url http://host.docker.internal:8080 s3api head-object --bucket awscli-mint-test-bucket-10103 …
+- aws --endpoint-url http://host.docker.internal:8080 s3api list-objects-v2 --bucket awscli-mint-test-bucket-80…
+- aws --endpoint-url http://host.docker.internal:8080 s3api copy-object --bucket awscli-mint-test-bucket-12843 …
+- aws --endpoint-url http://host.docker.internal:8080 s3api head-object --bucket awscli-mint-test-bucket-14704 …
+- aws --endpoint-url http://host.docker.internal:8080 s3api head-object --bucket awscli-mint-test-bucket-19189 …
 
 **aws-sdk-php** (11)
 
