@@ -42,6 +42,10 @@ class AnonymousAccessService {
     return null;
   }
 
+  /// Sin `*` la regla es un prefijo (`public/` cubre todo lo que empieza
+  /// asi); con `*` tiene que encajar la key entera (`fotos/*.jpg` cubre
+  /// `fotos/a.jpg` pero no `fotos/a.jpg.zip`). `*` vale por cualquier cosa,
+  /// tambien `/`; el resto se compara literal
   static bool matches(String pattern, String key) {
     // S3 keys don't start with '/', so we normalize the pattern
     final normalized = pattern.startsWith('/') ? pattern.substring(1) : pattern;
@@ -49,7 +53,8 @@ class AnonymousAccessService {
         .split('*')
         .map(RegExp.escape)
         .join('.*');
-    return RegExp('^$regexSource').hasMatch(key);
+    final anchor = normalized.contains('*') ? r'$' : '';
+    return RegExp('^$regexSource$anchor').hasMatch(key);
   }
 
   Future<List<AnonymousRuleModel>> _rules(String bucket) async {

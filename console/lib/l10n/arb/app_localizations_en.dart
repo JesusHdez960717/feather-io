@@ -651,7 +651,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get anonymousRulePrefixHelper =>
-      'End it with / for a folder, or use * as a wildcard (for example, *.jpg).';
+      'Without *, it covers everything that starts with it (end it with / for a folder). With *, the whole key must match (for example, *.jpg covers only .jpg files).';
 
   @override
   String get anonymousRulePrefixRequired => 'The prefix is required';

@@ -31,7 +31,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 
 TEST_DESC = {
-    'anonymous_access_test.dart': 'Reglas de acceso anónimo por prefijo (CRUD admin y efecto en list/get/put/delete) y que multipart nunca es anónimo.',
+    'anonymous_access_test.dart': 'Reglas de acceso anónimo (CRUD admin, efecto en list/get/put/delete, prefijo sin `*` y key entera con `*`) y que multipart nunca es anónimo.',
     'aws_chunked_test.dart': 'Cuerpos `aws-chunked` (firma por trozos y trailers), cortes a mitad de línea, errores y que una subida fallida no pisa el objeto.',
     'body_size_test.dart': 'Límites de tamaño: objetos > 10 MB, cuerpos de 2 MB, chunked sin `Content-Length`.',
     'copy_object_test.dart': 'CopyObject: copia, entre buckets, sobre sí mismo, errores y condiciones `x-amz-copy-source-if-*`.',
@@ -53,6 +53,7 @@ TEST_DESC = {
     'login_test.dart': 'Login de la consola (JWT) y tokens manipulados: sin `exp`, caducados, con otro secreto, `alg: none`; errores sin detalles internos.',
     'multipart_test.dart': 'Multipart: crear, partes, completar, abortar, ListMultipartUploads, ListParts, UploadPartCopy.',
     'object_metadata_test.dart': 'Metadatos: `Content-Type`, `x-amz-meta-*`, clase de almacenamiento, en copias y multipart.',
+    'presign_public_url_test.dart': 'URLs prefirmadas con `PUBLIC_URL`: dominio público aunque el `Host` venga manipulado, válidas a través de un proxy y validación de la variable.',
     'presign_test.dart': 'URLs prefirmadas (endpoint admin y verificación SigV4 por query).',
     'put_object_test.dart': 'PutObject: subidas, ETag, bucket inexistente, validación de keys, path traversal y sustituir un objeto abierto (Windows).',
     's3_controller_test.dart': 'Camino feliz completo (crear bucket → subir → listar → bajar → borrar).',

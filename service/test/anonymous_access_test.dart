@@ -43,6 +43,7 @@ void main() {
     await server.putObject(bucket, 'private/secret.txt', 'secret');
     await server.putObject(bucket, 'photos/cat.jpg', 'jpg');
     await server.putObject(bucket, 'photos/cat.png', 'png');
+    await server.putObject(bucket, 'photos/cat.jpg.zip', 'zip');
     await server.putObject(bucket, 'a+b/file.txt', 'literal');
 
     expect((await addRule('public/', 'readOnly')).statusCode, 200);
@@ -151,6 +152,11 @@ void main() {
     test('Should support * as a wildcard', () async {
       expect((await http.get(server.url('/$bucket/photos/cat.jpg'))).statusCode, 200);
       expect((await http.get(server.url('/$bucket/photos/cat.png'))).statusCode, 401);
+    });
+
+    test('Should match the whole key when the rule has *', () async {
+      //photos/*.jpg no abre photos/cat.jpg.zip
+      expect((await http.get(server.url('/$bucket/photos/cat.jpg.zip'))).statusCode, 401);
     });
 
     test('Should treat regex characters in the prefix literally', () async {
@@ -280,6 +286,29 @@ void main() {
         headers: server.auth(),
       );
       expect(aborted.statusCode, 204);
+    });
+  });
+
+  group('AnonymousAccessService.matches', () {
+    test('Should treat a rule without * as a prefix', () {
+      expect(AnonymousAccessService.matches('public/', 'public/a/b.txt'), isTrue);
+      expect(AnonymousAccessService.matches('public', 'public-2/x'), isTrue);
+      expect(AnonymousAccessService.matches('public/', 'private/a.txt'), isFalse);
+    });
+
+    test('Should match the whole key when the rule has *', () {
+      expect(AnonymousAccessService.matches('fotos/*.jpg', 'fotos/a.jpg'), isTrue);
+      expect(AnonymousAccessService.matches('fotos/*.jpg', 'fotos/2026/a.jpg'), isTrue);
+      expect(AnonymousAccessService.matches('fotos/*.jpg', 'fotos/a.jpg.zip'), isFalse);
+      expect(AnonymousAccessService.matches('*.jpg', 'a/b/c.jpg'), isTrue);
+      expect(AnonymousAccessService.matches('docs/*', 'docs/a/b.pdf'), isTrue);
+      expect(AnonymousAccessService.matches('*', 'cualquier/cosa'), isTrue);
+    });
+
+    test('Should ignore a leading slash and treat regex characters literally', () {
+      expect(AnonymousAccessService.matches('/public/', 'public/a.txt'), isTrue);
+      expect(AnonymousAccessService.matches('a+b/', 'aab/x'), isFalse);
+      expect(AnonymousAccessService.matches('a.b*', 'axb'), isFalse);
     });
   });
 }

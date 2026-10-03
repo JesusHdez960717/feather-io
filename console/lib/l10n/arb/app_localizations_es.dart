@@ -653,7 +653,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get anonymousRulePrefixHelper =>
-      'Termina en / para una carpeta, o usa * como comodín (por ejemplo, *.jpg).';
+      'Sin *, cubre todo lo que empieza así (termina en / para una carpeta). Con *, tiene que coincidir la key entera (por ejemplo, *.jpg solo cubre ficheros .jpg).';
 
   @override
   String get anonymousRulePrefixRequired => 'El prefijo es obligatorio';

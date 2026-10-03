@@ -143,7 +143,9 @@ leaves `!'()*` alone and the signature would not match); `test/sig_v4_signer_tes
 against the AWS docs example. The SigV4 maths live in `security/logic/sig_v4_signer.dart` (`SigV4Signer`), shared
   with `PresignService`, which signs `GET` URLs with the service keys for
   `POST /{admin}/bucket/{bucket}/presign` (the console has no secret key, so it asks the service).
-  The URL uses the scheme and `Host` of that request, because the host is part of the signature.
+  The URL uses `PUBLIC_URL` (scheme, host and port, validated at start-up) or, without it, the
+  scheme and `Host` of that request; a proxy in front must keep the original `Host`, because the
+  host is part of the signature.
 - Each route declares its own permission with
   `AuthFilter(rules: hasPermission('s3.put-object') | hasPermission('s3.anonymous.put-object'))`.
   Route keys and permission names match (`s3.*`, `admin.*`).
@@ -153,7 +155,9 @@ against the AWS docs example. The SigV4 maths live in `security/logic/sig_v4_sig
 - `AnonymousAccessFilter` runs on the S3 parent after the SigV4 filter, only for unauthenticated
   requests. It looks up the bucket's prefix rules (`anonymous_rule` table, via
   `AnonymousAccessService.findMatchingRule`) and grants the `s3.anonymous.*` permissions of the
-  first matching rule. `*` in a rule is a wildcard; everything else matches literally. It covers
+  first matching rule. A rule without `*` is a prefix; with `*` (any characters, `/` included) the
+  whole key must match, so `fotos/*.jpg` doesn't open `fotos/a.jpg.zip`; everything else matches
+  literally (`AnonymousAccessService.matches`). It covers
   list/get/put/delete object; multi-delete is never anonymous, because its keys come in the body.
   Deleting a bucket deletes its rules.
 
@@ -387,7 +391,7 @@ from scratch and regenerate `service/tool/s3_compat/RESULTADOS.md`. Outputs go t
   `server.putObject(…, headers: …)` (creates the bucket first and sends bytes without
   `Content-Type`, so reads fall back to the extension) and `server.sigV4(method, path, query: …)`, the
   headers of a native client signed with SigV4. Uploading with `http.put` needs the bucket created.
-- Use one distinct port per file so files run in parallel. Ports in use: 8082–8108.
+- Use one distinct port per file so files run in parallel. Ports in use: 8082–8109.
 - Cover auth (missing or invalid token → 401, wrong login credentials → 403), validation (bad bucket
   names, path traversal, forbidden chars → 400), content negotiation (JSON vs XML, including the S3
   error code) and edge cases (404, empty lists).

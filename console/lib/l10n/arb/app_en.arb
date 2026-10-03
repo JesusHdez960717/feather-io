@@ -267,7 +267,7 @@
   "anonymousRuleFormSectionAccess": "02 Access type",
   "anonymousRulePrefixLabel": "Prefix or pattern",
   "anonymousRulePrefixHint": "public/",
-  "anonymousRulePrefixHelper": "End it with / for a folder, or use * as a wildcard (for example, *.jpg).",
+  "anonymousRulePrefixHelper": "Without *, it covers everything that starts with it (end it with / for a folder). With *, the whole key must match (for example, *.jpg covers only .jpg files).",
   "anonymousRulePrefixRequired": "The prefix is required",
   "anonymousRuleFormErrorTitle": "Couldn't add the rule",
   "anonymousRuleCreatedSuccess": "Rule {prefix} added",

@@ -112,6 +112,7 @@ Sección de variables de entorno configurables para el servicio.
 | `RESERVED_BUCKET_NAMES` |    No     | ***(empty list)*** | Lista (separada por comas) de nombres de buckets reservados que no pueden ser creados por usuarios. |
 | `MAX_OBJECT_SIZE`       |    No     |  `5368709120`  | Tamaño máximo en bytes de un objeto subido con `PUT` (5 GiB por defecto); por encima responde `EntityTooLarge`. |
 | `JWT_SECRET`            |  **SI**   |         -          | Clave secreta para firmar los jwt.                                                                  |
+| `PUBLIC_URL`            |    No     |         -          | URL pública del servicio (`https://s3.example.com`, sin ruta) para las URLs prefirmadas; sin ella se usan el esquema y el `Host` de la petición. El proxy debe reenviar el `Host` original. |
 | `RATE_LIMIT_REQUESTS`   |    No     |       `2000`       | Peticiones por IP en cada ventana (límite general; por encima, `503 SlowDown` en S3 y `429` en admin); `0` lo desactiva. Ver `DECISIONES.md`. |
 | `RATE_LIMIT_WINDOW_SECONDS` | No    |        `60`        | Segundos de la ventana del límite general.                                                          |
 | `LOGIN_MAX_FAILURES`    |    No     |        `10`        | Logins fallidos seguidos que bloquean una IP.                                                       |

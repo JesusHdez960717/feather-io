@@ -19,6 +19,32 @@ extension ExtendedEnv on Env {
   int get maxObjectSize =>
       find<int>('MAX_OBJECT_SIZE', required: false) ?? defaultMaxObjectSize;
 
+  ///URL publica del servicio (`https://s3.example.com`), para las URLs
+  ///prefirmadas. Sin ella se usan el esquema y el `Host` de la peticion, que
+  ///detras de un proxy con HTTPS darian `http://`. Solo esquema, host y puerto:
+  ///la ruta forma parte de la firma
+  Uri? get publicUrl {
+    final raw = find<String>('PUBLIC_URL', required: false);
+    if (raw == null || raw.trim().isEmpty) return null;
+    final uri = Uri.tryParse(raw.trim());
+    final valid =
+        uri != null &&
+        (uri.scheme == 'http' || uri.scheme == 'https') &&
+        uri.host.isNotEmpty &&
+        (uri.path.isEmpty || uri.path == '/') &&
+        !uri.hasQuery &&
+        !uri.hasFragment &&
+        uri.userInfo.isEmpty;
+    if (!valid) {
+      throw ArgumentError.value(
+        raw,
+        'PUBLIC_URL',
+        'tiene que ser esquema, host y puerto, sin ruta (https://s3.example.com)',
+      );
+    }
+    return uri;
+  }
+
   ///Proxies propios delante del servicio que añaden su entrada a
   ///`X-Forwarded-For`; con 0 (por defecto) se usa la IP de la conexion
   int get trustedProxies => find<int>('TRUSTED_PROXIES', required: false) ?? 0;

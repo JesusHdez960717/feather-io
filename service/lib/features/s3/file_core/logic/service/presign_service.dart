@@ -8,7 +8,7 @@ class PresignService {
   PresignService() : fileManagement = di.find();
 
   /// URL `GET` de [key] valida durante [expiresIn]. [host] y [scheme] son los
-  /// de la peticion: la URL apunta al mismo servicio y la firma incluye el host
+  /// de `PUBLIC_URL` o, sin ella, los de la peticion: la firma incluye el host
   Future<PresignedUrlModel> presignGet({
     required String scheme,
     required String host,

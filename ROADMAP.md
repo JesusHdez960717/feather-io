@@ -100,6 +100,10 @@ No entran en la 1.0; se harán más adelante.
   falla a medias).
 - [ ] Pasar la búsqueda y los filtros de objetos al servicio, para buscar en toda la carpeta y no
   solo en las páginas ya cargadas.
+- [ ] Benchmarks (p. ej. `minio/warp`) con el servicio en Linux: confirmar los cuellos de botella
+  sospechados (cada página del listado recorre todo el bucket, `ListBuckets` recorre todos los
+  objetos, md5 y SQLite en cada subida) y revisar con esos datos el límite general de 2000
+  peticiones/min por IP (ver `DECISIONES.md`).
 
 ## Aparcado
 

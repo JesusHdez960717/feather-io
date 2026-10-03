@@ -118,9 +118,14 @@ class AdminController {
     final presign = await request.body<PresignRequest>();
     presign.validate().throwOnFailure();
 
+    //con PUBLIC_URL, la de fuera; si no, la de esta peticion
+    final publicUrl = env.publicUrl;
     final url = await presignService.presignGet(
-      scheme: request.requestedUri.scheme,
-      host: request.headers['host'] ?? request.requestedUri.authority,
+      scheme: publicUrl?.scheme ?? request.requestedUri.scheme,
+      host:
+          publicUrl?.authority ??
+          request.headers['host'] ??
+          request.requestedUri.authority,
       bucketName: request.pathParams['bucket']!,
       key: presign.key!,
       expiresIn: Duration(seconds: presign.expiresIn!),

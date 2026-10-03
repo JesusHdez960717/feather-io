@@ -54,6 +54,9 @@ class FeatherIO {
     //--------------- Errors ---------------\\
     Winter.context.setUp(exceptionHandler: S3ExceptionHandler());
 
+    //PUBLIC_URL mal escrita falla al arrancar, no al pedir la primera URL
+    env.publicUrl;
+
     //--------------- DB ---------------\\
     di.put(database ?? AppDatabase());
 
