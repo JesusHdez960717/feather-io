@@ -95,9 +95,29 @@ Summary of some of the available actions, their authentication method and the re
 |:------------------|:-------|:----------------------------|:-------------|:------------------------|
 | `login`           | POST   | `/login`                    | ***Public*** | -                       |
 | `bucket.download` | POST   | `/bucket/{bucket}/download` | JWT          | `admin.bucket.download` |
+| `access-key.list` | GET    | `/access-keys`              | JWT          | `admin.access-key.list` |
+| `access-key.create` | POST | `/access-keys`              | JWT          | `admin.access-key.create` |
+| `access-key.update` | PUT  | `/access-keys/{id}`         | JWT          | `admin.access-key.update` |
+| `access-key.regenerate-secret` | POST | `/access-keys/{id}/secret` | JWT | `admin.access-key.regenerate-secret` |
+| `access-key.delete` | DELETE | `/access-keys/{id}`       | JWT          | `admin.access-key.delete` |
 
 *\*The login checks directly against the `FEATHER_ACCESS` and `FEATHER_SECRET` environment
 credentials.*
+
+### Access keys
+
+Besides the root key of the env, S3 clients can sign with **access keys** created from the console
+(or the admin API). Each one has a name, an id (`FIOK…`), a secret shown only when it is created or
+regenerated, an optional expiration, and either one level on every bucket (`all_buckets`) or a
+level per bucket (`buckets`). Levels are `readOnly` (list and download), `writeOnly` (upload and
+delete) and `readWrite`. A key only sees its own buckets in ListBuckets, and only one with write
+access to every bucket may create or delete buckets. Managed keys can't log in to the console.
+
+```json
+POST /_admin/access-keys
+{"name": "Backups NAS", "buckets": [{"bucket": "backups", "access": "readWrite"}],
+ "expires_at": "2027-01-01T00:00:00Z"}
+```
 
 ## Env
 
@@ -109,6 +129,7 @@ Environment variables of the service.
 | `FEATHER_ACCESS`            | **Yes**  |         -          | Access key used to authenticate requests.                                                                         |
 | `STORAGE_VOLUME_PATH`       | **Yes**  |         -          | Local path of the volume where buckets, objects and the SQLite database (`.db/feather-io.sqlite`) are stored. |
 | `JWT_SECRET`                | **Yes**  |         -          | Secret key used to sign the JWTs.                                                                                 |
+| `KEYS_ENCRYPTION_SECRET`    | **Yes**  |         -          | Encrypts the secrets of the access keys in the database (e.g. `openssl rand -base64 32`). Changing it makes the stored keys unusable. |
 | `ADMIN_PREFIX`              |    No    |      `_admin`      | Prefix of the admin API and the system's reserved routes.                                                         |
 | `RESERVED_BUCKET_NAMES`     |    No    | ***(empty list)*** | Comma-separated list of reserved bucket names that users cannot create.                                           |
 | `MAX_OBJECT_SIZE`           |    No    |    `5368709120`    | Maximum size in bytes of an object uploaded with `PUT` (5 GiB by default); above it the answer is `EntityTooLarge`. |
@@ -129,7 +150,7 @@ named build context. From `service/`:
 ```bash
 docker build --build-context winter=../../winter -t feather-io .
 docker run -p 8080:8080 -v feather-data:/data \
-  -e FEATHER_ACCESS=… -e FEATHER_SECRET=… -e JWT_SECRET=… feather-io
+  -e FEATHER_ACCESS=… -e FEATHER_SECRET=… -e JWT_SECRET=… -e KEYS_ENCRYPTION_SECRET=… feather-io
 ```
 
 The image sets `STORAGE_VOLUME_PATH=/data` (a volume): buckets, objects and the SQLite database

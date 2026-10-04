@@ -122,7 +122,20 @@ disable it for the IPs of those processes. Measuring it is under *After 1.0* in 
 | A rule without `*` is a prefix; with `*`, the whole key has to match                                        | `public/` covers everything that starts that way, like an S3 prefix. With `*` a pattern is meant: before, `photos/*.jpg` also opened `photos/copy.jpg.zip`. Rules without `*` keep their meaning. The console explains it next to the field |
 | Anonymous traffic has no limit of its own, only the general one per IP                                      | The general limit already stops floods, anonymous ones included. A lower one is only needed if buckets are published on the internet with many downloads                                                                          |
 
-## 5. Other security decisions
+## 5. Access keys
+
+| Decision | Why |
+|---|---|
+| The secret is stored **encrypted** (AES-256-GCM with the sha256 of `KEYS_ENCRYPTION_SECRET`), not hashed | SigV4 computes an HMAC with the secret itself, so the service needs it back on every request: a hash like a password's would not do. Encrypting keeps a copy of the SQLite file (a backup, the volume) from giving the secrets away. The key id goes as associated data, so a secret copied onto another row does not decrypt |
+| `KEYS_ENCRYPTION_SECRET` is its own variable, not derived from `JWT_SECRET` | Rotating the JWT secret (to log everyone out) must not make every stored key unreadable. Changing `KEYS_ENCRYPTION_SECRET` does: the keys then have to be recreated |
+| The secret is shown **once** (on create and on regenerate) | It can't be shown again without decrypting it for the console, and a secret that can be read back can leak from the console's screen or logs. Losing it means regenerating it |
+| Permissions **per bucket** (read, write or both), or one level on every bucket; not per prefix | It is what clients need (a backup in its bucket, a website reading another) and what S3 policies are mostly used for. Per-prefix access already exists for anonymous rules; for keys it can come later |
+| Only a key with write access to **every** bucket may create and delete buckets | A key scoped to some buckets would otherwise create buckets it can't reach, or delete other people's |
+| Only the root key (`FEATHER_ACCESS`) opens the console; managed keys are for S3 clients | The console manages the keys themselves: a key able to log in could raise its own permissions. The admin API only accepts the JWT of the login |
+| A disabled, expired or deleted key answers `403 InvalidAccessKeyId` | As in AWS: it does not tell an attacker whether the key existed |
+| `last_used_at` is written at most once a minute per key | A `sync` of thousands of files would otherwise write to SQLite on every request |
+
+## 6. Other security decisions
 
 | Decision                                                                                                    | Why                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 |-------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

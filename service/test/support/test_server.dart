@@ -30,6 +30,7 @@ class TestServer {
     env.put('FEATHER_ACCESS', testAccess);
     env.put('FEATHER_SECRET', testSecret);
     env.put('JWT_SECRET', 'test-jwt-secret-$port');
+    env.put('KEYS_ENCRYPTION_SECRET', 'test-keys-secret-$port');
     env.put('STORAGE_VOLUME_PATH', storagePath);
 
     await _deleteStorage();
@@ -65,13 +66,17 @@ class TestServer {
   /// Headers of a native S3 client: a SigV4 signature with the test keys.
   /// [path] goes as it is in the URL (already encoded). [at] changes the
   /// signature date (now by default) and [payloadHash] signs the body's sha256
-  /// instead of `UNSIGNED-PAYLOAD`.
+  /// instead of `UNSIGNED-PAYLOAD`. [access] and [secret] sign with another
+  /// key (an access key created in the test).
   Map<String, String> sigV4(
     String method,
     String path, {
     Map<String, String> query = const {},
     DateTime? at,
     String payloadHash = SigV4Signer.unsignedPayload,
+    String access = testAccess,
+    String secret = testSecret,
+    Map<String, String> extraHeaders = const {},
   }) {
     final now = (at ?? DateTime.now()).toUtc();
     final amzDate = SigV4Signer.amzDate(now);
@@ -80,10 +85,11 @@ class TestServer {
       'host': 'localhost:$port',
       'x-amz-date': amzDate,
       'x-amz-content-sha256': payloadHash,
+      ...extraHeaders,
     };
-    const signedHeaders = 'host;x-amz-content-sha256;x-amz-date';
+    final signedHeaders = (headers.keys.toList()..sort()).join(';');
     final signature = SigV4Signer.signature(
-      secret: testSecret,
+      secret: secret,
       amzDate: amzDate,
       scope: scope,
       canonicalRequest: SigV4Signer.canonicalRequest(
@@ -98,7 +104,7 @@ class TestServer {
     return {
       ...headers,
       'authorization':
-          '${SigV4Signer.algorithm} Credential=$testAccess/$scope, '
+          '${SigV4Signer.algorithm} Credential=$access/$scope, '
           'SignedHeaders=$signedHeaders, Signature=$signature',
     };
   }

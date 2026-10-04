@@ -12,6 +12,11 @@ extension ExtendedEnv on Env {
 
   String get jwtSecret => find<String>('JWT_SECRET', required: true)!;
 
+  /// Encrypts the secrets of the access keys in the database (see
+  /// [SecretCipher]). Changing it makes every stored secret unreadable.
+  String get keysEncryptionSecret =>
+      find<String>('KEYS_ENCRYPTION_SECRET', required: true)!;
+
   String get storageVolumePath =>
       find<String>('STORAGE_VOLUME_PATH', required: true)!;
 

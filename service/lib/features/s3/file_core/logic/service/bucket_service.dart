@@ -8,10 +8,12 @@ class BucketService {
   final FileManagementService fileManagement;
 
   final AccessRuleTableRepo accessRuleRepo;
+  final AccessKeyTableRepo accessKeyRepo;
 
   BucketService()
     : bucketRepo = BucketTableRepo(di.find()),
       accessRuleRepo = AccessRuleTableRepo(di.find()),
+      accessKeyRepo = AccessKeyTableRepo(di.find()),
       fileManagement = di.find();
 
   Future<bool> createBucket({
@@ -39,8 +41,10 @@ class BucketService {
     // 2. Its pending multipart uploads
     await MultipartService().abortAll(bucketName);
 
-    // 3. Database delete (its anonymous access rules first)
+    // 3. Database delete (its anonymous access rules and the access keys'
+    // grants first)
     await accessRuleRepo.deleteByBucket(bucketName);
+    await accessKeyRepo.deleteGrantsByBucket(bucketName);
     await bucketRepo.delete(bucketName);
   }
 

@@ -2,7 +2,7 @@
 #   docker build --build-context winter=../../winter -t feather-io .
 # Run with the objects and the SQLite database in a volume:
 #   docker run -p 8080:8080 -v feather-data:/data \
-#     -e FEATHER_ACCESS=… -e FEATHER_SECRET=… -e JWT_SECRET=… feather-io
+#     -e FEATHER_ACCESS=… -e FEATHER_SECRET=… -e JWT_SECRET=… -e KEYS_ENCRYPTION_SECRET=… feather-io
 
 FROM dart:3.13.1 AS build
 

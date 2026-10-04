@@ -5,6 +5,7 @@ class AdminController {
 
   final AuthController authController;
   final AnonymousAccessController anonymousAccessController;
+  final AccessKeyController accessKeyController;
 
   Route get routing => Route.parent(
     path: '/$adminPrefix',
@@ -90,6 +91,48 @@ class AdminController {
           ),
         ]),
       ),
+      Route.get(
+        key: 'admin.access-key.list',
+        path: '/access-keys',
+        handler: accessKeyController.list,
+        filterConfig: FilterConfig([
+          AuthFilter(rules: hasPermission('admin.access-key.list')),
+        ]),
+      ),
+      Route.post(
+        key: 'admin.access-key.create',
+        path: '/access-keys',
+        handler: accessKeyController.create,
+        filterConfig: FilterConfig([
+          AuthFilter(rules: hasPermission('admin.access-key.create')),
+        ]),
+      ),
+      Route.put(
+        key: 'admin.access-key.update',
+        path: '/access-keys/{id}',
+        handler: accessKeyController.update,
+        filterConfig: FilterConfig([
+          AuthFilter(rules: hasPermission('admin.access-key.update')),
+        ]),
+      ),
+      Route.post(
+        key: 'admin.access-key.regenerate-secret',
+        path: '/access-keys/{id}/secret',
+        handler: accessKeyController.regenerateSecret,
+        filterConfig: FilterConfig([
+          AuthFilter(
+            rules: hasPermission('admin.access-key.regenerate-secret'),
+          ),
+        ]),
+      ),
+      Route.delete(
+        key: 'admin.access-key.delete',
+        path: '/access-keys/{id}',
+        handler: accessKeyController.delete,
+        filterConfig: FilterConfig([
+          AuthFilter(rules: hasPermission('admin.access-key.delete')),
+        ]),
+      ),
       Route.post(
         key: 'admin.bucket.download',
         path: '/bucket/{bucket}/download',
@@ -106,7 +149,8 @@ class AdminController {
       bucketService = BucketService(),
       presignService = PresignService(),
       authController = AuthController(),
-      anonymousAccessController = AnonymousAccessController();
+      anonymousAccessController = AnonymousAccessController(),
+      accessKeyController = AccessKeyController();
 
   final FileManagementService fileManagement;
   final BucketService bucketService;

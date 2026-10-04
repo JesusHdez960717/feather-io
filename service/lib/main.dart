@@ -40,6 +40,9 @@ class FeatherIO {
       Deserializer<PresignRequest>((data) => PresignRequest.fromJson(data)),
     );
     om.addDeserializer(
+      Deserializer<AccessKeyRequest>((data) => AccessKeyRequest.fromJson(data)),
+    );
+    om.addDeserializer(
       Deserializer<UpdateBucketRequest>(
         (data) => UpdateBucketRequest.fromJson(data),
       ),
@@ -53,6 +56,10 @@ class FeatherIO {
 
     //--------------- DB ---------------\\
     di.put(database ?? AppDatabase());
+
+    //--------------- Access keys ---------------\
+    // Their secrets are stored encrypted with KEYS_ENCRYPTION_SECRET
+    di.put(SecretCipher(env.keysEncryptionSecret));
 
     //--------------- File ---------------\\
     FileManagementService fileManagement = FileManagementService();

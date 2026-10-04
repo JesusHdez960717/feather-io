@@ -47,10 +47,12 @@ Run the server (port 8080) with the env from `.vscode/launch.json`:
 
 ```bash
 FEATHER_ACCESS=access FEATHER_SECRET=secret JWT_SECRET=some-jwt-secret \
-STORAGE_VOLUME_PATH=./uploads_local ADMIN_PREFIX=_admin fvm dart run lib/main.dart
+KEYS_ENCRYPTION_SECRET=some-keys-secret STORAGE_VOLUME_PATH=./uploads_local ADMIN_PREFIX=_admin \
+fvm dart run lib/main.dart
 ```
 
-Required env: `FEATHER_ACCESS`, `FEATHER_SECRET`, `JWT_SECRET`, `STORAGE_VOLUME_PATH`. Optional:
+Required env: `FEATHER_ACCESS`, `FEATHER_SECRET`, `JWT_SECRET`, `KEYS_ENCRYPTION_SECRET`,
+`STORAGE_VOLUME_PATH`. Optional:
 `ADMIN_PREFIX` (default `_admin`), `RESERVED_BUCKET_NAMES` and `MAX_OBJECT_SIZE` (bytes, default 5
 GiB). See `service/README.md` (its endpoint table lists only some routes, so treat the
 controllers as the source of truth).
@@ -147,6 +149,21 @@ against the AWS docs example. The SigV4 maths live in `security/logic/sig_v4_sig
   The URL uses `PUBLIC_URL` (scheme, host and port, validated at start-up) or, without it, the
   scheme and `Host` of that request; a proxy in front must keep the original `Host`, because the
   host is part of the signature.
+- **Access keys** (`admin/access_keys/`, tables `access_key` + `access_key_grant`): besides the
+  root key of the env, S3 clients sign with managed keys (`FIOK` + 16 chars, 40-char secret).
+  The secret is stored encrypted by `SecretCipher` (AES-256-GCM, key = sha256 of
+  `KEYS_ENCRYPTION_SECRET`, the key id as associated data; `security/logic/secret_cipher.dart`)
+  because SigV4 needs it back, and the API only returns it on create and on
+  `POST /{admin}/access-keys/{id}/secret`. `S3SigV4Filter` looks the key up
+  (`AccessKeyService.findForSignature`), answers `InvalidAccessKeyId` when it is unknown, disabled
+  or expired, and authenticates with the `AccessKeyModel` as the principal and the permissions of
+  its level on the request's bucket (`S3SigV4Filter.keyPermissions`: `readOnly` = list/get,
+  `writeOnly` = put/delete/multi-delete, plus `s3.list-buckets`; create/delete bucket only with
+  write access to every bucket). The controller reads the principal for what the route can't see:
+  ListBuckets only lists the key's buckets and a copy needs `canRead` on the source bucket. Only
+  the root key logs in to the console, so the admin API never sees a managed key. `last_used_at`
+  is written at most once a minute per key (`AccessKeyService.touch`). Deleting a bucket deletes
+  its grants. See `DECISIONS.md`.
 - Each route declares its own permission with
   `AuthFilter(rules: hasPermission('s3.put-object') | hasPermission('s3.anonymous.put-object'))`.
   Route keys and permission names match (`s3.*`, `admin.*`).
@@ -173,7 +190,8 @@ against the AWS docs example. The SigV4 maths live in `security/logic/sig_v4_sig
 | `repo/`          | Repository | Drift table access only.                                            |
 
 Current features: `s3/api/{rest,filter}` + `s3/file_core/{logic,repo}`, `admin/rest`,
-`admin/auth/{rest,logic}`, `admin/anonymous_access/{rest,logic,repo}`, plus `db/` (Drift) and
+`admin/auth/{rest,logic}`, `admin/anonymous_access/{rest,logic,repo}`,
+`admin/access_keys/{rest,logic,repo}`, plus `db/` (Drift) and
 `security/filter/` (JWT, SigV4).
 
 **Layer rules.**
@@ -394,8 +412,9 @@ from scratch and regenerate `service/tool/s3_compat/RESULTS.md`. Outputs go to
   `server.auth(json: …)`, `server.createBucket(…)` (tolerates an existing one),
   `server.putObject(…, headers: …)` (creates the bucket first and sends bytes without
   `Content-Type`, so reads fall back to the extension) and `server.sigV4(method, path, query: …)`, the
-  headers of a native client signed with SigV4. Uploading with `http.put` needs the bucket created.
-- Use one distinct port per file so files run in parallel. Ports in use: 8082–8110.
+  headers of a native client signed with SigV4 (`access:`/`secret:` sign with an access key created
+  in the test). Uploading with `http.put` needs the bucket created.
+- Use one distinct port per file so files run in parallel. Ports in use: 8082–8111.
 - Cover auth (missing or invalid token → 401, wrong login credentials → 403), validation (bad bucket
   names, path traversal, forbidden chars → 400), content negotiation (JSON vs XML, including the S3
   error code) and edge cases (404, empty lists).

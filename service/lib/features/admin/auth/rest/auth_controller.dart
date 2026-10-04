@@ -59,6 +59,11 @@ class AuthController {
           'admin.bucket.anonymous-access.get-rules',
           'admin.bucket.anonymous-access.write-rule',
           'admin.bucket.anonymous-access.delete-rule',
+          'admin.access-key.list',
+          'admin.access-key.create',
+          'admin.access-key.update',
+          'admin.access-key.regenerate-secret',
+          'admin.access-key.delete',
         ],
         'exp': expireAt.millisecondsSinceEpoch ~/ 1000,
       });

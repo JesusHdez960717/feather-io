@@ -131,7 +131,15 @@ class S3Controller {
       multipart = MultipartService();
 
   Future<ResponseEntity> listBuckets(RequestEntity request) async {
-    final buckets = await bucketService.listBuckets();
+    var buckets = await bucketService.listBuckets();
+    // An access key only sees the buckets it can reach
+    final principal = request.securityContext.authentication?.principal;
+    if (principal is AccessKeyModel) {
+      buckets = [
+        for (final bucket in buckets)
+          if (principal.levelOn(bucket.name) != null) bucket,
+      ];
+    }
 
     if (_acceptsJson(request)) {
       return ResponseEntity.ok(body: buckets);
@@ -275,11 +283,16 @@ class S3Controller {
 
   /// The source object of a copy (`x-amz-copy-source`: `/bucket/key` or
   /// `bucket/key`, URL-encoded and maybe with `?versionId`). Reading it requires
-  /// the regular download permission; an anonymous rule is not enough.
+  /// the regular download permission (an anonymous rule is not enough), and an
+  /// access key needs read access to the source's bucket.
   (String, String) _copySource(RequestEntity request, String copySource) {
-    final permissions =
-        request.securityContext.authentication?.permissions ?? const {};
-    if (!permissions.contains('s3.get-object')) {
+    final (bucket, key) = _parseCopySource(copySource);
+    final authentication = request.securityContext.authentication;
+    final principal = authentication?.principal;
+    final canRead = principal is AccessKeyModel
+        ? principal.canRead(bucket)
+        : (authentication?.permissions ?? const {}).contains('s3.get-object');
+    if (!canRead) {
       throw S3Exception(
         S3ErrorCode.accessDenied,
         message:
@@ -287,7 +300,10 @@ class S3Controller {
         resource: copySource,
       );
     }
+    return (bucket, key);
+  }
 
+  (String, String) _parseCopySource(String copySource) {
     final source = Uri.decodeComponent(copySource.split('?').first);
     final path = source.startsWith('/') ? source.substring(1) : source;
     final slash = path.indexOf('/');
