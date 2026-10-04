@@ -89,7 +89,7 @@ is done.
 - [ ] Access key management with permissions, with its admin screen in the console.
 - [x] SQLite path based on `STORAGE_VOLUME_PATH` (`STORAGE_VOLUME_PATH/.db/feather-io.sqlite`).
 - [ ] i18n of the service error messages.
-- [ ] Dockerfile: Dart version `^3.13` and `libsqlite3` in the final image.
+- [x] Dockerfile: Dart version `^3.13` and `libsqlite3` in the final image.
 - [ ] Console tests (cubits and repos).
 - [ ] Console: drop `MaterialUiCompatibilityBridge` (`main.dart`, deprecated; the only
   `flutter analyze` notice) once the dependencies have moved to `material_ui`.

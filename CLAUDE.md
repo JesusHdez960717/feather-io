@@ -55,8 +55,11 @@ Required env: `FEATHER_ACCESS`, `FEATHER_SECRET`, `JWT_SECRET`, `STORAGE_VOLUME_
 GiB). See `service/README.md` (its endpoint table lists only some routes, so treat the
 controllers as the source of truth).
 
-`service/Dockerfile` builds from `dart:3.12.2`, which is older than the `^3.13.0` SDK constraint. It
-also runs on a `scratch` image that has no `libsqlite3`.
+`service/Dockerfile` builds with `docker build --build-context winter=../../winter -t feather-io .`
+from `service/` (Winter is a path dependency, so it goes in as a named context and the build keeps
+the repo layout). It compiles AOT on `dart:3.13.1` and runs on `scratch` with the Dart runtime,
+`libsqlite3.so` copied next to its libc (the `sqlite3` package opens it through FFI) and a `/tmp`
+(zip downloads); `STORAGE_VOLUME_PATH=/data` is a volume. Bump the image tag with `.fvmrc`.
 
 ### Console (run from `console/`)
 

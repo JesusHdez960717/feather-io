@@ -119,3 +119,18 @@ Environment variables of the service.
 | `LOGIN_LOCK_SECONDS`        |    No    |       `900`        | Seconds an IP stays locked (answers `429` with `Retry-After`).                                                    |
 | `LOGIN_FAILURE_DELAY_MS`    |    No    |       `1000`       | Delay before answering each failed login.                                                                         |
 | `TRUSTED_PROXIES`           |    No    |        `0`         | Own proxies in front of the service; with 0 the connection IP is used and `X-Forwarded-For` is ignored.           |
+
+## Docker
+
+`Dockerfile` compiles the service AOT and runs it on a `scratch` image (~25 MB) with the Dart
+runtime and `libsqlite3`. Winter is still a path dependency (`../../winter`), so it goes in as a
+named build context. From `service/`:
+
+```bash
+docker build --build-context winter=../../winter -t feather-io .
+docker run -p 8080:8080 -v feather-data:/data \
+  -e FEATHER_ACCESS=… -e FEATHER_SECRET=… -e JWT_SECRET=… feather-io
+```
+
+The image sets `STORAGE_VOLUME_PATH=/data` (a volume): buckets, objects and the SQLite database
+live there, so they survive the container.
