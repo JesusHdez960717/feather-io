@@ -67,6 +67,17 @@ class _ObjectsFilterButtonState extends State<ObjectsFilterButton> {
   }
 
   Widget _buildPanel(BuildContext context) {
+    // Room below the button: on a short window the panel scrolls instead of
+    // being cut off by the bottom edge
+    final button = this.context.findRenderObject() as RenderBox?;
+    final buttonBottom = button == null
+        ? 0.0
+        : button.localToGlobal(Offset.zero).dy + button.size.height;
+    final maxHeight = (MediaQuery.sizeOf(context).height -
+            buttonBottom -
+            _gap -
+            app.dimensions.padding.l)
+        .clamp(160.0, double.infinity);
     return CallbackShortcuts(
       bindings: {const SingleActivator(LogicalKeyboardKey.escape): _close},
       child: SizedBox.expand(
@@ -90,6 +101,7 @@ class _ObjectsFilterButtonState extends State<ObjectsFilterButton> {
                 child: _ObjectsFilterPanel(
                   filter: widget.filter,
                   onChanged: widget.onChanged,
+                  maxHeight: maxHeight,
                 ),
               ),
             ),
@@ -105,8 +117,13 @@ class _ObjectsFilterPanel extends StatelessWidget {
 
   final ObjectFilter filter;
   final ValueChanged<ObjectFilter> onChanged;
+  final double maxHeight;
 
-  const _ObjectsFilterPanel({required this.filter, required this.onChanged});
+  const _ObjectsFilterPanel({
+    required this.filter,
+    required this.onChanged,
+    required this.maxHeight,
+  });
 
   Set<T> _toggle<T>(Set<T> set, T value) =>
       set.contains(value) ? ({...set}..remove(value)) : {...set, value};
@@ -117,6 +134,7 @@ class _ObjectsFilterPanel extends StatelessWidget {
       color: app.colors.neutral.transparent,
       child: Container(
         width: width,
+        constraints: BoxConstraints(maxHeight: maxHeight),
         padding: EdgeInsets.all(app.dimensions.padding.l),
         decoration: BoxDecoration(
           color: app.colors.primary.background2,
@@ -130,63 +148,65 @@ class _ObjectsFilterPanel extends StatelessWidget {
             ),
           ],
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(),
-            app.dimensions.padding.l.gap(),
-            _buildGroup(
-              title: app.intl.objectsFilterType,
-              children: [
-                for (final type in ObjectTypeFilter.values)
-                  _FilterChip(
-                    label: _typeLabel(type),
-                    selected: filter.types.contains(type),
-                    onTap: () => onChanged(
-                      filter.copyWith(types: _toggle(filter.types, type)),
-                    ),
-                  ),
-              ],
-            ),
-            app.dimensions.padding.l.gap(),
-            _buildGroup(
-              title: app.intl.objectsFilterSize,
-              children: [
-                for (final size in ObjectSizeFilter.values)
-                  _FilterChip(
-                    label: _sizeLabel(size),
-                    selected: filter.sizes.contains(size),
-                    onTap: () => onChanged(
-                      filter.copyWith(sizes: _toggle(filter.sizes, size)),
-                    ),
-                  ),
-              ],
-            ),
-            app.dimensions.padding.l.gap(),
-            _buildGroup(
-              title: app.intl.objectsFilterModified,
-              children: [
-                for (final date in ObjectDateFilter.values)
-                  _FilterChip(
-                    label: _dateLabel(date),
-                    selected: filter.dates.contains(date),
-                    onTap: () => onChanged(
-                      filter.copyWith(dates: _toggle(filter.dates, date)),
-                    ),
-                  ),
-              ],
-            ),
-            if (filter.isActive) ...[
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(),
               app.dimensions.padding.l.gap(),
-              Text(
-                app.intl.objectsFilterFoldersHidden,
-                style: app.textTheme.bodySmall?.copyWith(
-                  color: app.colors.neutral.grey3,
-                ),
+              _buildGroup(
+                title: app.intl.objectsFilterType,
+                children: [
+                  for (final type in ObjectTypeFilter.values)
+                    _FilterChip(
+                      label: _typeLabel(type),
+                      selected: filter.types.contains(type),
+                      onTap: () => onChanged(
+                        filter.copyWith(types: _toggle(filter.types, type)),
+                      ),
+                    ),
+                ],
               ),
+              app.dimensions.padding.l.gap(),
+              _buildGroup(
+                title: app.intl.objectsFilterSize,
+                children: [
+                  for (final size in ObjectSizeFilter.values)
+                    _FilterChip(
+                      label: _sizeLabel(size),
+                      selected: filter.sizes.contains(size),
+                      onTap: () => onChanged(
+                        filter.copyWith(sizes: _toggle(filter.sizes, size)),
+                      ),
+                    ),
+                ],
+              ),
+              app.dimensions.padding.l.gap(),
+              _buildGroup(
+                title: app.intl.objectsFilterModified,
+                children: [
+                  for (final date in ObjectDateFilter.values)
+                    _FilterChip(
+                      label: _dateLabel(date),
+                      selected: filter.dates.contains(date),
+                      onTap: () => onChanged(
+                        filter.copyWith(dates: _toggle(filter.dates, date)),
+                      ),
+                    ),
+                ],
+              ),
+              if (filter.isActive) ...[
+                app.dimensions.padding.l.gap(),
+                Text(
+                  app.intl.objectsFilterFoldersHidden,
+                  style: app.textTheme.bodySmall?.copyWith(
+                    color: app.colors.neutral.grey3,
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

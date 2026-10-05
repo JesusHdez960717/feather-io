@@ -532,7 +532,8 @@ Rules:
   must stay `{}`.
 - Delete keys that are no longer referenced. Don't add "section" pseudo-keys.
 - `MaterialApp` gets `AppLocalizations.delegate` plus `material_ui`'s
-  `GlobalMaterialLocalizations.delegates` (`_localizationsDelegates` in `main.dart`), never the
+  `GlobalMaterialLocalizations.delegates` (`appLocalizationsDelegates` in `main.dart`, also used by
+  the splash), never the
   generated `AppLocalizations.localizationsDelegates`: those register `flutter_localizations`'
   Material strings, which `material_ui` widgets can't see, so any locale but English fails with "No
   MaterialLocalizations found".

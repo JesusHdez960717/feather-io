@@ -1,4 +1,5 @@
 import 'package:console/app_exporter.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart' as old;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -13,8 +14,8 @@ final String loadingOverlayGlobalId = 'app-global-loading';
 /// (`AppLocalizations.localizationsDelegates`) bring the Material ones of
 /// `flutter_localizations`, which `material_ui` widgets can't see: outside
 /// English (which `material_ui` ships by default) they would fail with "No
-/// MaterialLocalizations found"
-const List<LocalizationsDelegate<dynamic>> _localizationsDelegates = [
+/// MaterialLocalizations found". Every MaterialApp uses these (app and splash)
+const List<LocalizationsDelegate<dynamic>> appLocalizationsDelegates = [
   AppLocalizations.delegate,
   ...GlobalMaterialLocalizations.delegates,
 ];
@@ -93,7 +94,7 @@ class App extends StatelessWidget {
             debugShowCheckedModeBanner: false,
             theme: ThemeConfig.theme,
             locale: locale,
-            localizationsDelegates: _localizationsDelegates,
+            localizationsDelegates: appLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             builder: (context, child) => Scaffold(
               body: Center(child: Text(context.intl.appNeedMoreSpace)),
@@ -102,6 +103,9 @@ class App extends StatelessWidget {
         } else {
           return MaterialApp.router(
             builder: (BuildContext context, Widget? child) {
+              // DateFormat uses it: dates follow the app's language
+              // (`06/sept/2026 09:22:32 p. m.` in Spanish)
+              Intl.defaultLocale = context.intl.localeName;
               return LoadingOverlay(
                 id: loadingOverlayGlobalId,
                 overlayWidgetBuilder: LoadingOverlayStyles.global,
@@ -118,7 +122,7 @@ class App extends StatelessWidget {
             theme: ThemeConfig.theme,
             locale: locale,
             routerConfig: RouteConfig.router,
-            localizationsDelegates: _localizationsDelegates,
+            localizationsDelegates: appLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
           );
         }

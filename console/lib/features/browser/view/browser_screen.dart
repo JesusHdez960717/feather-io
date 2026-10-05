@@ -249,6 +249,9 @@ class _BrowserScreenState extends State<BrowserScreen> {
                   prefix: state.prefix,
                   files: files,
                 );
+                // Once: without a name it carries the time, and the snackbar
+                // must show the same one as the transfers panel
+                final name = TransferCubit.zipFileName(keys, zipName: zipName);
                 app.snack.showSuccess(
                   message: app.intl.transfersUploadsAdded(files.length),
                   context: context,
@@ -258,12 +261,10 @@ class _BrowserScreenState extends State<BrowserScreen> {
                 app.di.find<TransferCubit>().download(
                   bucket: bucket.name,
                   keys: keys,
-                  zipName: zipName,
+                  zipName: name,
                 );
                 app.snack.showSuccess(
-                  message: app.intl.transfersDownloadAdded(
-                    TransferCubit.zipFileName(keys, zipName: zipName),
-                  ),
+                  message: app.intl.transfersDownloadAdded(name),
                   context: context,
                 );
               },

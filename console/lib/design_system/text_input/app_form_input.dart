@@ -86,6 +86,21 @@ class _AppFormInputState extends State<AppFormInput> {
     super.initState();
     widget.controller.addListener(_update);
     _focusNode.addListener(_onFocusChange);
+  /// On web Enter blurs the browser's input, and closing that connection
+  /// unfocuses the field, so whatever the user types next goes nowhere. If the
+  /// form is still on screen after submitting (a validation error, an API
+  /// error), the focus goes back to the field.
+  void _keepFocusAfterSubmit() {
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (!mounted || !(ModalRoute.of(context)?.isCurrent ?? true)) return;
+      _focusNode.requestFocus();
+      // The browser selects the whole text on focus: typing would replace it
+      widget.controller.selection = TextSelection.collapsed(
+        offset: widget.controller.text.length,
+      );
+    });
+  }
+
   }
 
   @override
@@ -238,7 +253,15 @@ class _AppFormInputState extends State<AppFormInput> {
                   field.didChange(value);
                   widget.onChange?.call(value);
                 },
-                onSubmitted: widget.onSubmitted,
+                onSubmitted: widget.onSubmitted == null
+                    ? null
+                    : (value) {
+                        widget.onSubmitted!(value);
+                        _keepFocusAfterSubmit();
+                      },
+                // By default Enter also unfocuses the field, after onSubmitted:
+                // a form that fails validation would lose the focus it just asked for
+                onEditingComplete: widget.onSubmitted == null ? null : () {},
                 style: app.textTheme.bodyLarge?.copyWith(
                   color: app.colors.neutral.white,
                 ),

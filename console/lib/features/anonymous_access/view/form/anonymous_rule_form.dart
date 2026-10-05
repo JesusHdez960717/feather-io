@@ -182,6 +182,13 @@ class _AnonymousRuleFormState extends State<AnonymousRuleForm> {
             ),
           ),
         ),
+        // The prefix runs straight into the bucket path in front of it
+        contentPadding: EdgeInsets.fromLTRB(
+          2,
+          app.dimensions.padding.m,
+          app.dimensions.padding.m,
+          app.dimensions.padding.m,
+        ),
         showCounter: true,
         maxLength: _prefixMaxLength,
         validator: _validatePrefix,
