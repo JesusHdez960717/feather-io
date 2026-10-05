@@ -66,8 +66,12 @@ class AccessKeyService {
   Future<AccessKeyModel> update(String id, AccessKeyRequest request) async {
     final current = await _get(id);
     final expiresAt = request.expiresAtDate;
-    // An expired key can be renamed without moving its date
-    if (expiresAt != current.expiresAt) _checkFutureExpiry(expiresAt);
+    // An expired key can be renamed without moving its date (compared as an
+    // instant: one comes in UTC and the other from the database in local time)
+    final sameDate =
+        expiresAt == null ||
+        (current.expiresAt?.isAtSameMomentAs(expiresAt) ?? false);
+    if (!sameDate) _checkFutureExpiry(expiresAt);
     final grants = request.grants;
     await _checkBuckets(grants);
 

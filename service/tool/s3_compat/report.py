@@ -31,6 +31,9 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 
 TEST_DESC = {
+    'access_keys_test.dart': 'Access keys: admin CRUD and validation, encrypted secret, each level on its bucket, ListBuckets filtered, copies, disabled/expired/deleted keys, regenerating the secret.',
+    'access_keys_permissions_test.dart': 'Access key permission matrix (every S3 operation for read, write and both, on its bucket and another), keys on every bucket, multipart, presigned URLs, changes taking effect, edge cases (tampered secret, recreated bucket, console login), and anonymous rules applying to signed keys as in AWS.',
+    'secret_cipher_test.dart': 'AES-GCM encryption of the access key secrets: round trip, nonce, key id, passphrase and tampering.',
     'anonymous_access_test.dart': 'Anonymous access rules (admin CRUD, effect on list/get/put/delete, a prefix without `*` and the whole key with `*`) and multipart never being anonymous.',
     'aws_chunked_test.dart': '`aws-chunked` bodies (chunk signatures and trailers), lines split mid-way, errors, and a failed upload not overwriting the object.',
     'body_size_test.dart': 'Size limits: objects > 10 MB, 2 MB bodies, chunked without `Content-Length`.',

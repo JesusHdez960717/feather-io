@@ -160,7 +160,8 @@ against the AWS docs example. The SigV4 maths live in `security/logic/sig_v4_sig
   its level on the request's bucket (`S3SigV4Filter.keyPermissions`: `readOnly` = list/get,
   `writeOnly` = put/delete/multi-delete, plus `s3.list-buckets`; create/delete bucket only with
   write access to every bucket). The controller reads the principal for what the route can't see:
-  ListBuckets only lists the key's buckets and a copy needs `canRead` on the source bucket. Only
+  ListBuckets only lists the key's buckets and a copy needs `canRead` on the source bucket (or a
+  public read rule on the source key). Only
   the root key logs in to the console, so the admin API never sees a managed key. `last_used_at`
   is written at most once a minute per key (`AccessKeyService.touch`). Deleting a bucket deletes
   its grants. See `DECISIONS.md`.
@@ -170,8 +171,10 @@ against the AWS docs example. The SigV4 maths live in `security/logic/sig_v4_sig
 - New endpoints need the route key, an `AuthFilter`, **and** the permission added to the list in
   `admin/auth/rest/auth_controller.dart` (and to `S3SigV4Filter` if native S3 clients should reach
   it).
-- `AnonymousAccessFilter` runs on the S3 parent after the SigV4 filter, only for unauthenticated
-  requests. It looks up the bucket's prefix rules (`anonymous_rule` table, via
+- `AnonymousAccessFilter` runs on the S3 parent after the SigV4 filter, for unauthenticated
+  requests and, as in AWS, for requests signed with an access key that lacks the route's permission
+  (it adds the rule's `s3.anonymous.*` permissions to the key's, which stays the principal; a copy
+  from a public read prefix is allowed through `S3Controller._publiclyReadable`). It looks up the bucket's prefix rules (`anonymous_rule` table, via
   `AnonymousAccessService.findMatchingRule`) and grants the `s3.anonymous.*` permissions of the
   first matching rule. A rule without `*` is a prefix; with `*` (any characters, `/` included) the
   whole key must match, so `fotos/*.jpg` doesn't open `fotos/a.jpg.zip`; everything else matches
@@ -414,7 +417,7 @@ from scratch and regenerate `service/tool/s3_compat/RESULTS.md`. Outputs go to
   `Content-Type`, so reads fall back to the extension) and `server.sigV4(method, path, query: …)`, the
   headers of a native client signed with SigV4 (`access:`/`secret:` sign with an access key created
   in the test). Uploading with `http.put` needs the bucket created.
-- Use one distinct port per file so files run in parallel. Ports in use: 8082–8111.
+- Use one distinct port per file so files run in parallel. Ports in use: 8082–8112.
 - Cover auth (missing or invalid token → 401, wrong login credentials → 403), validation (bad bucket
   names, path traversal, forbidden chars → 400), content negotiation (JSON vs XML, including the S3
   error code) and edge cases (404, empty lists).

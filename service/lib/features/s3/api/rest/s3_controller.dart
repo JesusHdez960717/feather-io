@@ -9,6 +9,7 @@ class S3Controller {
   final FileManagementService fileManagement;
   final BucketService bucketService;
   final MultipartService multipart;
+  final AnonymousAccessService anonymousAccess;
 
   Route get routing {
     return Route.parent(
@@ -128,7 +129,8 @@ class S3Controller {
   S3Controller()
     : fileManagement = di.find(),
       bucketService = BucketService(),
-      multipart = MultipartService();
+      multipart = MultipartService(),
+      anonymousAccess = AnonymousAccessService();
 
   Future<ResponseEntity> listBuckets(RequestEntity request) async {
     var buckets = await bucketService.listBuckets();
@@ -257,7 +259,7 @@ class S3Controller {
     String copySource,
   ) async {
     final bucketName = request.pathParams['bucket']!;
-    final (sourceBucket, sourceKey) = _copySource(request, copySource);
+    final (sourceBucket, sourceKey) = await _copySource(request, copySource);
 
     // As in S3: copies the source's headers unless REPLACE is requested
     final replace =
@@ -283,24 +285,36 @@ class S3Controller {
 
   /// The source object of a copy (`x-amz-copy-source`: `/bucket/key` or
   /// `bucket/key`, URL-encoded and maybe with `?versionId`). Reading it requires
-  /// the regular download permission (an anonymous rule is not enough), and an
-  /// access key needs read access to the source's bucket.
-  (String, String) _copySource(RequestEntity request, String copySource) {
+  /// the regular download permission (an anonymous request can't copy). An
+  /// access key needs read access to the source: its own on that bucket or, as
+  /// in AWS, an anonymous read rule covering the source key.
+  Future<(String, String)> _copySource(
+    RequestEntity request,
+    String copySource,
+  ) async {
     final (bucket, key) = _parseCopySource(copySource);
     final authentication = request.securityContext.authentication;
     final principal = authentication?.principal;
     final canRead = principal is AccessKeyModel
-        ? principal.canRead(bucket)
+        ? principal.canRead(bucket) || await _publiclyReadable(bucket, key)
         : (authentication?.permissions ?? const {}).contains('s3.get-object');
     if (!canRead) {
       throw S3Exception(
         S3ErrorCode.accessDenied,
-        message:
-            'Copying an object requires read permission on the source.',
+        message: 'Copying an object requires read permission on the source.',
         resource: copySource,
       );
     }
     return (bucket, key);
+  }
+
+  /// Whether an anonymous rule lets anyone download [key] of [bucket].
+  Future<bool> _publiclyReadable(String bucket, String key) async {
+    final rule = await anonymousAccess.findMatchingRule(
+      bucket: bucket,
+      key: key,
+    );
+    return rule != null && rule.access != AnonymousAccessType.writeOnly;
   }
 
   (String, String) _parseCopySource(String copySource) {
@@ -501,10 +515,11 @@ class S3Controller {
     };
 
     // A signed request may override the response headers with
-    // ?response-content-type=… (S3 doesn't allow it to anonymous ones)
-    final permissions =
-        request.securityContext.authentication?.permissions ?? const {};
-    if (permissions.contains('s3.get-object')) {
+    // ?response-content-type=… (S3 doesn't allow it to anonymous ones; an
+    // access key may, even when an anonymous rule is what lets it read)
+    final authentication = request.securityContext.authentication;
+    if ((authentication?.permissions ?? const {}).contains('s3.get-object') ||
+        authentication?.principal is AccessKeyModel) {
       for (final name in _overridableHeaders) {
         final value = request.queryParams['response-$name'];
         if (value != null) headers[name] = value;
@@ -754,7 +769,7 @@ class S3Controller {
     int partNumber,
     String copySource,
   ) async {
-    final (sourceBucket, sourceKey) = _copySource(request, copySource);
+    final (sourceBucket, sourceKey) = await _copySource(request, copySource);
     final rangeHeader = request.headers['x-amz-copy-source-range'];
     (int, int)? range;
     if (rangeHeader != null) {
