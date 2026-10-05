@@ -11,15 +11,17 @@ them by hand before a release or after touching the S3 API.
 
 ## Usage
 
-Start the service (see `service/README.md`) and, from the repo root:
+Start the service (see `service/README.md`) with `FEATHER_ACCESS=feather-access` and
+`FEATHER_SECRET=feather-secret-key` (the defaults of `run.sh`; `mc` rejects a secret key shorter
+than 8 characters) and, from the repo root:
 
 ```bash
-ACCESS_KEY=access SECRET_KEY=secret service/tool/s3_compat/run.sh          # awscli and rclone
-ACCESS_KEY=access SECRET_KEY=secret service/tool/s3_compat/run.sh mint     # Mint (about 5 min)
+service/tool/s3_compat/run.sh          # awscli and rclone
+service/tool/s3_compat/run.sh mint     # Mint (about 5 min)
 MINT_SUITES="minio-go s3cmd" service/tool/s3_compat/run.sh mint            # only some suites
 ```
 
-`ACCESS_KEY`/`SECRET_KEY` are `FEATHER_ACCESS`/`FEATHER_SECRET`. `ENDPOINT` (by default
+Other keys go in `ACCESS_KEY`/`SECRET_KEY` (`FEATHER_ACCESS`/`FEATHER_SECRET`). `ENDPOINT` (by default
 `http://host.docker.internal:8080`) is the service as seen from the containers. Each step prints
 `PASS` or `FAIL` (with the error output) and the script exits with an error if anything fails. The
 output of each target is saved in `out/` (`awscli.txt`, `rclone.txt`, `mint.txt` and

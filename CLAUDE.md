@@ -396,12 +396,12 @@ from scratch and regenerate `service/tool/s3_compat/RESULTS.md`. Outputs go to
 2. Service tests: from `service/`, `rm -rf uploads_test` and
    `fvm dart test --reporter json > tool/s3_compat/out/service_tests.jsonl`.
 3. A clean service: start it from an **empty scratch folder** with
-   `STORAGE_VOLUME_PATH=./uploads_local` (relative, so it doesn't touch `service/uploads_local`), the access
-   keys you will pass below, and its output in a log file. Outside `service/` `fvm` falls back to
+   `STORAGE_VOLUME_PATH=./uploads_local` (relative, so it doesn't touch `service/uploads_local`),
+   `FEATHER_ACCESS=feather-access FEATHER_SECRET=feather-secret-key` (the defaults of `run.sh`; `mc`
+   rejects a secret shorter than 8 characters), and its output in a log file. Outside `service/` `fvm` falls back to
    the global SDK, so call the pinned one: `<repo>/service/.fvm/flutter_sdk/bin/dart run
    <repo>/service/lib/main.dart`. Docker Desktop must be running.
-4. Clients: `ACCESS_KEY=… SECRET_KEY=… service/tool/s3_compat/run.sh awscli rclone mint` from the
-   repo root.
+4. Clients: `service/tool/s3_compat/run.sh awscli rclone mint` from the repo root.
 5. Report: `python service/tool/s3_compat/report.py --server-log <service log>` rewrites
    `RESULTS.md` (date, commit, versions, totals per test file, client and Mint suite, only the
    failures, each Mint failure with its cause, what doesn't work and what isn't tested).

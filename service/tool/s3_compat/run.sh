@@ -6,7 +6,8 @@
 #
 # Without arguments it runs awscli and rclone. Variables (with their defaults):
 #   ENDPOINT=http://host.docker.internal:8080   (the service as seen from Docker)
-#   ACCESS_KEY=access  SECRET_KEY=secret         (FEATHER_ACCESS / FEATHER_SECRET)
+#   ACCESS_KEY=feather-access  SECRET_KEY=feather-secret-key   (FEATHER_ACCESS / FEATHER_SECRET;
+#   mc rejects a secret key shorter than 8 characters)
 #   MINT_SUITES="awscli aws-sdk-go ..."          (Mint suites; see the README)
 #   OUT_DIR=service/tool/s3_compat/out           (outputs for report.py; gitignored)
 #
@@ -16,8 +17,8 @@ set -u
 
 DIR=$(cd "$(dirname "$0")" && pwd)
 ENDPOINT=${ENDPOINT:-http://host.docker.internal:8080}
-ACCESS_KEY=${ACCESS_KEY:-access}
-SECRET_KEY=${SECRET_KEY:-secret}
+ACCESS_KEY=${ACCESS_KEY:-feather-access}
+SECRET_KEY=${SECRET_KEY:-feather-secret-key}
 MINT_SUITES=${MINT_SUITES:-"awscli aws-sdk-go aws-sdk-java aws-sdk-java-v2 aws-sdk-php aws-sdk-ruby minio-go minio-py minio-js minio-java mc s3cmd healthcheck s3select versioning"}
 OUT_DIR=${OUT_DIR:-$DIR/out}
 mkdir -p "$OUT_DIR"
