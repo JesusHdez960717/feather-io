@@ -1802,6 +1802,12 @@ abstract class AppLocalizations {
   /// **'All'**
   String get accessKeyAllBuckets;
 
+  /// No description provided for @accessKeyNoBuckets.
+  ///
+  /// In en, this message translates to:
+  /// **'No buckets: edit it to give it access'**
+  String get accessKeyNoBuckets;
+
   /// No description provided for @accessKeyCreatesBuckets.
   ///
   /// In en, this message translates to:

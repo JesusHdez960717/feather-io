@@ -396,6 +396,7 @@
   "accessKeyCopyId": "Copy ID",
   "accessKeyIdCopied": "ID copied",
   "accessKeyAllBuckets": "All",
+  "accessKeyNoBuckets": "No buckets: edit it to give it access",
   "accessKeyCreatesBuckets": "+ create buckets",
   "accessKeyLevelReadOnly": "Read only",
   "accessKeyLevelWriteOnly": "Write only",

@@ -1051,6 +1051,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accessKeyAllBuckets => 'All';
 
   @override
+  String get accessKeyNoBuckets => 'No buckets: edit it to give it access';
+
+  @override
   String get accessKeyCreatesBuckets => '+ create buckets';
 
   @override

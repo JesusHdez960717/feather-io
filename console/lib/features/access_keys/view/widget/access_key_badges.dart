@@ -87,7 +87,15 @@ class AccessKeyPermissions extends StatelessWidget {
                 color: app.colors.neutral.grey3,
               ),
             ),
-        ] else
+        ] else if (keyModel.grants.isEmpty)
+          // Its buckets were deleted: the key reaches nothing until edited
+          Text(
+            app.intl.accessKeyNoBuckets,
+            style: app.textTheme.bodySmall?.copyWith(
+              color: app.colors.neutral.grey3,
+            ),
+          )
+        else
           for (final grant in keyModel.grants)
             _GrantTag(scope: grant.bucket, level: grant.access),
       ],

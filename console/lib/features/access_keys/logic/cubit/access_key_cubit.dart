@@ -5,11 +5,23 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Access keys of the *Access keys* section: list, search and the row actions
 /// (enable/disable, regenerate the secret, delete)
-class AccessKeyCubit extends Cubit<AccessKeyState> {
+class AccessKeyCubit extends Cubit<AccessKeyState>
+    with GlobalEventBusCommunication<AccessKeyState> {
   final AccessKeyRepo _repo;
   final AuthCubit _auth;
 
-  AccessKeyCubit(this._repo, this._auth) : super(const AccessKeyInitialState());
+  AccessKeyCubit(this._repo, this._auth)
+    : super(const AccessKeyInitialState()) {
+    // Deleting a bucket deletes the keys' grants on it (in the service): the
+    // list reloads so no key keeps showing it
+    onBus<BucketChangedEvent>((event) {
+      if (event.change != BucketChange.deleted || !state.data.loaded) return;
+      final granted = state.data.keys.any(
+        (key) => key.grants.any((grant) => grant.bucket == event.bucketName),
+      );
+      if (granted) load();
+    });
+  }
 
   Future<void> load() async {
     emit(AccessKeyLoadingInProgressState(data: state.data));

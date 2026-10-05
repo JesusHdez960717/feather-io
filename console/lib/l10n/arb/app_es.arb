@@ -319,6 +319,7 @@
   "accessKeyCopyId": "Copiar ID",
   "accessKeyIdCopied": "ID copiado",
   "accessKeyAllBuckets": "Todos",
+  "accessKeyNoBuckets": "Ningún bucket: edítala para darle acceso",
   "accessKeyCreatesBuckets": "+ crear buckets",
   "accessKeyLevelReadOnly": "Solo lectura",
   "accessKeyLevelWriteOnly": "Solo escritura",
