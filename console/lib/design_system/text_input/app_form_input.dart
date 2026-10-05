@@ -28,6 +28,10 @@ class AppFormInput extends StatefulWidget {
   final bool obscureText;
   final bool enabled;
   final bool autofocus;
+
+  /// What the browser's password manager may fill in (`AutofillHints.username`,
+  /// `AutofillHints.password`); the field must be inside an [AutofillGroup]
+  final Iterable<String>? autofillHints;
   final FocusNode? focusNode;
   final Widget? suffix;
   final Widget? prefix;
@@ -57,6 +61,7 @@ class AppFormInput extends StatefulWidget {
     this.obscureText = false,
     this.enabled = true,
     this.autofocus = false,
+    this.autofillHints,
     this.focusNode,
     this.suffix,
     this.prefix,
@@ -81,11 +86,6 @@ class _AppFormInputState extends State<AppFormInput> {
   FocusNode get _focusNode =>
       widget.focusNode ?? (_ownFocusNode ??= FocusNode());
 
-  @override
-  void initState() {
-    super.initState();
-    widget.controller.addListener(_update);
-    _focusNode.addListener(_onFocusChange);
   /// On web Enter blurs the browser's input, and closing that connection
   /// unfocuses the field, so whatever the user types next goes nowhere. If the
   /// form is still on screen after submitting (a validation error, an API
@@ -101,6 +101,11 @@ class _AppFormInputState extends State<AppFormInput> {
     });
   }
 
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_update);
+    _focusNode.addListener(_onFocusChange);
   }
 
   @override
@@ -243,6 +248,7 @@ class _AppFormInputState extends State<AppFormInput> {
                 focusNode: _focusNode,
                 enabled: widget.enabled,
                 autofocus: widget.autofocus,
+                autofillHints: widget.autofillHints,
                 inputFormatters: widget.inputFormatters,
                 keyboardType: widget.keyboardType,
                 textInputAction: widget.textInputAction,

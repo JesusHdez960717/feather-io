@@ -1,4 +1,5 @@
 import 'package:console/app_exporter.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -10,12 +11,6 @@ class LoginScreenNavigator {
 
   Widget builder(BuildContext context, GoRouterState state) {
     return const LoginScreen();
-  }
-
-  void neglectGo() {
-    Router.neglect(app.context, () {
-      app.navigator.go(name);
-    });
   }
 }
 
@@ -33,6 +28,10 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _secretController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
+  /// After the first submit attempt it validates on every change, so an error
+  /// goes away as soon as the field is filled
+  bool _submitted = false;
+
   @override
   void dispose() {
     _accessController.dispose();
@@ -41,6 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _onLogin() {
+    if (!_submitted) setState(() => _submitted = true);
     if (_formKey.currentState?.validate() ?? false) {
       context.read<AuthCubit>().login(
         access: _accessController.text,
@@ -53,8 +53,11 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
+        // On success the router leaves the login by itself (it listens to
+        // AuthCubit), to the page asked for before logging in. Closing the
+        // autofill context first lets the browser offer to save the keys
         if (state is AuthProcessingOKState) {
-          BrowserScreen.navigator.neglectGo();
+          TextInput.finishAutofillContext();
         } else if (state is AuthProcessingErrorState) {
           app.snack.showError(message: state.message, context: context);
         }
@@ -88,33 +91,45 @@ class _LoginScreenState extends State<LoginScreen> {
         borderRadius: app.dimensions.border.borderRadius.m,
         border: Border.all(color: app.colors.primary.background3),
       ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            AppWordmark(name: app.intl.appName, fontSize: 32),
-            app.dimensions.padding.xl.gap(),
-            AppFormInput(
-              controller: _accessController,
-              label: app.intl.loginAccessKey,
-              hint: app.intl.loginAccessKeyHint,
-              validator: (v) => v?.isEmpty == true ? app.intl.required : null,
-            ),
-            app.dimensions.padding.m.gap(),
-            AppFormPasswordInput(
-              controller: _secretController,
-              label: app.intl.loginSecretKey,
-              hint: app.intl.loginSecretKeyHint,
-              validator: (v) => v?.isEmpty == true ? app.intl.required : null,
-            ),
-            app.dimensions.padding.xl.gap(),
-            PrimaryButton.primary(
-              onPressed: _onLogin,
-              title: app.intl.loginButton,
-            ),
-          ],
+      // The keys go to the browser's password manager (it offers to save them
+      // and fills them in), never to the console's own storage
+      child: AutofillGroup(
+        child: Form(
+          key: _formKey,
+          autovalidateMode: _submitted
+              ? AutovalidateMode.always
+              : AutovalidateMode.disabled,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AppWordmark(name: app.intl.appName, fontSize: 32),
+              app.dimensions.padding.xl.gap(),
+              AppFormInput(
+                controller: _accessController,
+                label: app.intl.loginAccessKey,
+                hint: app.intl.loginAccessKeyHint,
+                validator: (v) => v?.isEmpty == true ? app.intl.required : null,
+                autofillHints: const [AutofillHints.username],
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _onLogin(),
+              ),
+              app.dimensions.padding.m.gap(),
+              AppFormPasswordInput(
+                controller: _secretController,
+                label: app.intl.loginSecretKey,
+                hint: app.intl.loginSecretKeyHint,
+                validator: (v) => v?.isEmpty == true ? app.intl.required : null,
+                autofillHints: const [AutofillHints.password],
+                onSubmitted: (_) => _onLogin(),
+              ),
+              app.dimensions.padding.xl.gap(),
+              PrimaryButton.primary(
+                onPressed: _onLogin,
+                title: app.intl.loginButton,
+              ),
+            ],
+          ),
         ),
       ),
     );

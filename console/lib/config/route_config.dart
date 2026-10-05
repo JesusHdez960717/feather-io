@@ -12,11 +12,16 @@ class RouteConfig {
       final isLoggingIn = state.matchedLocation == LoginScreen.navigator.path;
 
       if (auth.auth == null) {
-        return isLoggingIn ? null : LoginScreen.navigator.path;
+        if (isLoggingIn) return null;
+        // Remember where the user was going, to open it after logging in
+        return Uri(
+          path: LoginScreen.navigator.path,
+          queryParameters: {RouteNames.loginFromParam: state.uri.toString()},
+        ).toString();
       }
 
       if (isLoggingIn) {
-        return BrowserScreen.navigator.path;
+        return _afterLogin(state.uri.queryParameters[RouteNames.loginFromParam]);
       }
 
       return null;
@@ -52,11 +57,6 @@ class RouteConfig {
               ),
             ],
           ),
-        ],
-      ),
-    ],
-  );
-}
           StatefulShellBranch(
             routes: <RouteBase>[
               ///   /keys
@@ -67,6 +67,24 @@ class RouteConfig {
               ),
             ],
           ),
+        ],
+      ),
+    ],
+  );
+}
+
+/// The location saved in `?from=` if it is one of ours (a path, not the login
+/// itself); otherwise the browser
+String _afterLogin(String? from) {
+  final uri = from == null ? null : Uri.tryParse(from);
+  final valid =
+      uri != null &&
+      !uri.hasScheme &&
+      !uri.hasAuthority &&
+      uri.path.startsWith('/') &&
+      uri.path != LoginScreen.navigator.path;
+  return valid ? from! : BrowserScreen.navigator.path;
+}
 
 class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream(Stream<dynamic> stream) {

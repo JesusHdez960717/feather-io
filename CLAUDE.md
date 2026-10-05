@@ -491,7 +491,14 @@ Error states carry the `GlobalException` or its `message`; cubits get it via
 only `adapter/di.dart` may import `get`), `app.navigator`, `app.dialog`, `app.snack`, `app.loading`,
 `app.dateFormatter`, `app.storageFormatter`, `app.colors`, `app.dimensions`, `app.assets` and
 `app.intl`. Routing is `go_router` in `config/route_config.dart`, and it redirects to login when
-`AuthCubit.auth` is null. Route names and their query params live in `config/route_names.dart` (
+`AuthCubit.auth` is null, keeping the location asked for in `/login?from=…`; after logging in the
+router itself goes there (only internal paths, otherwise the browser). The session survives
+reloads: `AuthRepo` saves only the JWT and its expiry in `FlutterSecureStorage`,
+`AuthInit` restores it (`AuthCubit.restore`) before the router is built, and logout deletes it.
+The keys typed at login are never stored by the console: the login fields carry `AutofillHints`
+inside an `AutofillGroup` (and `TextInput.finishAutofillContext()` on success), so the browser's
+password manager offers to save and fill them. Dates follow the app's language because
+`MaterialApp.builder` sets `Intl.defaultLocale`. Route names and their query params live in `config/route_names.dart` (
 `RouteNames`); every screen navigator's `name` uses them, and a feature opens another feature's
 screen through them (e.g. `RouteNames.openBucketSettings(bucket)`), never by importing that screen.
 

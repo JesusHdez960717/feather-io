@@ -52,12 +52,6 @@ class BrowserScreenNavigator {
   /// Opens the browser at the root of [bucket]
   void openBucket(BucketModel bucket) => show(bucket: bucket.name);
 
-  void neglectGo() {
-    Router.neglect(app.context, () {
-      app.navigator.go(name);
-    });
-  }
-
   /// `photos/2026` (URL) → `photos/2026/` (S3 prefix)
   static String _toPrefix(String? folder) {
     final trimmed = (folder ?? '').replaceAll(RegExp(r'^/+|/+$'), '');
@@ -249,15 +243,15 @@ class _BrowserScreenState extends State<BrowserScreen> {
                   prefix: state.prefix,
                   files: files,
                 );
-                // Once: without a name it carries the time, and the snackbar
-                // must show the same one as the transfers panel
-                final name = TransferCubit.zipFileName(keys, zipName: zipName);
                 app.snack.showSuccess(
                   message: app.intl.transfersUploadsAdded(files.length),
                   context: context,
                 );
               },
               onDownload: (keys, {zipName}) {
+                // Once: without a name it carries the time, and the snackbar
+                // must show the same one as the transfers panel
+                final name = TransferCubit.zipFileName(keys, zipName: zipName);
                 app.di.find<TransferCubit>().download(
                   bucket: bucket.name,
                   keys: keys,
