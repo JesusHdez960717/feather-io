@@ -21,7 +21,7 @@ class RouteConfig {
       }
 
       if (isLoggingIn) {
-        return _afterLogin(state.uri.queryParameters[RouteNames.loginFromParam]);
+        return afterLogin(state.uri.queryParameters[RouteNames.loginFromParam]);
       }
 
       return null;
@@ -71,19 +71,19 @@ class RouteConfig {
       ),
     ],
   );
-}
 
-/// The location saved in `?from=` if it is one of ours (a path, not the login
-/// itself); otherwise the browser
-String _afterLogin(String? from) {
-  final uri = from == null ? null : Uri.tryParse(from);
-  final valid =
-      uri != null &&
-      !uri.hasScheme &&
-      !uri.hasAuthority &&
-      uri.path.startsWith('/') &&
-      uri.path != LoginScreen.navigator.path;
-  return valid ? from! : BrowserScreen.navigator.path;
+  /// The location saved in `?from=` if it is one of ours (a path, not the login
+  /// itself); otherwise the browser
+  static String afterLogin(String? from) {
+    final uri = from == null ? null : Uri.tryParse(from);
+    final valid =
+        uri != null &&
+        !uri.hasScheme &&
+        !uri.hasAuthority &&
+        uri.path.startsWith('/') &&
+        uri.path != LoginScreen.navigator.path;
+    return valid ? from! : BrowserScreen.navigator.path;
+  }
 }
 
 class GoRouterRefreshStream extends ChangeNotifier {
