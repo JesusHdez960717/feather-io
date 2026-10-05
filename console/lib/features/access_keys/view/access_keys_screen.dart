@@ -45,6 +45,8 @@ class _AccessKeysScreenState extends State<AccessKeysScreen> {
   void initState() {
     super.initState();
     cubit = context.read<AccessKeyCubit>()..load();
+    // the bucket filter and the create/edit drawer list them
+    context.read<BucketCubit>().load();
   }
 
   @override
@@ -159,17 +161,6 @@ class _AccessKeysScreenState extends State<AccessKeysScreen> {
           ),
         ),
         app.dimensions.padding.l.gap(),
-        SizedBox(
-          width: 260,
-          child: AppTextSearchField(
-            controller: _searchController,
-            // filters the keys already loaded: no wait
-            delay: 0,
-            onSearch: cubit.search,
-            hint: app.intl.accessKeysSearchHint,
-          ),
-        ),
-        app.dimensions.padding.l.gap(),
         PrimaryButton.primary(
           title: app.intl.accessKeyCreate,
           icon: app.assets.icons.actions.add,
@@ -194,6 +185,7 @@ class _AccessKeysScreenState extends State<AccessKeysScreen> {
           ? SingleChildScrollView(
               child: _AccessKeysTable(
                 data: data,
+                toolbar: _buildToolbar(data),
                 onEdit: (key) => AccessKeyForm.open(context, key: key),
                 onRegenerate: _onRegenerate,
                 onToggle: (key) => cubit.setEnabled(key, enabled: !key.enabled),
@@ -204,6 +196,31 @@ class _AccessKeysScreenState extends State<AccessKeysScreen> {
           : const SizedBox.expand(),
     );
   }
+
+  /// Search and filters, at the top of the table
+  Widget _buildToolbar(AccessKeyData data) {
+    return Row(
+      children: [
+        Expanded(
+          child: AppTextSearchField(
+            controller: _searchController,
+            // filters the keys already loaded: no wait
+            delay: 0,
+            onSearch: cubit.search,
+            hint: app.intl.accessKeysSearchHint,
+          ),
+        ),
+        app.dimensions.padding.l.gap(),
+        BlocBuilder<BucketCubit, BucketState>(
+          builder: (context, bucketState) => AccessKeysFilterButton(
+            filter: data.filter,
+            buckets: [for (final bucket in bucketState.buckets) bucket.name],
+            onChanged: cubit.applyFilter,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _AccessKeysTable extends StatelessWidget {
@@ -211,9 +228,9 @@ class _AccessKeysTable extends StatelessWidget {
   static const double _idWidth = 270;
   static const double _lastUsedWidth = 130;
   static const double _statusWidth = 185;
-  static const double _actionsWidth = 56;
 
   final AccessKeyData data;
+  final Widget toolbar;
   final ValueChanged<AccessKeyModel> onEdit;
   final ValueChanged<AccessKeyModel> onRegenerate;
   final ValueChanged<AccessKeyModel> onToggle;
@@ -222,6 +239,7 @@ class _AccessKeysTable extends StatelessWidget {
 
   const _AccessKeysTable({
     required this.data,
+    required this.toolbar,
     required this.onEdit,
     required this.onRegenerate,
     required this.onToggle,
@@ -229,26 +247,26 @@ class _AccessKeysTable extends StatelessWidget {
     required this.onCreate,
   });
 
-  BorderSide get _divider =>
-      BorderSide(color: app.colors.neutral.white.withValues(alpha: 0.08));
-
   @override
   Widget build(BuildContext context) {
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: app.colors.primary.background2,
-        borderRadius: app.dimensions.border.borderRadius.m,
-        border: Border.all(color: app.colors.neutral.grey5),
-      ),
-      child: Column(
-        children: [
-          _buildHeader(),
-          _buildRootRow(),
-          if (data.keys.isEmpty)
-            _EmptyKeys(onCreate: onCreate)
-          else if (data.visibleKeys.isEmpty)
-            Padding(
+    return AppSimpleTable(
+      toolbar: toolbar,
+      columns: [
+        AppTableColumn(app.intl.accessKeyColumnName, width: _nameWidth),
+        AppTableColumn(app.intl.accessKeyColumnId, width: _idWidth),
+        AppTableColumn(app.intl.accessKeyColumnPermissions),
+        AppTableColumn(app.intl.accessKeyColumnLastUsed, width: _lastUsedWidth),
+        AppTableColumn(app.intl.accessKeyColumnStatus, width: _statusWidth),
+        const AppTableColumn.actions(),
+      ],
+      rows: [
+        _buildRootRow(),
+        for (final key in data.visibleKeys) _buildKeyRow(key),
+      ],
+      placeholder: data.keys.isEmpty
+          ? _EmptyKeys(onCreate: onCreate)
+          : data.visibleKeys.isEmpty
+          ? Padding(
               padding: EdgeInsets.all(app.dimensions.padding.xl),
               child: Text(
                 app.intl.accessKeysNoMatch,
@@ -257,47 +275,12 @@ class _AccessKeysTable extends StatelessWidget {
                 ),
               ),
             )
-          else
-            for (final key in data.visibleKeys) _buildKeyRow(context, key),
-          _buildFooter(),
-        ],
-      ),
+          : null,
+      hint: app.intl.accessKeysFooterHint,
     );
   }
 
-  Widget _buildHeader() {
-    Widget header(String text, double? width) => _cell(
-      Text(
-        text,
-        style: app.textTheme.bodyMedium?.copyWith(
-          color: app.colors.neutral.grey3,
-        ),
-      ),
-      width,
-    );
-    return Container(
-      height: 42,
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: app.colors.neutral.white.withValues(alpha: 0.16),
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          header(app.intl.accessKeyColumnName, _nameWidth),
-          header(app.intl.accessKeyColumnId, _idWidth),
-          Expanded(child: header(app.intl.accessKeyColumnPermissions, null)),
-          header(app.intl.accessKeyColumnLastUsed, _lastUsedWidth),
-          header(app.intl.accessKeyColumnStatus, _statusWidth),
-          const SizedBox(width: _actionsWidth),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRootRow() {
+  AppTableRow _buildRootRow() {
     return _row(
       name: Row(
         children: [
@@ -339,7 +322,7 @@ class _AccessKeysTable extends StatelessWidget {
     );
   }
 
-  Widget _buildKeyRow(BuildContext context, AccessKeyModel key) {
+  AppTableRow _buildKeyRow(AccessKeyModel key) {
     final dimmed = key.status != AccessKeyStatus.active;
     return _row(
       name: Column(
@@ -402,27 +385,7 @@ class _AccessKeysTable extends StatelessWidget {
     );
   }
 
-  Widget _buildFooter() {
-    return Padding(
-      padding: EdgeInsets.all(app.dimensions.padding.l),
-      child: Row(
-        children: [
-          Icon(Icons.info_outline, size: 14, color: app.colors.neutral.grey3),
-          app.dimensions.padding.s.gap(),
-          Expanded(
-            child: Text(
-              app.intl.accessKeysFooterHint,
-              style: app.textTheme.bodySmall?.copyWith(
-                color: app.colors.neutral.grey3,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _row({
+  AppTableRow _row({
     required Widget name,
     required Widget id,
     required Widget permissions,
@@ -430,34 +393,14 @@ class _AccessKeysTable extends StatelessWidget {
     required Widget status,
     required Widget actions,
   }) {
-    return Container(
-      constraints: const BoxConstraints(minHeight: 56),
-      padding: EdgeInsets.symmetric(vertical: app.dimensions.padding.s),
-      decoration: BoxDecoration(border: Border(bottom: _divider)),
-      child: Row(
-        children: [
-          _cell(name, _nameWidth),
-          _cell(id, _idWidth),
-          Expanded(child: _cell(permissions, null)),
-          _cell(lastUsed, _lastUsedWidth),
-          _cell(status, _statusWidth),
-          SizedBox(
-            width: _actionsWidth,
-            child: Center(child: actions),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _cell(Widget child, double? width) {
-    return SizedBox(
-      width: width,
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: app.dimensions.padding.l),
-        child: Align(alignment: Alignment.centerLeft, child: child),
-      ),
-    );
+    return AppTableRow([
+      name,
+      id,
+      permissions,
+      lastUsed,
+      status,
+      actions,
+    ], minHeight: 56);
   }
 }
 

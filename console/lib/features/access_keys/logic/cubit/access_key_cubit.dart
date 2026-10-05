@@ -16,6 +16,15 @@ class AccessKeyCubit extends Cubit<AccessKeyState>
     // list reloads so no key keeps showing it
     onBus<BucketChangedEvent>((event) {
       if (event.change != BucketChange.deleted || !state.data.loaded) return;
+      // A deleted bucket can't stay selected in the filter
+      final filter = state.data.filter;
+      if (filter.buckets.contains(event.bucketName)) {
+        applyFilter(
+          filter.copyWith(
+            buckets: {...filter.buckets}..remove(event.bucketName),
+          ),
+        );
+      }
       final granted = state.data.keys.any(
         (key) => key.grants.any((grant) => grant.bucket == event.bucketName),
       );
@@ -41,6 +50,11 @@ class AccessKeyCubit extends Cubit<AccessKeyState>
   /// Filters by name or id, over the keys already loaded
   void search(String query) {
     emit(AccessKeyLoadingSuccessState(data: state.data.withQuery(query)));
+  }
+
+  /// Filters by status, level and bucket, over the keys already loaded
+  void applyFilter(AccessKeyFilter filter) {
+    emit(AccessKeyLoadingSuccessState(data: state.data.withFilter(filter)));
   }
 
   Future<void> setEnabled(AccessKeyModel key, {required bool enabled}) async {
@@ -101,17 +115,20 @@ class AccessKeyCubit extends Cubit<AccessKeyState>
 /// What a row action did, so the view can confirm it
 enum AccessKeyAction { enabled, disabled, secretRegenerated, deleted }
 
-/// The loaded keys and the search. [visibleKeys] is filled on every change
+/// The loaded keys, the search and the filters. [visibleKeys] is filled on
+/// every change
 class AccessKeyData {
   final String? rootAccessKeyId;
   final List<AccessKeyModel> keys;
   final String query;
+  final AccessKeyFilter filter;
   final List<AccessKeyModel> visibleKeys;
 
   const AccessKeyData._({
     required this.rootAccessKeyId,
     required this.keys,
     required this.query,
+    required this.filter,
     required this.visibleKeys,
   });
 
@@ -120,6 +137,7 @@ class AccessKeyData {
         rootAccessKeyId: null,
         keys: const [],
         query: '',
+        filter: AccessKeyFilter.none,
         visibleKeys: const [],
       );
 
@@ -127,21 +145,23 @@ class AccessKeyData {
     required String? rootAccessKeyId,
     required List<AccessKeyModel> keys,
     required String query,
+    required AccessKeyFilter filter,
   }) {
     final needle = query.trim().toLowerCase();
     return AccessKeyData._(
       rootAccessKeyId: rootAccessKeyId,
       keys: keys,
       query: query,
-      visibleKeys: needle.isEmpty
-          ? keys
-          : keys
-                .where(
-                  (k) =>
-                      k.name.toLowerCase().contains(needle) ||
-                      k.id.toLowerCase().contains(needle),
-                )
-                .toList(),
+      filter: filter,
+      visibleKeys: keys
+          .where(
+            (k) =>
+                (needle.isEmpty ||
+                    k.name.toLowerCase().contains(needle) ||
+                    k.id.toLowerCase().contains(needle)) &&
+                filter.matches(k),
+          )
+          .toList(),
     );
   }
 
@@ -151,12 +171,21 @@ class AccessKeyData {
     rootAccessKeyId: list.rootAccessKeyId,
     keys: list.keys,
     query: query,
+    filter: filter,
   );
 
   AccessKeyData withQuery(String query) => AccessKeyData._filtered(
     rootAccessKeyId: rootAccessKeyId,
     keys: keys,
     query: query,
+    filter: filter,
+  );
+
+  AccessKeyData withFilter(AccessKeyFilter filter) => AccessKeyData._filtered(
+    rootAccessKeyId: rootAccessKeyId,
+    keys: keys,
+    query: query,
+    filter: filter,
   );
 }
 

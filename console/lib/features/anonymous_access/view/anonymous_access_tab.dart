@@ -110,10 +110,6 @@ class _AnonymousAccessTabState extends State<AnonymousAccessTab> {
 }
 
 class _RulesTable extends StatelessWidget {
-  static const double _prefixWidth = 280;
-  static const double _accessWidth = 200;
-  static const double _actionsWidth = 56;
-
   final List<AnonymousRuleModel> rules;
   final ValueChanged<AnonymousRuleModel> onDelete;
 
@@ -121,108 +117,35 @@ class _RulesTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final divider = BorderSide(
-      color: app.colors.neutral.white.withValues(alpha: 0.08),
-    );
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: app.colors.primary.background2,
-        borderRadius: app.dimensions.border.borderRadius.m,
-        border: Border.all(color: app.colors.neutral.grey5),
-      ),
-      child: Column(
-        children: [
-          Container(
-            height: 42,
-            decoration: BoxDecoration(border: Border(bottom: divider)),
-            child: Row(
-              children: [
-                _headerCell(app.intl.anonymousRulePrefix, _prefixWidth),
-                _headerCell(app.intl.anonymousRuleAccess, _accessWidth),
-                Expanded(child: _headerCell(app.intl.anonymousRuleOps, null)),
-                const SizedBox(width: _actionsWidth),
-              ],
-            ),
-          ),
-          for (final rule in rules)
-            Container(
-              height: 52,
-              decoration: BoxDecoration(border: Border(bottom: divider)),
-              child: Row(
-                children: [
-                  _cell(_PrefixChip(prefix: rule.prefix), _prefixWidth),
-                  _cell(AnonymousAccessBadge(access: rule.access), _accessWidth),
-                  Expanded(
-                    child: _cell(
-                      Text(
-                        rule.access.operations,
-                        style: app.textTheme.bodyMedium?.copyWith(
-                          color: app.colors.neutral.grey2,
-                        ),
-                      ),
-                      null,
-                    ),
-                  ),
-                  SizedBox(
-                    width: _actionsWidth,
-                    child: IconButton(
-                      tooltip: app.intl.anonymousRuleDeleteTitle,
-                      onPressed: () => onDelete(rule),
-                      icon: app.assets.icons.actions.delete.build(
-                        size: 18,
-                        color: app.colors.primary.error,
-                      ),
-                    ),
-                  ),
-                ],
+    return AppSimpleTable(
+      columns: [
+        AppTableColumn(app.intl.anonymousRulePrefix, width: 280),
+        AppTableColumn(app.intl.anonymousRuleAccess, width: 200),
+        AppTableColumn(app.intl.anonymousRuleOps),
+        const AppTableColumn.actions(),
+      ],
+      rows: [
+        for (final rule in rules)
+          AppTableRow([
+            _PrefixChip(prefix: rule.prefix),
+            AnonymousAccessBadge(access: rule.access),
+            Text(
+              rule.access.operations,
+              style: app.textTheme.bodyMedium?.copyWith(
+                color: app.colors.neutral.grey2,
               ),
             ),
-          Padding(
-            padding: EdgeInsets.all(app.dimensions.padding.l),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.info_outline,
-                  size: 14,
-                  color: app.colors.neutral.grey3,
-                ),
-                app.dimensions.padding.s.gap(),
-                Expanded(
-                  child: Text(
-                    app.intl.anonymousRuleHint,
-                    style: app.textTheme.bodySmall?.copyWith(
-                      color: app.colors.neutral.grey3,
-                    ),
-                  ),
-                ),
-              ],
+            IconButton(
+              tooltip: app.intl.anonymousRuleDeleteTitle,
+              onPressed: () => onDelete(rule),
+              icon: app.assets.icons.actions.delete.build(
+                size: 18,
+                color: app.colors.primary.error,
+              ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _headerCell(String text, double? width) {
-    return _cell(
-      Text(
-        text,
-        style: app.textTheme.bodyMedium?.copyWith(
-          color: app.colors.neutral.grey3,
-        ),
-      ),
-      width,
-    );
-  }
-
-  Widget _cell(Widget child, double? width) {
-    return SizedBox(
-      width: width,
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: app.dimensions.padding.l),
-        child: Align(alignment: Alignment.centerLeft, child: child),
-      ),
+          ]),
+      ],
+      hint: app.intl.anonymousRuleHint,
     );
   }
 }

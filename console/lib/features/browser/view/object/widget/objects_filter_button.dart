@@ -1,10 +1,9 @@
 import 'package:console/app_exporter.dart';
-import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// *Filter* button with the number of active options. It opens a panel below
-/// that applies each change at once
-class ObjectsFilterButton extends StatefulWidget {
+/// *Filter* button of the browser: type, size and modification date of the
+/// objects of the pages already loaded
+class ObjectsFilterButton extends StatelessWidget {
   final ObjectFilter filter;
   final ValueChanged<ObjectFilter> onChanged;
 
@@ -14,250 +13,54 @@ class ObjectsFilterButton extends StatefulWidget {
     super.key,
   });
 
-  @override
-  State<ObjectsFilterButton> createState() => _ObjectsFilterButtonState();
-}
-
-class _ObjectsFilterButtonState extends State<ObjectsFilterButton> {
-  static const double _gap = 8;
-
-  final OverlayPortalController _portal = OverlayPortalController();
-  final LayerLink _link = LayerLink();
-
-  void _close() {
-    if (_portal.isShowing) {
-      _portal.hide();
-      setState(() {});
-    }
-  }
-
-  void _toggle() {
-    if (_portal.isShowing) {
-      _close();
-    } else {
-      _portal.show();
-      setState(() {});
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final count = widget.filter.activeCount;
-    return OverlayPortal(
-      controller: _portal,
-      overlayChildBuilder: _buildPanel,
-      child: CompositedTransformTarget(
-        link: _link,
-        child: Badge.count(
-          count: count,
-          isLabelVisible: count > 0,
-          backgroundColor: app.colors.primary.secondary,
-          textColor: app.colors.primary.background1,
-          child: PrimaryButton.primary(
-            title: app.intl.filter,
-            color: app.colors.primary.background3.withValues(alpha: 0.75),
-            icon: app.assets.icons.actions.filter,
-            onPressed: _toggle,
-            h: 42,
-            w: 100,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPanel(BuildContext context) {
-    // Room below the button: on a short window the panel scrolls instead of
-    // being cut off by the bottom edge
-    final button = this.context.findRenderObject() as RenderBox?;
-    final buttonBottom = button == null
-        ? 0.0
-        : button.localToGlobal(Offset.zero).dy + button.size.height;
-    final maxHeight = (MediaQuery.sizeOf(context).height -
-            buttonBottom -
-            _gap -
-            app.dimensions.padding.l)
-        .clamp(160.0, double.infinity);
-    return CallbackShortcuts(
-      bindings: {const SingleActivator(LogicalKeyboardKey.escape): _close},
-      child: SizedBox.expand(
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: _close,
-              ),
-            ),
-            CompositedTransformFollower(
-              link: _link,
-              showWhenUnlinked: false,
-              targetAnchor: Alignment.bottomRight,
-              followerAnchor: Alignment.topRight,
-              offset: const Offset(0, _gap),
-              child: FocusScope(
-                autofocus: true,
-                // the parent rebuilds the button with the new filter, and with it the panel
-                child: _ObjectsFilterPanel(
-                  filter: widget.filter,
-                  onChanged: widget.onChanged,
-                  maxHeight: maxHeight,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ObjectsFilterPanel extends StatelessWidget {
-  static const double width = 340;
-
-  final ObjectFilter filter;
-  final ValueChanged<ObjectFilter> onChanged;
-  final double maxHeight;
-
-  const _ObjectsFilterPanel({
-    required this.filter,
-    required this.onChanged,
-    required this.maxHeight,
-  });
-
   Set<T> _toggle<T>(Set<T> set, T value) =>
       set.contains(value) ? ({...set}..remove(value)) : {...set, value};
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: app.colors.neutral.transparent,
-      child: Container(
-        width: width,
-        constraints: BoxConstraints(maxHeight: maxHeight),
-        padding: EdgeInsets.all(app.dimensions.padding.l),
-        decoration: BoxDecoration(
-          color: app.colors.primary.background2,
-          borderRadius: app.dimensions.border.borderRadius.s,
-          border: Border.all(color: app.colors.neutral.grey5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.35),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
+    return AppFilterButton(
+      activeCount: filter.activeCount,
+      onClear: () => onChanged(ObjectFilter.none),
+      note: app.intl.objectsFilterFoldersHidden,
+      groups: [
+        AppFilterGroup(
+          title: app.intl.objectsFilterType,
+          options: [
+            for (final type in ObjectTypeFilter.values)
+              AppFilterOption(
+                label: _typeLabel(type),
+                selected: filter.types.contains(type),
+                onTap: () => onChanged(
+                  filter.copyWith(types: _toggle(filter.types, type)),
+                ),
+              ),
           ],
         ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              app.dimensions.padding.l.gap(),
-              _buildGroup(
-                title: app.intl.objectsFilterType,
-                children: [
-                  for (final type in ObjectTypeFilter.values)
-                    _FilterChip(
-                      label: _typeLabel(type),
-                      selected: filter.types.contains(type),
-                      onTap: () => onChanged(
-                        filter.copyWith(types: _toggle(filter.types, type)),
-                      ),
-                    ),
-                ],
-              ),
-              app.dimensions.padding.l.gap(),
-              _buildGroup(
-                title: app.intl.objectsFilterSize,
-                children: [
-                  for (final size in ObjectSizeFilter.values)
-                    _FilterChip(
-                      label: _sizeLabel(size),
-                      selected: filter.sizes.contains(size),
-                      onTap: () => onChanged(
-                        filter.copyWith(sizes: _toggle(filter.sizes, size)),
-                      ),
-                    ),
-                ],
-              ),
-              app.dimensions.padding.l.gap(),
-              _buildGroup(
-                title: app.intl.objectsFilterModified,
-                children: [
-                  for (final date in ObjectDateFilter.values)
-                    _FilterChip(
-                      label: _dateLabel(date),
-                      selected: filter.dates.contains(date),
-                      onTap: () => onChanged(
-                        filter.copyWith(dates: _toggle(filter.dates, date)),
-                      ),
-                    ),
-                ],
-              ),
-              if (filter.isActive) ...[
-                app.dimensions.padding.l.gap(),
-                Text(
-                  app.intl.objectsFilterFoldersHidden,
-                  style: app.textTheme.bodySmall?.copyWith(
-                    color: app.colors.neutral.grey3,
-                  ),
+        AppFilterGroup(
+          title: app.intl.objectsFilterSize,
+          options: [
+            for (final size in ObjectSizeFilter.values)
+              AppFilterOption(
+                label: _sizeLabel(size),
+                selected: filter.sizes.contains(size),
+                onTap: () => onChanged(
+                  filter.copyWith(sizes: _toggle(filter.sizes, size)),
                 ),
-              ],
-            ],
-          ),
+              ),
+          ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            app.intl.objectsFilterTitle,
-            style: app.textTheme.titleMedium?.copyWith(
-              color: app.colors.neutral.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        TextButton(
-          onPressed: filter.isActive
-              ? () => onChanged(ObjectFilter.none)
-              : null,
-          child: Text(
-            app.intl.objectsFilterClear,
-            style: app.textTheme.bodyMedium?.copyWith(
-              color: filter.isActive
-                  ? app.colors.primary.secondary
-                  : app.colors.neutral.grey5,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildGroup({required String title, required List<Widget> children}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title.toUpperCase(),
-          style: app.textTheme.labelMedium?.copyWith(
-            color: app.colors.primary.primaryFaded,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
-          ),
-        ),
-        app.dimensions.padding.s.gap(),
-        Wrap(
-          spacing: app.dimensions.padding.s,
-          runSpacing: app.dimensions.padding.s,
-          children: children,
+        AppFilterGroup(
+          title: app.intl.objectsFilterModified,
+          options: [
+            for (final date in ObjectDateFilter.values)
+              AppFilterOption(
+                label: _dateLabel(date),
+                selected: filter.dates.contains(date),
+                onTap: () => onChanged(
+                  filter.copyWith(dates: _toggle(filter.dates, date)),
+                ),
+              ),
+          ],
         ),
       ],
     );
@@ -284,51 +87,4 @@ class _ObjectsFilterPanel extends StatelessWidget {
     ObjectDateFilter.last30Days => app.intl.objectsFilterDate30d,
     ObjectDateFilter.older => app.intl.objectsFilterDateOlder,
   };
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _FilterChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final accent = app.colors.primary.secondary;
-    return Semantics(
-      button: true,
-      selected: selected,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: app.dimensions.border.borderRadius.s,
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: app.dimensions.padding.m,
-            vertical: app.dimensions.padding.s,
-          ),
-          decoration: BoxDecoration(
-            color: selected
-                ? accent.withValues(alpha: 0.15)
-                : app.colors.primary.background3.withValues(alpha: 0.5),
-            borderRadius: app.dimensions.border.borderRadius.s,
-            border: Border.all(
-              color: selected ? accent : app.colors.neutral.grey5,
-            ),
-          ),
-          child: Text(
-            label,
-            style: app.textTheme.bodySmall?.copyWith(
-              color: selected ? accent : app.colors.neutral.grey2,
-              fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }

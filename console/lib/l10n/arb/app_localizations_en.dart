@@ -236,10 +236,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get objectsNoMatchFilter => 'No objects match the filters';
 
   @override
-  String get objectsFilterTitle => 'Filters';
+  String get filtersTitle => 'Filters';
 
   @override
-  String get objectsFilterClear => 'Clear';
+  String get filtersClear => 'Clear';
 
   @override
   String get objectsFilterType => 'Type';
@@ -1163,7 +1163,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accessKeysCreateFirst => 'Create the first key';
 
   @override
-  String get accessKeysNoMatch => 'No key matches the search';
+  String get accessKeysNoMatch => 'No key matches the search or the filters';
+
+  @override
+  String get accessKeysFilterStatus => 'Status';
+
+  @override
+  String get accessKeysFilterLevel => 'Level';
+
+  @override
+  String get accessKeysFilterBucket => 'Bucket';
 
   @override
   String get accessKeyDeleteTitle => 'Delete key';

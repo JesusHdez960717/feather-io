@@ -524,17 +524,17 @@ abstract class AppLocalizations {
   /// **'No objects match the filters'**
   String get objectsNoMatchFilter;
 
-  /// No description provided for @objectsFilterTitle.
+  /// No description provided for @filtersTitle.
   ///
   /// In en, this message translates to:
   /// **'Filters'**
-  String get objectsFilterTitle;
+  String get filtersTitle;
 
-  /// No description provided for @objectsFilterClear.
+  /// No description provided for @filtersClear.
   ///
   /// In en, this message translates to:
   /// **'Clear'**
-  String get objectsFilterClear;
+  String get filtersClear;
 
   /// No description provided for @objectsFilterType.
   ///
@@ -1985,8 +1985,26 @@ abstract class AppLocalizations {
   /// No description provided for @accessKeysNoMatch.
   ///
   /// In en, this message translates to:
-  /// **'No key matches the search'**
+  /// **'No key matches the search or the filters'**
   String get accessKeysNoMatch;
+
+  /// No description provided for @accessKeysFilterStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get accessKeysFilterStatus;
+
+  /// No description provided for @accessKeysFilterLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Level'**
+  String get accessKeysFilterLevel;
+
+  /// No description provided for @accessKeysFilterBucket.
+  ///
+  /// In en, this message translates to:
+  /// **'Bucket'**
+  String get accessKeysFilterBucket;
 
   /// No description provided for @accessKeyDeleteTitle.
   ///
