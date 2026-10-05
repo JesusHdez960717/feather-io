@@ -1,0 +1,22 @@
+# Generates lib/i18n/messages.g.dart from the YAML files (run `fvm dart run slang` from service/).
+# The generated code is versioned. No LocaleSettings / global state: each request gets the
+# translations of its language through `serviceMessages(request.locale)`. Same setup as Winter.
+base_locale: en
+# A key missing in a non-base locale is a compile error in the generated code.
+fallback_strategy: none
+input_directory: lib/i18n
+input_file_pattern: .i18n.yaml
+# `{value}` like ARB/ICU instead of the default `$value`
+string_interpolation: braces
+output_directory: lib/i18n
+output_file_name: messages.g.dart
+flutter_integration: false
+locale_handling: false
+translation_class_visibility: public
+lazy: false
+enum_name: ServiceMessagesLocale
+class_name: ServiceMessages
+timestamp: false
+statistics: false
+format:
+  enabled: true

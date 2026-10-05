@@ -21,7 +21,7 @@ class ReservedBucketFilter extends Filter {
     if (bucketName != null && reservedBucketNames.contains(bucketName)) {
       throw S3Exception(
         S3ErrorCode.accessDenied,
-        message: 'Bucket name "$bucketName" is reserved.',
+        message: intl.errors.s3.reservedBucket(bucket: bucketName),
         resource: bucketName,
       );
     }

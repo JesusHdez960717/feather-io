@@ -49,6 +49,7 @@ TEST_DESC = {
     'get_bucket_location_test.dart': 'GetBucketLocation (`?location`).',
     'get_bucket_test.dart': 'Bucket details (admin): metadata and statistics.',
     'get_object_test.dart': 'GET/HEAD: content types, ETag, `Range` (206/416), `response-*` overrides.',
+    'i18n_test.dart': 'Localized errors: English by default, `Accept-Language: es` in XML and JSON with the same code and `Vary`, regions and q-values, 422 rules of Winter and the service, login.',
     'list_buckets_test.dart': 'ListBuckets: JSON/XML, UTC dates, `Owner`, statistics.',
     'list_objects_test.dart': 'ListObjects V1 and V2: prefixes, paging (token, `marker`, `start-after`), ETags, `encoding-type=url`.',
     'login_rate_limiter_test.dart': 'Login attempt limit (unit, fake clock): penalty, lock, unlock and reset.',

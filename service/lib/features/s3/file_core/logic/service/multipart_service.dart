@@ -75,7 +75,7 @@ class MultipartService {
     if (partNumber < 1 || partNumber > maxPartNumber) {
       throw S3Exception(
         S3ErrorCode.invalidArgument,
-        message: 'The part number must be between 1 and $maxPartNumber.',
+        message: intl.errors.multipart.partNumberRange(max: maxPartNumber),
         resource: key,
       );
     }
@@ -102,7 +102,7 @@ class MultipartService {
     if (parts.isEmpty) {
       throw S3Exception(
         S3ErrorCode.malformedXML,
-        message: 'At least one part must be specified.',
+        message: intl.errors.multipart.noParts,
         resource: key,
       );
     }
@@ -111,7 +111,7 @@ class MultipartService {
       if (parts[i].partNumber <= parts[i - 1].partNumber) {
         throw S3Exception(
           S3ErrorCode.invalidPartOrder,
-          message: 'The parts must be in ascending order.',
+          message: intl.errors.multipart.partsOrder,
           resource: key,
         );
       }
@@ -127,7 +127,7 @@ class MultipartService {
       if (!await file.exists() || !await etagFile.exists()) {
         throw S3Exception(
           S3ErrorCode.invalidPart,
-          message: 'Part $number has not been uploaded.',
+          message: intl.errors.multipart.partNotUploaded(number: number),
           resource: key,
         );
       }
@@ -136,7 +136,7 @@ class MultipartService {
       if (given.isNotEmpty && given != stored) {
         throw S3Exception(
           S3ErrorCode.invalidPart,
-          message: 'The ETag of part $number does not match.',
+          message: intl.errors.multipart.partEtagMismatch(number: number),
           resource: key,
         );
       }
@@ -144,9 +144,11 @@ class MultipartService {
       if (i < parts.length - 1 && length < minPartSize) {
         throw S3Exception(
           S3ErrorCode.entityTooSmall,
-          message:
-              'Part $number is $length bytes; every part but the last one '
-              'must be at least $minPartSize.',
+          message: intl.errors.multipart.partTooSmall(
+            number: number,
+            size: length,
+            min: minPartSize,
+          ),
           resource: key,
         );
       }
@@ -157,8 +159,10 @@ class MultipartService {
     if (size > env.maxObjectSize) {
       throw S3Exception(
         S3ErrorCode.entityTooLarge,
-        message:
-            'The object is $size bytes and the maximum is ${env.maxObjectSize}.',
+        message: intl.errors.s3.objectSizeOverMaximum(
+          size: size,
+          max: env.maxObjectSize,
+        ),
         resource: key,
       );
     }
@@ -307,7 +311,7 @@ class MultipartService {
     // The id is part of the path: hex only, no `..` nor slashes
     final noSuchUpload = S3Exception(
       S3ErrorCode.noSuchUpload,
-      message: 'The upload "$uploadId" does not exist or has already finished.',
+      message: intl.errors.multipart.noSuchUpload(uploadId: uploadId),
       resource: key,
     );
     if (!_uploadIdPattern.hasMatch(uploadId)) throw noSuchUpload;

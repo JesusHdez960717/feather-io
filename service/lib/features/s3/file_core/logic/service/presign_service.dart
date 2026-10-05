@@ -19,7 +19,7 @@ class PresignService {
     if (expiresIn.inSeconds < 1 || expiresIn > SigV4Signer.maxExpiration) {
       throw S3Exception(
         S3ErrorCode.invalidArgument,
-        message: 'The expiration must be between 1 second and 7 days.',
+        message: intl.errors.s3.presignExpiration,
         resource: key,
       );
     }

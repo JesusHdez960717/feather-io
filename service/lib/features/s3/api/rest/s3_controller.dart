@@ -301,7 +301,7 @@ class S3Controller {
     if (!canRead) {
       throw S3Exception(
         S3ErrorCode.accessDenied,
-        message: 'Copying an object requires read permission on the source.',
+        message: intl.errors.copy.needsReadPermission,
         resource: copySource,
       );
     }
@@ -324,7 +324,7 @@ class S3Controller {
     if (slash <= 0 || slash == path.length - 1) {
       throw S3Exception(
         S3ErrorCode.invalidArgument,
-        message: 'x-amz-copy-source must look like /bucket/key.',
+        message: intl.errors.copy.sourceFormat,
         resource: copySource,
       );
     }
@@ -375,7 +375,7 @@ class S3Controller {
     if (!_storageClasses.contains(value)) {
       throw S3Exception(
         S3ErrorCode.invalidStorageClass,
-        message: 'The storage class "$value" is not valid.',
+        message: intl.errors.s3.invalidStorageClass(value: value),
         resource: request.requestedUri.path,
       );
     }
@@ -430,7 +430,7 @@ class S3Controller {
     if (maxKeys == null) {
       throw S3Exception(
         S3ErrorCode.invalidArgument,
-        message: 'max-keys must be an integer.',
+        message: intl.errors.s3.maxKeysNotInteger,
         resource: maxKeysParam,
       );
     }
@@ -581,7 +581,7 @@ class S3Controller {
     if (start >= size) {
       throw S3Exception(
         S3ErrorCode.invalidRange,
-        message: 'The range "$header" is outside the object ($size bytes).',
+        message: intl.errors.s3.rangeOutsideObject(range: '"$header"', size: size),
         resource: key,
       );
     }
@@ -644,7 +644,7 @@ class S3Controller {
 
     throw S3Exception(
       S3ErrorCode.invalidRequest,
-      message: 'POST on an object only supports ?uploads or ?uploadId.',
+      message: intl.errors.multipart.postNotSupported,
       resource: key,
     );
   }
@@ -660,7 +660,7 @@ class S3Controller {
     if (!permissions.contains('s3.put-object')) {
       throw S3Exception(
         S3ErrorCode.accessDenied,
-        message: 'Multipart uploads require the upload permission.',
+        message: intl.errors.multipart.needsUploadPermission,
         resource: resource,
       );
     }
@@ -677,7 +677,7 @@ class S3Controller {
     if (partNumber == null) {
       throw S3Exception(
         S3ErrorCode.invalidArgument,
-        message: 'Missing the part number (partNumber).',
+        message: intl.errors.multipart.missingPartNumber,
         resource: key,
       );
     }
@@ -773,13 +773,12 @@ class S3Controller {
     final rangeHeader = request.headers['x-amz-copy-source-range'];
     (int, int)? range;
     if (rangeHeader != null) {
-      final match = RegExp(
-        r'^bytes=(\d+)-(\d+)$',
-      ).firstMatch(rangeHeader.trim());
+      final match = RegExp(r'^bytes=(\d+)-(\d+)$')
+          .firstMatch(rangeHeader.trim());
       if (match == null) {
         throw S3Exception(
           S3ErrorCode.invalidArgument,
-          message: 'x-amz-copy-source-range must look like bytes=a-b.',
+          message: intl.errors.copy.sourceRangeFormat,
           resource: rangeHeader,
         );
       }
@@ -823,7 +822,7 @@ class S3Controller {
   ) async {
     final malformed = S3Exception(
       S3ErrorCode.malformedXML,
-      message: 'The part list is not valid.',
+      message: intl.errors.multipart.invalidPartList,
       resource: key,
     );
     final body = await utf8.decodeStream(request.read());
@@ -852,7 +851,7 @@ class S3Controller {
     if (!request.queryParams.containsKey('delete')) {
       throw S3Exception(
         S3ErrorCode.invalidRequest,
-        message: 'Multi-object delete requires ?delete parameter',
+        message: intl.errors.multiDelete.needsDeleteParam,
         resource: bucketName,
       );
     }
@@ -867,9 +866,9 @@ class S3Controller {
     if (deleteRequest.keys.length > FileManagementService.maxKeysLimit) {
       throw S3Exception(
         S3ErrorCode.malformedXML,
-        message:
-            'At most ${FileManagementService.maxKeysLimit} objects can be '
-            'deleted per request.',
+        message: intl.errors.multiDelete.tooManyKeys(
+          max: FileManagementService.maxKeysLimit,
+        ),
         resource: bucketName,
       );
     }
@@ -893,7 +892,7 @@ class S3Controller {
     } catch (e) {
       throw S3Exception(
         S3ErrorCode.invalidRequest,
-        message: 'Invalid JSON for delete request',
+        message: intl.errors.multiDelete.invalidJson,
         resource: bucketName,
       );
     }
@@ -905,7 +904,7 @@ class S3Controller {
     if (_xmlTag(body, 'Delete') == null) {
       throw S3Exception(
         S3ErrorCode.malformedXML,
-        message: 'The body must be a <Delete> with the objects to delete.',
+        message: intl.errors.multiDelete.invalidBody,
         resource: bucketName,
       );
     }
@@ -1041,9 +1040,7 @@ class S3Controller {
         );
       }
       buffer.writeln('    <StorageClass>STANDARD</StorageClass>');
-      buffer.writeln(
-        '    <Initiated>${_s3Date(upload.initiated)}</Initiated>',
-      );
+      buffer.writeln('    <Initiated>${_s3Date(upload.initiated)}</Initiated>');
       buffer.writeln('  </Upload>');
     }
     buffer.writeln('</ListMultipartUploadsResult>');

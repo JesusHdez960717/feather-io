@@ -1,0 +1,88 @@
+# Messages of the service errors, in English (the base locale and the default answer).
+# The parameter types are declared here ({bucket: String}); the other locales only need the text.
+# After any change run `fvm dart run slang` (from service/) and commit the generated messages*.g.dart.
+# Quote the texts: `{bucket: String}` has a `: ` that YAML would read as a map.
+# Only the message is translated: the error codes (`NoSuchBucket`…) never change.
+errors:
+  # S3 errors of buckets, objects, listings and copies
+  s3:
+    invalidBucketName: 'The bucket name "{bucket: String}" is not valid.'
+    invalidBucketNameRules: 'The bucket name "{bucket: String}" is not valid. It must be 3 to 63 characters long, use only lowercase letters, digits, dots or hyphens, and start and end with a letter or a digit.'
+    reservedBucket: 'Bucket name "{bucket: String}" is reserved.'
+    noSuchBucket: 'The bucket "{bucket: String}" does not exist.'
+    bucketAlreadyExists: 'The bucket "{bucket: String}" already exists.'
+    bucketNotEmpty: 'The bucket "{bucket: String}" is not empty and cannot be deleted.'
+    invalidKey: 'The key "{key: String}" is not valid or contains forbidden characters.'
+    noSuchKey: 'The key "{key: String}" does not exist.'
+    unsupportedSubresource: 'The subresource "{subresource: String}" is not implemented.'
+    invalidStorageClass: 'The storage class "{value: String}" is not valid.'
+    maxKeysNotInteger: 'max-keys must be an integer.'
+    maxKeysNegative: 'max-keys cannot be negative.'
+    continuationTokenInvalid: 'The continuation-token is not valid.'
+    # `range` is the Range header (`bytes=10-20`) or the requested bytes (`10-20`)
+    rangeOutsideObject: 'The range {range: String} is outside the object ({size: int} bytes).'
+    objectOverMaximum: 'The object is over the maximum of {max: int} bytes.'
+    objectSizeOverMaximum: 'The object is {size: int} bytes and the maximum is {max: int}.'
+    objectInUse: 'The object is in use and cannot be replaced; please retry.'
+    incompleteChunkedBody: 'The aws-chunked body is incomplete or malformed.'
+    nothingToDownload: 'No objects found to download.'
+    missingFolderPrefix: 'Missing the folder to delete (prefix).'
+    slowDown: 'Please reduce your request rate.'
+    presignExpiration: 'The expiration must be between 1 second and 7 days.'
+  # CopyObject and UploadPartCopy
+  copy:
+    needsReadPermission: 'Copying an object requires read permission on the source.'
+    sourceFormat: 'x-amz-copy-source must look like /bucket/key.'
+    sourceRangeFormat: 'x-amz-copy-source-range must look like bytes=a-b.'
+    conditionsFailed: 'The source object does not meet the copy conditions.'
+    ontoItself: 'Copying an object onto itself requires changing its metadata or its storage class.'
+  # DeleteObjects
+  multiDelete:
+    needsDeleteParam: 'Multi-object delete requires ?delete parameter'
+    tooManyKeys: 'At most {max: int} objects can be deleted per request.'
+    invalidJson: 'Invalid JSON for delete request'
+    invalidBody: 'The body must be a <Delete> with the objects to delete.'
+  # Multipart uploads
+  multipart:
+    postNotSupported: 'POST on an object only supports ?uploads or ?uploadId.'
+    needsUploadPermission: 'Multipart uploads require the upload permission.'
+    missingPartNumber: 'Missing the part number (partNumber).'
+    partNumberRange: 'The part number must be between 1 and {max: int}.'
+    invalidPartList: 'The part list is not valid.'
+    noParts: 'At least one part must be specified.'
+    partsOrder: 'The parts must be in ascending order.'
+    partNotUploaded: 'Part {number: int} has not been uploaded.'
+    partEtagMismatch: 'The ETag of part {number: int} does not match.'
+    partTooSmall: 'Part {number: int} is {size: int} bytes; every part but the last one must be at least {min: int}.'
+    noSuchUpload: 'The upload "{uploadId: String}" does not exist or has already finished.'
+  # SigV4 signatures and presigned URLs. Never with internal details
+  signature:
+    invalid: 'The request signature is not valid.'
+    invalidAuthorizationHeader: 'Invalid Authorization header format'
+    invalidCredential: 'Invalid Credential format'
+    credentialDateMismatch: 'The credential''s date is not the signature''s date.'
+    clockSkew: 'The signature date is more than {minutes: int} minutes away from the server''s time.'
+    mismatch: 'Signature mismatch'
+    sha256Mismatch: 'The body does not match the signed x-amz-content-sha256.'
+    accessKeyInactive: 'The access key does not exist or is not active.'
+    presignMissingParam: 'Missing {name: String} in the presigned URL'
+    unsupportedAlgorithm: 'Unsupported signing algorithm'
+    invalidDateOrExpires: 'Invalid X-Amz-Date or X-Amz-Expires'
+    presignNotYetValid: 'The presigned URL is not valid yet.'
+    expired: 'Request has expired'
+  # Admin API
+  admin:
+    invalidCredentials: 'Invalid credentials'
+    tooManyLoginAttempts: 'Too many failed login attempts'
+    invalidLoginRequest: 'Invalid login request'
+    invalidRequest: 'Invalid request'
+    tooManyRequests: 'Too many requests'
+    accessKeyNotFound: 'Access key not found'
+  # Validation rules of the service's own requests (Winter translates its validators)
+  validations:
+    bucketName: 'Not a valid bucket name'
+    isoDate: 'Not a valid ISO 8601 date'
+    futureExpiry: 'The expiration date must be in the future'
+    accessKeyNoScope: 'Give the key all_buckets or at least one bucket'
+    accessKeyBothScopes: 'Use all_buckets or buckets, not both'
+    accessKeyRepeatedBucket: 'Each bucket can only appear once'

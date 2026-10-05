@@ -101,7 +101,7 @@ class AwsChunkedDecoder {
 
   static S3Exception _malformed() => S3Exception(
     S3ErrorCode.incompleteBody,
-    message: 'The aws-chunked body is incomplete or malformed.',
+    message: intl.errors.s3.incompleteChunkedBody,
   );
 }
 

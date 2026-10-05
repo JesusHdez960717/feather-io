@@ -28,7 +28,8 @@ class RateLimitFilter extends Filter {
     final headers = {
       'X-RateLimit-Limit': '${rateLimiter.maxRequests}',
       'X-RateLimit-Remaining': '${rateLimiter.getRemaining(client)}',
-      'X-RateLimit-Reset': '${_ceilSeconds(rateLimiter.getResetDuration(client))}',
+      'X-RateLimit-Reset':
+          '${_ceilSeconds(rateLimiter.getResetDuration(client))}',
     };
 
     if (allowed) {
@@ -44,17 +45,14 @@ class RateLimitFilter extends Filter {
 
     if (_isAdmin(request)) {
       return ResponseEntity.tooManyRequests(
-        body: 'Too many requests',
+        body: intl.errors.admin.tooManyRequests,
         retryAfter: int.parse(retryAfter),
         headers: headers,
       );
     }
     final error = await _s3Errors(
       request,
-      S3Exception(
-        S3ErrorCode.slowDown,
-        message: 'Please reduce your request rate.',
-      ),
+      S3Exception(S3ErrorCode.slowDown, message: intl.errors.s3.slowDown),
       StackTrace.current,
     );
     return error.copyWith(

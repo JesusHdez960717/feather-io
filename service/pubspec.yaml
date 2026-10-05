@@ -23,6 +23,11 @@ dependencies:
 
   dart_jsonwebtoken: 3.4.1      #JWT
 
+  #i18n: typed error messages generated from lib/i18n/*.i18n.yaml (`fvm dart run slang`)
+  slang: 4.19.2
+  #Imported by the code that slang generates
+  intl: 0.20.2
+
   #DB
   drift: 2.31.0
   sqlite3: 2.9.4

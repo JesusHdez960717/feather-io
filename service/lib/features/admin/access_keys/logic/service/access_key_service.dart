@@ -128,7 +128,13 @@ class AccessKeyService {
 
   Future<AccessKeyModel> _get(String id) async {
     final row = await repo.get(id);
-    if (row == null) throw NotFoundException(body: 'Access key not found');
+    if (row == null) {
+      throw S3Exception(
+        S3ErrorCode.noSuchAccessKey,
+        message: intl.errors.admin.accessKeyNotFound,
+        resource: id,
+      );
+    }
     return _toModel(row);
   }
 
@@ -155,7 +161,7 @@ class AccessKeyService {
           ConstrainViolation(
             value: expiresAt.toIso8601String(),
             fieldName: 'expires_at',
-            message: 'The expiration date must be in the future',
+            message: intl.errors.validations.futureExpiry,
           ),
         ],
       );

@@ -35,14 +35,15 @@ class CopyConditions {
     final failed =
         (ifMatch != null
             ? !_matches(ifMatch!, etag)
-            : ifUnmodifiedSince != null && seconds.isAfter(ifUnmodifiedSince!)) ||
+            : ifUnmodifiedSince != null &&
+                  seconds.isAfter(ifUnmodifiedSince!)) ||
         (ifNoneMatch != null
             ? _matches(ifNoneMatch!, etag)
             : ifModifiedSince != null && !seconds.isAfter(ifModifiedSince!));
     if (failed) {
       throw S3Exception(
         S3ErrorCode.preconditionFailed,
-        message: 'The source object does not meet the copy conditions.',
+        message: intl.errors.copy.conditionsFailed,
         resource: resource,
       );
     }

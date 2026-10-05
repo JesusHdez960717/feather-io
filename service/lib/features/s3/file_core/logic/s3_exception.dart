@@ -11,6 +11,9 @@ enum S3ErrorCode {
   internalError('InternalError', 500),
   invalidAccessKeyId('InvalidAccessKeyId', 403),
   invalidArgument('InvalidArgument', 400),
+  // Admin API only (not AWS codes)
+  invalidCredentials('InvalidCredentials', 403),
+  noSuchAccessKey('NoSuchAccessKey', 404),
   invalidBucketName('InvalidBucketName', 400),
   invalidPart('InvalidPart', 400),
   invalidPartOrder('InvalidPartOrder', 400),
@@ -36,9 +39,11 @@ enum S3ErrorCode {
 }
 
 /// Business error with an S3 code. `S3ExceptionHandler` renders it as XML or
-/// JSON depending on `Accept`.
+/// JSON depending on `Accept`. The message is in the request's language
+/// (`message: t.errors…`, from `Accept-Language`); the code never changes.
 class S3Exception extends ApiException implements Serializable {
   final S3ErrorCode code;
+
   final String message;
 
   /// Bucket or key the operation failed on.
@@ -50,28 +55,28 @@ class S3Exception extends ApiException implements Serializable {
   S3Exception.invalidBucketName(String bucketName)
     : this(
         S3ErrorCode.invalidBucketName,
-        message: 'The bucket name "$bucketName" is not valid.',
+        message: intl.errors.s3.invalidBucketName(bucket: bucketName),
         resource: bucketName,
       );
 
   S3Exception.invalidKey(String key)
     : this(
         S3ErrorCode.invalidArgument,
-        message: 'The key "$key" is not valid or contains forbidden characters.',
+        message: intl.errors.s3.invalidKey(key: key),
         resource: key,
       );
 
   S3Exception.noSuchBucket(String bucketName)
     : this(
         S3ErrorCode.noSuchBucket,
-        message: 'The bucket "$bucketName" does not exist.',
+        message: intl.errors.s3.noSuchBucket(bucket: bucketName),
         resource: bucketName,
       );
 
   S3Exception.noSuchKey(String key)
     : this(
         S3ErrorCode.noSuchKey,
-        message: 'The key "$key" does not exist.',
+        message: intl.errors.s3.noSuchKey(key: key),
         resource: key,
       );
 

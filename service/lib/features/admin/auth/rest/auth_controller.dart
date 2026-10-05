@@ -15,7 +15,7 @@ class AuthController {
     final locked = rateLimiter.lockedFor(client);
     if (locked != null) {
       return ResponseEntity.tooManyRequests(
-        body: 'Too many failed login attempts',
+        body: intl.errors.admin.tooManyLoginAttempts,
         retryAfter: (locked.inMilliseconds / 1000).ceil(),
       );
     }
@@ -29,7 +29,10 @@ class AuthController {
       final validSecret = _sameText(loginReq.secret, env.secret);
       if (!validAccess || !validSecret) {
         await rateLimiter.failed(client);
-        throw ForbiddenException(body: 'Invalid credentials');
+        throw S3Exception(
+          S3ErrorCode.invalidCredentials,
+          message: intl.errors.admin.invalidCredentials,
+        );
       }
       rateLimiter.succeeded(client);
 
@@ -77,7 +80,10 @@ class AuthController {
       );
     } catch (e) {
       if (e is ApiException) rethrow;
-      throw BadRequestException(body: 'Invalid login request');
+      throw S3Exception(
+        S3ErrorCode.invalidRequest,
+        message: intl.errors.admin.invalidLoginRequest,
+      );
     }
   }
 

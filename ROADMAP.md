@@ -90,7 +90,7 @@ is done.
   keys* section: per-bucket levels or every bucket, expiration, enable/disable, regenerate the
   secret; secrets encrypted with `KEYS_ENCRYPTION_SECRET`).
 - [x] SQLite path based on `STORAGE_VOLUME_PATH` (`STORAGE_VOLUME_PATH/.db/feather-io.sqlite`).
-- [ ] i18n of the service error messages.
+- [x] i18n of the service error messages (English and Spanish, from `Accept-Language`).
 - [x] Dockerfile: Dart version `^3.13` and `libsqlite3` in the final image.
 - [ ] Console tests (cubits and repos).
 

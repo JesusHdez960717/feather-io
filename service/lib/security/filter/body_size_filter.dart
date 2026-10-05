@@ -36,7 +36,7 @@ class BodySizeFilter extends Filter {
       if (length != null && length > max) {
         throw S3Exception(
           S3ErrorCode.entityTooLarge,
-          message: 'The object is $length bytes and the maximum is $max.',
+          message: intl.errors.s3.objectSizeOverMaximum(size: length, max: max),
           resource: request.pathParams['key'],
         );
       }

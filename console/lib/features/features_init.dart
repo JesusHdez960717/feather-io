@@ -5,6 +5,7 @@ import 'package:dio/browser.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:intl/intl.dart';
 
 class FeaturesInit {
   static Future<void> init() async {
@@ -25,6 +26,14 @@ class FeaturesInit {
       };
     dio.interceptors.add(
       InterceptorsWrapper(
+        // The service translates its error messages to the app's language
+        onRequest: (RequestOptions options, RequestInterceptorHandler handler) {
+          final language = Intl.defaultLocale;
+          if (language != null) {
+            options.headers[HttpHeaders.acceptLanguageHeader] = language;
+          }
+          return handler.next(options);
+        },
         onError: (DioException e, ErrorInterceptorHandler handler) async {
           if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
             app.di.find<AuthCubit>().logout();

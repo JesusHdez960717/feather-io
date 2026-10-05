@@ -197,7 +197,7 @@ class AdminController {
     if (prefix == null || prefix.isEmpty) {
       throw S3Exception(
         S3ErrorCode.invalidArgument,
-        message: 'Missing the folder to delete (prefix).',
+        message: intl.errors.s3.missingFolderPrefix,
         resource: bucketName,
       );
     }
@@ -245,7 +245,10 @@ class AdminController {
       );
     } catch (e) {
       if (e is ApiException) rethrow;
-      throw BadRequestException(body: 'Invalid request');
+      throw S3Exception(
+        S3ErrorCode.invalidRequest,
+        message: intl.errors.admin.invalidRequest,
+      );
     }
   }
 }

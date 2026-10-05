@@ -17,10 +17,7 @@ class FileManagementService {
     if (!S3Validator.isValidBucketName(bucketName)) {
       throw S3Exception(
         S3ErrorCode.invalidBucketName,
-        message:
-            'The bucket name "$bucketName" is not valid. It must be 3 to 63 '
-            'characters long, use only lowercase letters, digits, dots or '
-            'hyphens, and start and end with a letter or a digit.',
+        message: intl.errors.s3.invalidBucketNameRules(bucket: bucketName),
         resource: bucketName,
       );
     }
@@ -30,7 +27,7 @@ class FileManagementService {
     if (await bucketDir.exists()) {
       throw S3Exception(
         S3ErrorCode.bucketAlreadyOwnedByYou,
-        message: 'The bucket "$bucketName" already exists.',
+        message: intl.errors.s3.bucketAlreadyExists(bucket: bucketName),
         resource: bucketName,
       );
     }
@@ -65,7 +62,7 @@ class FileManagementService {
     if (hasObjects) {
       throw S3Exception(
         S3ErrorCode.bucketNotEmpty,
-        message: 'The bucket "$bucketName" is not empty and cannot be deleted.',
+        message: intl.errors.s3.bucketNotEmpty(bucket: bucketName),
         resource: bucketName,
       );
     }
@@ -137,7 +134,7 @@ class FileManagementService {
       if (bytesRead > max) {
         throw S3Exception(
           S3ErrorCode.entityTooLarge,
-          message: 'The object is over the maximum of $max bytes.',
+          message: intl.errors.s3.objectOverMaximum(max: max),
           resource: key,
         );
       }
@@ -196,7 +193,7 @@ class FileManagementService {
         if (await source.exists()) await source.delete();
         throw S3Exception(
           S3ErrorCode.serviceUnavailable,
-          message: 'The object is in use and cannot be replaced; please retry.',
+          message: intl.errors.s3.objectInUse,
           resource: key,
         );
       }
@@ -234,7 +231,7 @@ class FileManagementService {
     if (maxKeys < 0) {
       throw S3Exception(
         S3ErrorCode.invalidArgument,
-        message: 'max-keys cannot be negative.',
+        message: intl.errors.s3.maxKeysNegative,
         resource: bucketName,
       );
     }
@@ -349,7 +346,7 @@ class FileManagementService {
     } catch (_) {
       throw S3Exception(
         S3ErrorCode.invalidArgument,
-        message: 'The continuation-token is not valid.',
+        message: intl.errors.s3.continuationTokenInvalid,
         resource: token,
       );
     }
@@ -385,9 +382,7 @@ class FileManagementService {
     if (sameObject && headers == null && storageClass == null) {
       throw S3Exception(
         S3ErrorCode.invalidRequest,
-        message:
-            'Copying an object onto itself requires changing its metadata '
-            'or its storage class.',
+        message: intl.errors.copy.ontoItself,
         resource: key,
       );
     }
@@ -471,8 +466,10 @@ class FileManagementService {
     if (start > end || end >= stat.size) {
       throw S3Exception(
         S3ErrorCode.invalidRange,
-        message:
-            'The range $start-$end is outside the object (${stat.size} bytes).',
+        message: intl.errors.s3.rangeOutsideObject(
+          range: '$start-$end',
+          size: stat.size,
+        ),
         resource: sourceKey,
       );
     }
@@ -572,7 +569,7 @@ class FileManagementService {
       await tempDir.delete(recursive: true);
       throw S3Exception(
         S3ErrorCode.noSuchKey,
-        message: 'No objects found to download.',
+        message: intl.errors.s3.nothingToDownload,
         resource: bucketName,
       );
     }

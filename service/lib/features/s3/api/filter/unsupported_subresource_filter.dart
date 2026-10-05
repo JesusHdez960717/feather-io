@@ -56,7 +56,7 @@ class UnsupportedSubresourceFilter extends Filter {
     if (subresource != null) {
       throw S3Exception(
         S3ErrorCode.notImplemented,
-        message: 'The subresource "$subresource" is not implemented.',
+        message: intl.errors.s3.unsupportedSubresource(subresource: subresource),
         resource: request.requestedUri.path,
       );
     }

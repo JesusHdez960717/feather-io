@@ -49,7 +49,10 @@ class FeatherIO {
     );
 
     //--------------- Errors ---------------\\
-    Winter.context.setUp(exceptionHandler: S3ExceptionHandler());
+    Winter.context.setUp(
+      exceptionHandler: S3ExceptionHandler(),
+      localeConfig: serviceLocales(),
+    );
 
     // A malformed PUBLIC_URL fails at start-up, not on the first presigned URL
     env.publicUrl;

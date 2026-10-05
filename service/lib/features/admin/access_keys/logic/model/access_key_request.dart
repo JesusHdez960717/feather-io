@@ -57,17 +57,17 @@ class AccessKeyRequest implements Validatable {
       ..addRule((_) {
         final hasBuckets = buckets != null && buckets!.isNotEmpty;
         if (allBuckets == null && !hasBuckets) {
-          return 'Give the key all_buckets or at least one bucket';
+          return intl.errors.validations.accessKeyNoScope;
         }
         if (allBuckets != null && hasBuckets) {
-          return 'Use all_buckets or buckets, not both';
+          return intl.errors.validations.accessKeyBothScopes;
         }
         return null;
       })
       ..addRule((_) {
         final names = [for (final item in buckets ?? const []) item['bucket']];
         return names.toSet().length != names.length
-            ? 'Each bucket can only appear once'
+            ? intl.errors.validations.accessKeyRepeatedBucket
             : null;
       })
       ..validate(buckets);
@@ -79,7 +79,7 @@ class AccessKeyRequest implements Validatable {
         ..addRule(
           (value) => value is String && S3Validator.isValidBucketName(value)
               ? null
-              : 'Not a valid bucket name',
+              : intl.errors.validations.bucketName,
         )
         ..validate(bucket);
       cvc
@@ -93,7 +93,7 @@ class AccessKeyRequest implements Validatable {
       ..addRule(
         (value) => value == null || DateTime.tryParse(value as String) != null
             ? null
-            : 'Not a valid ISO 8601 date',
+            : intl.errors.validations.isoDate,
       )
       ..validate(expiresAt);
 
