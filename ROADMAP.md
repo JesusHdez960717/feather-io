@@ -5,12 +5,12 @@ is done.
 
 ## Current status
 
-| Area             | Service                                                                                                                       | Console                                                       |
-|------------------|-------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------|
-| Buckets          | List, create, edit, delete, empty, details with statistics (description and color in SQLite)                                  | All of the above, in the *Buckets* section                    |
+| Area             | Service                                                                                                                       | Console                                                          |
+|------------------|-------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------|
+| Buckets          | List, create, edit, delete, empty, details with statistics (description and color in SQLite)                                  | All of the above, in the *Buckets* section                       |
 | Objects          | List (prefix/delimiter, paging), upload, multipart, download, copy, delete one or many, zip download, folders, presigned URLs | All of the above, with preview, drag & drop and a transfer queue |
-| Anonymous access | Rules per prefix or pattern (`readOnly`, `writeOnly`, `readWrite`), applied by `AnonymousAccessFilter`                        | Create and delete rules per bucket                            |
-| Auth             | JWT + SigV4, the root key from the env plus access keys per bucket, login and general rate limits                             | Login, *Access keys* section                                  |
+| Anonymous access | Rules per prefix or pattern (`readOnly`, `writeOnly`, `readWrite`), applied by `AnonymousAccessFilter`                        | Create and delete rules per bucket                               |
+| Auth             | JWT + SigV4, the root key from the env plus access keys per bucket, login and general rate limits                             | Login, *Access keys* section                                     |
 
 ## Phase 0: Foundation
 
@@ -93,8 +93,17 @@ is done.
 - [ ] i18n of the service error messages.
 - [x] Dockerfile: Dart version `^3.13` and `libsqlite3` in the final image.
 - [ ] Console tests (cubits and repos).
-- [ ] Console: drop `MaterialUiCompatibilityBridge` (`main.dart`, deprecated; the only
-  `flutter analyze` notice) once the dependencies have moved to `material_ui`.
+
+## Phase 6: Makeup for version 1.0.0
+
+- [ ] An object mapper for XML, so the service has no `parseToXML` helpers: each object implements
+  `toJson` or `toXml` its own way.
+- [ ] Shrink `S3Controller`, which has more than 1000 lines.
+- [ ] A visual identity/icon like Brag's, and a promo video with real screenshots of the design.
+- [ ] Performance tests/benchmarks (e.g. `minio/warp`) with the service on Linux: confirm the
+  suspected bottlenecks (every listing page walks the whole bucket, `ListBuckets` walks every
+  object, md5 and SQLite on every upload) and review with that data the general limit of 2000
+  requests/min per IP (see `DECISIONS.md`).
 
 ## Open source release
 
@@ -122,10 +131,6 @@ Not part of 1.0; they will be done later.
   decided what happens if it fails halfway).
 - [ ] Move object search and filters to the service, to search the whole folder and not only the
   pages already loaded.
-- [ ] Benchmarks (e.g. `minio/warp`) with the service on Linux: confirm the suspected bottlenecks
-  (every listing page walks the whole bucket, `ListBuckets` walks every object, md5 and SQLite on
-  every upload) and review with that data the general limit of 2000 requests/min per IP (see
-  `DECISIONS.md`).
 
 ## Parked
 
@@ -137,11 +142,3 @@ Not part of 1.0; they will be done later.
   retention/object lock and MinIO's own APIs (admin, snowball, force-delete).
 - Keys with characters the filesystem doesn't support (`<>:"|?*` on Windows): keys would have to be
   encoded on disk.
-
-## Ideas
-
-- [ ] An object mapper for XML, so the service has no `parseToXML` helpers: each object implements
-  `toJson` or `toXml` its own way.
-- [ ] Shrink `S3Controller`, which has more than 1000 lines.
-- [ ] Performance tests/benchmarks, maybe with MinIO warp?
-- [ ] A visual identity/icon like Brag's, and a promo video with real screenshots of the design.
