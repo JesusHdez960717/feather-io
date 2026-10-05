@@ -449,12 +449,15 @@ in 8 MiB parts, one after another, so on web only one part is in memory, and a f
 upload is aborted; the browser only calls `upload`/`download`, the rail shows `TransfersIndicator`
 above the language selector and it opens `TransfersPanel`; finished downloads are handed to the
 browser to save, finished uploads fire `BucketChangedEvent`, at most every 2 s per bucket while more
-are pending, and it asks before closing the tab while transfers are running); `bucket_admin` is the
+are pending, and it asks before closing the tab while transfers are running); `access_keys` owns the *Access keys* section (`AccessKeysScreen` at `/keys`: the
+root key plus the managed keys, `AccessKeyForm` drawer, `AccessKeySecretDialog`, which shows the
+secret once and can't be dismissed until the user confirms it was saved; it reads the buckets
+through `BucketCubit`); `bucket_admin` is the
 *Buckets* section (`BucketAdminScreen`, list + detail tabs) and composes `buckets`,
 `anonymous_access` and `browser` ("Open in browser" uses `BrowserScreen.navigator.openBucket`). A
 feature may consume another feature's models, cubits and views, but never its client or repo, and
 dependencies go one way only (`browser` → `buckets`/`transfers`, `transfers` → `buckets`,
-`bucket_admin` → everything else, never the reverse). A screen that composes several features
+`access_keys` → `buckets`, `bucket_admin` → everything else, never the reverse). A screen that composes several features
 provides their cubits (e.g. `BrowserScreen.navigator.builder` provides `BrowserCubit` and
 `BucketCubit`); dialogs opened from it reuse the instance with `BlocProvider.value`.
 

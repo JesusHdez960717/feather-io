@@ -61,6 +61,15 @@ class _BaseScreenState extends State<BaseScreen> {
                   ),
                   label: Text(app.intl.navBuckets),
                 ),
+                NavigationRailDestination(
+                  icon: app.assets.icons.actions.key.build(
+                    color: app.colors.neutral.grey3,
+                  ),
+                  selectedIcon: app.assets.icons.actions.key.build(
+                    color: app.colors.neutral.white,
+                  ),
+                  label: Text(app.intl.navAccessKeys),
+                ),
               ],
               trailing: Expanded(
                 child: Align(

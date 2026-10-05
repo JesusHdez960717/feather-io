@@ -991,4 +991,326 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get navLogout => 'Cerrar sesión';
+
+  @override
+  String get navAccessKeys => 'Claves de acceso';
+
+  @override
+  String get accessKeysDescription =>
+      'Cada clave deja entrar a un cliente S3 (AWS CLI, rclone, SDKs) solo en los buckets que le des.';
+
+  @override
+  String get accessKeysSecretOnce =>
+      'El secreto se muestra una sola vez, al crear la clave o al regenerarlo.';
+
+  @override
+  String get accessKeysSearchHint => 'Buscar por nombre o ID...';
+
+  @override
+  String get accessKeyCreate => 'Crear clave';
+
+  @override
+  String get accessKeyColumnName => 'Nombre';
+
+  @override
+  String get accessKeyColumnId => 'Access key ID';
+
+  @override
+  String get accessKeyColumnPermissions => 'Permisos';
+
+  @override
+  String get accessKeyColumnLastUsed => 'Último uso';
+
+  @override
+  String get accessKeyColumnStatus => 'Estado';
+
+  @override
+  String get accessKeyRootName => 'Clave raíz';
+
+  @override
+  String get accessKeyRootBadge => 'Raíz';
+
+  @override
+  String get accessKeyRootPermissions => 'Todo, incluida la consola';
+
+  @override
+  String get accessKeyRootLocked =>
+      'Se configura con FEATHER_ACCESS y FEATHER_SECRET: no se puede editar ni eliminar';
+
+  @override
+  String accessKeyCreatedOn(String date) {
+    return 'Creada el $date';
+  }
+
+  @override
+  String get accessKeyCopyId => 'Copiar ID';
+
+  @override
+  String get accessKeyIdCopied => 'ID copiado';
+
+  @override
+  String get accessKeyAllBuckets => 'Todos';
+
+  @override
+  String get accessKeyCreatesBuckets => '+ crear buckets';
+
+  @override
+  String get accessKeyLevelReadOnly => 'Solo lectura';
+
+  @override
+  String get accessKeyLevelWriteOnly => 'Solo escritura';
+
+  @override
+  String get accessKeyLevelReadWrite => 'Lectura y escritura';
+
+  @override
+  String get accessKeyLevelShortRead => 'Lectura';
+
+  @override
+  String get accessKeyLevelShortWrite => 'Escritura';
+
+  @override
+  String get accessKeyLevelShortBoth => 'Ambos';
+
+  @override
+  String get accessKeyLevelReadOnlyDescription => 'Listar y descargar objetos.';
+
+  @override
+  String get accessKeyLevelWriteOnlyDescription =>
+      'Subir y borrar objetos, sin verlos.';
+
+  @override
+  String get accessKeyLevelReadWriteDescription =>
+      'Listar, descargar, subir y borrar objetos.';
+
+  @override
+  String get accessKeyStatusActive => 'Activa';
+
+  @override
+  String get accessKeyStatusDisabled => 'Desactivada';
+
+  @override
+  String get accessKeyStatusExpired => 'Caducada';
+
+  @override
+  String accessKeyExpiresOn(String date) {
+    return 'Caduca el $date';
+  }
+
+  @override
+  String accessKeyExpiredOn(String date) {
+    return 'Caducó el $date';
+  }
+
+  @override
+  String get accessKeyNeverUsed => 'Nunca';
+
+  @override
+  String get accessKeyUsedNow => 'Ahora mismo';
+
+  @override
+  String accessKeyUsedMinutes(int count) {
+    return 'Hace $count min';
+  }
+
+  @override
+  String accessKeyUsedHours(int count) {
+    return 'Hace $count h';
+  }
+
+  @override
+  String accessKeyUsedDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Hace $count días',
+      one: 'Hace 1 día',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String accessKeyActions(String name) {
+    return 'Acciones de $name';
+  }
+
+  @override
+  String get accessKeyEditPermissions => 'Editar permisos';
+
+  @override
+  String get accessKeyRegenerateSecret => 'Regenerar secreto';
+
+  @override
+  String get accessKeyDisable => 'Desactivar';
+
+  @override
+  String get accessKeyEnable => 'Activar';
+
+  @override
+  String get accessKeysFooterHint =>
+      'Las claves solo sirven para clientes S3: la consola se abre con la clave raíz. Una clave desactivada o caducada responde 403 InvalidAccessKeyId.';
+
+  @override
+  String get accessKeysEmptyTitle => 'Solo existe la clave raíz';
+
+  @override
+  String get accessKeysEmptyDescription =>
+      'Crea una clave para cada cliente o aplicación, con acceso solo a sus buckets. Así puedes revocarla sin tocar las demás.';
+
+  @override
+  String get accessKeysCreateFirst => 'Crear la primera clave';
+
+  @override
+  String get accessKeysNoMatch => 'Ninguna clave coincide con la búsqueda';
+
+  @override
+  String get accessKeyDeleteTitle => 'Eliminar clave';
+
+  @override
+  String accessKeyDeleteConfirm(String name) {
+    return '¿Seguro que quieres eliminar la clave $name? Los clientes que la usen recibirán 403 al momento. Si solo quieres pausarla, desactívala.';
+  }
+
+  @override
+  String get accessKeyRegenerateTitle => 'Regenerar secreto';
+
+  @override
+  String accessKeyRegenerateConfirm(String name) {
+    return '¿Generar un secreto nuevo para $name? El actual deja de funcionar al momento.';
+  }
+
+  @override
+  String get accessKeyRegenerate => 'Regenerar';
+
+  @override
+  String accessKeyDeletedSuccess(String name) {
+    return 'Clave $name eliminada';
+  }
+
+  @override
+  String accessKeyDisabledSuccess(String name) {
+    return 'Clave $name desactivada';
+  }
+
+  @override
+  String accessKeyEnabledSuccess(String name) {
+    return 'Clave $name activada';
+  }
+
+  @override
+  String accessKeySavedSuccess(String name) {
+    return 'Clave $name guardada';
+  }
+
+  @override
+  String get accessKeyFormCreateTitle => 'Crear clave de acceso';
+
+  @override
+  String get accessKeyFormEditTitle => 'Editar clave de acceso';
+
+  @override
+  String get accessKeyFormCreateDescription =>
+      'El ID y el secreto se generan al crearla.';
+
+  @override
+  String accessKeyFormEditDescription(String id) {
+    return '$id. El secreto no cambia.';
+  }
+
+  @override
+  String get accessKeyFormSectionIdentity => '01 Identificación';
+
+  @override
+  String get accessKeyFormSectionScope => '02 Alcance';
+
+  @override
+  String get accessKeyFormSectionPermissions => '03 Permisos';
+
+  @override
+  String get accessKeyNameLabel => 'Nombre';
+
+  @override
+  String get accessKeyNameHint => 'Backups NAS';
+
+  @override
+  String get accessKeyNameRequired => 'Ponle un nombre a la clave';
+
+  @override
+  String get accessKeyExpiryLabel => 'Caducidad';
+
+  @override
+  String get accessKeyExpiryNever => 'Nunca caduca';
+
+  @override
+  String get accessKeyExpiry30Days => 'En 30 días';
+
+  @override
+  String get accessKeyExpiry90Days => 'En 90 días';
+
+  @override
+  String get accessKeyExpiryYear => 'En 1 año';
+
+  @override
+  String accessKeyExpiryKeep(String date) {
+    return 'Mantener: $date';
+  }
+
+  @override
+  String get accessKeyScopeAll => 'Todos los buckets';
+
+  @override
+  String get accessKeyScopeAllDescription =>
+      'También los que se creen después. Con escritura, además puede crear y eliminar buckets.';
+
+  @override
+  String get accessKeyScopeSome => 'Buckets concretos';
+
+  @override
+  String get accessKeyScopeSomeDescription =>
+      'Solo los que marques, cada uno con su nivel. Solo ve esos al listar.';
+
+  @override
+  String accessKeyBucketsChecked(int count, int total) {
+    return '$count de $total marcados';
+  }
+
+  @override
+  String get accessKeyBucketsRequired => 'Marca al menos un bucket';
+
+  @override
+  String get accessKeyBucketsEmpty =>
+      'Aún no hay buckets: crea uno, o dale a la clave todos los buckets.';
+
+  @override
+  String get accessKeyFormErrorTitle => 'No se pudo guardar la clave';
+
+  @override
+  String accessKeySecretCreatedTitle(String name) {
+    return 'Clave creada: $name';
+  }
+
+  @override
+  String accessKeySecretRegeneratedTitle(String name) {
+    return 'Secreto nuevo: $name';
+  }
+
+  @override
+  String get accessKeySecretWarning =>
+      'Copia el secreto ahora: es la única vez que se muestra. Si lo pierdes, tendrás que regenerarlo.';
+
+  @override
+  String get accessKeySecretLabel => 'Secret access key';
+
+  @override
+  String get accessKeyCopySecret => 'Copiar secreto';
+
+  @override
+  String get accessKeySecretCopied => 'Secreto copiado';
+
+  @override
+  String get accessKeyDownloadCsv => 'Descargar como .csv';
+
+  @override
+  String get accessKeySecretSaved =>
+      'He guardado el secreto en un lugar seguro';
 }

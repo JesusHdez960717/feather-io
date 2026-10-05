@@ -6,6 +6,11 @@ abstract class RouteNames {
   static const String login = 'login';
   static const String browser = 'browser';
   static const String buckets = 'buckets';
+  static const String accessKeys = 'access-keys';
+
+  /// `?from=` of [login]: the location asked for without a session, opened
+  /// again after logging in
+  static const String loginFromParam = 'from';
 
   /// `?bucket=` of [browser]: the open bucket; without it, the bucket list
   static const String browserBucketParam = 'bucket';

@@ -57,6 +57,16 @@ class RouteConfig {
     ],
   );
 }
+          StatefulShellBranch(
+            routes: <RouteBase>[
+              ///   /keys
+              GoRoute(
+                name: AccessKeysScreen.navigator.name,
+                path: AccessKeysScreen.navigator.path,
+                builder: AccessKeysScreen.navigator.builder,
+              ),
+            ],
+          ),
 
 class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream(Stream<dynamic> stream) {

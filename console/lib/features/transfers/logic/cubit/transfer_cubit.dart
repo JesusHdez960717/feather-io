@@ -1,6 +1,5 @@
 import 'dart:js_interop';
 import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:console/app_exporter.dart';
 import 'package:cross_file/cross_file.dart';
@@ -302,7 +301,7 @@ class TransferCubit extends Cubit<TransferState> {
       );
       // if it was cancelled right when finishing, it is not stored
       if (_find(task.id)?.status != TransferStatus.running) return;
-      _save(bytes, task.name);
+      FileSaver.save(bytes, task.name);
       _finish(task.id, size: bytes.length);
     } catch (e) {
       _fail(task.id, e);
@@ -332,17 +331,6 @@ class TransferCubit extends Cubit<TransferState> {
             )
           : t,
     );
-  }
-
-  /// Hands the file to the browser to save it
-  void _save(List<int> bytes, String fileName) {
-    final blob = web.Blob([Uint8List.fromList(bytes).toJS].toJS);
-    final url = web.URL.createObjectURL(blob);
-    final anchor = web.document.createElement('a') as web.HTMLAnchorElement;
-    anchor.href = url;
-    anchor.download = fileName;
-    anchor.click();
-    web.URL.revokeObjectURL(url);
   }
 
   /// Announces that [bucket] has new objects: when its last pending upload

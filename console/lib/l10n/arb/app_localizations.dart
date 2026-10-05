@@ -1693,6 +1693,540 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Log out'**
   String get navLogout;
+
+  /// No description provided for @navAccessKeys.
+  ///
+  /// In en, this message translates to:
+  /// **'Access keys'**
+  String get navAccessKeys;
+
+  /// No description provided for @accessKeysDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Each key lets an S3 client (AWS CLI, rclone, SDKs) in, only to the buckets you give it.'**
+  String get accessKeysDescription;
+
+  /// No description provided for @accessKeysSecretOnce.
+  ///
+  /// In en, this message translates to:
+  /// **'The secret is shown only once, when the key is created or its secret is regenerated.'**
+  String get accessKeysSecretOnce;
+
+  /// No description provided for @accessKeysSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name or ID...'**
+  String get accessKeysSearchHint;
+
+  /// No description provided for @accessKeyCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create key'**
+  String get accessKeyCreate;
+
+  /// No description provided for @accessKeyColumnName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get accessKeyColumnName;
+
+  /// No description provided for @accessKeyColumnId.
+  ///
+  /// In en, this message translates to:
+  /// **'Access key ID'**
+  String get accessKeyColumnId;
+
+  /// No description provided for @accessKeyColumnPermissions.
+  ///
+  /// In en, this message translates to:
+  /// **'Permissions'**
+  String get accessKeyColumnPermissions;
+
+  /// No description provided for @accessKeyColumnLastUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Last used'**
+  String get accessKeyColumnLastUsed;
+
+  /// No description provided for @accessKeyColumnStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get accessKeyColumnStatus;
+
+  /// No description provided for @accessKeyRootName.
+  ///
+  /// In en, this message translates to:
+  /// **'Root key'**
+  String get accessKeyRootName;
+
+  /// No description provided for @accessKeyRootBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Root'**
+  String get accessKeyRootBadge;
+
+  /// No description provided for @accessKeyRootPermissions.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything, including the console'**
+  String get accessKeyRootPermissions;
+
+  /// No description provided for @accessKeyRootLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Set with FEATHER_ACCESS and FEATHER_SECRET: it can\'t be edited or deleted'**
+  String get accessKeyRootLocked;
+
+  /// No description provided for @accessKeyCreatedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Created {date}'**
+  String accessKeyCreatedOn(String date);
+
+  /// No description provided for @accessKeyCopyId.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy ID'**
+  String get accessKeyCopyId;
+
+  /// No description provided for @accessKeyIdCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'ID copied'**
+  String get accessKeyIdCopied;
+
+  /// No description provided for @accessKeyAllBuckets.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get accessKeyAllBuckets;
+
+  /// No description provided for @accessKeyCreatesBuckets.
+  ///
+  /// In en, this message translates to:
+  /// **'+ create buckets'**
+  String get accessKeyCreatesBuckets;
+
+  /// No description provided for @accessKeyLevelReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Read only'**
+  String get accessKeyLevelReadOnly;
+
+  /// No description provided for @accessKeyLevelWriteOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Write only'**
+  String get accessKeyLevelWriteOnly;
+
+  /// No description provided for @accessKeyLevelReadWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Read and write'**
+  String get accessKeyLevelReadWrite;
+
+  /// No description provided for @accessKeyLevelShortRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Read'**
+  String get accessKeyLevelShortRead;
+
+  /// No description provided for @accessKeyLevelShortWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Write'**
+  String get accessKeyLevelShortWrite;
+
+  /// No description provided for @accessKeyLevelShortBoth.
+  ///
+  /// In en, this message translates to:
+  /// **'Both'**
+  String get accessKeyLevelShortBoth;
+
+  /// No description provided for @accessKeyLevelReadOnlyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'List and download objects.'**
+  String get accessKeyLevelReadOnlyDescription;
+
+  /// No description provided for @accessKeyLevelWriteOnlyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload and delete objects, without seeing them.'**
+  String get accessKeyLevelWriteOnlyDescription;
+
+  /// No description provided for @accessKeyLevelReadWriteDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'List, download, upload and delete objects.'**
+  String get accessKeyLevelReadWriteDescription;
+
+  /// No description provided for @accessKeyStatusActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get accessKeyStatusActive;
+
+  /// No description provided for @accessKeyStatusDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled'**
+  String get accessKeyStatusDisabled;
+
+  /// No description provided for @accessKeyStatusExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get accessKeyStatusExpired;
+
+  /// No description provided for @accessKeyExpiresOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires {date}'**
+  String accessKeyExpiresOn(String date);
+
+  /// No description provided for @accessKeyExpiredOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired {date}'**
+  String accessKeyExpiredOn(String date);
+
+  /// No description provided for @accessKeyNeverUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get accessKeyNeverUsed;
+
+  /// No description provided for @accessKeyUsedNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Just now'**
+  String get accessKeyUsedNow;
+
+  /// No description provided for @accessKeyUsedMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} min ago'**
+  String accessKeyUsedMinutes(int count);
+
+  /// No description provided for @accessKeyUsedHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} h ago'**
+  String accessKeyUsedHours(int count);
+
+  /// No description provided for @accessKeyUsedDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day ago} other{{count} days ago}}'**
+  String accessKeyUsedDays(int count);
+
+  /// No description provided for @accessKeyActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions of {name}'**
+  String accessKeyActions(String name);
+
+  /// No description provided for @accessKeyEditPermissions.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit permissions'**
+  String get accessKeyEditPermissions;
+
+  /// No description provided for @accessKeyRegenerateSecret.
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate secret'**
+  String get accessKeyRegenerateSecret;
+
+  /// No description provided for @accessKeyDisable.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable'**
+  String get accessKeyDisable;
+
+  /// No description provided for @accessKeyEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable'**
+  String get accessKeyEnable;
+
+  /// No description provided for @accessKeysFooterHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Keys are only for S3 clients: the console opens with the root key. A disabled or expired key gets 403 InvalidAccessKeyId.'**
+  String get accessKeysFooterHint;
+
+  /// No description provided for @accessKeysEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the root key exists'**
+  String get accessKeysEmptyTitle;
+
+  /// No description provided for @accessKeysEmptyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a key for each client or application, with access to its own buckets only. You can then revoke it without touching the others.'**
+  String get accessKeysEmptyDescription;
+
+  /// No description provided for @accessKeysCreateFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Create the first key'**
+  String get accessKeysCreateFirst;
+
+  /// No description provided for @accessKeysNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No key matches the search'**
+  String get accessKeysNoMatch;
+
+  /// No description provided for @accessKeyDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete key'**
+  String get accessKeyDeleteTitle;
+
+  /// No description provided for @accessKeyDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the key {name}? Clients using it will get 403 right away. To pause it, disable it instead.'**
+  String accessKeyDeleteConfirm(String name);
+
+  /// No description provided for @accessKeyRegenerateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate secret'**
+  String get accessKeyRegenerateTitle;
+
+  /// No description provided for @accessKeyRegenerateConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate a new secret for {name}? The current one stops working right away.'**
+  String accessKeyRegenerateConfirm(String name);
+
+  /// No description provided for @accessKeyRegenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate'**
+  String get accessKeyRegenerate;
+
+  /// No description provided for @accessKeyDeletedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Key {name} deleted'**
+  String accessKeyDeletedSuccess(String name);
+
+  /// No description provided for @accessKeyDisabledSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Key {name} disabled'**
+  String accessKeyDisabledSuccess(String name);
+
+  /// No description provided for @accessKeyEnabledSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Key {name} enabled'**
+  String accessKeyEnabledSuccess(String name);
+
+  /// No description provided for @accessKeySavedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Key {name} saved'**
+  String accessKeySavedSuccess(String name);
+
+  /// No description provided for @accessKeyFormCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create access key'**
+  String get accessKeyFormCreateTitle;
+
+  /// No description provided for @accessKeyFormEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit access key'**
+  String get accessKeyFormEditTitle;
+
+  /// No description provided for @accessKeyFormCreateDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The ID and the secret are generated when it is created.'**
+  String get accessKeyFormCreateDescription;
+
+  /// No description provided for @accessKeyFormEditDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'{id}. The secret doesn\'t change.'**
+  String accessKeyFormEditDescription(String id);
+
+  /// No description provided for @accessKeyFormSectionIdentity.
+  ///
+  /// In en, this message translates to:
+  /// **'01 Identification'**
+  String get accessKeyFormSectionIdentity;
+
+  /// No description provided for @accessKeyFormSectionScope.
+  ///
+  /// In en, this message translates to:
+  /// **'02 Scope'**
+  String get accessKeyFormSectionScope;
+
+  /// No description provided for @accessKeyFormSectionPermissions.
+  ///
+  /// In en, this message translates to:
+  /// **'03 Permissions'**
+  String get accessKeyFormSectionPermissions;
+
+  /// No description provided for @accessKeyNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get accessKeyNameLabel;
+
+  /// No description provided for @accessKeyNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Backups NAS'**
+  String get accessKeyNameHint;
+
+  /// No description provided for @accessKeyNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Give the key a name'**
+  String get accessKeyNameRequired;
+
+  /// No description provided for @accessKeyExpiryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiration'**
+  String get accessKeyExpiryLabel;
+
+  /// No description provided for @accessKeyExpiryNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Never expires'**
+  String get accessKeyExpiryNever;
+
+  /// No description provided for @accessKeyExpiry30Days.
+  ///
+  /// In en, this message translates to:
+  /// **'In 30 days'**
+  String get accessKeyExpiry30Days;
+
+  /// No description provided for @accessKeyExpiry90Days.
+  ///
+  /// In en, this message translates to:
+  /// **'In 90 days'**
+  String get accessKeyExpiry90Days;
+
+  /// No description provided for @accessKeyExpiryYear.
+  ///
+  /// In en, this message translates to:
+  /// **'In 1 year'**
+  String get accessKeyExpiryYear;
+
+  /// No description provided for @accessKeyExpiryKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep: {date}'**
+  String accessKeyExpiryKeep(String date);
+
+  /// No description provided for @accessKeyScopeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All buckets'**
+  String get accessKeyScopeAll;
+
+  /// No description provided for @accessKeyScopeAllDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Also the ones created later. With write access it can also create and delete buckets.'**
+  String get accessKeyScopeAllDescription;
+
+  /// No description provided for @accessKeyScopeSome.
+  ///
+  /// In en, this message translates to:
+  /// **'Specific buckets'**
+  String get accessKeyScopeSome;
+
+  /// No description provided for @accessKeyScopeSomeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the ones you check, each with its level. It only sees those when listing.'**
+  String get accessKeyScopeSomeDescription;
+
+  /// No description provided for @accessKeyBucketsChecked.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} of {total} checked'**
+  String accessKeyBucketsChecked(int count, int total);
+
+  /// No description provided for @accessKeyBucketsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Check at least one bucket'**
+  String get accessKeyBucketsRequired;
+
+  /// No description provided for @accessKeyBucketsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no buckets yet: create one, or give the key every bucket.'**
+  String get accessKeyBucketsEmpty;
+
+  /// No description provided for @accessKeyFormErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The key couldn\'t be saved'**
+  String get accessKeyFormErrorTitle;
+
+  /// No description provided for @accessKeySecretCreatedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Key created: {name}'**
+  String accessKeySecretCreatedTitle(String name);
+
+  /// No description provided for @accessKeySecretRegeneratedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New secret: {name}'**
+  String accessKeySecretRegeneratedTitle(String name);
+
+  /// No description provided for @accessKeySecretWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy the secret now: this is the only time it is shown. If you lose it, you\'ll have to regenerate it.'**
+  String get accessKeySecretWarning;
+
+  /// No description provided for @accessKeySecretLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Secret access key'**
+  String get accessKeySecretLabel;
+
+  /// No description provided for @accessKeyCopySecret.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy secret'**
+  String get accessKeyCopySecret;
+
+  /// No description provided for @accessKeySecretCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Secret copied'**
+  String get accessKeySecretCopied;
+
+  /// No description provided for @accessKeyDownloadCsv.
+  ///
+  /// In en, this message translates to:
+  /// **'Download as .csv'**
+  String get accessKeyDownloadCsv;
+
+  /// No description provided for @accessKeySecretSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'ve saved the secret somewhere safe'**
+  String get accessKeySecretSaved;
 }
 
 class _AppLocalizationsDelegate

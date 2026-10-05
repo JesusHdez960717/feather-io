@@ -42,6 +42,7 @@ class FeaturesInit {
       BrowserInit.init(),
       BucketsInit.init(),
       AnonymousAccessInit.init(),
+      AccessKeysInit.init(),
       TransfersInit.init(),
     ]);
 

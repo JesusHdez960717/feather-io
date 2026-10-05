@@ -990,4 +990,325 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get navLogout => 'Log out';
+
+  @override
+  String get navAccessKeys => 'Access keys';
+
+  @override
+  String get accessKeysDescription =>
+      'Each key lets an S3 client (AWS CLI, rclone, SDKs) in, only to the buckets you give it.';
+
+  @override
+  String get accessKeysSecretOnce =>
+      'The secret is shown only once, when the key is created or its secret is regenerated.';
+
+  @override
+  String get accessKeysSearchHint => 'Search by name or ID...';
+
+  @override
+  String get accessKeyCreate => 'Create key';
+
+  @override
+  String get accessKeyColumnName => 'Name';
+
+  @override
+  String get accessKeyColumnId => 'Access key ID';
+
+  @override
+  String get accessKeyColumnPermissions => 'Permissions';
+
+  @override
+  String get accessKeyColumnLastUsed => 'Last used';
+
+  @override
+  String get accessKeyColumnStatus => 'Status';
+
+  @override
+  String get accessKeyRootName => 'Root key';
+
+  @override
+  String get accessKeyRootBadge => 'Root';
+
+  @override
+  String get accessKeyRootPermissions => 'Everything, including the console';
+
+  @override
+  String get accessKeyRootLocked =>
+      'Set with FEATHER_ACCESS and FEATHER_SECRET: it can\'t be edited or deleted';
+
+  @override
+  String accessKeyCreatedOn(String date) {
+    return 'Created $date';
+  }
+
+  @override
+  String get accessKeyCopyId => 'Copy ID';
+
+  @override
+  String get accessKeyIdCopied => 'ID copied';
+
+  @override
+  String get accessKeyAllBuckets => 'All';
+
+  @override
+  String get accessKeyCreatesBuckets => '+ create buckets';
+
+  @override
+  String get accessKeyLevelReadOnly => 'Read only';
+
+  @override
+  String get accessKeyLevelWriteOnly => 'Write only';
+
+  @override
+  String get accessKeyLevelReadWrite => 'Read and write';
+
+  @override
+  String get accessKeyLevelShortRead => 'Read';
+
+  @override
+  String get accessKeyLevelShortWrite => 'Write';
+
+  @override
+  String get accessKeyLevelShortBoth => 'Both';
+
+  @override
+  String get accessKeyLevelReadOnlyDescription => 'List and download objects.';
+
+  @override
+  String get accessKeyLevelWriteOnlyDescription =>
+      'Upload and delete objects, without seeing them.';
+
+  @override
+  String get accessKeyLevelReadWriteDescription =>
+      'List, download, upload and delete objects.';
+
+  @override
+  String get accessKeyStatusActive => 'Active';
+
+  @override
+  String get accessKeyStatusDisabled => 'Disabled';
+
+  @override
+  String get accessKeyStatusExpired => 'Expired';
+
+  @override
+  String accessKeyExpiresOn(String date) {
+    return 'Expires $date';
+  }
+
+  @override
+  String accessKeyExpiredOn(String date) {
+    return 'Expired $date';
+  }
+
+  @override
+  String get accessKeyNeverUsed => 'Never';
+
+  @override
+  String get accessKeyUsedNow => 'Just now';
+
+  @override
+  String accessKeyUsedMinutes(int count) {
+    return '$count min ago';
+  }
+
+  @override
+  String accessKeyUsedHours(int count) {
+    return '$count h ago';
+  }
+
+  @override
+  String accessKeyUsedDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days ago',
+      one: '1 day ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String accessKeyActions(String name) {
+    return 'Actions of $name';
+  }
+
+  @override
+  String get accessKeyEditPermissions => 'Edit permissions';
+
+  @override
+  String get accessKeyRegenerateSecret => 'Regenerate secret';
+
+  @override
+  String get accessKeyDisable => 'Disable';
+
+  @override
+  String get accessKeyEnable => 'Enable';
+
+  @override
+  String get accessKeysFooterHint =>
+      'Keys are only for S3 clients: the console opens with the root key. A disabled or expired key gets 403 InvalidAccessKeyId.';
+
+  @override
+  String get accessKeysEmptyTitle => 'Only the root key exists';
+
+  @override
+  String get accessKeysEmptyDescription =>
+      'Create a key for each client or application, with access to its own buckets only. You can then revoke it without touching the others.';
+
+  @override
+  String get accessKeysCreateFirst => 'Create the first key';
+
+  @override
+  String get accessKeysNoMatch => 'No key matches the search';
+
+  @override
+  String get accessKeyDeleteTitle => 'Delete key';
+
+  @override
+  String accessKeyDeleteConfirm(String name) {
+    return 'Delete the key $name? Clients using it will get 403 right away. To pause it, disable it instead.';
+  }
+
+  @override
+  String get accessKeyRegenerateTitle => 'Regenerate secret';
+
+  @override
+  String accessKeyRegenerateConfirm(String name) {
+    return 'Generate a new secret for $name? The current one stops working right away.';
+  }
+
+  @override
+  String get accessKeyRegenerate => 'Regenerate';
+
+  @override
+  String accessKeyDeletedSuccess(String name) {
+    return 'Key $name deleted';
+  }
+
+  @override
+  String accessKeyDisabledSuccess(String name) {
+    return 'Key $name disabled';
+  }
+
+  @override
+  String accessKeyEnabledSuccess(String name) {
+    return 'Key $name enabled';
+  }
+
+  @override
+  String accessKeySavedSuccess(String name) {
+    return 'Key $name saved';
+  }
+
+  @override
+  String get accessKeyFormCreateTitle => 'Create access key';
+
+  @override
+  String get accessKeyFormEditTitle => 'Edit access key';
+
+  @override
+  String get accessKeyFormCreateDescription =>
+      'The ID and the secret are generated when it is created.';
+
+  @override
+  String accessKeyFormEditDescription(String id) {
+    return '$id. The secret doesn\'t change.';
+  }
+
+  @override
+  String get accessKeyFormSectionIdentity => '01 Identification';
+
+  @override
+  String get accessKeyFormSectionScope => '02 Scope';
+
+  @override
+  String get accessKeyFormSectionPermissions => '03 Permissions';
+
+  @override
+  String get accessKeyNameLabel => 'Name';
+
+  @override
+  String get accessKeyNameHint => 'Backups NAS';
+
+  @override
+  String get accessKeyNameRequired => 'Give the key a name';
+
+  @override
+  String get accessKeyExpiryLabel => 'Expiration';
+
+  @override
+  String get accessKeyExpiryNever => 'Never expires';
+
+  @override
+  String get accessKeyExpiry30Days => 'In 30 days';
+
+  @override
+  String get accessKeyExpiry90Days => 'In 90 days';
+
+  @override
+  String get accessKeyExpiryYear => 'In 1 year';
+
+  @override
+  String accessKeyExpiryKeep(String date) {
+    return 'Keep: $date';
+  }
+
+  @override
+  String get accessKeyScopeAll => 'All buckets';
+
+  @override
+  String get accessKeyScopeAllDescription =>
+      'Also the ones created later. With write access it can also create and delete buckets.';
+
+  @override
+  String get accessKeyScopeSome => 'Specific buckets';
+
+  @override
+  String get accessKeyScopeSomeDescription =>
+      'Only the ones you check, each with its level. It only sees those when listing.';
+
+  @override
+  String accessKeyBucketsChecked(int count, int total) {
+    return '$count of $total checked';
+  }
+
+  @override
+  String get accessKeyBucketsRequired => 'Check at least one bucket';
+
+  @override
+  String get accessKeyBucketsEmpty =>
+      'There are no buckets yet: create one, or give the key every bucket.';
+
+  @override
+  String get accessKeyFormErrorTitle => 'The key couldn\'t be saved';
+
+  @override
+  String accessKeySecretCreatedTitle(String name) {
+    return 'Key created: $name';
+  }
+
+  @override
+  String accessKeySecretRegeneratedTitle(String name) {
+    return 'New secret: $name';
+  }
+
+  @override
+  String get accessKeySecretWarning =>
+      'Copy the secret now: this is the only time it is shown. If you lose it, you\'ll have to regenerate it.';
+
+  @override
+  String get accessKeySecretLabel => 'Secret access key';
+
+  @override
+  String get accessKeyCopySecret => 'Copy secret';
+
+  @override
+  String get accessKeySecretCopied => 'Secret copied';
+
+  @override
+  String get accessKeyDownloadCsv => 'Download as .csv';
+
+  @override
+  String get accessKeySecretSaved => 'I\'ve saved the secret somewhere safe';
 }

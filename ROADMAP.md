@@ -10,7 +10,7 @@ is done.
 | Buckets          | List, create, edit, delete, empty, details with statistics (description and color in SQLite)                                  | All of the above, in the *Buckets* section                    |
 | Objects          | List (prefix/delimiter, paging), upload, multipart, download, copy, delete one or many, zip download, folders, presigned URLs | All of the above, with preview, drag & drop and a transfer queue |
 | Anonymous access | Rules per prefix or pattern (`readOnly`, `writeOnly`, `readWrite`), applied by `AnonymousAccessFilter`                        | Create and delete rules per bucket                            |
-| Auth             | JWT + SigV4, a single user from the env, login and general rate limits                                                         | Login                                                         |
+| Auth             | JWT + SigV4, the root key from the env plus access keys per bucket, login and general rate limits                             | Login, *Access keys* section                                  |
 
 ## Phase 0: Foundation
 
@@ -86,7 +86,9 @@ is done.
 
 ## Phase 5: Operations and production
 
-- [ ] Access key management with permissions, with its admin screen in the console.
+- [x] Access key management with permissions, with its admin screen in the console (*Access
+  keys* section: per-bucket levels or every bucket, expiration, enable/disable, regenerate the
+  secret; secrets encrypted with `KEYS_ENCRYPTION_SECRET`).
 - [x] SQLite path based on `STORAGE_VOLUME_PATH` (`STORAGE_VOLUME_PATH/.db/feather-io.sqlite`).
 - [ ] i18n of the service error messages.
 - [x] Dockerfile: Dart version `^3.13` and `libsqlite3` in the final image.

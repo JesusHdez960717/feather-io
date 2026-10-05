@@ -70,6 +70,8 @@ class ActionsIcons {
 
   SvgAsset get info => const SvgAsset('$_actions/info.svg');
 
+  SvgAsset get key => const SvgAsset('$_actions/key.svg');
+
   SvgAsset get link => const SvgAsset('$_actions/link.svg');
 
   SvgAsset get lock => const SvgAsset('$_actions/lock.svg');
