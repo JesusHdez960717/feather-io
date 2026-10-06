@@ -1,10 +1,7 @@
-import 'dart:js_interop';
 import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:console/app_exporter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:web/web.dart' as web;
 
 /// Navigation through the objects of a bucket.
 /// Listing, creating and deleting buckets is [BucketCubit]'s job.
@@ -282,15 +279,7 @@ class BrowserCubit extends Cubit<BrowserState>
         key: key,
       );
 
-      final blob = web.Blob(
-        [Uint8List.fromList(data.bytes).toJS].toJS,
-        web.BlobPropertyBag(
-          type: data.contentType ?? 'application/octet-stream',
-        ),
-      );
-      final url = web.URL.createObjectURL(blob);
-
-      web.window.open(url, '_blank');
+      BrowserWindow.openBytes(data.bytes, contentType: data.contentType);
 
       emit(_loadingSuccessFrom(currentState));
     });

@@ -1,29 +1,3 @@
-// ignore_for_file: non_constant_identifier_names
-import 'dart:js_interop';
-
-@JS('window.env')
-external EnvConfig get env;
-
-@JS()
-@staticInterop
-class EnvConfig {}
-
-extension EnvConfigExtension on EnvConfig {
-  external String get SERVICE_URL;
-
-  external String? get ADMIN_PREFIX;
-}
-
-/// use it like this
-class Environment {
-  static String get serviceUrl => env.SERVICE_URL.startsWith('http')
-      ? env.SERVICE_URL
-      : 'https://${env.SERVICE_URL}';
-
-  static String get adminPrefix => env.ADMIN_PREFIX ?? '_admin';
-
-  static Map<String, String> get raw => {
-    'SERVICE_URL': env.SERVICE_URL,
-    'ADMIN_PREFIX': adminPrefix,
-  };
-}
+// `window.env` (web/env.js) on web; outside the browser (tests on the VM) the
+// `--dart-define`s or the local defaults
+export 'env_vm.dart' if (dart.library.js_interop) 'env_web.dart';

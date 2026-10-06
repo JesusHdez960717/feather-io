@@ -146,7 +146,13 @@ class AppGlobal {
 
   TextTheme get textTheme => theme.textTheme;
 
-  AppLocalizations get intl => context.intl;
+  /// Texts of the app's language; without a navigator yet (or in tests), those
+  /// of `Intl.defaultLocale`, English by default
+  AppLocalizations get intl {
+    final context = navigatorKey.currentContext;
+    if (context != null) return context.intl;
+    return lookupAppLocalizations(Locale(Intl.defaultLocale ?? 'en'));
+  }
 
   Logger logger = Logger();
 

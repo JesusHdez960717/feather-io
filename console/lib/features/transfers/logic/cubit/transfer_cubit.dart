@@ -1,10 +1,8 @@
-import 'dart:js_interop';
 import 'dart:math';
 
 import 'package:console/app_exporter.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:web/web.dart' as web;
 
 /// Background transfer queue (uploads and downloads). It lives across the whole
 /// app: transfers keep going across folders, buckets and sections. It runs
@@ -402,20 +400,12 @@ class TransferCubit extends Cubit<TransferState> {
   //------------------------- LEAVE WARNING -------------------------\\
   bool _guarding = false;
 
-  late final JSFunction _beforeUnload = ((web.Event event) {
-    event.preventDefault();
-  }).toJS;
-
   /// With transfers running, the browser asks before closing or reloading the
   /// tab
   void _guardLeave(bool on) {
     if (on == _guarding) return;
     _guarding = on;
-    if (on) {
-      web.window.addEventListener('beforeunload', _beforeUnload);
-    } else {
-      web.window.removeEventListener('beforeunload', _beforeUnload);
-    }
+    BrowserWindow.guardLeave(on);
   }
 
   @override
