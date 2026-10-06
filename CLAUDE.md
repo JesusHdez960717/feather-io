@@ -71,11 +71,16 @@ fvm flutter pub get
 fvm flutter gen-l10n                                            # after editing lib/l10n/arb/*.arb
 fvm flutter run -d chrome --web-port=8081
 fvm flutter analyze
+fvm flutter test                                                # on the VM, no browser
 ```
 
 - Runtime config comes from `web/env.js` (`window.env`: `SERVICE_URL`, `ADMIN_PREFIX`), which is
   gitignored. `ADMIN_PREFIX` must match the service.
-- The console has no test directory.
+- Tests (`test/`, `bloc_test` + `mocktail`) run on the VM. Code that needs the browser
+  (`dart:js_interop`, `package:web`, Dio's browser adapter, `window.env`) lives only in the
+  `*_web.dart` adapters (`adapter/`, `config/env_web.dart`), exported with
+  `if (dart.library.js_interop)` next to a `*_vm.dart` that does nothing; never import it
+  elsewhere, or the tests stop compiling.
 - On web, Dio sets the XHR timeout to `connectTimeout + receiveTimeout` (20 s) for the **whole**
   request, upload included. Requests that can take longer (uploads, downloads) pass
   `connectTimeout`/`receiveTimeout` = `Duration.zero` (no limit) and rely on a `CancelToken`.

@@ -92,7 +92,7 @@ is done.
 - [x] SQLite path based on `STORAGE_VOLUME_PATH` (`STORAGE_VOLUME_PATH/.db/feather-io.sqlite`).
 - [x] i18n of the service error messages (English and Spanish, from `Accept-Language`).
 - [x] Dockerfile: Dart version `^3.13` and `libsqlite3` in the final image.
-- [ ] Console tests (cubits and repos).
+- [x] Console tests (cubits and repos), on the VM with `fvm flutter test`.
 
 ## Phase 6: Makeup for version 1.0.0
 
