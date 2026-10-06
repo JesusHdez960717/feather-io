@@ -398,8 +398,9 @@ from scratch and regenerate `service/tool/s3_compat/RESULTS.md`. Outputs go to
 1. Static analysis: `fvm dart analyze > tool/s3_compat/out/service_analyze.txt` from `service/`,
    and `fvm flutter analyze > ../service/tool/s3_compat/out/console_analyze.txt 2>&1` from `console/`
    (it prints its summary to stderr).
-2. Service tests: from `service/`, `rm -rf uploads_test` and
-   `fvm dart test --reporter json > tool/s3_compat/out/service_tests.jsonl`.
+2. Tests: from `service/`, `rm -rf uploads_test` and
+   `fvm dart test --reporter json > tool/s3_compat/out/service_tests.jsonl`; from `console/`,
+   `fvm flutter test --reporter json > ../service/tool/s3_compat/out/console_tests.jsonl`.
 3. A clean service: start it from an **empty scratch folder** with
    `STORAGE_VOLUME_PATH=./uploads_local` (relative, so it doesn't touch `service/uploads_local`),
    `FEATHER_ACCESS=feather-access FEATHER_SECRET=feather-secret-key` (the defaults of `run.sh`; `mc`
@@ -414,7 +415,7 @@ from scratch and regenerate `service/tool/s3_compat/RESULTS.md`. Outputs go to
    - Mint failures marked **Unclassified** and any unhandled error in the service log are new:
      investigate them; a real bug is fixed (with its test), a new out-of-scope one goes into
      `REASONS` in `report.py` and *Parked* in `ROADMAP.md`.
-   - A new test file needs its line in `TEST_DESC`, and a suite whose outcome changed its text in
+   - A new test file needs its line in `TEST_DESC` (`CONSOLE_TEST_DESC` for the console), and a suite whose outcome changed its text in
      `SUITE_STATUS` (both in `report.py`); `NOT_WORKING`/`NOT_TESTED` are kept by hand there too.
    - Stop the scratch service when done.
 

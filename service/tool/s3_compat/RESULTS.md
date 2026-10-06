@@ -1,6 +1,6 @@
 # Test results (full run from scratch)
 
-Run on **2026-10-05** on commit `50f5bf8` (`feature/poc`),
+Run on **2026-10-05** on commit `cf5aa36` (`feature/poc`),
 on Windows 11 with Docker version 29.4.1, build 055a478.
 Generated with `service/tool/s3_compat/report.py`; to repeat it, see *Full test run* in `CLAUDE.md`.
 
@@ -9,6 +9,7 @@ Generated with `service/tool/s3_compat/report.py`; to repeat it, see *Full test 
 | `dart analyze` (service) | No issues |
 | `flutter analyze` (console) | 1 issue (see the output) |
 | `dart test` (service) | **480/480** in 35 files |
+| `flutter test` (console) | **132/132** in 19 files |
 | AWS CLI v2 (`aws-cli/2.37.9`) | **34/34** |
 | rclone (`rclone v1.75.1`) | **19/19** |
 | MinIO Mint (15 suites) | No failures: `aws-sdk-java`, `aws-sdk-java-v2`, `s3cmd`. Finish with out-of-scope failures: `minio-go`, `minio-java`. Unclassified failures: **0** |
@@ -54,9 +55,33 @@ Generated with `service/tool/s3_compat/report.py`; to repeat it, see *Full test 
 | `unsupported_subresource_test.dart` | 9/9 | `501 NotImplemented` for subresources and the reads that are answered anyway (tagging, versioning). |
 | `update_bucket_test.dart` | 11/11 | Editing the description and color of a bucket (admin). |
 
-The console has no tests (it is in the roadmap, phase 5); it is only analyzed.
+## 2. Console tests (`flutter test`)
 
-## 2. Real clients: AWS CLI v2 and rclone
+Cubits, repos and models, on the VM.
+
+| File | Tests | What it covers |
+|---|---:|---|
+| `access_key_cubit_test.dart` | 9/9 | Access keys section: load, search and filters, enable/disable, regenerate, delete, buckets deleted elsewhere. |
+| `access_key_filter_test.dart` | 7/7 | Access key filter: status, level and bucket groups and how they combine. |
+| `access_key_form_cubit_test.dart` | 4/4 | Access key drawer: create (secret shown), edit, 422 per field, general error. |
+| `access_key_repo_test.dart` | 5/5 | Access key DTO mapping (grants, levels, root id, secret), requests with UTC expiry, API errors. |
+| `anonymous_access_cubit_test.dart` | 9/9 | Anonymous rules of a bucket: load, stale responses of another bucket, delete; add-rule form with 422. |
+| `anonymous_access_repo_test.dart` | 3/3 | Anonymous rule mapping and requests, API errors. |
+| `auth_test.dart` | 10/10 | Session: JWT and expiry saved (never the keys), restore, expired or broken session, login and logout. |
+| `browser_cubit_test.dart` | 16/16 | Object browser: listing, paging with tokens, refresh, page size, up/forward, delete, changes from other sections. |
+| `browser_repo_test.dart` | 5/5 | Listing mapping, objects vs folders on delete, presigned link expiry, API errors. |
+| `bucket_cubit_test.dart` | 7/7 | Bucket list: load, delete and empty with bus notices, changes from other sections. |
+| `bucket_form_cubit_test.dart` | 5/5 | Bucket drawer: create, edit, 422 per field, 409 on the name. |
+| `bucket_repo_test.dart` | 4/4 | Bucket mapping and create/update requests, API errors. |
+| `object_action_cubit_test.dart` | 5/5 | Create folder, rename, move (also failing halfway) and their bus notices. |
+| `object_dialogs_cubit_test.dart` | 9/9 | Move target folders, object details with thumbnail, shared link expiry and stale responses. |
+| `object_models_test.dart` | 10/10 | Object name validation and the type/size/date filters. |
+| `route_config_test.dart` | 4/4 | Where to go after login: only internal paths (open redirect). |
+| `transfer_cubit_test.dart` | 13/13 | Transfer queue: 2 at a time, bucket notices, retry, cancel, progress, multipart parts and abort, zip downloads. |
+| `transfer_repo_test.dart` | 4/4 | Cancelling a transfer, multipart parts sent to complete, API errors. |
+| `zip_file_name_test.dart` | 3/3 | Name of a zip download. |
+
+## 3. Real clients: AWS CLI v2 and rclone
 
 Scripts `awscli.sh` and `rclone.sh` (see the scripts for what each step checks). Every step
 that downloads something also compares the content.
@@ -66,7 +91,7 @@ that downloads something also compares the content.
 | AWS CLI v2 (`aws-cli/2.37.9`) | 34/34 | — |
 | rclone (`rclone v1.75.1`) | 19/19 | — |
 
-## 3. MinIO Mint
+## 4. MinIO Mint
 
 Each suite tests with one SDK or tool. Many stop at their first failure; NA are tests the
 suite itself skips. `aws-sdk-java`, `aws-sdk-java-v2` and `minio-go` only log failures and
@@ -129,7 +154,7 @@ skipped tests: that they pass is known from their exit code (*Finishes OK*).
 | `s3select` | select_object_content(bucket_name, object_name, request) | Out of scope: S3 Select. |
 | `versioning` | /mint/build/versioning/bucket.go:66: main.testMakeBucket | Out of scope: versioning. |
 
-## 4. What doesn't work
+## 5. What doesn't work
 
 **Out of scope** (under *Parked* in `ROADMAP.md`; they answer `501 NotImplemented` or 401)
 
@@ -152,14 +177,15 @@ skipped tests: that they pass is known from their exit code (*Finishes OK*).
 - On Windows, replacing an object another request keeps open is retried for 5 s and then answers
   `503 ServiceUnavailable` (clients retry it). It doesn't happen on Linux.
 
-## 5. What isn't tested
+## 6. What isn't tested
 
-- **Linux**: the service of these runs is on Windows. Production would run in Docker on Linux,
-  and the `Dockerfile` still has to be fixed (roadmap phase 5).
+- **Linux**: the service of these runs is on Windows; production runs the `Dockerfile` image on
+  Linux.
 - **HTTPS**: every test goes over HTTP.
 - **Virtual-hosted style** (`bucket.host`): path-style only.
 - **High load and concurrency**: only the concurrency the clients add themselves (parallel uploads
   and deletes).
-- **Console**: it has no automated tests.
+- **Console screens**: its tests cover cubits, repos and models on the VM, not the widgets nor
+  the browser-only adapters (`*_web.dart`).
 - **Other clients**: Cyberduck, s3fs, the .NET and Rust SDKs, boto3 directly (the AWS CLI and s3cmd
   use it underneath).

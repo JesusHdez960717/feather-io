@@ -7,6 +7,7 @@ Usage (from the repo root, see "Full test run" in CLAUDE.md):
 
 Reads from --out (service/tool/s3_compat/out by default):
     service_tests.jsonl   fvm dart test --reporter json (from service/)
+    console_tests.jsonl   fvm flutter test --reporter json (from console/, optional)
     service_analyze.txt   fvm dart analyze (optional)
     console_analyze.txt   fvm flutter analyze (optional)
     awscli.txt, rclone.txt, mint.txt, mint-logs/log.json   run.sh awscli rclone mint
@@ -15,7 +16,7 @@ Reads from --out (service/tool/s3_compat/out by default):
 (optional).
 
 What is kept by hand lives in the constants below: what each test file covers
-(TEST_DESC), why each Mint test fails (REASONS) and the status of each suite
+(TEST_DESC, CONSOLE_TEST_DESC), why each Mint test fails (REASONS) and the status of each suite
 (SUITE_STATUS). A Mint failure without a known cause shows up as
 **Unclassified** and has to be reviewed.
 """
@@ -66,6 +67,28 @@ TEST_DESC = {
     'sig_v4_signer_test.dart': 'SigV4 signature against the official example of the AWS docs.',
     'unsupported_subresource_test.dart': '`501 NotImplemented` for subresources and the reads that are answered anyway (tagging, versioning).',
     'update_bucket_test.dart': 'Editing the description and color of a bucket (admin).',
+}
+
+CONSOLE_TEST_DESC = {
+    'access_key_cubit_test.dart': 'Access keys section: load, search and filters, enable/disable, regenerate, delete, buckets deleted elsewhere.',
+    'access_key_filter_test.dart': 'Access key filter: status, level and bucket groups and how they combine.',
+    'access_key_form_cubit_test.dart': 'Access key drawer: create (secret shown), edit, 422 per field, general error.',
+    'access_key_repo_test.dart': 'Access key DTO mapping (grants, levels, root id, secret), requests with UTC expiry, API errors.',
+    'anonymous_access_cubit_test.dart': 'Anonymous rules of a bucket: load, stale responses of another bucket, delete; add-rule form with 422.',
+    'anonymous_access_repo_test.dart': 'Anonymous rule mapping and requests, API errors.',
+    'auth_test.dart': 'Session: JWT and expiry saved (never the keys), restore, expired or broken session, login and logout.',
+    'browser_cubit_test.dart': 'Object browser: listing, paging with tokens, refresh, page size, up/forward, delete, changes from other sections.',
+    'browser_repo_test.dart': 'Listing mapping, objects vs folders on delete, presigned link expiry, API errors.',
+    'bucket_cubit_test.dart': 'Bucket list: load, delete and empty with bus notices, changes from other sections.',
+    'bucket_form_cubit_test.dart': 'Bucket drawer: create, edit, 422 per field, 409 on the name.',
+    'bucket_repo_test.dart': 'Bucket mapping and create/update requests, API errors.',
+    'object_action_cubit_test.dart': 'Create folder, rename, move (also failing halfway) and their bus notices.',
+    'object_dialogs_cubit_test.dart': 'Move target folders, object details with thumbnail, shared link expiry and stale responses.',
+    'object_models_test.dart': 'Object name validation and the type/size/date filters.',
+    'route_config_test.dart': 'Where to go after login: only internal paths (open redirect).',
+    'transfer_cubit_test.dart': 'Transfer queue: 2 at a time, bucket notices, retry, cancel, progress, multipart parts and abort, zip downloads.',
+    'transfer_repo_test.dart': 'Cancelling a transfer, multipart parts sent to complete, API errors.',
+    'zip_file_name_test.dart': 'Name of a zip download.',
 }
 
 SUITE_ORDER = ['awscli', 'aws-sdk-go', 'aws-sdk-java', 'aws-sdk-java-v2', 'aws-sdk-php',
@@ -147,13 +170,14 @@ NOT_WORKING = """**Out of scope** (under *Parked* in `ROADMAP.md`; they answer `
 - On Windows, replacing an object another request keeps open is retried for 5 s and then answers
   `503 ServiceUnavailable` (clients retry it). It doesn't happen on Linux."""
 
-NOT_TESTED = """- **Linux**: the service of these runs is on Windows. Production would run in Docker on Linux,
-  and the `Dockerfile` still has to be fixed (roadmap phase 5).
+NOT_TESTED = """- **Linux**: the service of these runs is on Windows; production runs the `Dockerfile` image on
+  Linux.
 - **HTTPS**: every test goes over HTTP.
 - **Virtual-hosted style** (`bucket.host`): path-style only.
 - **High load and concurrency**: only the concurrency the clients add themselves (parallel uploads
   and deletes).
-- **Console**: it has no automated tests.
+- **Console screens**: its tests cover cubits, repos and models on the VM, not the widgets nor
+  the browser-only adapters (`*_web.dart`).
 - **Other clients**: Cyberduck, s3fs, the .NET and Rust SDKs, boto3 directly (the AWS CLI and s3cmd
   use it underneath)."""
 
@@ -255,6 +279,7 @@ def main():
     out = Path(args.out)
 
     tests = load_service_tests(out / 'service_tests.jsonl')
+    console_tests = load_service_tests(out / 'console_tests.jsonl')
     steps = {name: load_steps(read(out / f'{name}.txt')) for name in ('awscli', 'rclone')}
     # Only the first token: `aws-cli/2.37.9`, `rclone v1.75.1`
     versions = {}
@@ -280,6 +305,9 @@ def main():
         ['git', 'status', '--porcelain', '--', 'service', 'console', ':!service/tool/s3_compat']) else ''
     total = sum(len(v) for v in tests.values())
     passed = sum(1 for v in tests.values() for t in v if t['result'] == 'success')
+    console_total = sum(len(v) for v in console_tests.values())
+    console_passed = sum(
+        1 for v in console_tests.values() for t in v if t['result'] == 'success')
 
     L = []
     w = L.append
@@ -294,6 +322,7 @@ def main():
     w(f'| `dart analyze` (service) | {analyze_summary(read(out / "service_analyze.txt"), "See the output")} |')
     w(f'| `flutter analyze` (console) | {analyze_summary(read(out / "console_analyze.txt"), "See the output")} |')
     w(f'| `dart test` (service) | **{passed}/{total}** in {len(tests)} files |')
+    w(f'| `flutter test` (console) | **{console_passed}/{console_total}** in {len(console_tests)} files |')
     for name, label in (('awscli', 'AWS CLI v2'), ('rclone', 'rclone')):
         ok = sum(1 for s, _ in steps[name] if s == 'PASS')
         w(f'| {label} (`{versions[name]}`) | **{ok}/{len(steps[name])}** |')
@@ -323,10 +352,27 @@ def main():
         for name, t in failed_tests:
             w(f'- `{name}`: {md(t["name"])} ({t["result"]})')
         w('')
-    w('The console has no tests (it is in the roadmap, phase 5); it is only analyzed.')
-    w('')
 
-    w('## 2. Real clients: AWS CLI v2 and rclone')
+    w('## 2. Console tests (`flutter test`)')
+    w('')
+    w('Cubits, repos and models, on the VM.')
+    w('')
+    w('| File | Tests | What it covers |')
+    w('|---|---:|---|')
+    for name, items in console_tests.items():
+        ok = sum(1 for t in items if t['result'] == 'success')
+        w(f'| `{name}` | {ok}/{len(items)} | {CONSOLE_TEST_DESC.get(name, "**No description: add it to report.py**")} |')
+    w('')
+    failed_console = [(name, t) for name, items in console_tests.items() for t in items
+                      if t['result'] != 'success']
+    if failed_console:
+        w('Failing tests:')
+        w('')
+        for name, t in failed_console:
+            w(f'- `{name}`: {md(t["name"])} ({t["result"]})')
+        w('')
+
+    w('## 3. Real clients: AWS CLI v2 and rclone')
     w('')
     w('Scripts `awscli.sh` and `rclone.sh` (see the scripts for what each step checks). Every step')
     w('that downloads something also compares the content.')
@@ -339,7 +385,7 @@ def main():
         w(f'| {label} (`{versions[name]}`) | {ok}/{len(steps[name])} | {"; ".join(failed) or "—"} |')
     w('')
 
-    w('## 3. MinIO Mint')
+    w('## 4. MinIO Mint')
     w('')
     w('Each suite tests with one SDK or tool. Many stop at their first failure; NA are tests the')
     w('suite itself skips. `aws-sdk-java`, `aws-sdk-java-v2` and `minio-go` only log failures and')
@@ -362,7 +408,7 @@ def main():
         w(f'| `{row["suite"]}` | {short(row["function"], 90)} | {md(reason(row))} |')
     w('')
 
-    w("## 4. What doesn't work")
+    w("## 5. What doesn't work")
     w('')
     if unclassified or server_errors:
         w('**To review in this run**')
@@ -374,13 +420,13 @@ def main():
         w('')
     w(NOT_WORKING)
     w('')
-    w("## 5. What isn't tested")
+    w("## 6. What isn't tested")
     w('')
     w(NOT_TESTED)
 
     Path(args.output).write_text('\n'.join(L) + '\n', encoding='utf-8', newline='\n')
     print(f'Wrote {args.output}')
-    print(f'dart test {passed}/{total}; Mint: {len(failures)} failures, {len(unclassified)} unclassified'
+    print(f'dart test {passed}/{total}; flutter test {console_passed}/{console_total}; Mint: {len(failures)} failures, {len(unclassified)} unclassified'
           + (f'; {server_errors} errors in the log' if server_errors is not None else ''))
     for row in unclassified:
         print(f'  UNCLASSIFIED {row["suite"]}: {row["function"][:80]}')
