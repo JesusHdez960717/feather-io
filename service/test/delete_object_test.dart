@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:service/feather.dart';
 import 'package:test/test.dart';
 
 import 'support/test_server.dart';
@@ -35,29 +36,25 @@ void main() {
       expect(getResponse.statusCode, 404);
     });
 
-    test(
-      'Should retry deleting a file that is open for a moment',
-      () async {
-        const key = 'open.txt';
-        await server.putObject(bucket, key, 'data');
-        final file = File('${server.storagePath}/$bucket/$key');
-        // On Windows an open file can't be deleted until it is closed
-        final handle = await file.open();
-        final closed = Future<void>.delayed(
-          const Duration(milliseconds: 200),
-          handle.close,
-        );
+    test('Should retry deleting a file that is open for a moment', () async {
+      const key = 'open.txt';
+      await server.putObject(bucket, key, 'data');
+      final file = File('${server.storagePath}/$bucket/$key');
+      // On Windows an open file can't be deleted until it is closed
+      final handle = await file.open();
+      final closed = Future<void>.delayed(
+        const Duration(milliseconds: 200),
+        handle.close,
+      );
 
-        final response = await http.delete(
-          server.url('/$bucket/$key'),
-          headers: server.auth(),
-        );
-        await closed;
-        expect(response.statusCode, 204);
-        expect(await file.exists(), isFalse);
-      },
-      testOn: 'windows',
-    );
+      final response = await http.delete(
+        server.url('/$bucket/$key'),
+        headers: server.auth(),
+      );
+      await closed;
+      expect(response.statusCode, 204);
+      expect(await file.exists(), isFalse);
+    }, testOn: 'windows');
 
     test('Should delete many objects of a folder in parallel', () async {
       // Like rclone purge: every request tries to remove the empty folder at
@@ -88,7 +85,10 @@ void main() {
 
       await http.delete(server.url('/$bucket/$key'), headers: server.auth());
 
-      expect(await Directory('${server.storagePath}/$bucket/a').exists(), isFalse);
+      expect(
+        await Directory('${server.storagePath}/$bucket/a').exists(),
+        isFalse,
+      );
       final listResponse = await http.get(
         server.url('/$bucket'),
         headers: server.auth(json: true),
@@ -108,7 +108,10 @@ void main() {
     test('Should fail without auth (401)', () async {
       final response = await http.delete(server.url('/$bucket/keep.txt'));
       expect(response.statusCode, 401);
-      expect(await File('${server.storagePath}/$bucket/keep.txt').exists(), isTrue);
+      expect(
+        await File('${server.storagePath}/$bucket/keep.txt').exists(),
+        isTrue,
+      );
     });
 
     test('Should fail with invalid key (400)', () async {
@@ -139,7 +142,10 @@ void main() {
       );
       expect(response.statusCode, 200);
       final body = jsonDecode(response.body);
-      expect((body['deleted'] as List).map((e) => e['key']), ['one.txt', 'two.txt']);
+      expect((body['deleted'] as List).map((e) => e['key']), [
+        'one.txt',
+        'two.txt',
+      ]);
       expect(body['errors'], isEmpty);
     });
 
@@ -172,22 +178,28 @@ void main() {
     test('Should reject an invalid JSON body (400)', () async {
       final response = await http.post(
         server.url('/$bucket?delete'),
-        headers: {...server.auth(json: true), 'content-type': 'application/json'},
+        headers: {
+          ...server.auth(json: true),
+          'content-type': 'application/json',
+        },
         body: 'not json',
       );
       expect(response.statusCode, 400);
       expect(jsonDecode(response.body)['code'], 'InvalidRequest');
     });
 
-    test('Should reject a body that is neither JSON nor <Delete> (400)', () async {
-      final response = await http.post(
-        server.url('/$bucket?delete'),
-        headers: server.auth(),
-        body: 'not xml',
-      );
-      expect(response.statusCode, 400);
-      expect(response.body, contains('<Code>MalformedXML</Code>'));
-    });
+    test(
+      'Should reject a body that is neither JSON nor <Delete> (400)',
+      () async {
+        final response = await http.post(
+          server.url('/$bucket?delete'),
+          headers: server.auth(),
+          body: 'not xml',
+        );
+        expect(response.statusCode, 400);
+        expect(response.body, contains('<Code>MalformedXML</Code>'));
+      },
+    );
   });
 
   group('S3Controller - Multi-delete Objects (S3 XML)', () {
@@ -212,10 +224,16 @@ void main() {
       expect(response.statusCode, 200, reason: response.body);
       expect(response.headers['content-type'], contains('application/xml'));
       expect(response.body, contains('<DeleteResult'));
-      expect(response.body, contains('<Deleted><Key>one.txt</Key></Deleted>'));
-      expect(response.body, contains('<Deleted><Key>a&amp;b.txt</Key></Deleted>'));
-      expect(await File('${server.storagePath}/$bucket/one.txt').exists(), isFalse);
-      expect(await File('${server.storagePath}/$bucket/a&b.txt').exists(), isFalse);
+      expect(deletedKeys(response.body), containsAll(['one.txt', 'a&b.txt']));
+      expect(response.body, contains('<Key>a&amp;b.txt</Key>'));
+      expect(
+        await File('${server.storagePath}/$bucket/one.txt').exists(),
+        isFalse,
+      );
+      expect(
+        await File('${server.storagePath}/$bucket/a&b.txt').exists(),
+        isFalse,
+      );
     });
 
     test('Should only list the errors in quiet mode', () async {
@@ -230,7 +248,10 @@ void main() {
       expect(response.body, isNot(contains('<Deleted>')));
       expect(response.body, contains('<Key>invalid:name</Key>'));
       expect(response.body, contains('<Code>InvalidArgument</Code>'));
-      expect(await File('${server.storagePath}/$bucket/quiet.txt').exists(), isFalse);
+      expect(
+        await File('${server.storagePath}/$bucket/quiet.txt').exists(),
+        isFalse,
+      );
     });
 
     test('Should accept a request signed with SigV4', () async {
@@ -242,7 +263,7 @@ void main() {
         body: deleteXml(['signed.txt']),
       );
       expect(response.statusCode, 200, reason: response.body);
-      expect(response.body, contains('<Deleted><Key>signed.txt</Key></Deleted>'));
+      expect(deletedKeys(response.body), contains('signed.txt'));
     });
 
     test('Should reject more than 1000 keys (400)', () async {
@@ -256,3 +277,9 @@ void main() {
     });
   });
 }
+
+/// The keys of the `<Deleted>` elements of a DeleteResult.
+List<String?> deletedKeys(String xml) => [
+  for (final deleted in XmlElement.parse(xml).children('Deleted'))
+    deleted.childText('Key'),
+];

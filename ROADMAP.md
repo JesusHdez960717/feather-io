@@ -100,9 +100,11 @@ is done.
 
 ## Phase 6: Makeup for version 1.0.0
 
-- [ ] An object mapper for XML, so the service has no `parseToXML` helpers: each object implements
-  `toJson` or `toXml` its own way.
-- [ ] Shrink `S3Controller`, which has more than 1000 lines.
+- [x] An object mapper for XML, so the service has no `parseToXML` helpers: each object implements
+  `toJson` and `toXml` its own way (`lib/xml/`: `XmlElement` writes and parses, `S3Response`
+  picks the format).
+- [x] Shrink `S3Controller`, which had more than 1000 lines: it only holds the routes, and the
+  operations live in `BucketController`, `ObjectController` and `MultipartController`.
 - [ ] A visual identity/icon like Brag's, and a promo video with real screenshots of the design.
 - [ ] Performance tests/benchmarks (e.g. `minio/warp`) with the service on Linux: confirm the
   suspected bottlenecks (every listing page walks the whole bucket, `ListBuckets` walks every

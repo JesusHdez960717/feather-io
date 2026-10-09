@@ -8,7 +8,8 @@ class ObjectMetaTableRepo {
 
   Future<ObjectMetaTableData?> find(String bucketName, String key) {
     return (_db.select(_db.objectMetaTable)..where(
-          (tbl) => tbl.bucketName.equals(bucketName) & tbl.objectKey.equals(key),
+          (tbl) =>
+              tbl.bucketName.equals(bucketName) & tbl.objectKey.equals(key),
         ))
         .getSingleOrNull();
   }
@@ -47,7 +48,8 @@ class ObjectMetaTableRepo {
 
   Future<void> delete(String bucketName, String key) async {
     await (_db.delete(_db.objectMetaTable)..where(
-          (tbl) => tbl.bucketName.equals(bucketName) & tbl.objectKey.equals(key),
+          (tbl) =>
+              tbl.bucketName.equals(bucketName) & tbl.objectKey.equals(key),
         ))
         .go();
   }

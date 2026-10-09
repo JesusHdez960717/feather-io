@@ -67,6 +67,7 @@ TEST_DESC = {
     's3_error_test.dart': 'S3 errors in XML/JSON and SigV4 signatures: wrong signature and key, replay (±15 min), credential date, body sha256, presigned URL dated in the future.',
     'sig_v4_signer_test.dart': 'SigV4 signature against the official example of the AWS docs.',
     'unsupported_subresource_test.dart': '`501 NotImplemented` for subresources and the reads that are answered anyway (tagging, versioning).',
+    'xml_test.dart': 'XML mapper (unit): writing with escaping and indentation, reading S3 bodies with prefixes, CDATA and entities, malformed XML.',
     'update_bucket_test.dart': 'Editing the description and color of a bucket (admin).',
 }
 

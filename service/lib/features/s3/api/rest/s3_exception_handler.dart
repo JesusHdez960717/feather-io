@@ -46,11 +46,11 @@ class S3ExceptionHandler extends SimpleExceptionHandler {
             );
     }
 
-    if (answered is S3Exception && !admin && !_acceptsJson(request)) {
-      return ResponseEntity(
-        answered.statusCode,
-        body: _mapExceptionToXml(answered),
-        headers: {...?answered.headers, 'content-type': 'application/xml'},
+    if (answered is S3Exception && !admin && !S3Response.acceptsJson(request)) {
+      return S3Response.xml(
+        answered.toXml(),
+        status: answered.statusCode,
+        headers: answered.headers,
       );
     }
     return super.handle(request, answered, stackTrace);
@@ -60,32 +60,4 @@ class S3ExceptionHandler extends SimpleExceptionHandler {
     final segments = request.requestedUri.pathSegments;
     return segments.isNotEmpty && segments.first == adminPrefix;
   }
-
-  bool _acceptsJson(RequestEntity request) =>
-      request.headers['accept']?.contains('application/json') == true;
-
-  String _mapExceptionToXml(S3Exception exception) {
-    final buffer = StringBuffer();
-    buffer.writeln('<?xml version="1.0" encoding="UTF-8"?>');
-    buffer.writeln('<Error>');
-    buffer.writeln('  <Code>${exception.code.code}</Code>');
-    buffer.writeln('  <Message>${_escapeXml(exception.message)}</Message>');
-    if (exception.resource != null) {
-      buffer.writeln(
-        '  <Resource>${_escapeXml(exception.resource!)}</Resource>',
-      );
-    }
-    if (requestId != null) {
-      buffer.writeln('  <RequestId>${_escapeXml(requestId!)}</RequestId>');
-    }
-    buffer.writeln('</Error>');
-    return buffer.toString();
-  }
-
-  String _escapeXml(String value) => value
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&apos;');
 }

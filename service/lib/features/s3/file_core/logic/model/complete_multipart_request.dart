@@ -24,6 +24,22 @@ class CompleteMultipartRequest {
 
   CompleteMultipartRequest({required this.parts});
 
+  /// The S3 body, a `CompleteMultipartUpload` with a `Part` (`PartNumber`,
+  /// `ETag`) per part. A part without a valid number is a [FormatException].
+  factory CompleteMultipartRequest.fromXml(XmlElement root) {
+    return CompleteMultipartRequest(
+      parts: [
+        for (final part in root.children('Part'))
+          CompletedPart(
+            partNumber:
+                int.tryParse(part.childText('PartNumber')?.trim() ?? '') ??
+                (throw const FormatException('A part without PartNumber')),
+            etag: part.childText('ETag')?.trim() ?? '',
+          ),
+      ],
+    );
+  }
+
   factory CompleteMultipartRequest.fromJson(Map<String, dynamic> json) {
     return CompleteMultipartRequest(
       parts: json.field<List<CompletedPart>?>('parts') ?? const [],

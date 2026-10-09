@@ -11,6 +11,7 @@ export 'logic/model/multipart_upload_model.dart';
 export 'logic/model/object_meta_model.dart';
 export 'logic/model/presign_request.dart';
 export 'logic/model/presigned_url_model.dart';
+export 'logic/model/s3_xml.dart';
 export 'logic/model/update_bucket_request.dart';
 export 'logic/s3_exception.dart';
 export 'logic/s3_validator.dart';

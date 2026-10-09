@@ -43,7 +43,7 @@ enum S3ErrorCode {
 /// `resource`) for the admin API and the clients that accept JSON. The message
 /// is in the request's language (`message: intl.errors…`, from
 /// `Accept-Language`); the code never changes.
-class S3Exception extends ApiException {
+class S3Exception extends ApiException implements XmlSerializable {
   final S3ErrorCode code;
 
   final String message;
@@ -85,6 +85,19 @@ class S3Exception extends ApiException {
         message: intl.errors.s3.noSuchKey(key: key),
         resource: key,
       );
+
+  /// The S3 `<Error>` (without namespace, as S3), with the id of the request
+  /// so it can be found in the logs.
+  @override
+  XmlElement toXml() => XmlElement(
+    'Error',
+    elements: [
+      XmlElement.leaf('Code', code.code),
+      XmlElement.leaf('Message', message),
+      if (resource != null) XmlElement.leaf('Resource', resource),
+      if (requestId != null) XmlElement.leaf('RequestId', requestId),
+    ],
+  );
 
   @override
   String toString() {

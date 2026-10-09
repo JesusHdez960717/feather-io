@@ -106,7 +106,11 @@ fvm flutter test                                                # on the VM, no 
 
 **Bootstrap.** `FeatherIO.start()` in `lib/main.dart` registers deserializers on the ObjectMapper (
 `om`), puts `AppDatabase`, `FileManagementService` and `JwtService` into Winter's `di`, then builds
-`S3Controller` and `AdminController` and passes their `.routing` to `Winter.start`.
+`S3Controller` and `AdminController` and passes their `.routing` to `Winter.start`. `S3Controller`
+only holds the S3 routes: S3 multiplexes several operations on one method and path (by query and
+headers), so each route hands the request to its operation in `BucketController`,
+`ObjectController` or `MultipartController`. What those read from a request (bucket, key, stored
+headers, storage class, copy conditions, the multipart permission) is the `S3Request` extension.
 `lib/feather.dart` is the barrel file that re-exports Winter and every feature. Source files import
 `package:service/feather.dart`, never `package:winter/winter.dart` or individual files. Each folder
 has a barrel (`admin.dart`, `anonymous_access.dart`, `file_core.dart`, …) that must export every new
@@ -187,7 +191,7 @@ against the AWS docs example. The SigV4 maths live in `security/logic/sig_v4_sig
 - `AnonymousAccessFilter` runs on the S3 parent after the SigV4 filter, for unauthenticated
   requests and, as in AWS, for requests signed with an access key that lacks the route's permission
   (it adds the rule's `s3.anonymous.*` permissions to the key's, which stays the principal; a copy
-  from a public read prefix is allowed through `S3Controller._publiclyReadable`). It looks up the bucket's prefix rules (`anonymous_rule` table, via
+  from a public read prefix is allowed through `ObjectController.copySource`). It looks up the bucket's prefix rules (`anonymous_rule` table, via
   `AnonymousAccessService.findMatchingRule`) and grants the `s3.anonymous.*` permissions of the
   first matching rule. A rule without `*` is a prefix; with `*` (any characters, `/` included) the
   whole key must match, so `fotos/*.jpg` doesn't open `fotos/a.jpg.zip`; everything else matches
@@ -199,7 +203,7 @@ against the AWS docs example. The SigV4 maths live in `security/logic/sig_v4_sig
 
 | Folder           | Layer      | Contents                                                            |
 |------------------|------------|---------------------------------------------------------------------|
-| `rest/`          | Controller | Routes, filters, request parsing, content negotiation, XML mapping. |
+| `rest/`          | Controller | Routes, request parsing, content negotiation (`S3Response`).        |
 | `filter/`        | Controller | Winter `Filter`s specific to the feature.                           |
 | `logic/model/`   | Model      | Typed models and request/response classes.                          |
 | `logic/service/` | Service    | Business logic, validation, file I/O.                               |
@@ -207,19 +211,18 @@ against the AWS docs example. The SigV4 maths live in `security/logic/sig_v4_sig
 
 Current features: `s3/api/{rest,filter}` + `s3/file_core/{logic,repo}`, `admin/rest`,
 `admin/auth/{rest,logic}`, `admin/anonymous_access/{rest,logic,repo}`,
-`admin/access_keys/{rest,logic,repo}`, plus `db/` (Drift) and
-`security/filter/` (JWT, SigV4).
+`admin/access_keys/{rest,logic,repo}`, plus `db/` (Drift),
+`security/filter/` (JWT, SigV4) and `xml/` (the XML mapper).
 
 **Layer rules.**
 
-- Controller is the **only** layer that touches HTTP formats: `package:xml`, `Content-Type`,
-  `Accept`, `toJson` output. Use Winter abstractions (`RequestEntity`, `ResponseEntity`, `Route`,
+- Controller is the **only** layer that touches HTTP formats: `Content-Type`, `Accept`, and
+  choosing between the `toJson()` and the `toXml()` of a model. Use Winter abstractions (`RequestEntity`, `ResponseEntity`, `Route`,
   `ObjectMapper`), never `dart:io`'s `HttpRequest`. A body is read with `body<T>()`, `bytes()`,
   `readAsString()` (text, 400 if it isn't UTF-8) or `read()` (a stream); a filter passes a changed
   request with `request.copyWith(...)`.
 - Services and repos return typed models (`BucketModel`, `ListObjectsResponse`…), `File`s or
-  `Stream<List<int>>`. They never import `package:xml`, build raw JSON maps for responses, or
-  inspect headers.
+  `Stream<List<int>>`. They never build raw JSON maps or XML for responses, nor inspect headers.
 - Repos never know about `Content-Type` or HTTP.
 - Avoid `dynamic`; use `Map<String, dynamic>` only for raw JSON input, otherwise strict models.
 - Don't add dependencies for things Dart core or Winter already cover.
@@ -237,28 +240,28 @@ a nested list with `validEach()` (`buckets[0].access`) and a rule of the service
 `.custom((value) => message or null)`. Admin request and response models have a
 `static final example` for the OpenAPI document. No `build_runner` except Drift.
 
-**Content negotiation (S3 only).** Controllers call `_acceptsJson(request)` (checks `Accept` for
-`application/json`):
+**Content negotiation (S3 only).** XML is S3-compliant and the default; the console always asks
+for JSON. A model answered by the S3 API implements `XmlSerializable` (`XmlElement toXml()`, next
+to its `toJson()`), and the controller returns `S3Response.ok(request, model)`, which picks the
+JSON when `Accept` has `application/json` and the XML otherwise. When the two forms differ (the
+JSON of ListBuckets is the list, the XML a `ListAllMyBucketsResult`), a small model holds what
+the XML needs (`BucketListModel`, `PartListModel`…) and its `toJson()` returns the list.
 
-```dart
-if (_acceptsJson(request)) {
-return ResponseEntity.ok(body: model); // Winter serializes it with its toJson()
-}
-return ResponseEntity.ok(
-body: _mapModelToXml(model), // private helper in the controller
-headers: {'content-type': 'application/xml'},
-);
-```
+The XML mapper (`lib/xml/`, no package) is `XmlElement`: built with `XmlElement(name, elements:)`
+and `XmlElement.leaf(name, value)`, written with `toXmlString()` (declaration, indentation, every
+text and attribute escaped), and read with `XmlElement.parse(body)` (`child`, `children`,
+`childText`; prefixes dropped, entities and CDATA decoded, anything malformed is a
+`FormatException`). Request bodies have a `fromXml` factory (`DeleteObjectsRequest`,
+`CompleteMultipartRequest`) and the controller turns a `FormatException` into `MalformedXML`.
+`S3Xml` has what the S3 documents share: the root with the S3 namespace, `<Owner>` (`feather-io`,
+which some clients require), the ETag between quotes and the dates in UTC with milliseconds
+(`2026-10-02T14:22:35.000Z`). `S3Exception.toXml()` is the `<Error>`, with the `RequestId`.
 
-XML is S3-compliant and the default. The console always asks for JSON. `multiDelete` reads the S3
-`<Delete>` XML or, with a JSON `Content-Type` or body, the console's JSON (at most 1000 keys), and
-answers `<DeleteResult>` or JSON. XML bodies are parsed with the controller's `_xmlTag`/`_xmlTags`
-(regex, no XML package) and `_unescapeXml`. ListBuckets includes a fixed `<Owner>` (`feather-io`),
-which some clients require. CreateBucket and PutObject answer like S3, with no body: CreateBucket with a `Location`
-header, PutObject with its `ETag`. GetBucketLocation (`GET /{bucket}?location`, served by the
-list-objects route) always answers an empty XML `LocationConstraint` (`us-east-1`). XML dates are
-UTC with milliseconds (`_s3Date`: `2026-10-02T14:22:35.000Z`) and every key, prefix and description
-goes through `_escapeXml`.
+`multiDelete` reads the S3 `<Delete>` XML or, with a JSON `Content-Type` or body, the console's
+JSON (at most 1000 keys). CreateBucket and PutObject answer like S3, with no body: CreateBucket
+with a `Location` header, PutObject with its `ETag`. GetBucketLocation (`GET /{bucket}?location`,
+served by the list-objects route) always answers an empty XML `LocationConstraint`
+(`us-east-1`).
 
 `UnsupportedSubresourceFilter` (S3 parent) answers `501 NotImplemented` to the subresources the
 service does not implement (`?versioning`, `?policy`, `?tagging`, `?acl`, `?legal-hold`…). Without it they would fall into
@@ -359,7 +362,7 @@ marker, never the content, and a key without `/` that is a directory deletes not
 folder with its content the console calls the admin endpoint
 `DELETE /{admin}/bucket/{bucket}/folder?prefix=fotos/` (`FileManagementService.deleteFolder`,
 permission `admin.bucket.delete-folder`); `BrowserRepo.deleteObjects` sends the folder keys there and
-the rest to the multi-delete. Winter drops the trailing `/` from the `{key}` path param; `S3Controller._objectKey` restores it
+the rest to the multi-delete. Winter drops the trailing `/` from the `{key}` path param; `S3Request.objectKey` restores it
 from the URL. `listFiles` sorts objects and common prefixes together and pages over them
 (`max-keys` up to 1000). With `list-type=2` the controller answers ListObjectsV2
 (`continuation-token` = base64url of the last key returned, or `start-after`); otherwise

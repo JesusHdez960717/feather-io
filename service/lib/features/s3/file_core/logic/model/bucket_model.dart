@@ -1,3 +1,5 @@
+import 'package:service/feather.dart';
+
 class BucketModel {
   final String name;
   final int objectCount;
@@ -41,4 +43,33 @@ class BucketModel {
       'color': color,
     };
   }
+
+  /// A `<Bucket>` of ListAllMyBucketsResult. Besides S3's name and creation
+  /// date, the metadata of the service (ignored by S3 clients).
+  XmlElement toXml() => XmlElement(
+    'Bucket',
+    elements: [
+      XmlElement.leaf('Name', name),
+      if (description != null) XmlElement.leaf('Description', description),
+      if (color != null) XmlElement.leaf('Color', color),
+      XmlElement.leaf('CreationDate', S3Xml.date(creationDate)),
+      XmlElement.leaf('ObjectCount', objectCount),
+      XmlElement.leaf('Size', size),
+    ],
+  );
+}
+
+/// ListBuckets: in JSON the list itself, in XML ListAllMyBucketsResult.
+class BucketListModel implements XmlSerializable {
+  final List<BucketModel> buckets;
+
+  BucketListModel(this.buckets);
+
+  List<BucketModel> toJson() => buckets;
+
+  @override
+  XmlElement toXml() => S3Xml.root('ListAllMyBucketsResult', [
+    S3Xml.owner(),
+    XmlElement('Buckets', elements: [for (final b in buckets) b.toXml()]),
+  ]);
 }

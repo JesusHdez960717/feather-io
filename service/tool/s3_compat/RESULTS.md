@@ -1,6 +1,6 @@
 # Test results (full run from scratch)
 
-Run on **2026-10-09** on commit `bc2aabe` (`feature/poc`) with uncommitted changes,
+Run on **2026-10-09** on commit `6aca49a` (`feature/poc`) with uncommitted changes,
 on Windows 11 with Docker version 29.4.1, build 055a478.
 Generated with `service/tool/s3_compat/report.py`; to repeat it, see *Full test run* in `CLAUDE.md`.
 
@@ -8,7 +8,7 @@ Generated with `service/tool/s3_compat/report.py`; to repeat it, see *Full test 
 |---|---|
 | `dart analyze` (service) | No issues |
 | `flutter analyze` (console) | 1 issue (see the output) |
-| `dart test` (service) | **486/486** in 36 files |
+| `dart test` (service) | **494/494** in 37 files |
 | `flutter test` (console) | **132/132** in 19 files |
 | AWS CLI v2 (`aws-cli/2.37.9`) | **34/34** |
 | rclone (`rclone v1.75.1`) | **19/19** |
@@ -55,6 +55,7 @@ Generated with `service/tool/s3_compat/report.py`; to repeat it, see *Full test 
 | `sig_v4_signer_test.dart` | 3/3 | SigV4 signature against the official example of the AWS docs. |
 | `unsupported_subresource_test.dart` | 9/9 | `501 NotImplemented` for subresources and the reads that are answered anyway (tagging, versioning). |
 | `update_bucket_test.dart` | 11/11 | Editing the description and color of a bucket (admin). |
+| `xml_test.dart` | 8/8 | XML mapper (unit): writing with escaping and indentation, reading S3 bodies with prefixes, CDATA and entities, malformed XML. |
 
 ## 2. Console tests (`flutter test`)
 

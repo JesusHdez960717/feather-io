@@ -1,3 +1,5 @@
+import 'package:service/feather.dart';
+
 class FileModel {
   final String key;
   final int size;
@@ -21,4 +23,19 @@ class FileModel {
       'etag': etag,
     };
   }
+}
+
+/// CopyObject: in JSON the copied object, in XML CopyObjectResult.
+class CopyObjectResultModel implements XmlSerializable {
+  final FileModel copied;
+
+  CopyObjectResultModel(this.copied);
+
+  Map<String, Object?> toJson() => copied.toJson();
+
+  @override
+  XmlElement toXml() => S3Xml.root('CopyObjectResult', [
+    XmlElement.leaf('LastModified', S3Xml.date(copied.lastModified)),
+    S3Xml.etag(copied.etag),
+  ]);
 }

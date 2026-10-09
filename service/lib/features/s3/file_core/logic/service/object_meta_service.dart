@@ -82,8 +82,8 @@ class ObjectMetaService {
       repo.delete(bucketName, key);
 
   /// Forgets everything under the folder [prefix].
-  Future<void> forgetFolder(String bucketName, String prefix) =>
-      repo.deleteByPrefix(bucketName, prefix.endsWith('/') ? prefix : '$prefix/');
+  Future<void> forgetFolder(String bucketName, String prefix) => repo
+      .deleteByPrefix(bucketName, prefix.endsWith('/') ? prefix : '$prefix/');
 
   Future<void> forgetBucket(String bucketName) =>
       repo.deleteByBucket(bucketName);
