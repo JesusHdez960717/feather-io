@@ -51,6 +51,7 @@ class BucketCubit extends Cubit<BucketState>
     await _process(
       bucket: bucket,
       change: BucketChange.deleted,
+      deleted: true,
       () =>
           _repo.deleteBucket(name: bucket.name, token: _auth.auth?.accessToken),
     );
@@ -70,11 +71,17 @@ class BucketCubit extends Cubit<BucketState>
     Future<void> Function() action, {
     required BucketModel bucket,
     required BucketChange change,
+    bool deleted = false,
   }) async {
     emit(BucketProcessInProgressState(buckets: state.buckets));
     try {
       await action();
-      emit(BucketProcessingOKState(buckets: state.buckets));
+      emit(
+        BucketProcessingOKState(
+          buckets: state.buckets,
+          deletedBucket: deleted ? bucket.name : null,
+        ),
+      );
     } catch (e) {
       emit(
         BucketProcessingErrorState(
@@ -119,7 +126,10 @@ class BucketProcessInProgressState extends BucketState {
 }
 
 class BucketProcessingOKState extends BucketState {
-  const BucketProcessingOKState({super.buckets});
+  /// The bucket the action deleted, so a screen showing it can move on
+  final String? deletedBucket;
+
+  const BucketProcessingOKState({super.buckets, this.deletedBucket});
 }
 
 class BucketProcessingErrorState extends BucketState {

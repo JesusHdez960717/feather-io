@@ -30,12 +30,13 @@ class BucketAdminScreenNavigator {
     );
   }
 
-  /// Changes the bucket or tab shown; the URL is the source of truth
-  void show({required String bucket, required BucketAdminTab tab}) {
+  /// Changes the bucket or tab shown (without a bucket, the first one); the
+  /// URL is the source of truth
+  void show({String? bucket, BucketAdminTab tab = BucketAdminTab.general}) {
     app.navigator.go(
       name,
       queryParameters: {
-        RouteNames.bucketsBucketParam: bucket,
+        RouteNames.bucketsBucketParam: ?bucket,
         RouteNames.bucketsTabParam: tab.name,
       },
     );
@@ -49,7 +50,8 @@ class BucketAdminScreen extends StatefulWidget {
   static final BucketAdminScreenNavigator navigator =
       BucketAdminScreenNavigator();
 
-  /// Selected bucket; if null or it no longer exists, the first one is shown
+  /// Selected bucket; without one the first is shown, and one that doesn't
+  /// exist shows a not-found page
   final String? bucket;
   final BucketAdminTab tab;
 
@@ -76,13 +78,10 @@ class _BucketAdminScreenState extends State<BucketAdminScreen> {
     if (widget.bucket != oldWidget.bucket) _syncRules(cubit.state.buckets);
   }
 
-  /// The one in the URL or, if there is none or it no longer exists (e.g. just deleted), the first
+  /// The one in the URL (null if it doesn't exist) or, without one, the first
   BucketModel? _selected(List<BucketModel> buckets) {
-    if (buckets.isEmpty) return null;
-    return buckets.firstWhere(
-      (b) => b.name == widget.bucket,
-      orElse: () => buckets.first,
-    );
+    if (widget.bucket == null) return buckets.firstOrNull;
+    return buckets.where((b) => b.name == widget.bucket).firstOrNull;
   }
 
   /// Loads the rules of the shown bucket (for its tab's counter)
@@ -106,6 +105,12 @@ class _BucketAdminScreenState extends State<BucketAdminScreen> {
           }
           if (state is BucketProcessingErrorState) {
             app.snack.showError(message: state.message, context: context);
+          }
+          // The bucket shown was just deleted here: show the first one
+          if (state is BucketProcessingOKState &&
+              state.deletedBucket != null &&
+              state.deletedBucket == widget.bucket) {
+            BucketAdminScreen.navigator.show(tab: widget.tab);
           }
           if (state is BucketLoadingSuccessState) _syncRules(state.buckets);
         },
@@ -146,6 +151,14 @@ class _BucketAdminScreenState extends State<BucketAdminScreen> {
     }
     if (state is BucketLoadingErrorState) {
       return ErrorPage(message: state.exception.message, onRetry: cubit.load);
+    }
+    if (state is BucketLoadingSuccessState && widget.bucket != null) {
+      return BrowserNotFoundPage(
+        title: app.intl.browserBucketNotFound(widget.bucket!),
+        description: app.intl.browserBucketNotFoundDescription,
+        action: app.intl.browserBackToBuckets,
+        onAction: () => BucketAdminScreen.navigator.show(tab: widget.tab),
+      );
     }
     if (state is BucketLoadingSuccessState) {
       return NoDataPage(

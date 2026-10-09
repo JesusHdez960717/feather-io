@@ -95,7 +95,12 @@ void main() {
       },
       expect: () => [
         isA<BucketProcessInProgressState>(),
-        isA<BucketProcessingOKState>(),
+        // The screen showing it moves on to another bucket
+        isA<BucketProcessingOKState>().having(
+          (s) => s.deletedBucket,
+          'deletedBucket',
+          'backups',
+        ),
         isA<BucketLoadingInProgressState>(),
         isA<BucketLoadingSuccessState>(),
       ],
@@ -114,7 +119,11 @@ void main() {
       act: (cubit) => cubit.emptyBucket(bucket: media),
       expect: () => [
         isA<BucketProcessInProgressState>(),
-        isA<BucketProcessingOKState>(),
+        isA<BucketProcessingOKState>().having(
+          (s) => s.deletedBucket,
+          'deletedBucket',
+          isNull,
+        ),
         isA<BucketLoadingInProgressState>(),
         isA<BucketLoadingSuccessState>(),
       ],
