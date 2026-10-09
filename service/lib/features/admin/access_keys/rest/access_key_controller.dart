@@ -11,7 +11,6 @@ class AccessKeyController {
 
   Future<ResponseEntity> create(RequestEntity request) async {
     final body = await request.body<AccessKeyRequest>();
-    body.validate().throwOnFailure();
 
     final key = await accessKeyService.create(body);
     return ResponseEntity(201, body: key);
@@ -19,7 +18,6 @@ class AccessKeyController {
 
   Future<ResponseEntity> update(RequestEntity request) async {
     final body = await request.body<AccessKeyRequest>();
-    body.validate().throwOnFailure();
 
     final key = await accessKeyService.update(request.pathParams['id']!, body);
     return ResponseEntity.ok(body: key);
@@ -34,6 +32,6 @@ class AccessKeyController {
 
   Future<ResponseEntity> delete(RequestEntity request) async {
     await accessKeyService.delete(request.pathParams['id']!);
-    return ResponseEntity(204);
+    return ResponseEntity.noContent();
   }
 }

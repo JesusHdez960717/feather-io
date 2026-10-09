@@ -38,10 +38,12 @@ enum S3ErrorCode {
   const S3ErrorCode(this.code, this.statusCode);
 }
 
-/// Business error with an S3 code. `S3ExceptionHandler` renders it as XML or
-/// JSON depending on `Accept`. The message is in the request's language
-/// (`message: t.errors…`, from `Accept-Language`); the code never changes.
-class S3Exception extends ApiException implements Serializable {
+/// Business error with an S3 code. `S3ExceptionHandler` renders it as the S3
+/// `<Error>` XML, or as a Problem Details (`detail` = [message], plus `code` and
+/// `resource`) for the admin API and the clients that accept JSON. The message
+/// is in the request's language (`message: intl.errors…`, from
+/// `Accept-Language`); the code never changes.
+class S3Exception extends ApiException {
   final S3ErrorCode code;
 
   final String message;
@@ -49,8 +51,12 @@ class S3Exception extends ApiException implements Serializable {
   /// Bucket or key the operation failed on.
   final String? resource;
 
-  S3Exception(this.code, {required this.message, this.resource})
-    : super(statusCode: code.statusCode, body: message);
+  S3Exception(this.code, {required this.message, this.resource, super.headers})
+    : super(
+        StatusCode.valueOf(code.statusCode),
+        detail: message,
+        extensions: {'code': code.code, 'resource': ?resource},
+      );
 
   S3Exception.invalidBucketName(String bucketName)
     : this(
@@ -79,15 +85,6 @@ class S3Exception extends ApiException implements Serializable {
         message: intl.errors.s3.noSuchKey(key: key),
         resource: key,
       );
-
-  @override
-  Map<String, dynamic> toJson() {
-    return {
-      'code': code.code,
-      'message': message,
-      if (resource != null) 'resource': resource,
-    };
-  }
 
   @override
   String toString() {

@@ -78,9 +78,9 @@ void main() {
           expect(response.statusCode, 400, reason: body);
           expect(body, contains('<Code>EntityTooLarge</Code>'));
         } on http.ClientException {
-          // Winter cuts the body at MAX_OBJECT_SIZE while reading it, and
-          // dart:io drops the connection because the body wasn't read to the
-          // end: the client gets no response, but nothing is stored
+          // Winter cuts the body at MAX_OBJECT_SIZE while reading it and reads
+          // the rest to answer; a client that stops sending first may still
+          // see the connection closed. Either way nothing is stored
         }
         expect(
           File('${server.storagePath}/$bucket/chunked-huge.bin').existsSync(),

@@ -191,6 +191,10 @@ class FileManagementService {
           continue;
         }
         if (await source.exists()) await source.delete();
+        logger.warning(
+          'An object stayed open for ${replaceTimeout.inSeconds} s and was not replaced',
+          fields: {'key': key},
+        );
         throw S3Exception(
           S3ErrorCode.serviceUnavailable,
           message: intl.errors.s3.objectInUse,
@@ -638,6 +642,10 @@ class FileManagementService {
       await _deleteEmptyParents(dir.parent, bucketPath);
     }
     await objectMeta.forgetFolder(bucketName, prefix);
+    logger.info(
+      'Folder deleted',
+      fields: {'bucket': bucketName, 'prefix': prefix},
+    );
   }
 
   /// Deletes [entity] (with its content if it is a directory). On Windows an
@@ -675,12 +683,19 @@ class FileManagementService {
         errors.add(
           DeleteError(key: key, code: e.code.code, message: e.message),
         );
-      } catch (e) {
+      } catch (e, stackTrace) {
+        // The cause only in the log: it may hold paths of the server
+        logger.error(
+          'Could not delete an object of a multi-delete',
+          error: e,
+          stackTrace: stackTrace,
+          fields: {'bucket': bucketName, 'key': key},
+        );
         errors.add(
           DeleteError(
             key: key,
             code: S3ErrorCode.internalError.code,
-            message: e.toString(),
+            message: intl.errors.s3.objectNotDeleted,
           ),
         );
       }

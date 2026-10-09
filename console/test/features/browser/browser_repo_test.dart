@@ -150,7 +150,7 @@ void main() {
     ).thenThrow(
       httpError(404, {
         'code': 'NoSuchBucket',
-        'message': 'The bucket "media" does not exist.',
+        'detail': 'The bucket "media" does not exist.',
       }),
     );
 

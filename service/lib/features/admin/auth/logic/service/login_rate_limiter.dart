@@ -1,3 +1,5 @@
+import 'package:service/feather.dart';
+
 /// Slows down brute force against the login, per IP: every failed attempt is
 /// answered after [failureDelay] and, after [maxFailures] failures in a row,
 /// the IP is locked for [lockDuration] (even if it then gets the credentials
@@ -46,8 +48,7 @@ class LoginRateLimiter {
     final now = _now();
     final attempts = _clients[client];
     final stale =
-        attempts == null ||
-        now.difference(attempts.lastFailure) > lockDuration;
+        attempts == null || now.difference(attempts.lastFailure) > lockDuration;
     final current = stale ? (_clients[client] = _Attempts(now)) : attempts;
     current
       ..failures += 1
@@ -56,6 +57,10 @@ class LoginRateLimiter {
       current
         ..lockedUntil = now.add(lockDuration)
         ..failures = 0;
+      logger.warning(
+        'Login locked after $maxFailures failures',
+        fields: {'client': client, 'lockSeconds': lockDuration.inSeconds},
+      );
     }
     if (_clients.length > _pruneAbove) _prune(now);
     if (failureDelay > Duration.zero) await _wait(failureDelay);

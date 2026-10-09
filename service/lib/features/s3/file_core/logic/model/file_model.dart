@@ -1,6 +1,4 @@
-import 'package:service/feather.dart';
-
-class FileModel implements Serializable {
+class FileModel {
   final String key;
   final int size;
   final DateTime lastModified;
@@ -15,8 +13,7 @@ class FileModel implements Serializable {
     required this.etag,
   });
 
-  @override
-  Object? toJson() {
+  Map<String, Object?> toJson() {
     return {
       'key': key,
       'size_bytes': size,

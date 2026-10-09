@@ -104,6 +104,16 @@ Summary of some of the available actions, their authentication method and the re
 *\*The login checks directly against the `FEATHER_ACCESS` and `FEATHER_SECRET` environment
 credentials.*
 
+The whole admin API is documented with OpenAPI: `GET /{ADMIN_PREFIX}/openapi.json` gives the
+document and `GET /{ADMIN_PREFIX}/docs` opens it in Swagger UI (log in with `/login` and paste its
+`access_token` in *Authorize*). Its errors are Problem Details (RFC 9457,
+`application/problem+json`) with the S3 error `code` and the `resource`:
+
+```json
+{"code": "NoSuchBucket", "resource": "photos", "type": "about:blank", "title": "Not Found",
+ "status": 404, "detail": "The bucket \"photos\" does not exist."}
+```
+
 ### Access keys
 
 Besides the root key of the env, S3 clients can sign with **access keys** created from the console
@@ -140,6 +150,11 @@ Environment variables of the service.
 | `LOGIN_LOCK_SECONDS`        |    No    |       `900`        | Seconds an IP stays locked (answers `429` with `Retry-After`).                                                    |
 | `LOGIN_FAILURE_DELAY_MS`    |    No    |       `1000`       | Delay before answering each failed login.                                                                         |
 | `TRUSTED_PROXIES`           |    No    |        `0`         | Own proxies in front of the service; with 0 the connection IP is used and `X-Forwarded-For` is ignored.           |
+| `LOG_FORMAT`                |    No    |         -          | `json` writes one JSON object per line (for a log collector); otherwise readable lines.                          |
+| `LOG_LEVEL`                 |    No    |       `info`       | `debug`, `info`, `warning` or `error`.                                                                            |
+
+For local development, `main()` also reads a `.env` file (and `.env.<WINTER_PROFILE>`) from the
+working directory, under the variables of the process.
 
 ## Docker
 

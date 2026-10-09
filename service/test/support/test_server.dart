@@ -32,6 +32,8 @@ class TestServer {
     env.put('JWT_SECRET', 'test-jwt-secret-$port');
     env.put('KEYS_ENCRYPTION_SECRET', 'test-keys-secret-$port');
     env.put('STORAGE_VOLUME_PATH', storagePath);
+    // Only problems: every request would otherwise write two lines
+    env.put('LOG_LEVEL', 'warning');
 
     await _deleteStorage();
     await FeatherIO.start(

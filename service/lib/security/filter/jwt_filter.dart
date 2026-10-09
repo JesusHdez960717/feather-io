@@ -12,8 +12,10 @@ class JwtFilter extends Filter {
   factory JwtFilter() => _instance;
 
   @override
-  Future<ResponseEntity> doFilter(RequestEntity request,
-      FilterChain chain,) async {
+  Future<ResponseEntity> doFilter(
+    RequestEntity request,
+    FilterChain chain,
+  ) async {
     final authHeader = request.headers[HttpHeader.authorization];
 
     if (authHeader != null && authHeader.startsWith('Bearer ')) {
@@ -29,10 +31,10 @@ class JwtFilter extends Filter {
           ),
         );
       } else {
-        request.securityContext.clearContext();
+        request.securityContext.clear();
       }
     } else {
-      request.securityContext.clearContext();
+      request.securityContext.clear();
     }
 
     return await chain.doFilter(request);

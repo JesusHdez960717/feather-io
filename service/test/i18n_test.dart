@@ -36,7 +36,7 @@ void main() {
       );
 
   List<String> messages(http.Response response) => [
-    for (final violation in jsonDecode(response.body) as List)
+    for (final violation in jsonDecode(response.body)['violations'] as List)
       violation['message'] as String,
   ];
 
@@ -75,7 +75,7 @@ void main() {
       expect(response.statusCode, 404);
       final body = jsonDecode(response.body);
       expect(body['code'], 'NoSuchBucket');
-      expect(body['message'], 'El bucket "no-such-bucket" no existe.');
+      expect(body['detail'], 'El bucket "no-such-bucket" no existe.');
       expect(response.headers['vary'], contains('Accept-Language'));
     });
 
@@ -83,16 +83,16 @@ void main() {
       'Should resolve regions, q-values and unsupported languages',
       () async {
         final mexico = await getMissingBucket(language: 'es-MX', json: true);
-        expect(jsonDecode(mexico.body)['message'], contains('no existe'));
+        expect(jsonDecode(mexico.body)['detail'], contains('no existe'));
 
         final weighted = await getMissingBucket(
           language: 'fr;q=1, es;q=0.8',
           json: true,
         );
-        expect(jsonDecode(weighted.body)['message'], contains('no existe'));
+        expect(jsonDecode(weighted.body)['detail'], contains('no existe'));
 
         final french = await getMissingBucket(language: 'fr', json: true);
-        expect(jsonDecode(french.body)['message'], contains('does not exist'));
+        expect(jsonDecode(french.body)['detail'], contains('does not exist'));
       },
     );
 
@@ -143,7 +143,7 @@ void main() {
       ]);
       for (var i = 0; i < languages.length; i++) {
         expect(
-          jsonDecode(responses[i].body)['message'],
+          jsonDecode(responses[i].body)['detail'],
           languages[i] == 'es'
               ? 'El bucket "no-such-bucket" no existe.'
               : 'The bucket "no-such-bucket" does not exist.',
@@ -160,7 +160,7 @@ void main() {
       expect(response.statusCode, 403);
       final body = jsonDecode(response.body);
       expect(body['code'], 'InvalidCredentials');
-      expect(body['message'], 'Credenciales no válidas');
+      expect(body['detail'], 'Credenciales no válidas');
     });
   });
 }

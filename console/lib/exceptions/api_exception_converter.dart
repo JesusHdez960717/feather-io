@@ -65,7 +65,8 @@ class ApiExceptionConverter {
       return GlobalException(
         type: GlobalExceptionType.validation,
         message: app.intl.errorValidation,
-        data: (error.response!.data as List<dynamic>)
+        // A Problem Details with the list in `violations`
+        data: ((error.response!.data as Map)['violations'] as List<dynamic>)
             .map(
               (json) => ValidationError.fromJson(json as Map<String, dynamic>),
             )
@@ -92,10 +93,14 @@ class ApiExceptionConverter {
     }
   }
 
-  /// S3 errors arrive as `{code, message, resource}`; the rest as plain text
+  /// Every error of the service is a Problem Details (RFC 9457): the text for
+  /// the user is its `detail` (S3 errors add their `code` and `resource`).
+  /// Without one, its `title` (the status); anything else as plain text
   static String _message(dynamic data) {
-    if (data is Map && data['message'] is String) {
-      return data['message'] as String;
+    if (data is Map) {
+      for (final key in const ['detail', 'title']) {
+        if (data[key] is String) return data[key] as String;
+      }
     }
     return data?.toString() ?? '';
   }

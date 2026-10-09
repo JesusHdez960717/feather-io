@@ -1,6 +1,4 @@
-import 'package:service/feather.dart';
-
-class BucketModel implements Serializable {
+class BucketModel {
   final String name;
   final int objectCount;
   final int size;
@@ -21,8 +19,18 @@ class BucketModel implements Serializable {
     this.color,
   });
 
-  @override
-  Object? toJson() {
+  /// The example of the OpenAPI document.
+  static final BucketModel example = BucketModel(
+    name: 'photos',
+    objectCount: 128,
+    size: 734003200,
+    creationDate: DateTime.utc(2026, 3, 14, 9, 30),
+    lastModified: DateTime.utc(2026, 10, 2, 14, 22, 35),
+    description: 'Photos of the 2026 trip',
+    color: 0xFF2196F3,
+  );
+
+  Map<String, Object?> toJson() {
     return {
       'name': name,
       'object_count': objectCount,

@@ -30,6 +30,7 @@ class BucketService {
       description: description,
       color: color,
     );
+    logger.info('Bucket created', fields: {'bucket': bucketName});
 
     return true;
   }
@@ -46,6 +47,7 @@ class BucketService {
     await accessRuleRepo.deleteByBucket(bucketName);
     await accessKeyRepo.deleteGrantsByBucket(bucketName);
     await bucketRepo.delete(bucketName);
+    logger.info('Bucket deleted', fields: {'bucket': bucketName});
   }
 
   Future<BucketModel> getBucket({required String bucketName}) async {
@@ -56,6 +58,7 @@ class BucketService {
   /// Deletes every object; the bucket, its metadata and its rules stay.
   Future<void> emptyBucket({required String bucketName}) async {
     await fileManagement.emptyBucket(bucketName);
+    logger.info('Bucket emptied', fields: {'bucket': bucketName});
   }
 
   /// Replaces the description and color of an existing bucket.

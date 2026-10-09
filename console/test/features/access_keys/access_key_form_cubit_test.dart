@@ -81,9 +81,12 @@ void main() {
     build: build,
     setUp: () => whenCreate().thenThrow(
       ExceptionConverter.parse(
-        httpError(422, [
-          {'fieldName': 'name', 'value': '', 'message': 'Too short'},
-        ]),
+        httpError(422, {
+          'status': 422,
+          'violations': [
+            {'fieldName': 'name', 'message': 'Too short', 'code': 'size.min'},
+          ],
+        }),
       ),
     ),
     act: (cubit) => cubit.save(draft: draft),

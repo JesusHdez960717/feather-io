@@ -143,46 +143,64 @@ void main() {
     test('Should reject a key without name or scope (422)', () async {
       expect((await createKey({'all_buckets': 'readOnly'})).statusCode, 422);
       expect((await createKey({'name': 'No scope'})).statusCode, 422);
-      expect(
-        (await createKey({'name': 'x', 'buckets': []})).statusCode,
-        422,
-      );
+      expect((await createKey({'name': 'x', 'buckets': []})).statusCode, 422);
     });
 
-    test('Should reject both scopes, bad levels and repeated buckets (422)',
-        () async {
-      final both = await createKey({
-        'name': 'Both',
-        'all_buckets': 'readOnly',
-        'buckets': [
-          {'bucket': photos, 'access': 'readOnly'},
-        ],
-      });
-      expect(both.statusCode, 422);
+    test(
+      'Should reject both scopes, bad levels and repeated buckets (422)',
+      () async {
+        final both = await createKey({
+          'name': 'Both',
+          'all_buckets': 'readOnly',
+          'buckets': [
+            {'bucket': photos, 'access': 'readOnly'},
+          ],
+        });
+        expect(both.statusCode, 422);
 
-      final badLevel = await createKey({
-        'name': 'Bad',
-        'buckets': [
-          {'bucket': photos, 'access': 'everything'},
-        ],
-      });
-      expect(badLevel.statusCode, 422);
+        final badLevel = await createKey({
+          'name': 'Bad',
+          'buckets': [
+            {'bucket': photos, 'access': 'everything'},
+          ],
+        });
+        expect(badLevel.statusCode, 422);
+        expect(
+          (jsonDecode(badLevel.body)['violations'] as List).single['fieldName'],
+          'buckets[0].access',
+        );
 
-      final repeated = await createKey({
-        'name': 'Twice',
-        'buckets': [
-          {'bucket': photos, 'access': 'readOnly'},
-          {'bucket': photos, 'access': 'writeOnly'},
-        ],
-      });
-      expect(repeated.statusCode, 422);
+        final repeated = await createKey({
+          'name': 'Twice',
+          'buckets': [
+            {'bucket': photos, 'access': 'readOnly'},
+            {'bucket': photos, 'access': 'writeOnly'},
+          ],
+        });
+        expect(repeated.statusCode, 422);
 
-      final longName = await createKey({
-        'name': 'x' * 65,
-        'all_buckets': 'readOnly',
-      });
-      expect(longName.statusCode, 422);
-    });
+        final longName = await createKey({
+          'name': 'x' * 65,
+          'all_buckets': 'readOnly',
+        });
+        expect(longName.statusCode, 422);
+      },
+    );
+
+    test(
+      'Should name the field of a body with the wrong shape (400)',
+      () async {
+        final response = await createKey({
+          'name': 'Shape',
+          'buckets': ['photos'],
+        });
+        expect(response.statusCode, 400);
+        expect(
+          jsonDecode(response.body)['detail'],
+          r'$.buckets[0]: expected an object, got a string',
+        );
+      },
+    );
 
     test('Should reject an expiration in the past (422)', () async {
       final response = await createKey({
@@ -412,7 +430,10 @@ void main() {
       final old = await signed('GET', '/$photos/cat.jpg', key);
       expect(old.statusCode, 403);
       expect(old.body, contains('SignatureDoesNotMatch'));
-      expect((await signed('GET', '/$photos/cat.jpg', rotated)).statusCode, 200);
+      expect(
+        (await signed('GET', '/$photos/cat.jpg', rotated)).statusCode,
+        200,
+      );
     });
 
     test('A deleted key answers InvalidAccessKeyId', () async {

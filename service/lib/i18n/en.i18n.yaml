@@ -24,6 +24,7 @@ errors:
     objectOverMaximum: 'The object is over the maximum of {max: int} bytes.'
     objectSizeOverMaximum: 'The object is {size: int} bytes and the maximum is {max: int}.'
     objectInUse: 'The object is in use and cannot be replaced; please retry.'
+    objectNotDeleted: 'The object could not be deleted; please retry.'
     incompleteChunkedBody: 'The aws-chunked body is incomplete or malformed.'
     nothingToDownload: 'No objects found to download.'
     missingFolderPrefix: 'Missing the folder to delete (prefix).'

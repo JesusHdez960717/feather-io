@@ -196,7 +196,7 @@ void main() {
         response: Response(
           requestOptions: options,
           statusCode: 404,
-          data: {'code': 'NotFound', 'message': 'Access key not found'},
+          data: {'code': 'NotFound', 'detail': 'Access key not found'},
         ),
       ),
     );

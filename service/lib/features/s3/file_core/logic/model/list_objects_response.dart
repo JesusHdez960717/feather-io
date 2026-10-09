@@ -1,6 +1,6 @@
 import 'package:service/feather.dart';
 
-class ListObjectsResponse implements Serializable {
+class ListObjectsResponse {
   final String bucketName;
   final String? prefix;
   final String? delimiter;
@@ -49,8 +49,7 @@ class ListObjectsResponse implements Serializable {
   /// Objects and common prefixes returned in this page.
   int get keyCount => contents.length + commonPrefixes.length;
 
-  @override
-  Object? toJson() {
+  Map<String, Object?> toJson() {
     return {
       'name': bucketName,
       'prefix': prefix,

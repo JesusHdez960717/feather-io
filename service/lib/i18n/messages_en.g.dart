@@ -150,6 +150,10 @@ class ServiceMessages$errors$s3$en {
   String get objectInUse =>
       'The object is in use and cannot be replaced; please retry.';
 
+  /// en: 'The object could not be deleted; please retry.'
+  String get objectNotDeleted =>
+      'The object could not be deleted; please retry.';
+
   /// en: 'The aws-chunked body is incomplete or malformed.'
   String get incompleteChunkedBody =>
       'The aws-chunked body is incomplete or malformed.';
@@ -437,6 +441,8 @@ extension on ServiceMessages {
       }) => 'The object is ${size} bytes and the maximum is ${max}.',
       'errors.s3.objectInUse' =>
         'The object is in use and cannot be replaced; please retry.',
+      'errors.s3.objectNotDeleted' =>
+        'The object could not be deleted; please retry.',
       'errors.s3.incompleteChunkedBody' =>
         'The aws-chunked body is incomplete or malformed.',
       'errors.s3.nothingToDownload' => 'No objects found to download.',

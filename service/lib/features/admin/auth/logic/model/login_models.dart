@@ -8,13 +8,20 @@ class LoginRequest {
 
   factory LoginRequest.fromJson(Map<String, dynamic> json) {
     return LoginRequest(
-      access: json['access'] as String,
-      secret: json['secret'] as String,
+      access: json.field<String>('access'),
+      secret: json.field<String>('secret'),
     );
   }
+
+  /// The example of the OpenAPI document (a request body only: no secret is
+  /// ever written).
+  static const Map<String, Object?> example = {
+    'access': 'feather-access',
+    'secret': 'feather-secret-key',
+  };
 }
 
-class LoginResponse implements Serializable {
+class LoginResponse {
   final String accessToken;
   final int expiresIn;
   final DateTime expireAt;
@@ -25,8 +32,14 @@ class LoginResponse implements Serializable {
     required this.expireAt,
   });
 
-  @override
-  Map<String, dynamic> toJson() {
+  /// The example of the OpenAPI document.
+  static final LoginResponse example = LoginResponse(
+    accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…',
+    expiresIn: const Duration(hours: 12).inMilliseconds,
+    expireAt: DateTime.utc(2026, 10, 9, 12),
+  );
+
+  Map<String, Object?> toJson() {
     return {
       'access_token': accessToken,
       'expires_in': expiresIn,

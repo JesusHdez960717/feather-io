@@ -7,9 +7,10 @@ repository. It is the single source of truth for project rules.
 
 Monorepo for a lightweight S3-compatible storage system:
 
-- `service/` — Dart backend built on **Winter**, an internal framework at `../winter` (path
-  dependency `../../winter` from `service/`, i.e. a sibling of this repo). Read its source there
-  when a Winter API is unclear.
+- `service/` — Dart backend built on **Winter** `1.0.0-rc.1`, an internal framework at
+  `../winter` (path dependency `../../winter` from `service/`, i.e. a sibling of this repo). Its
+  guides (`doc/`), examples (`example/`, the apps `auth_jwt` and `production` are the closest to
+  this service) and `DECISIONS.md` are the reference; read its source when an API is unclear.
 - `console/` — Flutter Web admin console. Talks to the service over REST.
 
 The two packages are strictly decoupled: they share nothing but the HTTP contract.
@@ -52,10 +53,13 @@ KEYS_ENCRYPTION_SECRET=some-keys-secret STORAGE_VOLUME_PATH=./uploads_local ADMI
 fvm dart run lib/main.dart
 ```
 
-Required env: `FEATHER_ACCESS`, `FEATHER_SECRET`, `JWT_SECRET`, `KEYS_ENCRYPTION_SECRET`,
-`STORAGE_VOLUME_PATH`. Optional:
-`ADMIN_PREFIX` (default `_admin`), `RESERVED_BUCKET_NAMES` and `MAX_OBJECT_SIZE` (bytes, default 5
-GiB). See `service/README.md` (its endpoint table lists only some routes, so treat the
+Required env (`requiredEnvVariables`, checked at once with `env.requireAll` before anything
+starts): `FEATHER_ACCESS`, `FEATHER_SECRET`, `JWT_SECRET`, `KEYS_ENCRYPTION_SECRET`,
+`STORAGE_VOLUME_PATH`. Optional: `ADMIN_PREFIX` (default `_admin`), `RESERVED_BUCKET_NAMES`,
+`MAX_OBJECT_SIZE` (bytes, default 5 GiB), `LOG_FORMAT` (`json` for one JSON object per line,
+otherwise readable lines) and `LOG_LEVEL` (`debug`, `info` (default), `warning`, `error`).
+`main()` reads `.env`/`.env.<WINTER_PROFILE>` under the process variables (`Env.load()`), so a
+local `.env` works too. See `service/README.md` (its endpoint table lists only some routes, so treat the
 controllers as the source of truth).
 
 `service/Dockerfile` builds with `docker build --build-context winter=../../winter -t feather-io .`
@@ -86,6 +90,8 @@ fvm flutter test                                                # on the VM, no 
   `connectTimeout`/`receiveTimeout` = `Duration.zero` (no limit) and rely on a `CancelToken`.
 - On web, Dio reports 401/403 as `connectionError` rather than `badResponse`.
   `ApiExceptionConverter` therefore maps web connection errors to `GlobalExceptionType.auth`.
+- Errors of the service are Problem Details: `ApiExceptionConverter` shows their `detail`, and a
+  422 becomes `ValidationError`s from its `violations` (`fieldName` = the form field).
 
 ## HTTP contract (both sides)
 
@@ -115,23 +121,24 @@ file.
   the admin prefix, and is attached per route rather than to the parent.
 - Filters on a parent route are inherited by its children. To stop a parent's `AuthFilter` from
   applying to child routes, gate it with
-  `shouldFilter: (r) => r.routingContext?.key == '<own key>'`, as `s3.list-objects` does.
+  `shouldFilter: (r) => r.route?.key == '<own key>'`, as `s3.list-objects` does.
 
 **Auth and authorization.**
 
 - The global filter is `JwtFilter`. It populates the `securityContext` from a `Bearer` token issued
   by `POST /{admin}/login`; `JwtService.verifyToken` also requires an `exp` claim, so no token can
-  live forever. A general `RateLimitFilter` (Winter's `RateLimiter`) is the first global filter:
-  `RATE_LIMIT_REQUESTS` (2000) requests per IP every `RATE_LIMIT_WINDOW_SECONDS` (60); above it the
-  S3 API answers `503 SlowDown` (what S3 clients retry) and the admin API `429` (0 disables it);
-  the number comes from measured client bursts (see `DECISIONS.md`). Login
-  is rate limited per client IP by `LoginRateLimiter` (in DI): every failure
+  live forever. Login is rate limited per client IP by `LoginRateLimiter` (in DI): every failure
   waits `LOGIN_FAILURE_DELAY_MS` (1 s) and `LOGIN_MAX_FAILURES` (10) failures in a row lock the IP
   for `LOGIN_LOCK_SECONDS` (15 min, `429` + `Retry-After`, even with good credentials); a success
   clears it. The IP is `request.clientIp(trustedProxies: TRUSTED_PROXIES)`, so `X-Forwarded-For`
   is ignored unless proxies are declared. Credentials are compared in constant time. That endpoint
   checks `FEATHER_ACCESS`/`FEATHER_SECRET` and issues a
   token with a fixed permission list.
+- A general `RateLimiterFilter` (Winter's) is the first global filter: `RATE_LIMIT_REQUESTS` (2000)
+  requests per IP every `RATE_LIMIT_WINDOW_SECONDS` (60), 0 disables it; the number comes from
+  measured client bursts (see `DECISIONS.md`). It throws Winter's 429, which `S3ExceptionHandler`
+  turns into `503 SlowDown` on the S3 API (what S3 clients retry) and a translated 429 on the admin
+  API, both with `Retry-After` and `X-RateLimit-*`.
 - `S3SigV4Filter` handles native S3 clients and is registered only on the S3 parent route, so the
   admin API accepts JWT only. `JwtFilter` is registered globally and again on both parents.
   `JwtFilter` and `S3SigV4Filter` both skip themselves (`shouldFilter`) once the request is
@@ -176,7 +183,7 @@ against the AWS docs example. The SigV4 maths live in `security/logic/sig_v4_sig
   Route keys and permission names match (`s3.*`, `admin.*`).
 - New endpoints need the route key, an `AuthFilter`, **and** the permission added to the list in
   `admin/auth/rest/auth_controller.dart` (and to `S3SigV4Filter` if native S3 clients should reach
-  it).
+  it). An admin endpoint also needs its `docs:` (see *OpenAPI*).
 - `AnonymousAccessFilter` runs on the S3 parent after the SigV4 filter, for unauthenticated
   requests and, as in AWS, for requests signed with an access key that lacks the route's permission
   (it adds the rule's `s3.anonymous.*` permissions to the key's, which stays the principal; a copy
@@ -207,7 +214,9 @@ Current features: `s3/api/{rest,filter}` + `s3/file_core/{logic,repo}`, `admin/r
 
 - Controller is the **only** layer that touches HTTP formats: `package:xml`, `Content-Type`,
   `Accept`, `toJson` output. Use Winter abstractions (`RequestEntity`, `ResponseEntity`, `Route`,
-  `ObjectMapper`); never use `shelf` directly.
+  `ObjectMapper`), never `dart:io`'s `HttpRequest`. A body is read with `body<T>()`, `bytes()`,
+  `readAsString()` (text, 400 if it isn't UTF-8) or `read()` (a stream); a filter passes a changed
+  request with `request.copyWith(...)`.
 - Services and repos return typed models (`BucketModel`, `ListObjectsResponse`…), `File`s or
   `Stream<List<int>>`. They never import `package:xml`, build raw JSON maps for responses, or
   inspect headers.
@@ -215,18 +224,25 @@ Current features: `s3/api/{rest,filter}` + `s3/file_core/{logic,repo}`, `admin/r
 - Avoid `dynamic`; use `Map<String, dynamic>` only for raw JSON input, otherwise strict models.
 - Don't add dependencies for things Dart core or Winter already cover.
 
-**Models / serialization.** JSON is hand-written: implement `Serializable` (from Winter) with
-`toJson()`. Request models have a `fromJson` factory **and** a matching `om.addDeserializer` in
-`main.dart`, then are read with `request.body<T>()`. Request models that need validation implement
-`Validatable` and the controller calls `.validate().throwOnFailure()`. No `build_runner` except
-Drift.
+**Models / serialization.** JSON is hand-written, without interfaces: a model has a
+`Map<String, Object?> toJson()` (Winter finds it by itself) with the `snake_case` names. Request
+models have a `fromJson` factory that reads each field with `json.field<T>('json_name')` (never
+casts: a wrong body is then a 400 that names the field, `$.buckets[0]: expected an object, got a
+string`), **and** a `Deserializer<T>.json(T.fromJson)` in `main.dart`; a list of objects
+(`json.field<List<CompletedPart>>`) needs its element registered too. They are read with
+`request.body<T>()`, which also validates a `Validatable` (422): never call `validate()` again
+in the controller, except after `body<T>(validate: false)` (CreateBucket, whose optional body may
+be XML). Validation is `ConstraintValidatorContext()..field('name', value).notNull().size(...)`,
+a nested list with `validEach()` (`buckets[0].access`) and a rule of the service with
+`.custom((value) => message or null)`. Admin request and response models have a
+`static final example` for the OpenAPI document. No `build_runner` except Drift.
 
 **Content negotiation (S3 only).** Controllers call `_acceptsJson(request)` (checks `Accept` for
 `application/json`):
 
 ```dart
 if (_acceptsJson(request)) {
-return ResponseEntity.ok(body: model); // Winter serializes Serializable to JSON
+return ResponseEntity.ok(body: model); // Winter serializes it with its toJson()
 }
 return ResponseEntity.ok(
 body: _mapModelToXml(model), // private helper in the controller
@@ -252,30 +268,50 @@ them before other operations: GetObjectTagging (`GET /{bucket}/{key}?tagging`, a
 the AWS CLI asks before a multipart copy) and GetBucketVersioning (`GET /{bucket}?versioning`,
 never enabled; rclone asks before a purge).
 
-**Errors.**
+**Errors.** Every JSON error is a Problem Details (RFC 9457, `application/problem+json`:
+`type`, `title`, `status`, `detail`), as Winter answers them.
 
 - S3 errors (from services and S3 filters) throw
   `S3Exception(S3ErrorCode.x, message: …, resource: …)` (`s3/file_core/logic/s3_exception.dart`), or
   one of its named constructors (`invalidBucketName`, `invalidKey`, `noSuchBucket`, `noSuchKey`).
-  Each `S3ErrorCode` carries the AWS code and its HTTP status; add new codes there.
-- `S3ExceptionHandler` (registered in `main.dart` with `Winter.context.setUp`) renders them as the
-  S3 `<Error>` XML by default, or as JSON `{code, message, resource}` when the client accepts JSON
-  or the path is under the admin prefix. Winter sends JSON error bodies as
-  `application/problem+json`.
+  It is an `ApiException`: `detail` is the message and the extensions `code` and `resource`. Each
+  `S3ErrorCode` carries the AWS code and its HTTP status; add new codes there.
+- `S3ExceptionHandler` (registered in `main.dart` with `Winter.context.setUp`) overrides
+  `SimpleExceptionHandler.handle`: on the S3 API an `S3Exception` is the S3 `<Error>` XML (with
+  its `RequestId`) unless the client accepts JSON, a 413 is `EntityTooLarge` and a 429 is
+  `SlowDown`; everything else follows Winter's rules (a 400 of the object mapper with the path of
+  the field, a 422 with `violations` (`fieldName`, `message`, `code`, `params`), a 500 that only
+  shows the `requestId`).
 - The admin API throws `S3Exception` too (`InvalidCredentials`, `NoSuchAccessKey`,
-  `InvalidRequest`…), so its errors are `{code, message, resource}` as well (the 429 bodies and the
-  422 violation list aside).
+  `InvalidRequest`…), so its errors are Problem Details with `code` and `resource` as well.
 - Messages are translated, codes never (`DECISIONS.md` §7). The texts live in
   `lib/i18n/en.i18n.yaml` (base, with the parameter types) and `es.i18n.yaml`, generated by slang
-  (`fvm dart run slang`, generated code versioned). Any code reads them with the `t` getter
+  (`fvm dart run slang`, generated code versioned). Any code reads them with the `intl` getter
   (`lib/i18n/i18n.dart`), in the language of the request in progress (Winter's `requestLocale`,
   from `Accept-Language`, English by default), without receiving the request:
-  `S3Exception(…, message: t.errors.s3.noSuchBucket(bucket: name))`, `addRule((v) => … ? null :
-  t.errors.validations.x)`, `.notNull(message: t.…)`. `t` is a getter: never keep it in a `final`
-  or a `static`, and build validators inside `validate()`. Winter adds `Vary: Accept-Language`
-  by itself. A new message goes into both YAML files.
-- A controller that wraps a block in `try/catch` must `if (e is ApiException) rethrow;` before
-  converting unknown errors.
+  `S3Exception(…, message: intl.errors.s3.noSuchBucket(bucket: name))`,
+  `.custom((v) => … ? null : intl.errors.validations.x)`, `.notNull(message: intl.…)`. `intl` is a
+  getter: never keep it in a `final` or a `static`, and build validators inside `validate()`.
+  Winter adds `Vary: Accept-Language` by itself. A new message goes into both YAML files.
+- A controller that wraps a block in `try/catch` must
+  `if (e is ApiException || e is DeserializationException) rethrow;` before converting unknown
+  errors (a malformed body keeps its 400 with the field).
+- Never put the text of an unexpected error in a response (it may hold paths of the server): log
+  it with `logger.error(…, error: e, stackTrace: s)` and answer a generic message.
+
+**Logging.** Everything goes through Winter's `logger` (never `print`/`stdout`):
+`env.serviceLogger` (`LOG_FORMAT`, `LOG_LEVEL`) is set in `FeatherIO.start`, and every line
+carries the request id (also in the `X-Request-Id` header). `LoggingFilter` (global) writes the
+method, path, status and time of each request; it never logs the query (a presigned URL carries
+its signature there) nor bodies. Services log changes of state at `info` and what needs attention
+at `warning`, with ids in `fields`, never a secret, token or key typed at login.
+
+**OpenAPI.** `AdminController.routing` serves the OpenAPI 3.1 document of the admin API at
+`/{admin}/openapi.json` and Swagger UI at `/{admin}/docs` (both public; the S3 API is left out,
+it is the one AWS documents). Each admin route has `docs: RouteDocs(summary:, tags:, request:,
+response:, status:, query:)`: the bodies come from the `example` of the models, and the schema
+constraints from their `validate()`; security, the 401/403/429 and the error responses are found
+by Winter. `test/openapi_test.dart` checks it.
 
 **Storage & performance.** Buckets are directories under `STORAGE_VOLUME_PATH`. Bucket metadata (
 description, color, timestamps), anonymous rules and object ETags live in SQLite via Drift, in
@@ -307,9 +343,9 @@ or `Uint8List` for object data. Multi-object downloads build the zip in a temp f
 `ServerConfig.maxBodySize` (10 MB by default) is set to `MAX_OBJECT_SIZE`, and `BodySizeFilter` (
 global) narrows it by route from the `Content-Length`: `s3.put-object` over `MAX_OBJECT_SIZE` →
 `EntityTooLarge`; every other body (read into memory) is capped at 2 MB (413). A `POST`/`PUT`/
-`PATCH` without `Content-Length` (empty, as aws-sdk-java-v2's CreateBucket, or chunked: shelf drops
-`Transfer-Encoding`, so they look the same) gets its body wrapped in Winter's `limitBodySize`, which
-fails with 413 while reading. Every bucket name goes through
+`PATCH` without `Content-Length` (empty, as aws-sdk-java-v2's CreateBucket, or chunked) gets its
+body wrapped by the filter, which fails with 413 while reading; Winter reads the rest and
+discards it, so the client gets the answer (`EntityTooLarge` on the S3 API). Every bucket name goes through
 `S3Validator.isValidBucketName` and every key through `S3Validator.isValidKey` (path traversal
 protection) before touching the filesystem. Keys can't contain `\`: on Windows it is a folder
 separator, so `a\b` would alias `a/b` and could write a folder marker.
@@ -428,16 +464,18 @@ from scratch and regenerate `service/tool/s3_compat/RESULTS.md`. Outputs go to
   `setUpAll(server.start)` / `tearDownAll(server.stop)`. It sets the env, starts the real server
   with an in-memory SQLite (`FeatherIO.start(database: …)`), logs in to get `server.token`, and
   creates and deletes `./uploads_test/<name>` (gitignored); `fileDatabase: true` uses the real
-  SQLite file inside that folder instead. Helpers: `server.url(path)`,
+  SQLite file inside that folder instead. It sets `LOG_LEVEL=warning`, so only problems are
+  printed. Helpers: `server.url(path)`,
   `server.auth(json: …)`, `server.createBucket(…)` (tolerates an existing one),
   `server.putObject(…, headers: …)` (creates the bucket first and sends bytes without
   `Content-Type`, so reads fall back to the extension) and `server.sigV4(method, path, query: …)`, the
   headers of a native client signed with SigV4 (`access:`/`secret:` sign with an access key created
   in the test). Uploading with `http.put` needs the bucket created.
-- Use one distinct port per file so files run in parallel. Ports in use: 8082–8113.
+- Use one distinct port per file so files run in parallel. Ports in use: 8082–8114.
 - Cover auth (missing or invalid token → 401, wrong login credentials → 403), validation (bad bucket
-  names, path traversal, forbidden chars → 400), content negotiation (JSON vs XML, including the S3
-  error code) and edge cases (404, empty lists).
+  names, path traversal, forbidden chars → 400; a 422 reads `body['violations']`, a JSON error
+  `body['detail']` and `body['code']`), content negotiation (JSON vs XML, including the S3 error
+  code) and edge cases (404, empty lists).
 - To send a path traversal that reaches the server, encode the slashes (`..%2F..%2Ffile`). The HTTP
   client normalizes `%2e%2e` segments away.
 

@@ -42,7 +42,10 @@ void main() {
     test('PUT /{bucket} - Should fail with a wrong token (401)', () async {
       final response = await http.put(
         server.url('/create-test-wrong-token'),
-        headers: {...jsonHeaders(auth: false), 'authorization': 'Bearer not-a-jwt'},
+        headers: {
+          ...jsonHeaders(auth: false),
+          'authorization': 'Bearer not-a-jwt',
+        },
         body: jsonEncode({}),
       );
       expect(response.statusCode, 401);
@@ -60,40 +63,49 @@ void main() {
       expect(response.headers['location'], '/create-test-sigv4');
     });
 
-    test('PUT /{bucket} - Should accept a request without Content-Length nor body', () async {
-      // Like aws-sdk-java-v2's CreateBucket; package:http always sends the
-      // header, so this goes through a raw socket
-      final socket = await Socket.connect('localhost', server.port);
-      socket.write(
-        'PUT /create-test-no-length HTTP/1.1\r\n'
-        'Host: localhost:${server.port}\r\n'
-        'Authorization: Bearer ${server.token}\r\n'
-        'Connection: close\r\n\r\n',
-      );
-      final response = await utf8.decodeStream(socket);
-      socket.destroy();
-      expect(response, startsWith('HTTP/1.1 200'));
-      expect(await bucketExists('create-test-no-length'), isTrue);
-    });
+    test(
+      'PUT /{bucket} - Should accept a request without Content-Length nor body',
+      () async {
+        // Like aws-sdk-java-v2's CreateBucket; package:http always sends the
+        // header, so this goes through a raw socket
+        final socket = await Socket.connect('localhost', server.port);
+        socket.write(
+          'PUT /create-test-no-length HTTP/1.1\r\n'
+          'Host: localhost:${server.port}\r\n'
+          'Authorization: Bearer ${server.token}\r\n'
+          'Connection: close\r\n\r\n',
+        );
+        final response = await utf8.decodeStream(socket);
+        socket.destroy();
+        expect(response, startsWith('HTTP/1.1 200'));
+        expect(await bucketExists('create-test-no-length'), isTrue);
+      },
+    );
 
-    test('PUT /{bucket} - Should create a bucket with description and color', () async {
-      const color = 0xFFC0156E;
-      final response = await http.put(
-        server.url('/create-test-colored'),
-        headers: jsonHeaders(),
-        body: jsonEncode({'description': 'Website images: café', 'color': color}),
-      );
-      expect(response.statusCode, 200);
-      expect(await bucketExists('create-test-colored'), isTrue);
+    test(
+      'PUT /{bucket} - Should create a bucket with description and color',
+      () async {
+        const color = 0xFFC0156E;
+        final response = await http.put(
+          server.url('/create-test-colored'),
+          headers: jsonHeaders(),
+          body: jsonEncode({
+            'description': 'Website images: café',
+            'color': color,
+          }),
+        );
+        expect(response.statusCode, 200);
+        expect(await bucketExists('create-test-colored'), isTrue);
 
-      final list = await http.get(server.url('/'), headers: jsonHeaders());
-      expect(list.statusCode, 200);
-      final bucket = (jsonDecode(list.body) as List).firstWhere(
-        (b) => b['name'] == 'create-test-colored',
-      );
-      expect(bucket['description'], 'Website images: café');
-      expect(bucket['color'], color);
-    });
+        final list = await http.get(server.url('/'), headers: jsonHeaders());
+        expect(list.statusCode, 200);
+        final bucket = (jsonDecode(list.body) as List).firstWhere(
+          (b) => b['name'] == 'create-test-colored',
+        );
+        expect(bucket['description'], 'Website images: café');
+        expect(bucket['color'], color);
+      },
+    );
 
     test('PUT /{bucket} - Should create a bucket without body', () async {
       final response = await http.put(
@@ -122,7 +134,11 @@ void main() {
           body: jsonEncode({}),
         );
         expect(response.statusCode, 400, reason: name);
-        expect(jsonDecode(response.body)['code'], 'InvalidBucketName', reason: name);
+        expect(
+          jsonDecode(response.body)['code'],
+          'InvalidBucketName',
+          reason: name,
+        );
       }
     });
 
@@ -137,20 +153,23 @@ void main() {
       expect(await bucketExists('reserved-bucket'), isFalse);
     });
 
-    test('PUT /{bucket} - Should reject a description that is too long (422)', () async {
-      final response = await http.put(
-        server.url('/create-test-long-desc'),
-        headers: jsonHeaders(),
-        body: jsonEncode({
-          'description': 'x' * (CreateBucketRequest.maxDescriptionLength + 1),
-        }),
-      );
-      expect(response.statusCode, 422);
-      final List violations = jsonDecode(response.body);
-      expect(violations.single['fieldName'], 'description');
-      expect(violations.single['message'], isNotEmpty);
-      expect(await bucketExists('create-test-long-desc'), isFalse);
-    });
+    test(
+      'PUT /{bucket} - Should reject a description that is too long (422)',
+      () async {
+        final response = await http.put(
+          server.url('/create-test-long-desc'),
+          headers: jsonHeaders(),
+          body: jsonEncode({
+            'description': 'x' * (CreateBucketRequest.maxDescriptionLength + 1),
+          }),
+        );
+        expect(response.statusCode, 422);
+        final List violations = jsonDecode(response.body)['violations'];
+        expect(violations.single['fieldName'], 'description');
+        expect(violations.single['message'], isNotEmpty);
+        expect(await bucketExists('create-test-long-desc'), isFalse);
+      },
+    );
 
     test('PUT /{bucket} - Should reject an out of range color (422)', () async {
       final response = await http.put(
@@ -159,7 +178,7 @@ void main() {
         body: jsonEncode({'color': -1}),
       );
       expect(response.statusCode, 422);
-      final List violations = jsonDecode(response.body);
+      final List violations = jsonDecode(response.body)['violations'];
       expect(violations.single['fieldName'], 'color');
     });
   });

@@ -21,8 +21,7 @@ class AnonymousAccessController {
   Future<ResponseEntity> createRule(RequestEntity request) async {
     final bucketName = request.pathParams['bucket']!;
 
-    final requestBody = await request.body<CreateRuleRequest>()
-      ..validate().throwOnFailure();
+    final requestBody = await request.body<CreateRuleRequest>();
     AnonymousRuleModel model = requestBody.toModel();
 
     await anonymousAccessService.createRule(bucket: bucketName, model: model);
@@ -33,7 +32,6 @@ class AnonymousAccessController {
   Future<ResponseEntity> deleteRule(RequestEntity request) async {
     final bucketName = request.pathParams['bucket']!;
     final body = await request.body<DeleteRuleRequest>();
-    body.validate().throwOnFailure();
 
     await anonymousAccessService.deleteRule(
       bucket: bucketName,

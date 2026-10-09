@@ -32,12 +32,12 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 
 TEST_DESC = {
-    'access_keys_test.dart': 'Access keys: admin CRUD and validation, encrypted secret, each level on its bucket, ListBuckets filtered, copies, disabled/expired/deleted keys, regenerating the secret.',
+    'access_keys_test.dart': 'Access keys: admin CRUD and validation (422 per nested field, 400 naming the field), encrypted secret, each level on its bucket, ListBuckets filtered, copies, disabled/expired/deleted keys, regenerating the secret.',
     'access_keys_permissions_test.dart': 'Access key permission matrix (every S3 operation for read, write and both, on its bucket and another), keys on every bucket, multipart, presigned URLs, changes taking effect, edge cases (tampered secret, recreated bucket, console login), and anonymous rules applying to signed keys as in AWS.',
     'secret_cipher_test.dart': 'AES-GCM encryption of the access key secrets: round trip, nonce, key id, passphrase and tampering.',
     'anonymous_access_test.dart': 'Anonymous access rules (admin CRUD, effect on list/get/put/delete, a prefix without `*` and the whole key with `*`) and multipart never being anonymous.',
     'aws_chunked_test.dart': '`aws-chunked` bodies (chunk signatures and trailers), lines split mid-way, errors, and a failed upload not overwriting the object.',
-    'body_size_test.dart': 'Size limits: objects > 10 MB, 2 MB bodies, chunked without `Content-Length`.',
+    'body_size_test.dart': 'Size limits: objects > 10 MB (`EntityTooLarge`), 2 MB bodies, chunked without `Content-Length`.',
     'copy_object_test.dart': 'CopyObject: copies, across buckets, onto itself, errors and the `x-amz-copy-source-if-*` conditions.',
     'cors_test.dart': 'CORS (preflight and the exposed `ETag`).',
     'create_bucket_test.dart': 'CreateBucket: JWT and SigV4, no body nor `Content-Length`, metadata, validation and reserved names.',
@@ -56,7 +56,8 @@ TEST_DESC = {
     'login_rate_limiter_test.dart': 'Login attempt limit (unit, fake clock): penalty, lock, unlock and reset.',
     'login_rate_limit_test.dart': 'Login attempt limit against the server: 429 with `Retry-After`, fake `X-Forwarded-For`, end of the lock.',
     'rate_limit_test.dart': 'General limit per IP: `X-RateLimit-*` headers, `503 SlowDown` on S3 and 429 on admin with `Retry-After`, fake `X-Forwarded-For`, next window.',
-    'login_test.dart': 'Console login (JWT) and tampered tokens: no `exp`, expired, another secret, `alg: none`; errors without internal details.',
+    'login_test.dart': 'Console login (JWT) and tampered tokens: no `exp`, expired, another secret, `alg: none`; a malformed body names its field; errors without internal details.',
+    'openapi_test.dart': 'OpenAPI document of the admin API (every route, no S3 routes, Bearer security, constraints from `validate()`) and Swagger UI.',
     'multipart_test.dart': 'Multipart: create, parts, complete, abort, ListMultipartUploads, ListParts, UploadPartCopy.',
     'object_metadata_test.dart': 'Metadata: `Content-Type`, `x-amz-meta-*`, storage class, on copies and multipart.',
     'presign_public_url_test.dart': 'Presigned URLs with `PUBLIC_URL`: public domain even with a tampered `Host`, valid through a proxy, and validation of the variable.',

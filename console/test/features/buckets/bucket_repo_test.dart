@@ -110,7 +110,7 @@ void main() {
     ).thenThrow(
       httpError(409, {
         'code': 'BucketNotEmpty',
-        'message': 'The bucket "media" is not empty and cannot be deleted.',
+        'detail': 'The bucket "media" is not empty and cannot be deleted.',
       }),
     );
 

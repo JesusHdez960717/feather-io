@@ -1,47 +1,33 @@
 import 'package:service/feather.dart';
 
-class CreateBucketRequest implements Serializable, Validatable {
+class CreateBucketRequest implements Validatable {
   static const int maxDescriptionLength = 1024;
 
   final String? description;
   final int? color;
 
-  CreateBucketRequest({
-    this.description,
-    this.color,
-  });
+  CreateBucketRequest({this.description, this.color});
+
+  /// The example of the OpenAPI document.
+  static final CreateBucketRequest example = CreateBucketRequest(
+    description: 'Photos of the 2026 trip',
+    color: 0xFF2196F3,
+  );
 
   factory CreateBucketRequest.fromJson(Map<String, dynamic> json) {
     return CreateBucketRequest(
-      description: json['description'] as String?,
-      color: json['color'] as int?,
+      description: json.field<String?>('description'),
+      color: json.field<int?>('color'),
     );
   }
 
   @override
-  ConstraintValidatorContext validate() {
-    final cvc = ConstraintValidatorContext();
-
-    cvc
-        .buildValidator('description')
-        .size(max: maxDescriptionLength)
-        .validate(description);
-
+  ConstraintValidatorContext validate() => ConstraintValidatorContext()
+    ..field('description', description).size(max: maxDescriptionLength)
     // Unsigned 32-bit ARGB color, as the console sends it (Color.toARGB32)
-    cvc
-        .buildValidator('color')
-        .min(0)
-        .max(0xFFFFFFFF)
-        .validate(color);
+    ..field('color', color).min(0).max(0xFFFFFFFF);
 
-    return cvc;
-  }
-
-  @override
-  Object? toJson() {
-    return {
-      'description': description,
-      'color': color,
-    };
+  Map<String, Object?> toJson() {
+    return {'description': description, 'color': color};
   }
 }

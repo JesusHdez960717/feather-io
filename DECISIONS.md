@@ -45,11 +45,12 @@ IP and locking one locks them all.
 
 ## 2. General request limit
 
-**What it does.** `RateLimitFilter` (`security/filter/`), registered as the **first global filter**
-in `main.dart`, with Winter's `RateLimiter` (sliding window): at most **`RATE_LIMIT_REQUESTS`
-requests (2000) per IP in each `RATE_LIMIT_WINDOW_SECONDS` window (60 s)**. Above that, the **S3 API
-answers `503 SlowDown`** with the S3 `<Error>` (XML, or JSON with `Accept`), like S3, and the
-**admin API `429`**; both with `Retry-After`. Every response carries `X-RateLimit-Limit`,
+**What it does.** Winter's `RateLimiterFilter`, registered as the **first global filter** in
+`main.dart` (sliding window): at most **`RATE_LIMIT_REQUESTS` requests (2000) per IP in each
+`RATE_LIMIT_WINDOW_SECONDS` window (60 s)**. Above that it throws Winter's `429`, and
+`S3ExceptionHandler` answers it: the **S3 API `503 SlowDown`** with the S3 `<Error>` (XML, or JSON
+with `Accept`), like S3, and the **admin API `429`** (a Problem Details with a translated `detail`);
+both with `Retry-After`. Every response carries `X-RateLimit-Limit`,
 `X-RateLimit-Remaining` and `X-RateLimit-Reset`. `RATE_LIMIT_REQUESTS=0` disables it. The IP is
 computed as for the login (`TRUSTED_PROXIES`).
 
@@ -157,7 +158,39 @@ and Spanish.
 | Only the text of the message is translated, never the error code (`<Code>`, `code`)                                                                                                                | Clients decide on the code (`NoSuchKey`, `SlowDown`…); the message is only shown or logged. Translating the message changes nothing for them                                                                                                                                                                                                                                                                                                                                                                  |
 | Translated error responses carry `Vary: Accept-Language` (Winter adds it when the request's language was read)                                                                                     | A proxy or CDN must not serve one language's error to another client                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Browsers do send `Accept-Language`, so an expired presigned URL opened in a browser in Spanish shows the error in Spanish                                                                          | It is a person reading it; it is the only visible difference with AWS                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| Translations with `slang`, from YAML files (`en.i18n.yaml` as the base with the parameter types, `es.i18n.yaml` with the texts), generated with `fvm dart run slang` and versioned, as Winter does | Typed access (`m.errors.s3.noSuchBucket(bucket: name)`) instead of keys as strings; a missing key in a language doesn't compile (`fallback_strategy: none`); the texts are compiled into the binary, so nothing to copy into the `scratch` Docker image; no `build_runner`. YAML rather than ARB because ARB has no nested keys and JSON no comments                                                                                                                                                          |
-| Messages are read with the `t` getter, in the language of the request in progress (Winter's `requestLocale`, kept in a `Zone` per request), and become plain strings when the error is built: `message: t.errors.s3.bucketNotEmpty(bucket: name)` | Most errors are thrown where there is no request (e.g. `FileManagementService.deleteBucket`, multipart, copy conditions), and the zone gives them its language without passing it down. It replaced an earlier version where every error and validation rule carried a function from the messages to its text (`(m) => m.errors…`, with a `localized(...)` adapter for Winter), resolved by the exception handler: more ceremony at every `throw` and rule. Discarded too: one exception class per error (~70 small classes) and passing the language to the services (an HTTP detail in the service layer) |
+| Translations with `slang`, from YAML files (`en.i18n.yaml` as the base with the parameter types, `es.i18n.yaml` with the texts), generated with `fvm dart run slang` and versioned, as Winter does | Typed access (`intl.errors.s3.noSuchBucket(bucket: name)`) instead of keys as strings; a missing key in a language doesn't compile (`fallback_strategy: none`); the texts are compiled into the binary, so nothing to copy into the `scratch` Docker image; no `build_runner`. YAML rather than ARB because ARB has no nested keys and JSON no comments                                                                                                                                                          |
+| Messages are read with the `intl` getter, in the language of the request in progress (Winter's `requestLocale`, kept in a `Zone` per request), and become plain strings when the error is built: `message: intl.errors.s3.bucketNotEmpty(bucket: name)` | Most errors are thrown where there is no request (e.g. `FileManagementService.deleteBucket`, multipart, copy conditions), and the zone gives them its language without passing it down. It replaced an earlier version where every error and validation rule carried a function from the messages to its text (`(m) => m.errors…`, with a `localized(...)` adapter for Winter), resolved by the exception handler: more ceremony at every `throw` and rule. Discarded too: one exception class per error (~70 small classes) and passing the language to the services (an HTTP detail in the service layer) |
 | The messages, logs included, are in the request's language | They are built once, when the error is thrown. The code (`NoSuchKey`…) and the route in the log stay the same in every language, so the diagnosis doesn't depend on reading the text |
-| `t` is a getter and validators are built inside `validate()` | A `final` or `static` value would freeze the language of whoever evaluated it first |
+| `intl` is a getter and validators are built inside `validate()` | A `final` or `static` value would freeze the language of whoever evaluated it first |
+
+## 8. Errors: Problem Details
+
+Every JSON error of the service (admin API, and S3 API with `Accept: application/json`) is a
+Problem Details (RFC 9457, `application/problem+json`), Winter's format. The S3 API keeps the S3
+`<Error>` XML by default.
+
+| Decision | Why |
+|---|---|
+| An `S3Exception` is a Problem Details whose `detail` is the message, plus the extensions `code` (the S3 code) and `resource` | It was `{code, message, resource}`, while the errors of Winter itself (401, 404 of a route, 400 of a body, 422) were already Problem Details: two formats for one client. Now every error reads the same, the console shows `detail`, and it still decides on `code`, which is never translated |
+| The 422 is Winter's: a Problem Details with `violations` (`fieldName`, `message`, `code`, `params`), never the value | The value that failed is personal data or a long text that the client already has; the `code` lets a client translate or react without parsing the message |
+| Request bodies are read with `json.field<T>()`, and a wrong body is a 400 whose `detail` names the field (`$.buckets[0]: expected an object, got a string`) | With casts every wrong body was the same generic 400 (or a 500 for a wrong type), and the developer of a client had to guess the field. The path never contains the value sent nor a Dart type |
+| On the S3 API, a 413 (a body over the limit found while reading) is `EntityTooLarge` and a 429 is `SlowDown`, both as the S3 `<Error>` | S3 clients parse the XML and decide on its code; they don't know Winter's Problem Details. The admin API keeps Winter's answers |
+| The S3 `<Error>` carries `<RequestId>`, the request id of the logs | As in S3: a client can report it, and the log lines of that request are found by it |
+| An unexpected error inside a multi-delete is logged and answered with a fixed message, never its `toString()` | The text of an exception can reveal paths and the implementation |
+
+## 9. OpenAPI of the admin API
+
+| Decision | Why |
+|---|---|
+| Only the admin API is documented (`/{admin}/openapi.json`, Swagger UI at `/{admin}/docs`) | The S3 API is the one AWS documents, and its routes multiplex many operations by query and headers (`PUT /{bucket}/{key}` is PutObject, CopyObject, UploadPart and UploadPartCopy) with XML bodies: a generated document would be misleading |
+| Both are public, like the login | They describe the API, never its data; the protected routes still need the JWT, which Swagger takes in *Authorize* |
+| The bodies come from an `example` of each model, and the constraints from its `validate()` | Nothing is written twice: the example is serialized by the same `toJson()` as a real response, and a rule changed in `validate()` changes the document |
+
+## 10. Logs
+
+| Decision | Why |
+|---|---|
+| Readable lines by default, one JSON object per line with `LOG_FORMAT=json`; `LOG_LEVEL` (`info` by default) | Readable while developing, and a log collector (Loki, Cloud Logging, Datadog) reads the JSON without parsing rules |
+| `LoggingFilter` logs every request after the general rate limit | A flood rejected by the limit doesn't flood the logs too (Winter logs those at `debug`) |
+| Never the query string, bodies, tokens, secrets nor what was typed at login; failed logins and locks are logged with the client IP | A presigned URL carries its signature in the query, and a log ends up in more places than the service. The IP is what an operator needs to see a brute force |
+| Services log the changes of state (`info`) with ids in `fields` | Who deleted a bucket or created a key is the first question after an incident; the request id of each line ties it to its request |

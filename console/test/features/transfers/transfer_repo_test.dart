@@ -106,7 +106,7 @@ void main() {
 
   test('An API error arrives with the service message', () async {
     whenDownload().thenThrow(
-      httpError(404, {'code': 'NoSuchKey', 'message': 'Nothing to download'}),
+      httpError(404, {'code': 'NoSuchKey', 'detail': 'Nothing to download'}),
     );
 
     await expectLater(

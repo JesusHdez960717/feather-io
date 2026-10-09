@@ -1,6 +1,4 @@
-import 'package:service/feather.dart';
-
-class DeleteObjectsResponse implements Serializable {
+class DeleteObjectsResponse {
   final List<String> deleted;
   final List<DeleteError> errors;
   final bool quiet;
@@ -11,8 +9,7 @@ class DeleteObjectsResponse implements Serializable {
     this.quiet = false,
   });
 
-  @override
-  Object? toJson() {
+  Map<String, Object?> toJson() {
     return {
       if (!quiet) 'deleted': deleted.map((key) => {'key': key}).toList(),
       'errors': errors.map((e) => e.toJson()).toList(),
@@ -20,23 +17,14 @@ class DeleteObjectsResponse implements Serializable {
   }
 }
 
-class DeleteError implements Serializable {
+class DeleteError {
   final String key;
   final String code;
   final String message;
 
-  DeleteError({
-    required this.key,
-    required this.code,
-    required this.message,
-  });
+  DeleteError({required this.key, required this.code, required this.message});
 
-  @override
-  Object? toJson() {
-    return {
-      'key': key,
-      'code': code,
-      'message': message,
-    };
+  Map<String, Object?> toJson() {
+    return {'key': key, 'code': code, 'message': message};
   }
 }

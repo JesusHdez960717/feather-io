@@ -28,7 +28,7 @@ class AnonymousAccessFilter extends Filter {
     FilterChain chain,
   ) async {
     final bucket = request.pathParams['bucket'];
-    final routeKey = request.routingContext?.key;
+    final routeKey = request.route?.key;
 
     final current = request.securityContext.authentication;
     final keyHasIt =

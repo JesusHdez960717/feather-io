@@ -6,31 +6,23 @@ class CreateRuleRequest implements Validatable {
 
   CreateRuleRequest(this.prefix, this.access);
 
+  /// The example of the OpenAPI document.
+  static final CreateRuleRequest example = CreateRuleRequest(
+    'public/',
+    AnonymousAccessType.readOnly.name,
+  );
+
   factory CreateRuleRequest.fromJson(Map<String, dynamic> json) {
     return CreateRuleRequest(
-      json['prefix'] as String?,
-      json['access'] as String?,
+      json.field<String?>('prefix'),
+      json.field<String?>('access'),
     );
   }
 
   @override
-  ConstraintValidatorContext validate() {
-    final cvc = ConstraintValidatorContext();
-
-    cvc
-        .buildValidator('prefix')
-        .notNull()
-        .size(min: 1, max: 128)
-        .validate(prefix);
-
-    cvc
-        .buildValidator('access')
-        .notNull()
-        .isEnum(AnonymousAccessType.values)
-        .validate(access);
-
-    return cvc;
-  }
+  ConstraintValidatorContext validate() => ConstraintValidatorContext()
+    ..field('prefix', prefix).notNull().size(min: 1, max: 128)
+    ..field('access', access).notNull().isEnum(AnonymousAccessType.values);
 
   AnonymousRuleModel toModel() {
     return AnonymousRuleModel(
@@ -38,6 +30,8 @@ class CreateRuleRequest implements Validatable {
       AnonymousAccessType.values.byName(access!),
     );
   }
+
+  Map<String, Object?> toJson() => {'prefix': prefix, 'access': access};
 }
 
 class DeleteRuleRequest implements Validatable {
@@ -45,20 +39,17 @@ class DeleteRuleRequest implements Validatable {
 
   DeleteRuleRequest(this.prefix);
 
+  /// The example of the OpenAPI document.
+  static final DeleteRuleRequest example = DeleteRuleRequest('public/');
+
   factory DeleteRuleRequest.fromJson(Map<String, dynamic> json) {
-    return DeleteRuleRequest(json['prefix'] as String?);
+    return DeleteRuleRequest(json.field<String?>('prefix'));
   }
 
   @override
-  ConstraintValidatorContext validate() {
-    final cvc = ConstraintValidatorContext();
+  ConstraintValidatorContext validate() =>
+      ConstraintValidatorContext()
+        ..field('prefix', prefix).notNull().size(min: 1, max: 128);
 
-    cvc
-        .buildValidator('prefix')
-        .notNull()
-        .size(min: 1, max: 128)
-        .validate(prefix);
-
-    return cvc;
-  }
+  Map<String, Object?> toJson() => {'prefix': prefix};
 }

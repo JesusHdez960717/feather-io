@@ -1,6 +1,6 @@
 # Test results (full run from scratch)
 
-Run on **2026-10-05** on commit `cf5aa36` (`feature/poc`),
+Run on **2026-10-09** on commit `bc2aabe` (`feature/poc`) with uncommitted changes,
 on Windows 11 with Docker version 29.4.1, build 055a478.
 Generated with `service/tool/s3_compat/report.py`; to repeat it, see *Full test run* in `CLAUDE.md`.
 
@@ -8,7 +8,7 @@ Generated with `service/tool/s3_compat/report.py`; to repeat it, see *Full test 
 |---|---|
 | `dart analyze` (service) | No issues |
 | `flutter analyze` (console) | 1 issue (see the output) |
-| `dart test` (service) | **480/480** in 35 files |
+| `dart test` (service) | **486/486** in 36 files |
 | `flutter test` (console) | **132/132** in 19 files |
 | AWS CLI v2 (`aws-cli/2.37.9`) | **34/34** |
 | rclone (`rclone v1.75.1`) | **19/19** |
@@ -20,10 +20,10 @@ Generated with `service/tool/s3_compat/report.py`; to repeat it, see *Full test 
 | File | Tests | What it covers |
 |---|---:|---|
 | `access_keys_permissions_test.dart` | 111/111 | Access key permission matrix (every S3 operation for read, write and both, on its bucket and another), keys on every bucket, multipart, presigned URLs, changes taking effect, edge cases (tampered secret, recreated bucket, console login), and anonymous rules applying to signed keys as in AWS. |
-| `access_keys_test.dart` | 22/22 | Access keys: admin CRUD and validation, encrypted secret, each level on its bucket, ListBuckets filtered, copies, disabled/expired/deleted keys, regenerating the secret. |
+| `access_keys_test.dart` | 23/23 | Access keys: admin CRUD and validation (422 per nested field, 400 naming the field), encrypted secret, each level on its bucket, ListBuckets filtered, copies, disabled/expired/deleted keys, regenerating the secret. |
 | `anonymous_access_test.dart` | 29/29 | Anonymous access rules (admin CRUD, effect on list/get/put/delete, a prefix without `*` and the whole key with `*`) and multipart never being anonymous. |
 | `aws_chunked_test.dart` | 10/10 | `aws-chunked` bodies (chunk signatures and trailers), lines split mid-way, errors, and a failed upload not overwriting the object. |
-| `body_size_test.dart` | 8/8 | Size limits: objects > 10 MB, 2 MB bodies, chunked without `Content-Length`. |
+| `body_size_test.dart` | 8/8 | Size limits: objects > 10 MB (`EntityTooLarge`), 2 MB bodies, chunked without `Content-Length`. |
 | `copy_object_test.dart` | 17/17 | CopyObject: copies, across buckets, onto itself, errors and the `x-amz-copy-source-if-*` conditions. |
 | `cors_test.dart` | 3/3 | CORS (preflight and the exposed `ETag`). |
 | `create_bucket_test.dart` | 11/11 | CreateBucket: JWT and SigV4, no body nor `Content-Length`, metadata, validation and reserved names. |
@@ -41,9 +41,10 @@ Generated with `service/tool/s3_compat/report.py`; to repeat it, see *Full test 
 | `list_objects_test.dart` | 21/21 | ListObjects V1 and V2: prefixes, paging (token, `marker`, `start-after`), ETags, `encoding-type=url`. |
 | `login_rate_limit_test.dart` | 2/2 | Login attempt limit against the server: 429 with `Retry-After`, fake `X-Forwarded-For`, end of the lock. |
 | `login_rate_limiter_test.dart` | 6/6 | Login attempt limit (unit, fake clock): penalty, lock, unlock and reset. |
-| `login_test.dart` | 9/9 | Console login (JWT) and tampered tokens: no `exp`, expired, another secret, `alg: none`; errors without internal details. |
+| `login_test.dart` | 9/9 | Console login (JWT) and tampered tokens: no `exp`, expired, another secret, `alg: none`; a malformed body names its field; errors without internal details. |
 | `multipart_test.dart` | 31/31 | Multipart: create, parts, complete, abort, ListMultipartUploads, ListParts, UploadPartCopy. |
 | `object_metadata_test.dart` | 12/12 | Metadata: `Content-Type`, `x-amz-meta-*`, storage class, on copies and multipart. |
+| `openapi_test.dart` | 5/5 | OpenAPI document of the admin API (every route, no S3 routes, Bearer security, constraints from `validate()`) and Swagger UI. |
 | `presign_public_url_test.dart` | 5/5 | Presigned URLs with `PUBLIC_URL`: public domain even with a tampered `Host`, valid through a proxy, and validation of the variable. |
 | `presign_test.dart` | 11/11 | Presigned URLs (admin endpoint and SigV4 query verification). |
 | `put_object_test.dart` | 13/13 | PutObject: uploads, ETag, missing bucket, key validation, path traversal and replacing an open object (Windows). |

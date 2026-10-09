@@ -59,6 +59,7 @@ class AccessKeyService {
       grants: grants,
       expiresAt: expiresAt,
     );
+    logger.info('Access key created', fields: {'accessKeyId': id});
     return (await _get(id)).withSecret(secret);
   }
 
@@ -83,6 +84,7 @@ class AccessKeyService {
       grants: grants,
       expiresAt: expiresAt,
     );
+    logger.info('Access key updated', fields: {'accessKeyId': id});
     return _get(id);
   }
 
@@ -94,6 +96,7 @@ class AccessKeyService {
       id: id,
       secretEncrypted: cipher.encrypt(secret, associatedData: id),
     );
+    logger.info('Access key secret regenerated', fields: {'accessKeyId': id});
     return key.withSecret(secret);
   }
 
@@ -101,6 +104,7 @@ class AccessKeyService {
     await _get(id);
     await repo.delete(id);
     _lastTouched.remove(id);
+    logger.info('Access key deleted', fields: {'accessKeyId': id});
   }
 
   /// The key [id] with its secret in plain text, to check a signature, or null
@@ -158,7 +162,7 @@ class AccessKeyService {
     if (expiresAt != null && !expiresAt.isAfter(DateTime.now())) {
       throw ValidationException(
         violations: [
-          ConstrainViolation(
+          ConstraintViolation(
             value: expiresAt.toIso8601String(),
             fieldName: 'expires_at',
             message: intl.errors.validations.futureExpiry,

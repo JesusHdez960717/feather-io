@@ -94,7 +94,7 @@ class S3SigV4Filter extends Filter {
         payloadHash != null &&
         _sha256Pattern.hasMatch(payloadHash)) {
       return await chain.doFilter(
-        request.change(
+        request.copyWith(
           body: _checkSha256(request.read(), payloadHash.toLowerCase()),
         ),
       );
@@ -154,7 +154,9 @@ class S3SigV4Filter extends Filter {
         signedAt.isAfter(now.add(maxClockSkew))) {
       throw S3Exception(
         S3ErrorCode.requestTimeTooSkewed,
-        message: intl.errors.signature.clockSkew(minutes: maxClockSkew.inMinutes),
+        message: intl.errors.signature.clockSkew(
+          minutes: maxClockSkew.inMinutes,
+        ),
       );
     }
   }

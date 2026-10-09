@@ -19,6 +19,7 @@ errors:
     objectOverMaximum: 'El objeto supera el máximo de {max} bytes.'
     objectSizeOverMaximum: 'El objeto tiene {size} bytes y el máximo es {max}.'
     objectInUse: 'El objeto está en uso y no se puede reemplazar; vuelve a intentarlo.'
+    objectNotDeleted: 'El objeto no se pudo borrar; vuelve a intentarlo.'
     incompleteChunkedBody: 'El cuerpo aws-chunked está incompleto o mal formado.'
     nothingToDownload: 'No se encontraron objetos para descargar.'
     missingFolderPrefix: 'Falta la carpeta a eliminar (prefix).'

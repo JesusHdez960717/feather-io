@@ -1,15 +1,18 @@
-import 'package:service/feather.dart';
-
 enum AnonymousAccessType { readOnly, writeOnly, readWrite }
 
-class AnonymousRuleModel implements Serializable {
+class AnonymousRuleModel {
   final String prefix;
   final AnonymousAccessType access;
 
   AnonymousRuleModel(this.prefix, this.access);
 
-  @override
-  Object? toJson() {
+  /// The example of the OpenAPI document.
+  static final AnonymousRuleModel example = AnonymousRuleModel(
+    'public/',
+    AnonymousAccessType.readOnly,
+  );
+
+  Map<String, Object?> toJson() {
     return {'prefix': prefix, 'access': access.name};
   }
 }

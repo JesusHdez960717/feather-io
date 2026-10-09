@@ -1,5 +1,3 @@
-import 'package:service/feather.dart';
-
 /// What an access key may do on a bucket (the same levels as the anonymous
 /// rules).
 enum AccessKeyLevel {
@@ -12,19 +10,18 @@ enum AccessKeyLevel {
   bool get canWrite => this != readOnly;
 }
 
-class AccessKeyGrant implements Serializable {
+class AccessKeyGrant {
   final String bucket;
   final AccessKeyLevel access;
 
   AccessKeyGrant(this.bucket, this.access);
 
-  @override
-  Object? toJson() => {'bucket': bucket, 'access': access.name};
+  Map<String, Object?> toJson() => {'bucket': bucket, 'access': access.name};
 }
 
 /// An access key for native S3 clients. It reaches every bucket with
 /// [allBuckets], or only the buckets of [grants].
-class AccessKeyModel implements Serializable {
+class AccessKeyModel {
   final String id;
   final String name;
   final bool enabled;
@@ -49,6 +46,20 @@ class AccessKeyModel implements Serializable {
     required this.lastUsedAt,
     this.secret,
   });
+
+  /// The example of the OpenAPI document; [secret] only comes on create and
+  /// on regenerating it.
+  static final AccessKeyModel example = AccessKeyModel(
+    id: 'FIOKA1B2C3D4E5F6G7H8',
+    name: 'Backups',
+    enabled: true,
+    allBuckets: null,
+    grants: [AccessKeyGrant('backups', AccessKeyLevel.readWrite)],
+    expiresAt: DateTime.utc(2027),
+    createdAt: DateTime.utc(2026, 10, 1, 8),
+    lastUsedAt: DateTime.utc(2026, 10, 9, 7, 45),
+    secret: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+  );
 
   bool get isExpired =>
       expiresAt != null && !DateTime.now().isBefore(expiresAt!);
@@ -79,8 +90,18 @@ class AccessKeyModel implements Serializable {
     secret: secret,
   );
 
-  @override
-  Object? toJson() {
+  AccessKeyModel withoutSecret() => AccessKeyModel(
+    id: id,
+    name: name,
+    enabled: enabled,
+    allBuckets: allBuckets,
+    grants: grants,
+    expiresAt: expiresAt,
+    createdAt: createdAt,
+    lastUsedAt: lastUsedAt,
+  );
+
+  Map<String, Object?> toJson() {
     return {
       'access_key_id': id,
       'name': name,
@@ -98,12 +119,20 @@ class AccessKeyModel implements Serializable {
 
 /// The managed keys plus the id of the root key (`FEATHER_ACCESS`), which has
 /// no row: it can't be edited or deleted.
-class AccessKeyListModel implements Serializable {
+class AccessKeyListModel {
   final String rootAccessKeyId;
   final List<AccessKeyModel> keys;
 
   AccessKeyListModel({required this.rootAccessKeyId, required this.keys});
 
-  @override
-  Object? toJson() => {'root_access_key_id': rootAccessKeyId, 'keys': keys};
+  /// The example of the OpenAPI document.
+  static final AccessKeyListModel example = AccessKeyListModel(
+    rootAccessKeyId: 'feather-access',
+    keys: [AccessKeyModel.example.withoutSecret()],
+  );
+
+  Map<String, Object?> toJson() => {
+    'root_access_key_id': rootAccessKeyId,
+    'keys': keys,
+  };
 }

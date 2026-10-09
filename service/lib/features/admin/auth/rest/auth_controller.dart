@@ -14,8 +14,8 @@ class AuthController {
         request.clientIp(trustedProxies: env.trustedProxies) ?? 'unknown';
     final locked = rateLimiter.lockedFor(client);
     if (locked != null) {
-      return ResponseEntity.tooManyRequests(
-        body: intl.errors.admin.tooManyLoginAttempts,
+      throw TooManyRequestsException(
+        detail: intl.errors.admin.tooManyLoginAttempts,
         retryAfter: (locked.inMilliseconds / 1000).ceil(),
       );
     }
@@ -28,6 +28,8 @@ class AuthController {
       final validAccess = _sameText(loginReq.access, env.access);
       final validSecret = _sameText(loginReq.secret, env.secret);
       if (!validAccess || !validSecret) {
+        // The IP, never what was typed
+        logger.warning('Failed login', fields: {'client': client});
         await rateLimiter.failed(client);
         throw S3Exception(
           S3ErrorCode.invalidCredentials,
@@ -79,7 +81,8 @@ class AuthController {
         ),
       );
     } catch (e) {
-      if (e is ApiException) rethrow;
+      // A body that isn't the expected JSON keeps its 400 with the field
+      if (e is ApiException || e is DeserializationException) rethrow;
       throw S3Exception(
         S3ErrorCode.invalidRequest,
         message: intl.errors.admin.invalidLoginRequest,

@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
@@ -60,7 +59,7 @@ class S3Controller {
               shouldFilter: (request) {
                 // Only for this very route, so the child routes don't inherit
                 // it: get-object must not need the list-objects permission
-                return request.routingContext?.key == 's3.list-objects';
+                return request.route?.key == 's3.list-objects';
               },
             ),
             ReservedBucketFilter(),
@@ -159,7 +158,8 @@ class S3Controller {
 
     CreateBucketRequest? createRequest;
     try {
-      createRequest = await request.body<CreateBucketRequest>();
+      // Validated below: a 422 must not fall into this catch
+      createRequest = await request.body<CreateBucketRequest>(validate: false);
     } catch (_) {
       // Defaults when the body is empty or not valid
       createRequest = null;
@@ -581,7 +581,10 @@ class S3Controller {
     if (start >= size) {
       throw S3Exception(
         S3ErrorCode.invalidRange,
-        message: intl.errors.s3.rangeOutsideObject(range: '"$header"', size: size),
+        message: intl.errors.s3.rangeOutsideObject(
+          range: '"$header"',
+          size: size,
+        ),
         resource: key,
       );
     }
@@ -825,10 +828,12 @@ class S3Controller {
       message: intl.errors.multipart.invalidPartList,
       resource: key,
     );
-    final body = await utf8.decodeStream(request.read());
+    final body = await request.readAsString();
     if (request.headers['content-type']?.contains('json') == true) {
       try {
-        return CompleteMultipartRequest.fromJson(jsonDecode(body)).parts;
+        return CompleteMultipartRequest.fromJson(
+          om.decode<Map<String, dynamic>>(body),
+        ).parts;
       } catch (_) {
         throw malformed;
       }
@@ -856,7 +861,7 @@ class S3Controller {
       );
     }
 
-    final body = await utf8.decodeStream(request.read());
+    final body = await request.readAsString();
     final isJson =
         request.headers['content-type']?.contains('json') == true ||
         body.trimLeft().startsWith('{');
@@ -888,7 +893,9 @@ class S3Controller {
   /// DeleteObjects in JSON (the console).
   DeleteObjectsRequest _readDeleteJson(String body, String bucketName) {
     try {
-      return DeleteObjectsRequest.fromJson(jsonDecode(body));
+      return DeleteObjectsRequest.fromJson(
+        om.decode<Map<String, dynamic>>(body),
+      );
     } catch (e) {
       throw S3Exception(
         S3ErrorCode.invalidRequest,

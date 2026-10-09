@@ -28,16 +28,16 @@ void main() {
   Future<http.Response> update(String bucket, Object body, {bool auth = true}) {
     return http.put(
       server.url('/${env.adminPrefix}/bucket/$bucket'),
-      headers: {
-        if (auth) ...server.auth(),
-        'content-type': 'application/json',
-      },
+      headers: {if (auth) ...server.auth(), 'content-type': 'application/json'},
       body: jsonEncode(body),
     );
   }
 
   Future<Map<String, dynamic>> findBucket(String name) async {
-    final list = await http.get(server.url('/'), headers: server.auth(json: true));
+    final list = await http.get(
+      server.url('/'),
+      headers: server.auth(json: true),
+    );
     return (jsonDecode(list.body) as List).firstWhere((b) => b['name'] == name);
   }
 
@@ -66,23 +66,31 @@ void main() {
     });
 
     test('Should clear the fields sent as null', () async {
-      final response = await update('edit-bucket', {'description': null, 'color': null});
+      final response = await update('edit-bucket', {
+        'description': null,
+        'color': null,
+      });
       expect(response.statusCode, 200);
       final body = jsonDecode(response.body);
       expect(body['description'], isNull);
       expect(body['color'], isNull);
     });
 
-    test('Should update a bucket created by an upload (without metadata)', () async {
-      await server.putObject('uploaded-bucket', 'file.txt', 'data');
+    test(
+      'Should update a bucket created by an upload (without metadata)',
+      () async {
+        await server.putObject('uploaded-bucket', 'file.txt', 'data');
 
-      final response = await update('uploaded-bucket', {'description': 'Subido'});
-      expect(response.statusCode, 200);
-      final body = jsonDecode(response.body);
-      expect(body['description'], 'Subido');
-      expect(body['object_count'], 1);
-      expect(body['size_bytes'], 4);
-    });
+        final response = await update('uploaded-bucket', {
+          'description': 'Subido',
+        });
+        expect(response.statusCode, 200);
+        final body = jsonDecode(response.body);
+        expect(body['description'], 'Subido');
+        expect(body['object_count'], 1);
+        expect(body['size_bytes'], 4);
+      },
+    );
 
     test('Should return 404 for a non-existent bucket', () async {
       final response = await update('ghost-bucket', {'description': 'x'});
@@ -106,13 +114,19 @@ void main() {
         'description': 'x' * (CreateBucketRequest.maxDescriptionLength + 1),
       });
       expect(response.statusCode, 422);
-      expect((jsonDecode(response.body) as List).single['fieldName'], 'description');
+      expect(
+        (jsonDecode(response.body)['violations'] as List).single['fieldName'],
+        'description',
+      );
     });
 
     test('Should reject an out of range color (422)', () async {
       final response = await update('edit-bucket', {'color': 0x1FFFFFFFF});
       expect(response.statusCode, 422);
-      expect((jsonDecode(response.body) as List).single['fieldName'], 'color');
+      expect(
+        (jsonDecode(response.body)['violations'] as List).single['fieldName'],
+        'color',
+      );
     });
 
     test('Should reject a body that is not JSON (400)', () async {
@@ -125,7 +139,9 @@ void main() {
     });
 
     test('Should fail without auth (401)', () async {
-      final response = await update('edit-bucket', {'description': 'x'}, auth: false);
+      final response = await update('edit-bucket', {
+        'description': 'x',
+      }, auth: false);
       expect(response.statusCode, 401);
     });
   });

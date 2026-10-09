@@ -80,9 +80,16 @@ void main() {
     build: build,
     setUp: () => whenCreate().thenThrow(
       ExceptionConverter.parse(
-        httpError(422, [
-          {'fieldName': 'description', 'value': 'x', 'message': 'Too long'},
-        ]),
+        httpError(422, {
+          'status': 422,
+          'violations': [
+            {
+              'fieldName': 'description',
+              'message': 'Too long',
+              'code': 'size.max',
+            },
+          ],
+        }),
       ),
     ),
     act: (cubit) => cubit.create(name: 'media'),
@@ -101,7 +108,7 @@ void main() {
     build: build,
     setUp: () => whenCreate().thenThrow(
       ExceptionConverter.parse(
-        httpError(409, {'code': 'BucketAlreadyExists', 'message': 'Exists'}),
+        httpError(409, {'code': 'BucketAlreadyExists', 'detail': 'Exists'}),
       ),
     ),
     act: (cubit) => cubit.create(name: 'media'),

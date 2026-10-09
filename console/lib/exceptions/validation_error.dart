@@ -1,26 +1,31 @@
-/// A violation of a 422, in Winter's format: `{fieldName, value, message}`
+/// A violation of a 422 (an item of the `violations` of its Problem Details):
+/// `{fieldName, message, code, params}`. The value that failed is never sent
 class ValidationError {
-  /// Request field that failed validation (e.g. `description`)
+  /// Request field that failed validation (e.g. `description`, `buckets[0].access`)
   final String source;
-  final Object? invalidValue;
+
+  /// The rule that failed (`size.max`, `notNull`…), when there is one
+  final String? code;
+
+  /// The text, already in the language of the request
   final String message;
 
   ValidationError({
     required this.source,
-    required this.invalidValue,
+    required this.code,
     required this.message,
   });
 
   factory ValidationError.fromJson(Map<String, dynamic> json) =>
       ValidationError(
         source: json['fieldName'] as String? ?? '',
-        invalidValue: json['value'],
+        code: json['code'] as String?,
         message: json['message'] as String? ?? '',
       );
 
   @override
   String toString() {
-    return 'ValidationError{source: $source, invalidValue: $invalidValue, message: $message}';
+    return 'ValidationError{source: $source, code: $code, message: $message}';
   }
 }
 

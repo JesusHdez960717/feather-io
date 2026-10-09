@@ -53,7 +53,7 @@ void main() {
       expect(response.headers['content-type'], contains('json'));
       final body = jsonDecode(response.body);
       expect(body['code'], 'NoSuchBucket');
-      expect(body['message'], isNotEmpty);
+      expect(body['detail'], isNotEmpty);
       expect(body['resource'], 'missing-bucket');
     });
 
@@ -134,12 +134,18 @@ void main() {
       expect(response.body, contains('<Code>SignatureDoesNotMatch</Code>'));
     });
 
-    test('Should accept the Authorization fields without spaces (s3cmd)', () async {
-      final headers = server.sigV4('GET', '/');
-      headers['authorization'] = headers['authorization']!.replaceAll(', ', ',');
-      final response = await http.get(server.url('/'), headers: headers);
-      expect(response.statusCode, 200, reason: response.body);
-    });
+    test(
+      'Should accept the Authorization fields without spaces (s3cmd)',
+      () async {
+        final headers = server.sigV4('GET', '/');
+        headers['authorization'] = headers['authorization']!.replaceAll(
+          ', ',
+          ',',
+        );
+        final response = await http.get(server.url('/'), headers: headers);
+        expect(response.statusCode, 200, reason: response.body);
+      },
+    );
   });
 
   group('S3SigV4Filter - replay and body', () {
@@ -207,25 +213,32 @@ void main() {
       expect(response.statusCode, 200, reason: response.body);
     });
 
-    test('Should reject a body that does not match the signed sha256', () async {
-      await server.putObject('signed-body', 'changed.txt', 'previous');
-      final response = await http.put(
-        server.url('/signed-body/changed.txt'),
-        headers: server.sigV4(
-          'PUT',
-          '/signed-body/changed.txt',
-          payloadHash: sha256.convert(utf8.encode('original')).toString(),
-        ),
-        body: 'tampered',
-      );
-      expect(response.statusCode, 400);
-      expect(response.body, contains('<Code>XAmzContentSHA256Mismatch</Code>'));
-      // The previous object stays intact
-      expect(
-        await File('${server.storagePath}/signed-body/changed.txt').readAsString(),
-        'previous',
-      );
-    });
+    test(
+      'Should reject a body that does not match the signed sha256',
+      () async {
+        await server.putObject('signed-body', 'changed.txt', 'previous');
+        final response = await http.put(
+          server.url('/signed-body/changed.txt'),
+          headers: server.sigV4(
+            'PUT',
+            '/signed-body/changed.txt',
+            payloadHash: sha256.convert(utf8.encode('original')).toString(),
+          ),
+          body: 'tampered',
+        );
+        expect(response.statusCode, 400);
+        expect(
+          response.body,
+          contains('<Code>XAmzContentSHA256Mismatch</Code>'),
+        );
+        // The previous object stays intact
+        expect(
+          await File('${server.storagePath}/signed-body/changed.txt')
+              .readAsString(),
+          'previous',
+        );
+      },
+    );
 
     test('Should reject a presigned URL dated in the future', () async {
       final future = DateTime.now().toUtc().add(const Duration(days: 30));

@@ -202,9 +202,16 @@ void main() {
       build: build,
       setUp: () => whenCreate().thenThrow(
         ExceptionConverter.parse(
-          httpError(422, [
-            {'fieldName': 'prefix', 'value': '', 'message': 'Too short'},
-          ]),
+          httpError(422, {
+            'status': 422,
+            'violations': [
+              {
+                'fieldName': 'prefix',
+                'message': 'Too short',
+                'code': 'size.min',
+              },
+            ],
+          }),
         ),
       ),
       act: (cubit) => cubit.create(bucket: 'media', rule: photos),

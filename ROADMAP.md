@@ -93,6 +93,10 @@ is done.
 - [x] i18n of the service error messages (English and Spanish, from `Accept-Language`).
 - [x] Dockerfile: Dart version `^3.13` and `libsqlite3` in the final image.
 - [x] Console tests (cubits and repos), on the VM with `fvm flutter test`.
+- [x] Winter `1.0.0-rc.1`: errors as Problem Details (the console reads `detail` and the 422's
+  `violations`), request bodies read with `json.field` (a 400 names the field), Winter's rate
+  limiter, logs through `logger` (`LOG_FORMAT`, `LOG_LEVEL`, `LoggingFilter`) and the OpenAPI
+  document of the admin API with Swagger UI (`/{admin}/docs`).
 
 ## Phase 6: Makeup for version 1.0.0
 
