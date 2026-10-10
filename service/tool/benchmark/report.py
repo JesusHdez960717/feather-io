@@ -41,65 +41,67 @@ LIST_DESC = 'ListObjectsV2 by pages of 100 keys, 8 clients, in a bucket of {n} o
 
 # Filled in by hand after reading a run (see the docstring)
 FINDINGS = [
-    '**Within its size, it is fast enough and light.** With buckets of up to a thousand objects '
-    'every operation answers in milliseconds: a listing page in ~60 ms, a HEAD in ~2 ms, a GET of '
-    '1 MiB in ~11 ms. The process starts with **12 MiB** of memory and its peak in the whole run '
-    'was **394 MiB**, against MinIO\'s 126 MiB and 1.5 GiB.',
-    '**Medium transfers are close to MinIO, big single uploads are not.** PUT of 1 MiB with 8 '
-    'clients goes at the same speed (130 vs 132 MiB/s), with 32 clients it is faster (106 vs '
-    '86 MiB/s), and multipart reaches 116 vs 145 MiB/s; but a PUT of 16 MiB stays at 113 MiB/s '
-    'against 477, about the speed of one stream. Reads are about half: 739 vs 1303 MiB/s with '
-    '1 MiB objects.',
-    '**The fixed cost of each request is what separates it from MinIO**: 189 PUTs/s of 1 KiB against '
-    '1040 (5.5x), and 2305 GETs/s against 7629 (3.3x). An upload creates a temporary file, computes '
-    'the md5, renames it and writes its metadata to SQLite, which is opened with its defaults (a '
-    'rollback journal and `synchronous=FULL`: several fsyncs per upload).',
-    '**Listing gets slower with the size of the bucket, not of the page.** Each page walks the whole '
-    'bucket and reads the metadata (`stat`) of every file before keeping 100 keys: a page costs '
-    '~0.05 ms per object in the bucket, ~60 ms with 1000 objects and ~500 ms with 10 000 (MinIO '
-    'stays at ~30 ms). ListBuckets walks every object of every bucket: ~1 s with 16 000 objects in '
-    'total.',
+    '**Within its size, it is fast and light.** With buckets of up to a few thousand objects every '
+    'operation answers in milliseconds: a listing page in ~25 ms, a HEAD in ~2 ms, a GET of 1 MiB in '
+    '~10 ms. The process starts with **12 MiB** of memory and its peak in the whole run was '
+    '**414 MiB**, against MinIO\'s 126 MiB and 1.5 GiB.',
+    '**Uploads are as fast as MinIO or faster**, since SQLite runs in WAL mode: 2037 PUTs/s of 1 KiB '
+    '(MinIO 1040), and 159 vs 132 MiB/s with 1 MiB objects; with 32 clients 136 vs 86 MiB/s. The '
+    'exception is a big single upload: a PUT of 16 MiB reaches 147 MiB/s against 477.',
+    '**Reads carry a fixed cost per request**: 2047 GETs/s of 1 KiB against 7629 (3.7x), and about '
+    'half the throughput with 1 MiB objects (691 vs 1303 MiB/s). Each GET looks up the metadata in '
+    'SQLite and checks the file\'s size and date.',
+    '**A listing page costs what its folder holds, no longer what the bucket holds.** A page walks '
+    'only the folder of the prefix (one level with the delimiter `/`, the console\'s) and reads the '
+    'metadata of its own 100 keys only: 25 ms with 1000 objects, 67 ms with 10 000 (MinIO 10 and '
+    '28 ms), and ~50 ms in a flat bucket of 10 000 objects listed from its root. ListBuckets still '
+    'walks every object of every bucket: ~1 s with 16 000 objects in total.',
     '**The default rate limit (2000 requests/min per IP) caps one machine at ~33 requests/s.** With 8 '
     'clients sharing an IP, 98 requests failed in a minute even after the SDK retries. It is the '
     'emergency brake it was designed to be (`DECISIONS.md` §2), not a throttle: a bulk load from one '
     'machine needs it raised.',
 ]
+
+# Before and after each change that made it faster: (change, metric, before, after)
+HISTORY = [
+    ('SQLite in WAL mode with `synchronous=NORMAL`', 'PUT of 1 KiB, 8 clients', '189 ops/s', '2037 ops/s'),
+    ('', 'PUT of 1 MiB with 1 / 8 / 32 clients', '73 / 130 / 106 MiB/s', '108 / 159 / 136 MiB/s'),
+    ('', 'PUT of 16 MiB, 8 clients', '113 MiB/s', '147 MiB/s'),
+    ('', 'Mixed load, 8 clients', '420 ops/s', '518 ops/s'),
+    ('Listings walk only the folder of the prefix and `stat` only the page', 'A page in a bucket of 1000 / 10 000 objects', '57 / 507 ms', '25 / 67 ms'),
+    ('', 'A page of a flat bucket of 10 000 objects (from its root)', '~500 ms', '~50 ms'),
+]
+
 LIMITS = [
-    '**Objects per bucket.** Up to ~1000 objects the console browses without noticing; at 5000 a '
-    'page takes ~0.3 s and at 10 000 ~0.5 s; by extrapolation, 100 000 objects would be ~5 s per '
-    'page, and listing a whole bucket that size (1000 pages) more than an hour. The size of the '
-    'objects doesn\'t matter, their number does.',
+    '**Objects per folder.** A page costs what its folder holds: ~5 ms per thousand objects in it '
+    '(~50 ms with 10 000 at one level). A bucket organized in folders scales with the size of each '
+    'folder, not of the bucket; listing a whole flat bucket of 10 000 objects takes ~5 s (100 '
+    'pages), and of 100 000 objects about 9 minutes by extrapolation, since every page walks the '
+    'folder again.',
     '**Objects in the whole storage.** ListBuckets (the console\'s bucket list, and every S3 client '
     'that starts with `ls`) costs ~0.06 ms per stored object: 1 s with 16 000, ~6 s with 100 000.',
-    '**Small files.** ~190 uploads/s of 1 KiB with 8 clients (~40 ms each): a `sync` of 10 000 small '
-    'files takes about a minute.',
+    '**Reads of small objects.** ~2000 GETs/s of 1 KiB with 8 clients, a third of MinIO.',
     '**One machine at a time.** With the default rate limit a client of many parallel workers on one '
     'IP gets `SlowDown` above 2000 requests/min.',
-    '**Memory grows with concurrency and big objects and is not given back:** ~50 MiB with small '
+    '**Memory grows with concurrency and big objects and is not given back:** ~70 MiB with small '
     'objects, ~150 MiB with 1 MiB objects, ~400 MiB at the peak (multipart and 32 clients). It is '
     'the Dart heap keeping what it reached; plan ~512 MiB for a container.',
 ]
 IMPROVEMENTS = [
-    '**Listing only what the page needs (biggest gain, little code).** Read the metadata (`stat`) of '
-    'the objects of the page only, not of every file of the bucket; with a delimiter (the console '
-    'always sends `/`) walk only the directory of the prefix instead of the whole bucket, since a '
-    'folder is a directory. A folder of the console would then cost what is in it, not what the '
-    'bucket holds.',
-    '**SQLite in WAL mode with `synchronous=NORMAL`** (a `PRAGMA` when the database opens): one '
-    'write per upload instead of several fsyncs, the usual way to speed up small writes without '
-    'losing durability against a crash of the process.',
     '**ListBuckets from the database.** The object count and size of each bucket can come from the '
     '`object_meta` table (a `SUM`/`COUNT` grouped by bucket) instead of walking the disk; the walk '
     'is still needed when files change outside the service, so it could become a periodic '
     'reconciliation.',
     '**An index of keys** (the `object_meta` table already has one row per object) would make a '
     'listing page a query `WHERE key > ? ORDER BY key LIMIT 100`: constant per page, whatever the '
-    'size of the bucket. It is the change that takes it to hundreds of thousands of objects, at the '
+    'size of the folder. It is the change that takes it to hundreds of thousands of objects, at the '
     'price of keeping the table as the source of truth of what exists.',
-    '**Big single uploads.** A PUT of 16 MiB with 8 clients stays at ~115 MiB/s (MinIO: 477), '
-    'while multipart (the same bytes in 8 MiB parts) gets about as much with 2 uploads: '
-    'worth profiling the write path (the md5 computed in Dart over every chunk, the size of the '
-    'chunks written) before changing it.',
+    '**Big single uploads.** A PUT of 16 MiB with 8 clients stays at ~150 MiB/s (MinIO: 477), while '
+    'multipart (the same bytes in 8 MiB parts) gets about as much with 2 uploads: worth profiling '
+    'the write path (the md5 computed in Dart over every chunk, the size of the chunks written) '
+    'before changing it.',
+    '**Reads.** A GET checks the metadata in SQLite and the file\'s size and date on every request; '
+    'caching it in memory for the hot objects would cut the fixed cost of small reads.',
     '**The rate limit for signed requests.** The limit exists against clients without credentials '
     '(`DECISIONS.md` §2); requests signed with a valid key, or with the JWT, could have a higher '
     'limit (or none), so a backup or a migration doesn\'t need the global one raised.',
@@ -241,6 +243,17 @@ def main():
         for finding in FINDINGS:
             w(f'- {finding}')
         w('')
+    if HISTORY:
+        w('## What changed')
+        w('')
+        w('The first run found the bottlenecks; these are the numbers of the same scenarios before '
+          'and after each change.')
+        w('')
+        w('| Change | Scenario | Before | After |')
+        w('|---|---|---:|---:|')
+        for change, metric, before, after in HISTORY:
+            w(f'| {change} | {metric} | {before} | {after} |')
+        w('')
 
     w('## 1. Objects')
     w('')
@@ -270,9 +283,10 @@ def main():
 
     w('## 2. Listings and bucket size')
     w('')
-    w('Each listing page (100 keys) walks the whole bucket, so its cost grows with the objects of '
-      'the bucket, not with the page. ListBuckets walks every object of every bucket to give their '
-      'counts and sizes: it is timed after each listing scenario, with every object stored so far.')
+    w('A listing page walks the folder of its prefix (one level with the delimiter `/`) and reads '
+      'the metadata of its own keys only, so its cost grows with what that folder holds. ListBuckets '
+      'walks every object of every bucket to give their counts and sizes: it is timed after each '
+      'listing scenario, with every object stored so far.')
     w('')
     w('Each warp client lists its own prefix of the bucket from start to end (N / 8 objects, by '
       'pages of 100 keys). The time of a page is the median time of that whole listing divided by '
@@ -286,6 +300,27 @@ def main():
         w(f'| {n:,} | {fmt(f.get("obj_s"))} | {fmt(m.get("obj_s"))} | {per_page(f, n)} | '
           f'{per_page(m, n)} |')
     w('')
+    flat = list_buckets(feather_dir / 'listflat.txt')
+    if flat:
+        w('The worst case, a flat bucket (every object at its root), listed by `list_flat.py` against '
+          'feather-io (warp can\'t measure it):')
+        w('')
+        w('| Objects at the root | One page with `/` | One page without delimiter | The whole bucket |')
+        w('|---:|---:|---:|---:|')
+        by_name = {}
+        for line in (read(feather_dir / 'listflat.txt') or '').splitlines():
+            parts = line.split()
+            if len(parts) > 2:
+                by_name[parts[1]] = dict(re.findall(r'(\w+)=([\d.]+)', line))
+        objects = int(float(next(iter(by_name.values()))['objects']))
+        delim = by_name.get('page-delimiter', {})
+        recursive = by_name.get('page-recursive', {})
+        whole = by_name.get('whole-bucket', {})
+        w(f'| {objects:,} | {fmt(float(delim.get("avg_ms", 0)))} ms | '
+          f'{fmt(float(recursive.get("avg_ms", 0)))} ms | '
+          f'{fmt(float(whole.get("total_ms", 0)) / 1000)} s ({int(float(whole.get("pages", 0)))} pages) |')
+        w('')
+
     rows = list_buckets(feather_dir / 'listbuckets.txt')
     if rows:
         w('| Buckets | Objects in total | ListBuckets (average) |')

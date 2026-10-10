@@ -23,14 +23,14 @@ against MinIO or AWS as products:
 | Security | **8.5** | SigV4 with clock skew and body sha256, access keys encrypted with AES-GCM, login throttling, rate limit, errors without internal details, path traversal. Missing: its own TLS (it relies on a proxy) and an external audit |
 | Tests | **8.5** | About as many lines of tests as of code (494 service tests, 132 console tests, the batteries against real clients). No CI: running them depends on remembering it |
 | Architecture and code | **8** | Clear layers, features like `admin/`, XML apart, Problem Details errors, `DECISIONS.md`. `ObjectService` is still big (~650 lines) |
-| Performance | **6** | Very light on memory (12 MiB at start) and fast up to ~1000 objects per bucket, but listings scale with the bucket, small uploads are 5.5x slower than MinIO and ListBuckets walks the whole storage (`service/tool/benchmark/RESULTS.md`) |
+| Performance | **7.5** | Very light on memory (12 MiB at start); uploads as fast as MinIO or faster since SQLite runs in WAL mode (2037 PUTs/s of 1 KiB, MinIO 1040), and a listing page costs what its folder holds (25 ms with 1000 objects, 67 ms with 10 000). Still behind: reads of small objects (a third of MinIO), big single uploads, and ListBuckets walking the whole storage (`service/tool/benchmark/RESULTS.md`) |
 | Production readiness | **6** | 24 MB Docker image, structured logs, graceful shutdown, OpenAPI. Missing: CI, a health endpoint for the orchestrator, backups of the database, metrics, real long-running use; it depends on a release candidate of Winter |
 
-Overall **7.5**. Within its scope it can reach **8.5–9**; a 10 would need what it isn't by design
+Overall **8** (it was 7.5 before the two quick improvements of point 1). Within its scope it can reach **8.5–9**; a 10 would need what it isn't by design
 (several nodes, replication, versioning). How, by return on the effort:
 
-1. **Listings that only look at what they need and SQLite in WAL mode** (Phase 6): little code, an
-   immediate effect on browsing in the console and on small uploads. Performance from 6 to ~7.5.
+1. ~~**Listings that only look at what they need and SQLite in WAL mode**~~ (done): little code,
+   10x faster small uploads and listings 2–8x faster. Performance from 6 to 7.5.
 2. **CI** (Phase 6): cheap, and what most raises tests and production readiness.
 3. **A health endpoint and the backups documented** (Phase 6): Winter already has `Route.health`.
 4. **ListBuckets from the database and an index of keys** (Phase 6 and *After 1.0*): only needed
@@ -133,9 +133,11 @@ Overall **7.5**. Within its scope it can reach **8.5–9**; a 10 would need what
   bottlenecks confirmed (every listing page walks the whole bucket, `ListBuckets` walks every
   object, the fixed cost of each upload) and the general limit reviewed with data
   (`service/tool/benchmark/RESULTS.md`).
-- [ ] Listing only what the page needs: `stat` only the objects of the page, and with a delimiter
-  walk only the directory of the prefix (today a page costs ~0.05 ms per object of the bucket).
-- [ ] SQLite in WAL mode with `synchronous=NORMAL`: small uploads are 5.5x slower than MinIO.
+- [x] Listing only what the page needs: `stat` only the objects of the page, and walk only the
+  folder of the prefix (one level with the delimiter `/`). A page with 10 000 objects went from
+  507 to 67 ms.
+- [x] SQLite in WAL mode with `synchronous=NORMAL`: 2037 PUTs/s of 1 KiB instead of 189 (MinIO
+  1040).
 - [ ] ListBuckets from the `object_meta` table instead of walking every object (~1 s with 16 000).
 - [ ] Profile big single uploads (a PUT of 16 MiB stays at ~115 MiB/s, MinIO 477).
 - [ ] CI (GitHub Actions): analysis and tests of both packages on every push, and the AWS CLI and

@@ -12,6 +12,8 @@
 #   DURATION=20s                 how long each scenario runs
 #   MINIO_IMAGE=elestio/minio:latest   the reference server
 #   LIST_SIZES="100 1000 5000 10000"   objects in the bucket of each listing scenario
+#   ONLY=regex                   run only the scenarios whose name matches, keeping the rest of
+#                                the outputs (ONLY=list-flat run.sh feather minio)
 #   OUT_DIR=service/tool/benchmark/out (outputs for report.py; gitignored)
 #
 # Each scenario leaves warp's summary in OUT_DIR/<target>/<scenario>.txt and the RSS of the
@@ -22,6 +24,7 @@ set -u
 DIR=$(cd "$(dirname "$0")" && pwd)
 DURATION=${DURATION:-20s}
 LIST_SIZES=${LIST_SIZES:-"100 1000 5000 10000"}
+ONLY=${ONLY:-}
 OUT_DIR=${OUT_DIR:-$DIR/out}
 mkdir -p "$OUT_DIR"
 OUT_DIR=$(cd "$OUT_DIR" && pwd)
@@ -86,6 +89,7 @@ stop_server() { docker rm -fv $SERVER >/dev/null 2>&1; }
 # NAME.mem while it runs
 scenario() {
   local name=$1; shift
+  if [ -n "$ONLY" ] && ! [[ $name =~ $ONLY ]]; then return; fi
   echo "--- $name"
   : > "$TARGET_DIR/$name.mem"
   (while true; do
@@ -105,7 +109,8 @@ scenario() {
 run_target() {
   local target=$1
   TARGET_DIR=$OUT_DIR/$target
-  rm -rf "$TARGET_DIR" && mkdir -p "$TARGET_DIR"
+  [ -z "$ONLY" ] && rm -rf "$TARGET_DIR"
+  mkdir -p "$TARGET_DIR"
   start_server "$target" 0
   docker inspect --format '{{.Config.Image}}' $SERVER > "$TARGET_DIR/image.txt"
 
@@ -129,15 +134,24 @@ run_target() {
 
   # Listings by bucket size. Each size in its own bucket, kept, so ListBuckets is then timed
   # with every object stored so far
-  : > "$TARGET_DIR/listbuckets.txt"
+  [ -z "$ONLY" ] && : > "$TARGET_DIR/listbuckets.txt"
   for size in $LIST_SIZES; do
     scenario "list-$size" list --objects "$size" --obj.size 1KiB --concurrent 8 \
       --bucket "list-$size" --noclear --duration "$DURATION"
-    if [ "$target" = feather ]; then
+    if [ "$target" = feather ] && { [ -z "$ONLY" ] || [[ list-$size =~ $ONLY ]]; }; then
       python "$(host_path "$DIR/list_buckets.py")" http://localhost:18080 $ACCESS $SECRET 3 \
         >> "$TARGET_DIR/listbuckets.txt" && tail -1 "$TARGET_DIR/listbuckets.txt"
     fi
   done
+
+  # The worst case of a listing: a flat bucket (every object at its root, no folders). warp can't
+  # measure it (with --noprefix it counts errors even against MinIO), so list_flat.py does,
+  # against the service only
+  if [ "$target" = feather ] && { [ -z "$ONLY" ] || [[ list-flat =~ $ONLY ]]; }; then
+    echo "--- list-flat"
+    python "$(host_path "$DIR/list_flat.py")" http://localhost:18080 $ACCESS $SECRET \
+      "${LIST_SIZES##* }" > "$TARGET_DIR/listflat.txt" && cat "$TARGET_DIR/listflat.txt"
+  fi
   stop_server
 }
 

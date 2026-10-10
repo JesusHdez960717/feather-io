@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 import 'package:service/feather.dart';
+import 'package:sqlite3/sqlite3.dart' show Database;
 
 part 'database.g.dart';
 
@@ -143,6 +144,17 @@ class AppDatabase extends _$AppDatabase {
     final file = File(defaultPath);
     // SQLite creates the file but not its folder
     file.parent.createSync(recursive: true);
-    return NativeDatabase.createInBackground(file);
+    return NativeDatabase.createInBackground(file, setup: _setUp);
+  }
+
+  /// WAL with `synchronous=NORMAL`: a write goes to the log without waiting
+  /// for several fsyncs (the default rollback journal with `synchronous=FULL`
+  /// made small uploads 5x slower, see `service/tool/benchmark/RESULTS.md`).
+  /// A crash of the process loses nothing; a power loss may lose the last
+  /// writes, never corrupt the database. Readers don't wait for a writer.
+  static void _setUp(Database database) {
+    database
+      ..execute('PRAGMA journal_mode = WAL')
+      ..execute('PRAGMA synchronous = NORMAL');
   }
 }

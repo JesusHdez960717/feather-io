@@ -197,3 +197,11 @@ Problem Details (RFC 9457, `application/problem+json`), Winter's format. The S3 
 | `LoggingFilter` logs every request after the general rate limit | A flood rejected by the limit doesn't flood the logs too (Winter logs those at `debug`) |
 | Never the query string, bodies, tokens, secrets nor what was typed at login; failed logins and locks are logged with the client IP | A presigned URL carries its signature in the query, and a log ends up in more places than the service. The IP is what an operator needs to see a brute force |
 | Services log the changes of state (`info`) with ids in `fields` | Who deleted a bucket or created a key is the first question after an incident; the request id of each line ties it to its request |
+
+## 11. SQLite
+
+| Decision | Why |
+|---|---|
+| The database runs in WAL mode with `synchronous=NORMAL` (`AppDatabase._setUp`) | Every upload writes its metadata (ETag and headers). With SQLite's defaults (a rollback journal and `synchronous=FULL`) each write waited for several fsyncs: 189 PUTs/s of 1 KiB, 5.5x slower than MinIO. In WAL it goes to the log and is synced at checkpoints: 2037 PUTs/s (`service/tool/benchmark/RESULTS.md`). Readers no longer wait for a writer either |
+| What it gives up | A crash of the process loses nothing; a power loss or a crash of the machine may lose the last writes, never corrupt the database. What is lost is metadata of the last uploads: their files are on disk, and a missing row is rebuilt on the next read (the ETag is recomputed from the file), so at worst the headers stored with those objects (`Content-Type`, `x-amz-meta-*`) are lost |
+| The database keeps two more files next to it (`-wal`, `-shm`) | They are part of the database: a backup copies the three, with the service stopped, or uses SQLite's own backup |

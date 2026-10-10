@@ -14,7 +14,9 @@ of objects.
 - Objects: PUT and GET of 1 KiB, 1 MiB and 16 MiB with 8 clients; PUT of 1 MiB with 1 and 32
   clients; HEAD; a mixed load (GET, HEAD, PUT, DELETE); multipart uploads of 64 MiB.
 - Listings in buckets of 100, 1000, 5000 and 10000 objects (`LIST_SIZES`), and ListBuckets
-  timed after each one with every object stored so far.
+  timed after each one with every object stored so far (`list_buckets.py`).
+- A flat bucket of 10000 objects (every one at its root) listed by `list_flat.py`: warp can't
+  measure it (with `--noprefix` it counts errors, also against MinIO).
 - The memory of the server, sampled every 2 s during each scenario.
 - The same scenarios against MinIO (`elestio/minio`: MinIO no longer publishes its images on
   Docker Hub) as a reference.
@@ -30,8 +32,9 @@ service/tool/benchmark/run.sh feather minio limited    # ~25 min
 python service/tool/benchmark/report.py                 # rewrites RESULTS.md
 ```
 
-`DURATION` (20 s by default) sets how long each scenario runs, and `LIST_SIZES` the buckets of the
-listings. The outputs go to `out/` (gitignored). The reading of the numbers (summary, limits and
+`DURATION` (20 s by default) sets how long each scenario runs, `LIST_SIZES` the buckets of the
+listings, and `ONLY` (a regular expression) runs only the matching scenarios, keeping the other
+outputs (`ONLY=list-flat run.sh feather`). The outputs go to `out/` (gitignored). The reading of the numbers (summary, limits and
 improvements) is written by hand in the constants of `report.py`: review it when a run changes the
 picture.
 

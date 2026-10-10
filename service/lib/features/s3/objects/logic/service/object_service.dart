@@ -174,29 +174,42 @@ class ObjectService {
         : _decodeContinuationToken(continuationToken);
 
     final bucketPath = _getBucketPath(bucketName);
-    final dir = Directory(bucketPath);
-
-    if (!await dir.exists()) {
+    if (!await Directory(bucketPath).exists()) {
       throw S3Exception.noSuchBucket(bucketName);
     }
 
-    // Lists the directory recursively, to include the subfolders
-    final List<FileSystemEntity> entities = await dir
-        .list(recursive: true)
-        .toList();
-
-    final Map<String, (File, FileStat)> files = {};
-    final Set<String> commonPrefixes = {};
-
     final normalizedPrefix = prefix ?? '';
+    final files = <String, File>{};
+    final commonPrefixes = <String>{};
 
-    for (var entity in entities) {
-      if (entity is! File) continue;
+    // Only the folder of the prefix holds its keys (`photos/2026/a` is in
+    // `photos/2026/`), and with the delimiter `/` (the console's) only its own
+    // level: a page costs what that folder holds, not what the bucket does
+    final base = _prefixFolder(bucketPath, normalizedPrefix);
+    final baseDir = Directory(p.join(bucketPath, base));
+    final shallow = delimiter == '/';
+    final entities = await baseDir.exists()
+        ? await baseDir.list(recursive: !shallow).toList()
+        : const <FileSystemEntity>[];
 
+    for (final entity in entities) {
       // The path relative to the bucket is the key (e.g. files/test/123.jpg)
       final relative = p
           .relative(entity.path, from: bucketPath)
           .replaceAll('\\', '/');
+
+      if (entity is Directory) {
+        // Only one level is read: a subfolder is a common prefix if it holds
+        // any file (its marker included), as when it is walked
+        final folderKey = '$relative/';
+        if (shallow &&
+            folderKey.startsWith(normalizedPrefix) &&
+            await entity.list(recursive: true).any((e) => e is File)) {
+          commonPrefixes.add(folderKey);
+        }
+        continue;
+      }
+      if (entity is! File) continue;
 
       // The marker of an explicitly created folder is listed as the key "folder/"
       final isFolder = p.posix.basename(relative) == S3Validator.folderMarker;
@@ -221,7 +234,7 @@ class ObjectService {
         }
       }
 
-      files[key] = (entity, await entity.stat());
+      files[key] = entity;
     }
 
     // Objects and prefixes go together and sorted, as in S3, and pages follow
@@ -233,14 +246,17 @@ class ObjectService {
     final page = pending.take(min(maxKeys, maxKeysLimit)).toList();
     final isTruncated = pending.length > page.length;
 
-    // ETags only for this page's objects: a missing one means reading the file
+    // Size, date and ETag only for this page's objects
     final pageFiles = {
       for (final key in page)
-        if (files[key] != null && !key.endsWith('/')) key: files[key]!,
+        if (files[key] case final file?) key: (file, await file.stat()),
     };
     final pageEtags = await objectMeta.etagsOf(
       bucketName: bucketName,
-      files: pageFiles,
+      files: {
+        for (final MapEntry(:key, :value) in pageFiles.entries)
+          if (!key.endsWith('/')) key: value,
+      },
     );
 
     return ListObjectsResponse(
@@ -249,7 +265,7 @@ class ObjectService {
       delimiter: delimiter,
       contents: [
         for (final key in page)
-          if (files[key] case (_, final stat))
+          if (pageFiles[key] case (_, final stat))
             FileModel(
               key: key,
               size: key.endsWith('/') ? 0 : stat.size,
@@ -271,6 +287,18 @@ class ObjectService {
           : null,
       totalKeys: keys.length,
     );
+  }
+
+  /// The folder of the bucket that holds every key of [prefix]: the prefix up
+  /// to its last `/` (`photos/2026/` for `photos/2026/a`). The root when there
+  /// is none, or when it is not a valid key (it comes from the query, so it
+  /// never reaches the disk without the path traversal check).
+  String _prefixFolder(String bucketPath, String prefix) {
+    final slash = prefix.lastIndexOf('/');
+    if (slash < 0) return '';
+    final folder = prefix.substring(0, slash + 1);
+    if (!S3Validator.isValidKey(folder)) return '';
+    return p.isWithin(bucketPath, p.join(bucketPath, folder)) ? folder : '';
   }
 
   String _decodeContinuationToken(String token) {

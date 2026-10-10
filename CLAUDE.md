@@ -325,7 +325,8 @@ by Winter. `test/features/admin/openapi_test.dart` checks it.
 **Storage & performance.** Buckets are directories under `STORAGE_VOLUME_PATH`. Bucket metadata (
 description, color, timestamps), anonymous rules and object ETags live in SQLite via Drift, in
 `STORAGE_VOLUME_PATH/.db/feather-io.sqlite` (`AppDatabase.defaultPath`; a dot folder, never listed
-as a bucket), so the metadata lives in the same volume as the objects. The
+as a bucket), so the metadata lives in the same volume as the objects. It is opened in WAL mode with
+`synchronous=NORMAL` (`AppDatabase._setUp`, see `DECISIONS.md` §11). The
 schema has no migrations while in development: when it changes, delete the SQLite file and let it be
 recreated. PutObject, CopyObject and CreateMultipartUpload need an existing bucket (`NoSuchBucket`
 otherwise); only the subfolders of the key are created on the fly. PutObject writes into
@@ -369,7 +370,11 @@ folder with its content the console calls the admin endpoint
 `DELETE /{admin}/bucket/{bucket}/folder?prefix=fotos/` (`ObjectService.deleteFolder`,
 permission `admin.bucket.delete-folder`); `BrowserRepo.deleteObjects` sends the folder keys there and
 the rest to the multi-delete. Winter drops the trailing `/` from the `{key}` path param; `S3Request.objectKey` restores it
-from the URL. `listFiles` sorts objects and common prefixes together and pages over them
+from the URL. `listFiles` walks only the folder of the prefix (`photos/2026/` for `photos/2026/a`,
+only its own level with the delimiter `/`, a subfolder with any file being a common prefix; a
+prefix that is not a valid key walks from the root) and reads the `stat` of the keys of the page
+only, so a page costs what its folder holds. It sorts objects and common prefixes together and
+pages over them
 (`max-keys` up to 1000). With `list-type=2` the controller answers ListObjectsV2
 (`continuation-token` = base64url of the last key returned, or `start-after`); otherwise
 ListObjects V1 (`marker` and `NextMarker`). With `encoding-type=url` keys, prefixes and markers go
