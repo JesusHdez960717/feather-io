@@ -41,8 +41,8 @@ fvm dart run build_runner build          # only for Drift (lib/features/db/datab
 fvm dart run slang                       # after editing lib/i18n/*.i18n.yaml (error messages)
 fvm dart analyze
 fvm dart test                            # all tests
-fvm dart test test/put_object_test.dart  # one file
-fvm dart test test/put_object_test.dart --plain-name "Should upload successfully in root"
+fvm dart test test/features/s3/objects/put_object_test.dart  # one file
+fvm dart test test/features/s3/objects/put_object_test.dart --plain-name "Should upload successfully in root"
 ```
 
 Run the server (port 8080) with the env from `.vscode/launch.json`:
@@ -159,7 +159,7 @@ file.
   include internal details. The `Authorization` fields may be separated by `,` with or without a space (s3cmd
   sends none). Canonical query names and values, and the paths `PresignService` builds, are encoded
 with `SigV4Signer.uriEncode` (everything but `A-Za-z0-9-_.~`, like AWS; `Uri.encodeComponent`
-leaves `!'()*` alone and the signature would not match); `test/sig_v4_signer_test.dart` checks it
+leaves `!'()*` alone and the signature would not match); `test/security/sig_v4_signer_test.dart` checks it
 against the AWS docs example. The SigV4 maths live in `security/logic/sig_v4_signer.dart` (`SigV4Signer`), shared
   with `PresignService`, which signs `GET` URLs with the service keys for
   `POST /{admin}/bucket/{bucket}/presign` (the console has no secret key, so it asks the service).
@@ -322,7 +322,7 @@ at `warning`, with ids in `fields`, never a secret, token or key typed at login.
 it is the one AWS documents). Each admin route has `docs: RouteDocs(summary:, tags:, request:,
 response:, status:, query:)`: the bodies come from the `example` of the models, and the schema
 constraints from their `validate()`; security, the 401/403/429 and the error responses are found
-by Winter. `test/openapi_test.dart` checks it.
+by Winter. `test/features/admin/openapi_test.dart` checks it.
 
 **Storage & performance.** Buckets are directories under `STORAGE_VOLUME_PATH`. Bucket metadata (
 description, color, timestamps), anonymous rules and object ETags live in SQLite via Drift, in
@@ -468,9 +468,11 @@ from scratch and regenerate `service/tool/s3_compat/RESULTS.md`. Outputs go to
 
 **Tests.** Rules for new tests:
 
-- Every new feature gets tests. `s3_controller_test.dart` holds the happy path (upload → list →
-  get → delete); each endpoint gets its own file (`put_object_test.dart`,
-  `list_buckets_test.dart`…).
+- Every new feature gets tests. `test/` mirrors `lib/`: a test goes in the folder of what it
+  tests (`features/s3/objects/put_object_test.dart`, `features/admin/auth/login_test.dart`,
+  `security/`, `xml/`, `i18n/`), and `support/` holds the helpers. `s3_controller_test.dart`
+  (in `features/s3/`) holds the happy path (upload → list → get → delete); each endpoint gets its
+  own file (`put_object_test.dart`, `list_buckets_test.dart`…).
 - Use `TestServer` (`test/support/test_server.dart`): `TestServer(port: …, name: …)`, then
   `setUpAll(server.start)` / `tearDownAll(server.stop)`. It sets the env, starts the real server
   with an in-memory SQLite (`FeatherIO.start(database: …)`), logs in to get `server.token`, and

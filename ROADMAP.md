@@ -105,11 +105,11 @@ is done.
   picks the format).
 - [x] Shrink `S3Controller`, which had more than 1000 lines: it only holds the routes, and the
   operations live in `BucketController`, `ObjectController` and `MultipartController`.
-- [ ] A visual identity/icon like Brag's, and a promo video with real screenshots of the design.
 - [ ] Performance tests/benchmarks (e.g. `minio/warp`) with the service on Linux: confirm the
   suspected bottlenecks (every listing page walks the whole bucket, `ListBuckets` walks every
   object, md5 and SQLite on every upload) and review with that data the general limit of 2000
   requests/min per IP (see `DECISIONS.md`).
+- [ ] A visual identity/icon like Brag's, and a promo video with real screenshots of the design.
 
 ## Open source release
 
