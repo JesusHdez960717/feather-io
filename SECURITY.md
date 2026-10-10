@@ -26,7 +26,7 @@ What the service protects and how; the reasons and the data behind each decision
   than 15 minutes away from the server clock is rejected (no replay of captured requests), and a
   signed body sha256 is checked against the body. Presigned URLs last at most 7 days.
 - Failed logins wait 1 second each, and 10 in a row lock the client IP for 15 minutes, even with
-  the right credentials afterwards. Credentials are compared in constant time.
+  the right credentials afterward. Credentials are compared in constant time.
 - A general rate limit per IP (2000 requests per minute by default) stops floods before any work is
   done.
 

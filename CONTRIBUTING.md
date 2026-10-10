@@ -17,7 +17,7 @@ cd ../console && fvm install && fvm flutter pub get
 How to run each one locally is in the [README](README.md#locally). Docker Desktop (or Docker on
 Linux) is needed for the S3 client tests and the images.
 
-## How the code is organised
+## How the code is organized
 
 [`CLAUDE.md`](CLAUDE.md) is the single source of truth for the project rules: the architecture of
 both packages, their layers and folders, naming, errors, logging, i18n and tests. Read the part of
@@ -41,11 +41,11 @@ the package you touch before changing it. The most important ones:
 Every change comes with its tests (`service/test/` mirrors `service/lib/`; each test file uses its
 own port, see *Tests* in `CLAUDE.md`).
 
-| When | Run | Time |
-|---|---|---|
-| Every change | `fvm dart analyze && fvm dart test` in `service/`, `fvm flutter analyze && fvm flutter test` in `console/` | ~1 min |
-| Touching the S3 API (controller, filters, signatures, XML, headers) | also `service/tool/s3_compat/run.sh` against a running service (AWS CLI and rclone in Docker) | ~2 min |
-| Big protocol changes, or before a release | also `run.sh mint` (15 suites of SDKs and tools) | ~5 min |
+| When                                                                | Run                                                                                                        | Time   |
+|---------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|--------|
+| Every change                                                        | `fvm dart analyze && fvm dart test` in `service/`, `fvm flutter analyze && fvm flutter test` in `console/` | ~1 min |
+| Touching the S3 API (controller, filters, signatures, XML, headers) | also `service/tool/s3_compat/run.sh` against a running service (AWS CLI and rclone in Docker)              | ~2 min |
+| Big protocol changes, or before a release                           | also `run.sh mint` (15 suites of SDKs and tools)                                                           | ~5 min |
 
 `dart test` checks responses against our reading of the S3 spec; real clients parse the XML
 strictly and sign in their own way, and almost every incompatibility so far was found by them. Look

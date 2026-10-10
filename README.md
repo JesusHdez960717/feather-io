@@ -19,16 +19,16 @@ and create access keys per bucket.
 
 ## What it supports
 
-| | |
-|---|---|
-| **Buckets** | Create, list, delete, empty; description and color for the console; statistics |
-| **Objects** | Upload (streamed to disk, up to `MAX_OBJECT_SIZE`, 5 GiB by default), download with `Range`, `HEAD`, copy (with `x-amz-copy-source-if-*`), delete one or up to 1000, folders, stored headers (`Content-Type`, `Cache-Control`, `x-amz-meta-*`…), real ETags |
-| **Listings** | ListObjects V1 and V2, prefix and delimiter, paging, `encoding-type=url` |
-| **Multipart** | Create, upload parts (also by copy), complete, abort, list parts and uploads |
-| **Signatures** | AWS SigV4 in the header or in the query (presigned URLs up to 7 days), `aws-chunked` bodies, clock skew and body sha256 checks |
-| **Access** | The root key, managed access keys (read, write or both, per bucket or on every bucket, with expiry), anonymous access per prefix or pattern |
-| **Console** | Object browser (list and grid, previews, drag & drop, a background transfer queue), buckets, anonymous rules, access keys, share links; English and Spanish |
-| **Operations** | Health check, structured logs (JSON), a rate limit per IP, login throttling, graceful shutdown, OpenAPI for the admin API |
+|                |                                                                                                                                                                                                                                                             |
+|----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Buckets**    | Create, list, delete, empty; description and color for the console; statistics                                                                                                                                                                              |
+| **Objects**    | Upload (streamed to disk, up to `MAX_OBJECT_SIZE`, 5 GiB by default), download with `Range`, `HEAD`, copy (with `x-amz-copy-source-if-*`), delete one or up to 1000, folders, stored headers (`Content-Type`, `Cache-Control`, `x-amz-meta-*`…), real ETags |
+| **Listings**   | ListObjects V1 and V2, prefix and delimiter, paging, `encoding-type=url`                                                                                                                                                                                    |
+| **Multipart**  | Create, upload parts (also by copy), complete, abort, list parts and uploads                                                                                                                                                                                |
+| **Signatures** | AWS SigV4 in the header or in the query (presigned URLs up to 7 days), `aws-chunked` bodies, clock skew and body sha256 checks                                                                                                                              |
+| **Access**     | The root key, managed access keys (read, write or both, per bucket or on every bucket, with expiry), anonymous access per prefix or pattern                                                                                                                 |
+| **Console**    | Object browser (list and grid, previews, drag & drop, a background transfer queue), buckets, anonymous rules, access keys, share links; English and Spanish                                                                                                 |
+| **Operations** | Health check, structured logs (JSON), a rate limit per IP, login throttling, graceful shutdown, OpenAPI for the admin API                                                                                                                                   |
 
 Tested with real clients in Docker (`service/tool/s3_compat/`): **AWS CLI v2 34/34**, **rclone
 19/19**, and the 15 suites of [MinIO Mint](https://github.com/minio/mint) (AWS SDKs for Java, PHP
@@ -139,10 +139,10 @@ More clients (boto3), the endpoints and the permissions are in
 
 ## The console
 
-| | |
-|---|---|
-| ![Bucket details](docs/screenshots/bucket.png) | ![Access keys](docs/screenshots/access-keys.png) |
-| Buckets: details, anonymous access rules and the danger zone | Access keys per bucket, shown once, with expiry |
+|                                                              |                                                  |
+|--------------------------------------------------------------|--------------------------------------------------|
+| ![Bucket details](docs/screenshots/bucket.png)               | ![Access keys](docs/screenshots/access-keys.png) |
+| Buckets: details, anonymous access rules and the danger zone | Access keys per bucket, shown once, with expiry  |
 
 ![Background transfers](docs/screenshots/transfers.png)
 
