@@ -1,15 +1,12 @@
-# Build from service/, passing Winter (a path dependency until it is published) as a named context:
-#   docker build --build-context winter=../../winter -t feather-io .
+# Build from service/:
+#   docker build -t feather-io .
 # Run with the objects and the SQLite database in a volume:
 #   docker run -p 8080:8080 -v feather-data:/data \
 #     -e FEATHER_ACCESS=… -e FEATHER_SECRET=… -e JWT_SECRET=… -e KEYS_ENCRYPTION_SECRET=… feather-io
 
 FROM dart:3.13.1 AS build
 
-# Keep the repo layout so the `../../winter` path in pubspec resolves.
-COPY --from=winter pubspec.yaml /src/winter/
-COPY --from=winter lib /src/winter/lib
-WORKDIR /src/feather-io/service
+WORKDIR /src
 
 # Resolve app dependencies (cached while the pubspec doesn't change).
 COPY pubspec.* ./

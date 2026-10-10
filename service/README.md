@@ -159,11 +159,10 @@ working directory, under the variables of the process.
 ## Docker
 
 `Dockerfile` compiles the service AOT and runs it on a `scratch` image (~25 MB) with the Dart
-runtime and `libsqlite3`. Winter is still a path dependency (`../../winter`), so it goes in as a
-named build context. From `service/`:
+runtime and `libsqlite3`. From `service/`:
 
 ```bash
-docker build --build-context winter=../../winter -t feather-io .
+docker build -t feather-io .
 docker run -p 8080:8080 -v feather-data:/data \
   -e FEATHER_ACCESS=… -e FEATHER_SECRET=… -e JWT_SECRET=… -e KEYS_ENCRYPTION_SECRET=… feather-io
 ```

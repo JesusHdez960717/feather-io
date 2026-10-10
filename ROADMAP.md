@@ -115,8 +115,8 @@ is done.
 
 A session of its own, before publishing the repo.
 
-- [ ] Publish Winter and depend on its released version instead of the local path
-  (`../../winter`): until then nobody else can build the service.
+- [x] Publish Winter and depend on its released version instead of the local path: the service
+  uses `winter: 1.0.0-rc.1` from pub.dev, and the Docker image builds without it.
 - [ ] Root `README.md`: what it is, what is supported (and what isn't, see *Parked*), how to run
   the service and the console (local and Docker), how to configure S3 clients, screenshots, and
   what comes next.

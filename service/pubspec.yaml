@@ -7,11 +7,7 @@ environment:
   sdk: ^3.13.0
 
 dependencies:
-  winter:
-    path: ../../winter
-#    git:
-#      url: https://github.com/Root-101/winter.git
-#      ref: feature/retake_project
+  winter: 1.0.0-rc.1            #framework
 
   path: 1.9.1                   #storage
 

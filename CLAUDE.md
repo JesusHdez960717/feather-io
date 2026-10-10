@@ -7,10 +7,10 @@ repository. It is the single source of truth for project rules.
 
 Monorepo for a lightweight S3-compatible storage system:
 
-- `service/` — Dart backend built on **Winter** `1.0.0-rc.1`, an internal framework at
-  `../winter` (path dependency `../../winter` from `service/`, i.e. a sibling of this repo). Its
-  guides (`doc/`), examples (`example/`, the apps `auth_jwt` and `production` are the closest to
-  this service) and `DECISIONS.md` are the reference; read its source when an API is unclear.
+- `service/` — Dart backend built on **Winter** `1.0.0-rc.1` (from pub.dev; its source is also at
+  `../winter`, a sibling of this repo). Its guides (`doc/`), examples (`example/`, the apps
+  `auth_jwt` and `production` are the closest to this service) and `DECISIONS.md` are the
+  reference; read its source when an API is unclear.
 - `console/` — Flutter Web admin console. Talks to the service over REST.
 
 The two packages are strictly decoupled: they share nothing but the HTTP contract.
@@ -62,9 +62,7 @@ otherwise readable lines) and `LOG_LEVEL` (`debug`, `info` (default), `warning`,
 local `.env` works too. See `service/README.md` (its endpoint table lists only some routes, so treat the
 controllers as the source of truth).
 
-`service/Dockerfile` builds with `docker build --build-context winter=../../winter -t feather-io .`
-from `service/` (Winter is a path dependency, so it goes in as a named context and the build keeps
-the repo layout). It compiles AOT on `dart:3.13.1` and runs on `scratch` with the Dart runtime,
+`service/Dockerfile` builds with `docker build -t feather-io .` from `service/`. It compiles AOT on `dart:3.13.1` and runs on `scratch` with the Dart runtime,
 `libsqlite3.so` copied next to its libc (the `sqlite3` package opens it through FFI) and a `/tmp`
 (zip downloads); `STORAGE_VOLUME_PATH=/data` is a volume. Bump the image tag with `.fvmrc`.
 
