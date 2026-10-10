@@ -101,7 +101,10 @@ legitimate use**: it is an emergency brake against abuse.
 **Careful when tuning it.** The measurements are on Windows, where every upload is slow (Defender,
 SQLite). On a fast Linux server the same `sync` would go faster and could exceed 2000/min. If it is
 deployed for massive loads (migrations, backups with many small files), measure and raise it, or
-disable it for the IPs of those processes. Measuring it is under *After 1.0* in `ROADMAP.md`.
+disable it for the IPs of those processes. Measured on Linux (`service/tool/benchmark/RESULTS.md`):
+8 parallel clients on one IP stay at ~33 requests/s and 98 requests fail in a minute even after the
+SDK retries, as expected of a brake; a higher limit for signed requests is under *After 1.0* in
+`ROADMAP.md`.
 
 ## 3. SigV4 signatures
 

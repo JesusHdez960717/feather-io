@@ -425,6 +425,11 @@ service: `run.sh` (AWS CLI v2 and rclone batteries, `awscli.sh`/`rclone.sh`) and
 (MinIO Mint, 15 suites of AWS/MinIO SDKs, s3cmd and mc, ~5 min). Check the service log too:
 clients retry, so a 500 may only show up there.
 
+**Performance.** `service/tool/benchmark/` runs MinIO's warp against the service in Docker
+(throughput by object size and clients, listings by bucket size, ListBuckets, memory, the rate
+limit) and MinIO as a reference; `report.py` writes `RESULTS.md` (see its README). Run it after a
+change meant to make the service faster, and update the reading of the numbers in `report.py`.
+
 **Which tests to run.** `dart test` catches regressions in what already works (every endpoint,
 its edge cases and every bug found so far), but it checks responses against our reading of the S3
 spec. Real clients parse the XML strictly, sign in their own way and chain calls nobody expects,

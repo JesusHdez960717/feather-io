@@ -12,6 +12,30 @@ is done.
 | Anonymous access | Rules per prefix or pattern (`readOnly`, `writeOnly`, `readWrite`), applied by `AnonymousAccessFilter`                        | Create and delete rules per bucket                               |
 | Auth             | JWT + SigV4, the root key from the env plus access keys per bucket, login and general rate limits                             | Login, *Access keys* section                                     |
 
+## Assessment
+
+Where the service stands (2026-10-10), from 1 to 10, as a lightweight self-hosted S3 storage, not
+against MinIO or AWS as products:
+
+| Area | Score | Why |
+|---|:---:|---|
+| S3 compatibility | **9** | AWS CLI 34/34 and rclone 19/19; every Mint failure is something out of scope (SigV2, versioning, POST policy, S3 Select…), none of what it supports. Fine details covered: `aws-chunked`, `encoding-type=url`, ranges, copy conditions, full multipart |
+| Security | **8.5** | SigV4 with clock skew and body sha256, access keys encrypted with AES-GCM, login throttling, rate limit, errors without internal details, path traversal. Missing: its own TLS (it relies on a proxy) and an external audit |
+| Tests | **8.5** | About as many lines of tests as of code (494 service tests, 132 console tests, the batteries against real clients). No CI: running them depends on remembering it |
+| Architecture and code | **8** | Clear layers, features like `admin/`, XML apart, Problem Details errors, `DECISIONS.md`. `ObjectService` is still big (~650 lines) |
+| Performance | **6** | Very light on memory (12 MiB at start) and fast up to ~1000 objects per bucket, but listings scale with the bucket, small uploads are 5.5x slower than MinIO and ListBuckets walks the whole storage (`service/tool/benchmark/RESULTS.md`) |
+| Production readiness | **6** | 24 MB Docker image, structured logs, graceful shutdown, OpenAPI. Missing: CI, a health endpoint for the orchestrator, backups of the database, metrics, real long-running use; it depends on a release candidate of Winter |
+
+Overall **7.5**. Within its scope it can reach **8.5–9**; a 10 would need what it isn't by design
+(several nodes, replication, versioning). How, by return on the effort:
+
+1. **Listings that only look at what they need and SQLite in WAL mode** (Phase 6): little code, an
+   immediate effect on browsing in the console and on small uploads. Performance from 6 to ~7.5.
+2. **CI** (Phase 6): cheap, and what most raises tests and production readiness.
+3. **A health endpoint and the backups documented** (Phase 6): Winter already has `Route.health`.
+4. **ListBuckets from the database and an index of keys** (Phase 6 and *After 1.0*): only needed
+   for buckets of tens of thousands of objects.
+
 ## Phase 0: Foundation
 
 - [x] Move `service/test/*` to JWT (`JWT_SECRET`, `STORAGE_VOLUME_PATH`).
@@ -105,10 +129,19 @@ is done.
   picks the format).
 - [x] Shrink `S3Controller`, which had more than 1000 lines: it only holds the routes, and the
   operations live in `BucketController`, `ObjectController` and `MultipartController`.
-- [ ] Performance tests/benchmarks (e.g. `minio/warp`) with the service on Linux: confirm the
-  suspected bottlenecks (every listing page walks the whole bucket, `ListBuckets` walks every
-  object, md5 and SQLite on every upload) and review with that data the general limit of 2000
-  requests/min per IP (see `DECISIONS.md`).
+- [x] Performance tests/benchmarks (`minio/warp`) with the service on Linux: the suspected
+  bottlenecks confirmed (every listing page walks the whole bucket, `ListBuckets` walks every
+  object, the fixed cost of each upload) and the general limit reviewed with data
+  (`service/tool/benchmark/RESULTS.md`).
+- [ ] Listing only what the page needs: `stat` only the objects of the page, and with a delimiter
+  walk only the directory of the prefix (today a page costs ~0.05 ms per object of the bucket).
+- [ ] SQLite in WAL mode with `synchronous=NORMAL`: small uploads are 5.5x slower than MinIO.
+- [ ] ListBuckets from the `object_meta` table instead of walking every object (~1 s with 16 000).
+- [ ] Profile big single uploads (a PUT of 16 MiB stays at ~115 MiB/s, MinIO 477).
+- [ ] CI (GitHub Actions): analysis and tests of both packages on every push, and the AWS CLI and
+  rclone batteries against the Docker image.
+- [ ] A health endpoint for the orchestrator (`Route.health`, with the database as a check), and
+  how to back up the volume and the SQLite database in the README.
 - [ ] A visual identity/icon like Brag's, and a promo video with real screenshots of the design.
 
 ## Open source release
@@ -137,6 +170,10 @@ Not part of 1.0; they will be done later.
   decided what happens if it fails halfway).
 - [ ] Move object search and filters to the service, to search the whole folder and not only the
   pages already loaded.
+- [ ] An index of keys (from `object_meta`) for listings, constant per page whatever the size of
+  the bucket: what would take it to hundreds of thousands of objects.
+- [ ] A higher general rate limit (or none) for signed requests: one machine with many parallel
+  workers gets `SlowDown` above 2000 requests/min (`service/tool/benchmark/RESULTS.md`).
 
 ## Parked
 

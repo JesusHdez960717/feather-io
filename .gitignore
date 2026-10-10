@@ -48,3 +48,5 @@ brag-output/
 #------- S3 compatibility -------#
 # outputs of service/tool/s3_compat/run.sh
 service/tool/s3_compat/out/
+# outputs of service/tool/benchmark/run.sh
+service/tool/benchmark/out/
