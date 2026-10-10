@@ -105,7 +105,7 @@ fvm flutter test                                                # on the VM, no 
 ## Service architecture
 
 **Bootstrap.** `FeatherIO.start()` in `lib/main.dart` registers deserializers on the ObjectMapper (
-`om`), puts `AppDatabase`, `FileManagementService` and `JwtService` into Winter's `di`, then builds
+`om`), puts `AppDatabase`, `ObjectService`, `BucketService` and `JwtService` into Winter's `di`, then builds
 `S3Controller` and `AdminController` and passes their `.routing` to `Winter.start`. `S3Controller`
 only holds the S3 routes: S3 multiplexes several operations on one method and path (by query and
 headers), so each route hands the request to its operation in `BucketController`,
@@ -113,7 +113,7 @@ headers), so each route hands the request to its operation in `BucketController`
 headers, storage class, copy conditions, the multipart permission) is the `S3Request` extension.
 `lib/feather.dart` is the barrel file that re-exports Winter and every feature. Source files import
 `package:service/feather.dart`, never `package:winter/winter.dart` or individual files. Each folder
-has a barrel (`admin.dart`, `anonymous_access.dart`, `file_core.dart`, …) that must export every new
+has a barrel (`admin.dart`, `anonymous_access.dart`, `s3.dart`, `buckets.dart`, …) that must export every new
 file.
 
 **Two APIs share one router.**
@@ -209,10 +209,18 @@ against the AWS docs example. The SigV4 maths live in `security/logic/sig_v4_sig
 | `logic/service/` | Service    | Business logic, validation, file I/O.                               |
 | `repo/`          | Repository | Drift table access only.                                            |
 
-Current features: `s3/api/{controller,filter}` + `s3/file_core/{logic,repo}`, `admin/controller`,
-`admin/auth/{controller,logic}`, `admin/anonymous_access/{controller,logic,repo}`,
-`admin/access_keys/{controller,logic,repo}`, plus `db/` (Drift),
-`security/filter/` (JWT, SigV4) and `xml/` (the XML mapper).
+A parent feature keeps what its sub-features share, and each sub-feature has its own folders:
+
+- `admin/` (`admin_controller.dart` with the admin routes) with `auth/`, `anonymous_access/` and
+  `access_keys/`.
+- `s3/` (`s3_controller.dart` with the S3 routes, `s3_request.dart`, `s3_response.dart`;
+  `filter/`; `utils/` with `AwsChunkedDecoder`, `S3Validator` and `S3Xml`) with `buckets/`
+  (`BucketService`: their folder, metadata and what goes away with them), `objects/`
+  (`ObjectService`: objects on disk, `ObjectMetaService`, `PresignService`) and `multipart/`.
+- `db/` (Drift).
+
+Outside `features/`: `config/`, `exceptions/` (`S3Exception`, `S3ErrorCode` and
+`S3ExceptionHandler`), `i18n/`, `security/` (JWT, SigV4, secrets) and `xml/` (the XML mapper).
 
 **Layer rules.**
 
@@ -275,7 +283,7 @@ never enabled; rclone asks before a purge).
 `type`, `title`, `status`, `detail`), as Winter answers them.
 
 - S3 errors (from services and S3 filters) throw
-  `S3Exception(S3ErrorCode.x, message: …, resource: …)` (`s3/file_core/logic/s3_exception.dart`), or
+  `S3Exception(S3ErrorCode.x, message: …, resource: …)` (`exceptions/`), or
   one of its named constructors (`invalidBucketName`, `invalidKey`, `noSuchBucket`, `noSuchKey`).
   It is an `ApiException`: `detail` is the message and the extensions `code` and `resource`. Each
   `S3ErrorCode` carries the AWS code and its HTTP status; add new codes there.
@@ -325,11 +333,11 @@ recreated. PutObject, CopyObject and CreateMultipartUpload need an existing buck
 otherwise); only the subfolders of the key are created on the fly. PutObject writes into
 `STORAGE_VOLUME_PATH/.tmp/` (a dot folder, never listed) and renames the file into place when the
 upload ends, so a failed upload keeps the previous object (CopyObject and
-CompleteMultipartUpload also end with `FileManagementService.replaceFile`; on Windows an open
+CompleteMultipartUpload also end with `ObjectService.replaceFile`; on Windows an open
 target can't be replaced, so it retries for `replaceTimeout` (5 s) and then answers
 `503 ServiceUnavailable`, which S3 clients retry); `Md5Tap.write` closes and deletes the file
 when the stream fails (`pipe` does not close the sink). Deletes go through
-`FileManagementService._delete`, which on Windows retries for a few seconds while the file is open
+`ObjectService._delete`, which on Windows retries for a few seconds while the file is open
 (a download not yet closed, the antivirus scanning a new file). Removing the empty parents of a
 deleted object is best-effort and never recursive (`_deleteEmptyParents`): parallel deletes race
 for the same folder, and an upload may land in it meanwhile; a leftover empty folder without marker
@@ -342,7 +350,7 @@ the end, dart:io drops the connection without sending the error). `aws-chunked` 
 the object's `Content-Encoding`. Object payloads must
 always flow as `Stream<List<int>>` (`request.read()`, `file.openRead()`): **never** `readAsBytes()`
 or `Uint8List` for object data. Multi-object downloads build the zip in a temp file (
-`FileManagementService.zipObjects`) and stream it with `openAndDeleteTemp`. Winter's
+`ObjectService.zipObjects`) and stream it with `openAndDeleteTemp`. Winter's
 `ServerConfig.maxBodySize` (10 MB by default) is set to `MAX_OBJECT_SIZE`, and `BodySizeFilter` (
 global) narrows it by route from the `Content-Length`: `s3.put-object` over `MAX_OBJECT_SIZE` →
 `EntityTooLarge`; every other body (read into memory) is capped at 2 MB (413). A `POST`/`PUT`/
@@ -360,7 +368,7 @@ and zips skip it, no key may use that name, and a bucket holding only empty fold
 Deleting works like S3: `DELETE /{bucket}/fotos/` (or `fotos/` in a multi-delete) removes only the
 marker, never the content, and a key without `/` that is a directory deletes nothing. To delete a
 folder with its content the console calls the admin endpoint
-`DELETE /{admin}/bucket/{bucket}/folder?prefix=fotos/` (`FileManagementService.deleteFolder`,
+`DELETE /{admin}/bucket/{bucket}/folder?prefix=fotos/` (`ObjectService.deleteFolder`,
 permission `admin.bucket.delete-folder`); `BrowserRepo.deleteObjects` sends the folder keys there and
 the rest to the multi-delete. Winter drops the trailing `/` from the `{key}` path param; `S3Request.objectKey` restores it
 from the URL. `listFiles` sorts objects and common prefixes together and pages over them
@@ -412,7 +420,7 @@ aborts its uploads. The upload id is validated as 32 hex chars before it touches
 `part-number-marker`/`max-parts`, and requires `s3.put-object` like the rest of multipart. ListMultipartUploads (`GET /{bucket}?uploads`, list-objects route) lists the
 pending uploads of the bucket, sorted and without paging. UploadPartCopy (`PUT ?partNumber&uploadId`
 with `x-amz-copy-source` and optionally `x-amz-copy-source-range: bytes=a-b`) feeds UploadPart with
-`FileManagementService.readForCopy`. CORS exposes `ETag` so the console can read it.
+`ObjectService.readForCopy`. CORS exposes `ETag` so the console can read it.
 
 **S3 compatibility.** `service/tool/s3_compat/` runs real S3 clients in Docker against a running
 service: `run.sh` (AWS CLI v2 and rclone batteries, `awscli.sh`/`rclone.sh`) and `run.sh mint`

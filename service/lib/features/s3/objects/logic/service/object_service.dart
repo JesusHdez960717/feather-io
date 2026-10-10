@@ -6,89 +6,18 @@ import 'package:archive/archive_io.dart';
 import 'package:path/path.dart' as p;
 import 'package:service/feather.dart';
 
-class FileManagementService {
+/// The objects of the buckets, on disk: upload, copy, read, list, delete
+/// (one, many or a folder) and download several in a zip.
+class ObjectService {
   final ObjectMetaService objectMeta;
 
-  FileManagementService({ObjectMetaService? objectMeta})
+  ObjectService({ObjectMetaService? objectMeta})
     : objectMeta = objectMeta ?? ObjectMetaService();
 
-  Future<bool> createBucket({required String bucketName}) async {
-    // Bucket name with the S3 rules
-    if (!S3Validator.isValidBucketName(bucketName)) {
-      throw S3Exception(
-        S3ErrorCode.invalidBucketName,
-        message: intl.errors.s3.invalidBucketNameRules(bucket: bucketName),
-        resource: bucketName,
-      );
-    }
-
-    // As in S3, creating a bucket that already exists is a 409
-    final bucketDir = Directory(_getBucketPath(bucketName));
-    if (await bucketDir.exists()) {
-      throw S3Exception(
-        S3ErrorCode.bucketAlreadyOwnedByYou,
-        message: intl.errors.s3.bucketAlreadyExists(bucket: bucketName),
-        resource: bucketName,
-      );
-    }
-
-    // Creates the bucket on disk
-    await bucketDir.create(recursive: true);
-
-    return true;
-  }
-
-  Future<bool> deleteBucketPhysical(String bucketName) async {
-    if (!S3Validator.isValidBucketName(bucketName)) {
-      throw S3Exception.invalidBucketName(bucketName);
-    }
-
-    final bucketPath = _getBucketPath(bucketName);
-    final dir = Directory(bucketPath);
-
-    if (!await dir.exists()) {
-      throw S3Exception.noSuchBucket(bucketName);
-    }
-
-    // S3 requires the bucket to be empty. Empty folders (with only their
-    // marker) are not objects and don't prevent it
-    final hasObjects = await dir
-        .list(recursive: true)
-        .any(
-          (entity) =>
-              entity is File &&
-              p.basename(entity.path) != S3Validator.folderMarker,
-        );
-    if (hasObjects) {
-      throw S3Exception(
-        S3ErrorCode.bucketNotEmpty,
-        message: intl.errors.s3.bucketNotEmpty(bucket: bucketName),
-        resource: bucketName,
-      );
-    }
-
-    await dir.delete(recursive: true);
-    await objectMeta.forgetBucket(bucketName);
-    return true;
-  }
-
-  Future<bool> bucketExists(String bucketName) async {
-    if (!S3Validator.isValidBucketName(bucketName)) {
-      throw S3Exception.invalidBucketName(bucketName);
-    }
-    return Directory(_getBucketPath(bucketName)).exists();
-  }
-
-  /// Deletes all the content of the bucket and leaves its folder empty.
-  Future<void> emptyBucket(String bucketName) async {
-    if (!S3Validator.isValidBucketName(bucketName)) {
-      throw S3Exception.invalidBucketName(bucketName);
-    }
-    final dir = Directory(_getBucketPath(bucketName));
-    if (!await dir.exists()) {
-      throw S3Exception.noSuchBucket(bucketName);
-    }
-    await for (final entity in dir.list()) {
+  /// Deletes every object and folder of [bucketName] (its folder stays) and
+  /// their metadata. The bucket must exist.
+  Future<void> deleteAll(String bucketName) async {
+    await for (final entity in Directory(_getBucketPath(bucketName)).list()) {
       await _delete(entity);
     }
     await objectMeta.forgetBucket(bucketName);

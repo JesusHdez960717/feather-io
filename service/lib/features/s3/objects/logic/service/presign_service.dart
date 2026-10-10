@@ -3,9 +3,9 @@ import 'package:service/feather.dart';
 /// Builds presigned URLs (SigV4 in the query) with the service credentials, so
 /// the console can share an object without knowing them.
 class PresignService {
-  final FileManagementService fileManagement;
+  final ObjectService objectService;
 
-  PresignService() : fileManagement = di.find();
+  PresignService() : objectService = di.find();
 
   /// `GET` URL of [key] valid for [expiresIn]. [host] and [scheme] come from
   /// `PUBLIC_URL` or, without it, from the request; the signature includes the host.
@@ -24,7 +24,7 @@ class PresignService {
       );
     }
     // Validates the bucket and the key and checks that the object exists
-    await fileManagement.getFile(bucketName: bucketName, key: key);
+    await objectService.getFile(bucketName: bucketName, key: key);
 
     final now = DateTime.now().toUtc();
     final amzDate = SigV4Signer.amzDate(now);

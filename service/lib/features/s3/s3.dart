@@ -1,2 +1,13 @@
-export 'api/api.dart';
-export 'file_core/file_core.dart';
+export 'buckets/buckets.dart';
+export 'filter/anonymous_access_filter.dart';
+export 'filter/reserved_bucket_filter.dart';
+export 'filter/s3_bucket_name_filter.dart';
+export 'filter/unsupported_subresource_filter.dart';
+export 'multipart/multipart.dart';
+export 'objects/objects.dart';
+export 's3_controller.dart';
+export 's3_request.dart';
+export 's3_response.dart';
+export 'utils/aws_chunked_decoder.dart';
+export 'utils/s3_validator.dart';
+export 'utils/s3_xml.dart';

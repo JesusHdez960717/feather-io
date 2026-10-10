@@ -306,14 +306,14 @@ class AdminController {
   ];
 
   AdminController()
-    : fileManagement = di.find(),
-      bucketService = BucketService(),
+    : objectService = di.find(),
+      bucketService = di.find(),
       presignService = PresignService(),
       authController = AuthController(),
       anonymousAccessController = AnonymousAccessController(),
       accessKeyController = AccessKeyController();
 
-  final FileManagementService fileManagement;
+  final ObjectService objectService;
   final BucketService bucketService;
   final PresignService presignService;
 
@@ -362,7 +362,7 @@ class AdminController {
         resource: bucketName,
       );
     }
-    await fileManagement.deleteFolder(bucketName: bucketName, prefix: prefix);
+    await objectService.deleteFolder(bucketName: bucketName, prefix: prefix);
     return ResponseEntity.noContent();
   }
 
@@ -387,7 +387,7 @@ class AdminController {
     try {
       final downloadRequest = await request.body<DownloadObjectsRequest>();
 
-      final zipFile = await fileManagement.zipObjects(
+      final zipFile = await objectService.zipObjects(
         bucketName: bucketName,
         keys: downloadRequest.keys,
       );
@@ -397,7 +397,7 @@ class AdminController {
 
       return ResponseEntity<Stream<List<int>>>(
         200,
-        body: fileManagement.openAndDeleteTemp(zipFile),
+        body: objectService.openAndDeleteTemp(zipFile),
         headers: {
           'content-type': 'application/zip',
           'content-disposition': 'attachment; filename="$fileName"',

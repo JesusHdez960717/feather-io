@@ -21,7 +21,7 @@ class AccessKeyService {
       'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
   final AccessKeyTableRepo repo;
-  final FileManagementService fileManagement;
+  final BucketService buckets;
   final SecretCipher cipher;
 
   final Random _random = Random.secure();
@@ -31,7 +31,7 @@ class AccessKeyService {
 
   AccessKeyService()
     : repo = AccessKeyTableRepo(di.find()),
-      fileManagement = di.find(),
+      buckets = di.find(),
       cipher = di.find();
 
   Future<AccessKeyListModel> list() async {
@@ -174,7 +174,7 @@ class AccessKeyService {
 
   Future<void> _checkBuckets(List<AccessKeyGrant> grants) async {
     for (final grant in grants) {
-      if (!await fileManagement.bucketExists(grant.bucket)) {
+      if (!await buckets.bucketExists(grant.bucket)) {
         throw S3Exception.noSuchBucket(grant.bucket);
       }
     }

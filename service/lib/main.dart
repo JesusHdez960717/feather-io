@@ -71,7 +71,8 @@ class FeatherIO {
     di.put(SecretCipher(env.keysEncryptionSecret));
 
     //--------------- File ---------------\\
-    di.put(FileManagementService());
+    di.put(ObjectService());
+    di.put(BucketService());
 
     //--------------- JWT ---------------\\
     di.put(JwtService());

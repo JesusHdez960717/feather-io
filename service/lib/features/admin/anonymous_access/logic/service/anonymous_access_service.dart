@@ -2,11 +2,11 @@ import 'package:service/feather.dart';
 
 class AnonymousAccessService {
   final AccessRuleTableRepo accessRuleRepo;
-  final FileManagementService fileManagement;
+  final BucketService buckets;
 
   AnonymousAccessService()
     : accessRuleRepo = AccessRuleTableRepo(di.find()),
-      fileManagement = di.find();
+      buckets = di.find();
 
   Future<List<AnonymousRuleModel>> getRules({required String bucket}) async {
     await _checkBucket(bucket);
@@ -72,7 +72,7 @@ class AnonymousAccessService {
   }
 
   Future<void> _checkBucket(String bucket) async {
-    if (!await fileManagement.bucketExists(bucket)) {
+    if (!await buckets.bucketExists(bucket)) {
       throw S3Exception.noSuchBucket(bucket);
     }
   }

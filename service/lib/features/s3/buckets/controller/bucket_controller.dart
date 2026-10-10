@@ -4,12 +4,10 @@ import 'package:service/feather.dart';
 /// what `GET /{bucket}` answers (ListObjects V1/V2, GetBucketLocation,
 /// GetBucketVersioning).
 class BucketController {
-  final FileManagementService fileManagement;
+  final ObjectService objectService;
   final BucketService bucketService;
 
-  BucketController()
-    : fileManagement = di.find(),
-      bucketService = BucketService();
+  BucketController() : objectService = di.find(), bucketService = di.find();
 
   Future<ResponseEntity> listBuckets(RequestEntity request) async {
     var buckets = await bucketService.listBuckets();
@@ -59,7 +57,7 @@ class BucketController {
     final delimiter = request.queryParams['delimiter'];
     final maxKeysParam = request.queryParams['max-keys'];
     final maxKeys = maxKeysParam == null
-        ? FileManagementService.maxKeysLimit
+        ? ObjectService.maxKeysLimit
         : int.tryParse(maxKeysParam);
     if (maxKeys == null) {
       throw S3Exception(
@@ -71,7 +69,7 @@ class BucketController {
 
     // ListObjectsV2 with list-type=2; otherwise V1 (pages with marker)
     final v2 = request.queryParams['list-type'] == '2';
-    final result = await fileManagement.listFiles(
+    final result = await objectService.listFiles(
       bucketName: bucketName,
       prefix: prefix,
       delimiter: delimiter,
@@ -105,7 +103,7 @@ class BucketController {
   }
 
   Future<void> _checkExists(String bucketName) async {
-    if (!await fileManagement.bucketExists(bucketName)) {
+    if (!await bucketService.bucketExists(bucketName)) {
       throw S3Exception.noSuchBucket(bucketName);
     }
   }

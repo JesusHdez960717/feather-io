@@ -6,14 +6,14 @@ import 'package:service/feather.dart';
 /// a route accepting anonymous rules check the upload permission themselves.
 class MultipartController {
   final MultipartService multipart;
-  final FileManagementService fileManagement;
+  final ObjectService objectService;
 
   /// Resolves the source of UploadPartCopy, with the same rules as CopyObject.
   final ObjectController objects;
 
   MultipartController(this.objects)
     : multipart = MultipartService(),
-      fileManagement = di.find();
+      objectService = di.find();
 
   /// CreateMultipartUpload: `POST /{bucket}/{key}?uploads`.
   Future<ResponseEntity> create(RequestEntity request) async {
@@ -125,7 +125,7 @@ class MultipartController {
       range = (int.parse(match.group(1)!), int.parse(match.group(2)!));
     }
 
-    final source = await fileManagement.readForCopy(
+    final source = await objectService.readForCopy(
       sourceBucket: sourceBucket,
       sourceKey: sourceKey,
       range: range,
@@ -166,8 +166,8 @@ class MultipartController {
         int.tryParse(request.queryParams['part-number-marker'] ?? '') ?? 0;
     final maxParts =
         (int.tryParse(request.queryParams['max-parts'] ?? '') ??
-                FileManagementService.maxKeysLimit)
-            .clamp(0, FileManagementService.maxKeysLimit);
+                ObjectService.maxKeysLimit)
+            .clamp(0, ObjectService.maxKeysLimit);
 
     final pending = (await multipart.listParts(
       bucketName: request.bucketName,
@@ -199,7 +199,7 @@ class MultipartController {
     final uploads = (await multipart.list(
       bucketName: bucketName,
       prefix: prefix,
-    )).take(FileManagementService.maxKeysLimit).toList();
+    )).take(ObjectService.maxKeysLimit).toList();
     return S3Response.ok(
       request,
       MultipartUploadListModel(

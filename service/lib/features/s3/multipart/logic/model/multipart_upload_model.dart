@@ -69,7 +69,7 @@ class MultipartUploadListModel implements XmlSerializable {
     XmlElement.leaf('NextKeyMarker', null),
     XmlElement.leaf('NextUploadIdMarker', null),
     XmlElement.leaf('Prefix', prefix),
-    XmlElement.leaf('MaxUploads', FileManagementService.maxKeysLimit),
+    XmlElement.leaf('MaxUploads', ObjectService.maxKeysLimit),
     XmlElement.leaf('IsTruncated', false),
     for (final upload in uploads) upload.toUploadXml(),
   ]);

@@ -23,7 +23,6 @@ void main() {
   tearDownAll(server.stop);
 
   group('S3Controller - PUT Object', () {
-
     test('Should upload successfully in root', () async {
       final response = await http.put(
         server.url('/$bucket/file.txt'),
@@ -57,10 +56,7 @@ void main() {
         body: 'data',
       );
       expect(response.statusCode, 200);
-      expect(
-        response.headers['etag'],
-        '"${md5.convert(utf8.encode('data'))}"',
-      );
+      expect(response.headers['etag'], '"${md5.convert(utf8.encode('data'))}"');
       expect(response.body, isEmpty);
     });
 
@@ -72,7 +68,10 @@ void main() {
       );
       expect(response.statusCode, 404);
       expect(response.body, contains('<Code>NoSuchBucket</Code>'));
-      expect(await Directory('${server.storagePath}/missing').exists(), isFalse);
+      expect(
+        await Directory('${server.storagePath}/missing').exists(),
+        isFalse,
+      );
     });
 
     test('Should fail without auth (401)', () async {
@@ -134,48 +133,41 @@ void main() {
       return handle;
     }
 
-    test(
-      'Should replace an object that is open for a moment',
-      () async {
-        await server.putObject(bucket, 'open.txt', 'before');
-        await openFor('open.txt', const Duration(milliseconds: 300));
+    test('Should replace an object that is open for a moment', () async {
+      await server.putObject(bucket, 'open.txt', 'before');
+      await openFor('open.txt', const Duration(milliseconds: 300));
 
-        final response = await http.put(
-          server.url('/$bucket/open.txt'),
-          headers: server.auth(),
-          body: 'after',
-        );
-        expect(response.statusCode, 200, reason: response.body);
-        expect(
-          await File('${server.storagePath}/$bucket/open.txt').readAsString(),
-          'after',
-        );
-      },
-      testOn: 'windows',
-    );
+      final response = await http.put(
+        server.url('/$bucket/open.txt'),
+        headers: server.auth(),
+        body: 'after',
+      );
+      expect(response.statusCode, 200, reason: response.body);
+      expect(
+        await File('${server.storagePath}/$bucket/open.txt').readAsString(),
+        'after',
+      );
+    }, testOn: 'windows');
 
-    test(
-      'Should copy onto an object that is open for a moment',
-      () async {
-        await server.putObject(bucket, 'copy-source.txt', 'new');
-        await server.putObject(bucket, 'copy-open.txt', 'old');
-        await openFor('copy-open.txt', const Duration(milliseconds: 300));
+    test('Should copy onto an object that is open for a moment', () async {
+      await server.putObject(bucket, 'copy-source.txt', 'new');
+      await server.putObject(bucket, 'copy-open.txt', 'old');
+      await openFor('copy-open.txt', const Duration(milliseconds: 300));
 
-        final response = await http.put(
-          server.url('/$bucket/copy-open.txt'),
-          headers: {
-            ...server.auth(),
-            'x-amz-copy-source': '/$bucket/copy-source.txt',
-          },
-        );
-        expect(response.statusCode, 200, reason: response.body);
-        expect(
-          await File('${server.storagePath}/$bucket/copy-open.txt').readAsString(),
-          'new',
-        );
-      },
-      testOn: 'windows',
-    );
+      final response = await http.put(
+        server.url('/$bucket/copy-open.txt'),
+        headers: {
+          ...server.auth(),
+          'x-amz-copy-source': '/$bucket/copy-source.txt',
+        },
+      );
+      expect(response.statusCode, 200, reason: response.body);
+      expect(
+        await File('${server.storagePath}/$bucket/copy-open.txt')
+            .readAsString(),
+        'new',
+      );
+    }, testOn: 'windows');
 
     test(
       'Should answer 503 and keep the object if it stays open',
@@ -183,7 +175,7 @@ void main() {
         await server.putObject(bucket, 'locked.txt', 'before');
         final handle = await openFor(
           'locked.txt',
-          FileManagementService.replaceTimeout + const Duration(seconds: 3),
+          ObjectService.replaceTimeout + const Duration(seconds: 3),
         );
 
         final response = await http.put(

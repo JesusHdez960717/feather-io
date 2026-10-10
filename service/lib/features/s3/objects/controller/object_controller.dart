@@ -7,15 +7,15 @@ import 'package:service/feather.dart';
 /// The S3 operations on objects: PutObject, CopyObject, GetObject (and HEAD),
 /// GetObjectTagging, DeleteObject and DeleteObjects.
 class ObjectController {
-  final FileManagementService fileManagement;
+  final ObjectService objectService;
   final AnonymousAccessService anonymousAccess;
 
   ObjectController()
-    : fileManagement = di.find(),
+    : objectService = di.find(),
       anonymousAccess = AnonymousAccessService();
 
   Future<ResponseEntity> putObject(RequestEntity request) async {
-    final etag = await fileManagement.uploadFile(
+    final etag = await objectService.uploadFile(
       bucketName: request.bucketName,
       key: request.objectKey,
       binary: request.objectBody(),
@@ -34,7 +34,7 @@ class ObjectController {
     // As in S3: copies the source's headers unless REPLACE is requested
     final replace =
         request.headers['x-amz-metadata-directive']?.toUpperCase() == 'REPLACE';
-    final copied = await fileManagement.copyFile(
+    final copied = await objectService.copyFile(
       sourceBucket: sourceBucket,
       sourceKey: sourceKey,
       bucketName: request.bucketName,
@@ -100,9 +100,9 @@ class ObjectController {
   Future<ResponseEntity> getObject(RequestEntity request) async {
     final bucketName = request.bucketName;
     final key = request.objectKey;
-    final file = await fileManagement.getFile(bucketName: bucketName, key: key);
+    final file = await objectService.getFile(bucketName: bucketName, key: key);
     final stat = await file.stat();
-    final meta = await fileManagement.metaOf(
+    final meta = await objectService.metaOf(
       bucketName: bucketName,
       key: key,
       file: file,
@@ -201,7 +201,7 @@ class ObjectController {
   /// GetObjectTagging (`?tagging`): the service doesn't store tags, so there
   /// are none. The AWS CLI asks for them before a multipart copy.
   Future<ResponseEntity> objectTagging(RequestEntity request) async {
-    await fileManagement.getFile(
+    await objectService.getFile(
       bucketName: request.bucketName,
       key: request.objectKey,
     );
@@ -211,7 +211,7 @@ class ObjectController {
   }
 
   Future<ResponseEntity> deleteObject(RequestEntity request) async {
-    await fileManagement.deleteFile(
+    await objectService.deleteFile(
       bucketName: request.bucketName,
       key: request.objectKey,
     );
@@ -238,17 +238,17 @@ class ObjectController {
     final deleteRequest = isJson
         ? _readDeleteJson(body, bucketName)
         : _readDeleteXml(body, bucketName);
-    if (deleteRequest.keys.length > FileManagementService.maxKeysLimit) {
+    if (deleteRequest.keys.length > ObjectService.maxKeysLimit) {
       throw S3Exception(
         S3ErrorCode.malformedXML,
         message: intl.errors.multiDelete.tooManyKeys(
-          max: FileManagementService.maxKeysLimit,
+          max: ObjectService.maxKeysLimit,
         ),
         resource: bucketName,
       );
     }
 
-    final result = await fileManagement.deleteObjects(
+    final result = await objectService.deleteObjects(
       bucketName: bucketName,
       request: deleteRequest,
     );

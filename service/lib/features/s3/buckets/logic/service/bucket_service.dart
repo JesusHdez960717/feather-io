@@ -3,9 +3,12 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:service/feather.dart';
 
+/// The buckets: their folder on disk under `STORAGE_VOLUME_PATH`, their
+/// metadata in the database, and what goes away with them (rules, grants,
+/// pending uploads).
 class BucketService {
   final BucketTableRepo bucketRepo;
-  final FileManagementService fileManagement;
+  final ObjectService objectService;
 
   final AccessRuleTableRepo accessRuleRepo;
   final AccessKeyTableRepo accessKeyRepo;
@@ -14,15 +17,15 @@ class BucketService {
     : bucketRepo = BucketTableRepo(di.find()),
       accessRuleRepo = AccessRuleTableRepo(di.find()),
       accessKeyRepo = AccessKeyTableRepo(di.find()),
-      fileManagement = di.find();
+      objectService = di.find();
 
   Future<bool> createBucket({
     required String bucketName,
     String? description,
     int? color,
   }) async {
-    // 1. Physical creation via FileManagementService
-    await fileManagement.createBucket(bucketName: bucketName);
+    // 1. Its folder
+    await _createFolder(bucketName);
 
     // 2. Persistence via Repo
     await bucketRepo.save(
@@ -36,8 +39,8 @@ class BucketService {
   }
 
   Future<void> deleteBucket({required String bucketName}) async {
-    // 1. Physical delete (checks if empty)
-    await fileManagement.deleteBucketPhysical(bucketName);
+    // 1. Its folder (only if it is empty)
+    await _deleteFolder(bucketName);
 
     // 2. Its pending multipart uploads
     await MultipartService().abortAll(bucketName);
@@ -57,7 +60,8 @@ class BucketService {
 
   /// Deletes every object; the bucket, its metadata and its rules stay.
   Future<void> emptyBucket({required String bucketName}) async {
-    await fileManagement.emptyBucket(bucketName);
+    await _existingBucketDir(bucketName);
+    await objectService.deleteAll(bucketName);
     logger.info('Bucket emptied', fields: {'bucket': bucketName});
   }
 
@@ -103,11 +107,67 @@ class BucketService {
     return buckets;
   }
 
+  Future<bool> bucketExists(String bucketName) async {
+    if (!S3Validator.isValidBucketName(bucketName)) {
+      throw S3Exception.invalidBucketName(bucketName);
+    }
+    return Directory(_bucketPath(bucketName)).exists();
+  }
+
+  Future<void> _createFolder(String bucketName) async {
+    // Bucket name with the S3 rules
+    if (!S3Validator.isValidBucketName(bucketName)) {
+      throw S3Exception(
+        S3ErrorCode.invalidBucketName,
+        message: intl.errors.s3.invalidBucketNameRules(bucket: bucketName),
+        resource: bucketName,
+      );
+    }
+
+    // As in S3, creating a bucket that already exists is a 409
+    final bucketDir = Directory(_bucketPath(bucketName));
+    if (await bucketDir.exists()) {
+      throw S3Exception(
+        S3ErrorCode.bucketAlreadyOwnedByYou,
+        message: intl.errors.s3.bucketAlreadyExists(bucket: bucketName),
+        resource: bucketName,
+      );
+    }
+    await bucketDir.create(recursive: true);
+  }
+
+  Future<void> _deleteFolder(String bucketName) async {
+    final dir = await _existingBucketDir(bucketName);
+
+    // S3 requires the bucket to be empty. Empty folders (with only their
+    // marker) are not objects and don't prevent it
+    final hasObjects = await dir
+        .list(recursive: true)
+        .any(
+          (entity) =>
+              entity is File &&
+              p.basename(entity.path) != S3Validator.folderMarker,
+        );
+    if (hasObjects) {
+      throw S3Exception(
+        S3ErrorCode.bucketNotEmpty,
+        message: intl.errors.s3.bucketNotEmpty(bucket: bucketName),
+        resource: bucketName,
+      );
+    }
+
+    await dir.delete(recursive: true);
+    await objectService.objectMeta.forgetBucket(bucketName);
+  }
+
+  String _bucketPath(String bucketName) =>
+      p.join(env.storageVolumePath, bucketName);
+
   Future<Directory> _existingBucketDir(String bucketName) async {
     if (!S3Validator.isValidBucketName(bucketName)) {
       throw S3Exception.invalidBucketName(bucketName);
     }
-    final dir = Directory(p.join(env.storageVolumePath, bucketName));
+    final dir = Directory(_bucketPath(bucketName));
     if (!await dir.exists()) {
       throw S3Exception.noSuchBucket(bucketName);
     }
