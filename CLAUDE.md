@@ -186,7 +186,7 @@ against the AWS docs example. The SigV4 maths live in `security/logic/sig_v4_sig
   `AuthFilter(rules: hasPermission('s3.put-object') | hasPermission('s3.anonymous.put-object'))`.
   Route keys and permission names match (`s3.*`, `admin.*`).
 - New endpoints need the route key, an `AuthFilter`, **and** the permission added to the list in
-  `admin/auth/rest/auth_controller.dart` (and to `S3SigV4Filter` if native S3 clients should reach
+  `admin/auth/controller/auth_controller.dart` (and to `S3SigV4Filter` if native S3 clients should reach
   it). An admin endpoint also needs its `docs:` (see *OpenAPI*).
 - `AnonymousAccessFilter` runs on the S3 parent after the SigV4 filter, for unauthenticated
   requests and, as in AWS, for requests signed with an access key that lacks the route's permission
@@ -203,15 +203,15 @@ against the AWS docs example. The SigV4 maths live in `security/logic/sig_v4_sig
 
 | Folder           | Layer      | Contents                                                            |
 |------------------|------------|---------------------------------------------------------------------|
-| `rest/`          | Controller | Routes, request parsing, content negotiation (`S3Response`).        |
+| `controller/`    | Controller | Routes, request parsing, content negotiation (`S3Response`).        |
 | `filter/`        | Controller | Winter `Filter`s specific to the feature.                           |
 | `logic/model/`   | Model      | Typed models and request/response classes.                          |
 | `logic/service/` | Service    | Business logic, validation, file I/O.                               |
 | `repo/`          | Repository | Drift table access only.                                            |
 
-Current features: `s3/api/{rest,filter}` + `s3/file_core/{logic,repo}`, `admin/rest`,
-`admin/auth/{rest,logic}`, `admin/anonymous_access/{rest,logic,repo}`,
-`admin/access_keys/{rest,logic,repo}`, plus `db/` (Drift),
+Current features: `s3/api/{controller,filter}` + `s3/file_core/{logic,repo}`, `admin/controller`,
+`admin/auth/{controller,logic}`, `admin/anonymous_access/{controller,logic,repo}`,
+`admin/access_keys/{controller,logic,repo}`, plus `db/` (Drift),
 `security/filter/` (JWT, SigV4) and `xml/` (the XML mapper).
 
 **Layer rules.**
