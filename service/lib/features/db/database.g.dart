@@ -3,287 +3,6 @@
 part of 'database.dart';
 
 // ignore_for_file: type=lint
-class $AccessKeyGrantTableTable extends AccessKeyGrantTable
-    with TableInfo<$AccessKeyGrantTableTable, AccessKeyGrantTableData> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $AccessKeyGrantTableTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _keyIdMeta = const VerificationMeta('keyId');
-  @override
-  late final GeneratedColumn<String> keyId = GeneratedColumn<String>(
-    'key_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _bucketNameMeta = const VerificationMeta(
-    'bucketName',
-  );
-  @override
-  late final GeneratedColumn<String> bucketName = GeneratedColumn<String>(
-    'bucket_name',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  @override
-  late final GeneratedColumnWithTypeConverter<AccessKeyLevel, String> access =
-      GeneratedColumn<String>(
-        'access',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      ).withConverter<AccessKeyLevel>(
-        $AccessKeyGrantTableTable.$converteraccess,
-      );
-  @override
-  List<GeneratedColumn> get $columns => [keyId, bucketName, access];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'access_key_grant';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<AccessKeyGrantTableData> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('key_id')) {
-      context.handle(
-        _keyIdMeta,
-        keyId.isAcceptableOrUnknown(data['key_id']!, _keyIdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_keyIdMeta);
-    }
-    if (data.containsKey('bucket_name')) {
-      context.handle(
-        _bucketNameMeta,
-        bucketName.isAcceptableOrUnknown(data['bucket_name']!, _bucketNameMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_bucketNameMeta);
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {keyId, bucketName};
-  @override
-  AccessKeyGrantTableData map(
-    Map<String, dynamic> data, {
-    String? tablePrefix,
-  }) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return AccessKeyGrantTableData(
-      keyId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}key_id'],
-      )!,
-      bucketName: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}bucket_name'],
-      )!,
-      access: $AccessKeyGrantTableTable.$converteraccess.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}access'],
-        )!,
-      ),
-    );
-  }
-
-  @override
-  $AccessKeyGrantTableTable createAlias(String alias) {
-    return $AccessKeyGrantTableTable(attachedDatabase, alias);
-  }
-
-  static JsonTypeConverter2<AccessKeyLevel, String, String> $converteraccess =
-      const EnumNameConverter<AccessKeyLevel>(AccessKeyLevel.values);
-}
-
-class AccessKeyGrantTableData extends DataClass
-    implements Insertable<AccessKeyGrantTableData> {
-  final String keyId;
-  final String bucketName;
-  final AccessKeyLevel access;
-  const AccessKeyGrantTableData({
-    required this.keyId,
-    required this.bucketName,
-    required this.access,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['key_id'] = Variable<String>(keyId);
-    map['bucket_name'] = Variable<String>(bucketName);
-    {
-      map['access'] = Variable<String>(
-        $AccessKeyGrantTableTable.$converteraccess.toSql(access),
-      );
-    }
-    return map;
-  }
-
-  AccessKeyGrantTableCompanion toCompanion(bool nullToAbsent) {
-    return AccessKeyGrantTableCompanion(
-      keyId: Value(keyId),
-      bucketName: Value(bucketName),
-      access: Value(access),
-    );
-  }
-
-  factory AccessKeyGrantTableData.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return AccessKeyGrantTableData(
-      keyId: serializer.fromJson<String>(json['keyId']),
-      bucketName: serializer.fromJson<String>(json['bucketName']),
-      access: $AccessKeyGrantTableTable.$converteraccess.fromJson(
-        serializer.fromJson<String>(json['access']),
-      ),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'keyId': serializer.toJson<String>(keyId),
-      'bucketName': serializer.toJson<String>(bucketName),
-      'access': serializer.toJson<String>(
-        $AccessKeyGrantTableTable.$converteraccess.toJson(access),
-      ),
-    };
-  }
-
-  AccessKeyGrantTableData copyWith({
-    String? keyId,
-    String? bucketName,
-    AccessKeyLevel? access,
-  }) => AccessKeyGrantTableData(
-    keyId: keyId ?? this.keyId,
-    bucketName: bucketName ?? this.bucketName,
-    access: access ?? this.access,
-  );
-  AccessKeyGrantTableData copyWithCompanion(AccessKeyGrantTableCompanion data) {
-    return AccessKeyGrantTableData(
-      keyId: data.keyId.present ? data.keyId.value : this.keyId,
-      bucketName: data.bucketName.present
-          ? data.bucketName.value
-          : this.bucketName,
-      access: data.access.present ? data.access.value : this.access,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('AccessKeyGrantTableData(')
-          ..write('keyId: $keyId, ')
-          ..write('bucketName: $bucketName, ')
-          ..write('access: $access')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(keyId, bucketName, access);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is AccessKeyGrantTableData &&
-          other.keyId == this.keyId &&
-          other.bucketName == this.bucketName &&
-          other.access == this.access);
-}
-
-class AccessKeyGrantTableCompanion
-    extends UpdateCompanion<AccessKeyGrantTableData> {
-  final Value<String> keyId;
-  final Value<String> bucketName;
-  final Value<AccessKeyLevel> access;
-  final Value<int> rowid;
-  const AccessKeyGrantTableCompanion({
-    this.keyId = const Value.absent(),
-    this.bucketName = const Value.absent(),
-    this.access = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  AccessKeyGrantTableCompanion.insert({
-    required String keyId,
-    required String bucketName,
-    required AccessKeyLevel access,
-    this.rowid = const Value.absent(),
-  }) : keyId = Value(keyId),
-       bucketName = Value(bucketName),
-       access = Value(access);
-  static Insertable<AccessKeyGrantTableData> custom({
-    Expression<String>? keyId,
-    Expression<String>? bucketName,
-    Expression<String>? access,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (keyId != null) 'key_id': keyId,
-      if (bucketName != null) 'bucket_name': bucketName,
-      if (access != null) 'access': access,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  AccessKeyGrantTableCompanion copyWith({
-    Value<String>? keyId,
-    Value<String>? bucketName,
-    Value<AccessKeyLevel>? access,
-    Value<int>? rowid,
-  }) {
-    return AccessKeyGrantTableCompanion(
-      keyId: keyId ?? this.keyId,
-      bucketName: bucketName ?? this.bucketName,
-      access: access ?? this.access,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (keyId.present) {
-      map['key_id'] = Variable<String>(keyId.value);
-    }
-    if (bucketName.present) {
-      map['bucket_name'] = Variable<String>(bucketName.value);
-    }
-    if (access.present) {
-      map['access'] = Variable<String>(
-        $AccessKeyGrantTableTable.$converteraccess.toSql(access.value),
-      );
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('AccessKeyGrantTableCompanion(')
-          ..write('keyId: $keyId, ')
-          ..write('bucketName: $bucketName, ')
-          ..write('access: $access, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
 class $AccessKeyTableTable extends AccessKeyTable
     with TableInfo<$AccessKeyTableTable, AccessKeyTableData> {
   @override
@@ -822,318 +541,6 @@ class AccessKeyTableCompanion extends UpdateCompanion<AccessKeyTableData> {
   }
 }
 
-class $AnonymousRuleTableTable extends AnonymousRuleTable
-    with TableInfo<$AnonymousRuleTableTable, AnonymousRuleTableData> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $AnonymousRuleTableTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
-    'id',
-    aliasedName,
-    false,
-    hasAutoIncrement: true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'PRIMARY KEY AUTOINCREMENT',
-    ),
-  );
-  static const VerificationMeta _bucketNameMeta = const VerificationMeta(
-    'bucketName',
-  );
-  @override
-  late final GeneratedColumn<String> bucketName = GeneratedColumn<String>(
-    'bucket_name',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _prefixMeta = const VerificationMeta('prefix');
-  @override
-  late final GeneratedColumn<String> prefix = GeneratedColumn<String>(
-    'prefix',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  @override
-  late final GeneratedColumnWithTypeConverter<AnonymousAccessType, String>
-  access =
-      GeneratedColumn<String>(
-        'access',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      ).withConverter<AnonymousAccessType>(
-        $AnonymousRuleTableTable.$converteraccess,
-      );
-  @override
-  List<GeneratedColumn> get $columns => [id, bucketName, prefix, access];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'anonymous_rule';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<AnonymousRuleTableData> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    }
-    if (data.containsKey('bucket_name')) {
-      context.handle(
-        _bucketNameMeta,
-        bucketName.isAcceptableOrUnknown(data['bucket_name']!, _bucketNameMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_bucketNameMeta);
-    }
-    if (data.containsKey('prefix')) {
-      context.handle(
-        _prefixMeta,
-        prefix.isAcceptableOrUnknown(data['prefix']!, _prefixMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_prefixMeta);
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  AnonymousRuleTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return AnonymousRuleTableData(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}id'],
-      )!,
-      bucketName: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}bucket_name'],
-      )!,
-      prefix: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}prefix'],
-      )!,
-      access: $AnonymousRuleTableTable.$converteraccess.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}access'],
-        )!,
-      ),
-    );
-  }
-
-  @override
-  $AnonymousRuleTableTable createAlias(String alias) {
-    return $AnonymousRuleTableTable(attachedDatabase, alias);
-  }
-
-  static JsonTypeConverter2<AnonymousAccessType, String, String>
-  $converteraccess = const EnumNameConverter<AnonymousAccessType>(
-    AnonymousAccessType.values,
-  );
-}
-
-class AnonymousRuleTableData extends DataClass
-    implements Insertable<AnonymousRuleTableData> {
-  final int id;
-  final String bucketName;
-  final String prefix;
-  final AnonymousAccessType access;
-  const AnonymousRuleTableData({
-    required this.id,
-    required this.bucketName,
-    required this.prefix,
-    required this.access,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
-    map['bucket_name'] = Variable<String>(bucketName);
-    map['prefix'] = Variable<String>(prefix);
-    {
-      map['access'] = Variable<String>(
-        $AnonymousRuleTableTable.$converteraccess.toSql(access),
-      );
-    }
-    return map;
-  }
-
-  AnonymousRuleTableCompanion toCompanion(bool nullToAbsent) {
-    return AnonymousRuleTableCompanion(
-      id: Value(id),
-      bucketName: Value(bucketName),
-      prefix: Value(prefix),
-      access: Value(access),
-    );
-  }
-
-  factory AnonymousRuleTableData.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return AnonymousRuleTableData(
-      id: serializer.fromJson<int>(json['id']),
-      bucketName: serializer.fromJson<String>(json['bucketName']),
-      prefix: serializer.fromJson<String>(json['prefix']),
-      access: $AnonymousRuleTableTable.$converteraccess.fromJson(
-        serializer.fromJson<String>(json['access']),
-      ),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
-      'bucketName': serializer.toJson<String>(bucketName),
-      'prefix': serializer.toJson<String>(prefix),
-      'access': serializer.toJson<String>(
-        $AnonymousRuleTableTable.$converteraccess.toJson(access),
-      ),
-    };
-  }
-
-  AnonymousRuleTableData copyWith({
-    int? id,
-    String? bucketName,
-    String? prefix,
-    AnonymousAccessType? access,
-  }) => AnonymousRuleTableData(
-    id: id ?? this.id,
-    bucketName: bucketName ?? this.bucketName,
-    prefix: prefix ?? this.prefix,
-    access: access ?? this.access,
-  );
-  AnonymousRuleTableData copyWithCompanion(AnonymousRuleTableCompanion data) {
-    return AnonymousRuleTableData(
-      id: data.id.present ? data.id.value : this.id,
-      bucketName: data.bucketName.present
-          ? data.bucketName.value
-          : this.bucketName,
-      prefix: data.prefix.present ? data.prefix.value : this.prefix,
-      access: data.access.present ? data.access.value : this.access,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('AnonymousRuleTableData(')
-          ..write('id: $id, ')
-          ..write('bucketName: $bucketName, ')
-          ..write('prefix: $prefix, ')
-          ..write('access: $access')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(id, bucketName, prefix, access);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is AnonymousRuleTableData &&
-          other.id == this.id &&
-          other.bucketName == this.bucketName &&
-          other.prefix == this.prefix &&
-          other.access == this.access);
-}
-
-class AnonymousRuleTableCompanion
-    extends UpdateCompanion<AnonymousRuleTableData> {
-  final Value<int> id;
-  final Value<String> bucketName;
-  final Value<String> prefix;
-  final Value<AnonymousAccessType> access;
-  const AnonymousRuleTableCompanion({
-    this.id = const Value.absent(),
-    this.bucketName = const Value.absent(),
-    this.prefix = const Value.absent(),
-    this.access = const Value.absent(),
-  });
-  AnonymousRuleTableCompanion.insert({
-    this.id = const Value.absent(),
-    required String bucketName,
-    required String prefix,
-    required AnonymousAccessType access,
-  }) : bucketName = Value(bucketName),
-       prefix = Value(prefix),
-       access = Value(access);
-  static Insertable<AnonymousRuleTableData> custom({
-    Expression<int>? id,
-    Expression<String>? bucketName,
-    Expression<String>? prefix,
-    Expression<String>? access,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (bucketName != null) 'bucket_name': bucketName,
-      if (prefix != null) 'prefix': prefix,
-      if (access != null) 'access': access,
-    });
-  }
-
-  AnonymousRuleTableCompanion copyWith({
-    Value<int>? id,
-    Value<String>? bucketName,
-    Value<String>? prefix,
-    Value<AnonymousAccessType>? access,
-  }) {
-    return AnonymousRuleTableCompanion(
-      id: id ?? this.id,
-      bucketName: bucketName ?? this.bucketName,
-      prefix: prefix ?? this.prefix,
-      access: access ?? this.access,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<int>(id.value);
-    }
-    if (bucketName.present) {
-      map['bucket_name'] = Variable<String>(bucketName.value);
-    }
-    if (prefix.present) {
-      map['prefix'] = Variable<String>(prefix.value);
-    }
-    if (access.present) {
-      map['access'] = Variable<String>(
-        $AnonymousRuleTableTable.$converteraccess.toSql(access.value),
-      );
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('AnonymousRuleTableCompanion(')
-          ..write('id: $id, ')
-          ..write('bucketName: $bucketName, ')
-          ..write('prefix: $prefix, ')
-          ..write('access: $access')
-          ..write(')'))
-        .toString();
-  }
-}
-
 class $BucketTableTable extends BucketTable
     with TableInfo<$BucketTableTable, BucketTableData> {
   @override
@@ -1501,6 +908,608 @@ class BucketTableCompanion extends UpdateCompanion<BucketTableData> {
   }
 }
 
+class $AccessKeyGrantTableTable extends AccessKeyGrantTable
+    with TableInfo<$AccessKeyGrantTableTable, AccessKeyGrantTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AccessKeyGrantTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _keyIdMeta = const VerificationMeta('keyId');
+  @override
+  late final GeneratedColumn<String> keyId = GeneratedColumn<String>(
+    'key_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES access_key (id)',
+    ),
+  );
+  static const VerificationMeta _bucketNameMeta = const VerificationMeta(
+    'bucketName',
+  );
+  @override
+  late final GeneratedColumn<String> bucketName = GeneratedColumn<String>(
+    'bucket_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES bucket (name)',
+    ),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<AccessKeyLevel, String> access =
+      GeneratedColumn<String>(
+        'access',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<AccessKeyLevel>(
+        $AccessKeyGrantTableTable.$converteraccess,
+      );
+  @override
+  List<GeneratedColumn> get $columns => [keyId, bucketName, access];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'access_key_grant';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AccessKeyGrantTableData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('key_id')) {
+      context.handle(
+        _keyIdMeta,
+        keyId.isAcceptableOrUnknown(data['key_id']!, _keyIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_keyIdMeta);
+    }
+    if (data.containsKey('bucket_name')) {
+      context.handle(
+        _bucketNameMeta,
+        bucketName.isAcceptableOrUnknown(data['bucket_name']!, _bucketNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bucketNameMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {keyId, bucketName};
+  @override
+  AccessKeyGrantTableData map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AccessKeyGrantTableData(
+      keyId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}key_id'],
+      )!,
+      bucketName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}bucket_name'],
+      )!,
+      access: $AccessKeyGrantTableTable.$converteraccess.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}access'],
+        )!,
+      ),
+    );
+  }
+
+  @override
+  $AccessKeyGrantTableTable createAlias(String alias) {
+    return $AccessKeyGrantTableTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<AccessKeyLevel, String, String> $converteraccess =
+      const EnumNameConverter<AccessKeyLevel>(AccessKeyLevel.values);
+}
+
+class AccessKeyGrantTableData extends DataClass
+    implements Insertable<AccessKeyGrantTableData> {
+  final String keyId;
+  final String bucketName;
+  final AccessKeyLevel access;
+  const AccessKeyGrantTableData({
+    required this.keyId,
+    required this.bucketName,
+    required this.access,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['key_id'] = Variable<String>(keyId);
+    map['bucket_name'] = Variable<String>(bucketName);
+    {
+      map['access'] = Variable<String>(
+        $AccessKeyGrantTableTable.$converteraccess.toSql(access),
+      );
+    }
+    return map;
+  }
+
+  AccessKeyGrantTableCompanion toCompanion(bool nullToAbsent) {
+    return AccessKeyGrantTableCompanion(
+      keyId: Value(keyId),
+      bucketName: Value(bucketName),
+      access: Value(access),
+    );
+  }
+
+  factory AccessKeyGrantTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AccessKeyGrantTableData(
+      keyId: serializer.fromJson<String>(json['keyId']),
+      bucketName: serializer.fromJson<String>(json['bucketName']),
+      access: $AccessKeyGrantTableTable.$converteraccess.fromJson(
+        serializer.fromJson<String>(json['access']),
+      ),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'keyId': serializer.toJson<String>(keyId),
+      'bucketName': serializer.toJson<String>(bucketName),
+      'access': serializer.toJson<String>(
+        $AccessKeyGrantTableTable.$converteraccess.toJson(access),
+      ),
+    };
+  }
+
+  AccessKeyGrantTableData copyWith({
+    String? keyId,
+    String? bucketName,
+    AccessKeyLevel? access,
+  }) => AccessKeyGrantTableData(
+    keyId: keyId ?? this.keyId,
+    bucketName: bucketName ?? this.bucketName,
+    access: access ?? this.access,
+  );
+  AccessKeyGrantTableData copyWithCompanion(AccessKeyGrantTableCompanion data) {
+    return AccessKeyGrantTableData(
+      keyId: data.keyId.present ? data.keyId.value : this.keyId,
+      bucketName: data.bucketName.present
+          ? data.bucketName.value
+          : this.bucketName,
+      access: data.access.present ? data.access.value : this.access,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AccessKeyGrantTableData(')
+          ..write('keyId: $keyId, ')
+          ..write('bucketName: $bucketName, ')
+          ..write('access: $access')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(keyId, bucketName, access);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AccessKeyGrantTableData &&
+          other.keyId == this.keyId &&
+          other.bucketName == this.bucketName &&
+          other.access == this.access);
+}
+
+class AccessKeyGrantTableCompanion
+    extends UpdateCompanion<AccessKeyGrantTableData> {
+  final Value<String> keyId;
+  final Value<String> bucketName;
+  final Value<AccessKeyLevel> access;
+  final Value<int> rowid;
+  const AccessKeyGrantTableCompanion({
+    this.keyId = const Value.absent(),
+    this.bucketName = const Value.absent(),
+    this.access = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AccessKeyGrantTableCompanion.insert({
+    required String keyId,
+    required String bucketName,
+    required AccessKeyLevel access,
+    this.rowid = const Value.absent(),
+  }) : keyId = Value(keyId),
+       bucketName = Value(bucketName),
+       access = Value(access);
+  static Insertable<AccessKeyGrantTableData> custom({
+    Expression<String>? keyId,
+    Expression<String>? bucketName,
+    Expression<String>? access,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (keyId != null) 'key_id': keyId,
+      if (bucketName != null) 'bucket_name': bucketName,
+      if (access != null) 'access': access,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AccessKeyGrantTableCompanion copyWith({
+    Value<String>? keyId,
+    Value<String>? bucketName,
+    Value<AccessKeyLevel>? access,
+    Value<int>? rowid,
+  }) {
+    return AccessKeyGrantTableCompanion(
+      keyId: keyId ?? this.keyId,
+      bucketName: bucketName ?? this.bucketName,
+      access: access ?? this.access,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (keyId.present) {
+      map['key_id'] = Variable<String>(keyId.value);
+    }
+    if (bucketName.present) {
+      map['bucket_name'] = Variable<String>(bucketName.value);
+    }
+    if (access.present) {
+      map['access'] = Variable<String>(
+        $AccessKeyGrantTableTable.$converteraccess.toSql(access.value),
+      );
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AccessKeyGrantTableCompanion(')
+          ..write('keyId: $keyId, ')
+          ..write('bucketName: $bucketName, ')
+          ..write('access: $access, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $AnonymousRuleTableTable extends AnonymousRuleTable
+    with TableInfo<$AnonymousRuleTableTable, AnonymousRuleTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AnonymousRuleTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _bucketNameMeta = const VerificationMeta(
+    'bucketName',
+  );
+  @override
+  late final GeneratedColumn<String> bucketName = GeneratedColumn<String>(
+    'bucket_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES bucket (name)',
+    ),
+  );
+  static const VerificationMeta _prefixMeta = const VerificationMeta('prefix');
+  @override
+  late final GeneratedColumn<String> prefix = GeneratedColumn<String>(
+    'prefix',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<AnonymousAccessType, String>
+  access =
+      GeneratedColumn<String>(
+        'access',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<AnonymousAccessType>(
+        $AnonymousRuleTableTable.$converteraccess,
+      );
+  @override
+  List<GeneratedColumn> get $columns => [id, bucketName, prefix, access];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'anonymous_rule';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AnonymousRuleTableData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('bucket_name')) {
+      context.handle(
+        _bucketNameMeta,
+        bucketName.isAcceptableOrUnknown(data['bucket_name']!, _bucketNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bucketNameMeta);
+    }
+    if (data.containsKey('prefix')) {
+      context.handle(
+        _prefixMeta,
+        prefix.isAcceptableOrUnknown(data['prefix']!, _prefixMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_prefixMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AnonymousRuleTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AnonymousRuleTableData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      bucketName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}bucket_name'],
+      )!,
+      prefix: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}prefix'],
+      )!,
+      access: $AnonymousRuleTableTable.$converteraccess.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}access'],
+        )!,
+      ),
+    );
+  }
+
+  @override
+  $AnonymousRuleTableTable createAlias(String alias) {
+    return $AnonymousRuleTableTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<AnonymousAccessType, String, String>
+  $converteraccess = const EnumNameConverter<AnonymousAccessType>(
+    AnonymousAccessType.values,
+  );
+}
+
+class AnonymousRuleTableData extends DataClass
+    implements Insertable<AnonymousRuleTableData> {
+  final int id;
+  final String bucketName;
+  final String prefix;
+  final AnonymousAccessType access;
+  const AnonymousRuleTableData({
+    required this.id,
+    required this.bucketName,
+    required this.prefix,
+    required this.access,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['bucket_name'] = Variable<String>(bucketName);
+    map['prefix'] = Variable<String>(prefix);
+    {
+      map['access'] = Variable<String>(
+        $AnonymousRuleTableTable.$converteraccess.toSql(access),
+      );
+    }
+    return map;
+  }
+
+  AnonymousRuleTableCompanion toCompanion(bool nullToAbsent) {
+    return AnonymousRuleTableCompanion(
+      id: Value(id),
+      bucketName: Value(bucketName),
+      prefix: Value(prefix),
+      access: Value(access),
+    );
+  }
+
+  factory AnonymousRuleTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AnonymousRuleTableData(
+      id: serializer.fromJson<int>(json['id']),
+      bucketName: serializer.fromJson<String>(json['bucketName']),
+      prefix: serializer.fromJson<String>(json['prefix']),
+      access: $AnonymousRuleTableTable.$converteraccess.fromJson(
+        serializer.fromJson<String>(json['access']),
+      ),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'bucketName': serializer.toJson<String>(bucketName),
+      'prefix': serializer.toJson<String>(prefix),
+      'access': serializer.toJson<String>(
+        $AnonymousRuleTableTable.$converteraccess.toJson(access),
+      ),
+    };
+  }
+
+  AnonymousRuleTableData copyWith({
+    int? id,
+    String? bucketName,
+    String? prefix,
+    AnonymousAccessType? access,
+  }) => AnonymousRuleTableData(
+    id: id ?? this.id,
+    bucketName: bucketName ?? this.bucketName,
+    prefix: prefix ?? this.prefix,
+    access: access ?? this.access,
+  );
+  AnonymousRuleTableData copyWithCompanion(AnonymousRuleTableCompanion data) {
+    return AnonymousRuleTableData(
+      id: data.id.present ? data.id.value : this.id,
+      bucketName: data.bucketName.present
+          ? data.bucketName.value
+          : this.bucketName,
+      prefix: data.prefix.present ? data.prefix.value : this.prefix,
+      access: data.access.present ? data.access.value : this.access,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AnonymousRuleTableData(')
+          ..write('id: $id, ')
+          ..write('bucketName: $bucketName, ')
+          ..write('prefix: $prefix, ')
+          ..write('access: $access')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, bucketName, prefix, access);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AnonymousRuleTableData &&
+          other.id == this.id &&
+          other.bucketName == this.bucketName &&
+          other.prefix == this.prefix &&
+          other.access == this.access);
+}
+
+class AnonymousRuleTableCompanion
+    extends UpdateCompanion<AnonymousRuleTableData> {
+  final Value<int> id;
+  final Value<String> bucketName;
+  final Value<String> prefix;
+  final Value<AnonymousAccessType> access;
+  const AnonymousRuleTableCompanion({
+    this.id = const Value.absent(),
+    this.bucketName = const Value.absent(),
+    this.prefix = const Value.absent(),
+    this.access = const Value.absent(),
+  });
+  AnonymousRuleTableCompanion.insert({
+    this.id = const Value.absent(),
+    required String bucketName,
+    required String prefix,
+    required AnonymousAccessType access,
+  }) : bucketName = Value(bucketName),
+       prefix = Value(prefix),
+       access = Value(access);
+  static Insertable<AnonymousRuleTableData> custom({
+    Expression<int>? id,
+    Expression<String>? bucketName,
+    Expression<String>? prefix,
+    Expression<String>? access,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (bucketName != null) 'bucket_name': bucketName,
+      if (prefix != null) 'prefix': prefix,
+      if (access != null) 'access': access,
+    });
+  }
+
+  AnonymousRuleTableCompanion copyWith({
+    Value<int>? id,
+    Value<String>? bucketName,
+    Value<String>? prefix,
+    Value<AnonymousAccessType>? access,
+  }) {
+    return AnonymousRuleTableCompanion(
+      id: id ?? this.id,
+      bucketName: bucketName ?? this.bucketName,
+      prefix: prefix ?? this.prefix,
+      access: access ?? this.access,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (bucketName.present) {
+      map['bucket_name'] = Variable<String>(bucketName.value);
+    }
+    if (prefix.present) {
+      map['prefix'] = Variable<String>(prefix.value);
+    }
+    if (access.present) {
+      map['access'] = Variable<String>(
+        $AnonymousRuleTableTable.$converteraccess.toSql(access.value),
+      );
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AnonymousRuleTableCompanion(')
+          ..write('id: $id, ')
+          ..write('bucketName: $bucketName, ')
+          ..write('prefix: $prefix, ')
+          ..write('access: $access')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $ObjectMetaTableTable extends ObjectMetaTable
     with TableInfo<$ObjectMetaTableTable, ObjectMetaTableData> {
   @override
@@ -1517,6 +1526,9 @@ class $ObjectMetaTableTable extends ObjectMetaTable
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES bucket (name)',
+    ),
   );
   static const VerificationMeta _objectKeyMeta = const VerificationMeta(
     'objectKey',
@@ -1920,12 +1932,12 @@ class ObjectMetaTableCompanion extends UpdateCompanion<ObjectMetaTableData> {
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
+  late final $AccessKeyTableTable accessKeyTable = $AccessKeyTableTable(this);
+  late final $BucketTableTable bucketTable = $BucketTableTable(this);
   late final $AccessKeyGrantTableTable accessKeyGrantTable =
       $AccessKeyGrantTableTable(this);
-  late final $AccessKeyTableTable accessKeyTable = $AccessKeyTableTable(this);
   late final $AnonymousRuleTableTable anonymousRuleTable =
       $AnonymousRuleTableTable(this);
-  late final $BucketTableTable bucketTable = $BucketTableTable(this);
   late final $ObjectMetaTableTable objectMetaTable = $ObjectMetaTableTable(
     this,
   );
@@ -1934,195 +1946,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
-    accessKeyGrantTable,
     accessKeyTable,
-    anonymousRuleTable,
     bucketTable,
+    accessKeyGrantTable,
+    anonymousRuleTable,
     objectMetaTable,
   ];
 }
 
-typedef $$AccessKeyGrantTableTableCreateCompanionBuilder =
-    AccessKeyGrantTableCompanion Function({
-      required String keyId,
-      required String bucketName,
-      required AccessKeyLevel access,
-      Value<int> rowid,
-    });
-typedef $$AccessKeyGrantTableTableUpdateCompanionBuilder =
-    AccessKeyGrantTableCompanion Function({
-      Value<String> keyId,
-      Value<String> bucketName,
-      Value<AccessKeyLevel> access,
-      Value<int> rowid,
-    });
-
-class $$AccessKeyGrantTableTableFilterComposer
-    extends Composer<_$AppDatabase, $AccessKeyGrantTableTable> {
-  $$AccessKeyGrantTableTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get keyId => $composableBuilder(
-    column: $table.keyId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get bucketName => $composableBuilder(
-    column: $table.bucketName,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<AccessKeyLevel, AccessKeyLevel, String>
-  get access => $composableBuilder(
-    column: $table.access,
-    builder: (column) => ColumnWithTypeConverterFilters(column),
-  );
-}
-
-class $$AccessKeyGrantTableTableOrderingComposer
-    extends Composer<_$AppDatabase, $AccessKeyGrantTableTable> {
-  $$AccessKeyGrantTableTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get keyId => $composableBuilder(
-    column: $table.keyId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get bucketName => $composableBuilder(
-    column: $table.bucketName,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get access => $composableBuilder(
-    column: $table.access,
-    builder: (column) => ColumnOrderings(column),
-  );
-}
-
-class $$AccessKeyGrantTableTableAnnotationComposer
-    extends Composer<_$AppDatabase, $AccessKeyGrantTableTable> {
-  $$AccessKeyGrantTableTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get keyId =>
-      $composableBuilder(column: $table.keyId, builder: (column) => column);
-
-  GeneratedColumn<String> get bucketName => $composableBuilder(
-    column: $table.bucketName,
-    builder: (column) => column,
-  );
-
-  GeneratedColumnWithTypeConverter<AccessKeyLevel, String> get access =>
-      $composableBuilder(column: $table.access, builder: (column) => column);
-}
-
-class $$AccessKeyGrantTableTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $AccessKeyGrantTableTable,
-          AccessKeyGrantTableData,
-          $$AccessKeyGrantTableTableFilterComposer,
-          $$AccessKeyGrantTableTableOrderingComposer,
-          $$AccessKeyGrantTableTableAnnotationComposer,
-          $$AccessKeyGrantTableTableCreateCompanionBuilder,
-          $$AccessKeyGrantTableTableUpdateCompanionBuilder,
-          (
-            AccessKeyGrantTableData,
-            BaseReferences<
-              _$AppDatabase,
-              $AccessKeyGrantTableTable,
-              AccessKeyGrantTableData
-            >,
-          ),
-          AccessKeyGrantTableData,
-          PrefetchHooks Function()
-        > {
-  $$AccessKeyGrantTableTableTableManager(
-    _$AppDatabase db,
-    $AccessKeyGrantTableTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$AccessKeyGrantTableTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$AccessKeyGrantTableTableOrderingComposer(
-                $db: db,
-                $table: table,
-              ),
-          createComputedFieldComposer: () =>
-              $$AccessKeyGrantTableTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
-          updateCompanionCallback:
-              ({
-                Value<String> keyId = const Value.absent(),
-                Value<String> bucketName = const Value.absent(),
-                Value<AccessKeyLevel> access = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => AccessKeyGrantTableCompanion(
-                keyId: keyId,
-                bucketName: bucketName,
-                access: access,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String keyId,
-                required String bucketName,
-                required AccessKeyLevel access,
-                Value<int> rowid = const Value.absent(),
-              }) => AccessKeyGrantTableCompanion.insert(
-                keyId: keyId,
-                bucketName: bucketName,
-                access: access,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
-          prefetchHooksCallback: null,
-        ),
-      );
-}
-
-typedef $$AccessKeyGrantTableTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $AccessKeyGrantTableTable,
-      AccessKeyGrantTableData,
-      $$AccessKeyGrantTableTableFilterComposer,
-      $$AccessKeyGrantTableTableOrderingComposer,
-      $$AccessKeyGrantTableTableAnnotationComposer,
-      $$AccessKeyGrantTableTableCreateCompanionBuilder,
-      $$AccessKeyGrantTableTableUpdateCompanionBuilder,
-      (
-        AccessKeyGrantTableData,
-        BaseReferences<
-          _$AppDatabase,
-          $AccessKeyGrantTableTable,
-          AccessKeyGrantTableData
-        >,
-      ),
-      AccessKeyGrantTableData,
-      PrefetchHooks Function()
-    >;
 typedef $$AccessKeyTableTableCreateCompanionBuilder =
     AccessKeyTableCompanion Function({
       required String id,
@@ -2147,6 +1978,44 @@ typedef $$AccessKeyTableTableUpdateCompanionBuilder =
       Value<DateTime?> lastUsedAt,
       Value<int> rowid,
     });
+
+final class $$AccessKeyTableTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $AccessKeyTableTable,
+          AccessKeyTableData
+        > {
+  $$AccessKeyTableTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static MultiTypedResultKey<
+    $AccessKeyGrantTableTable,
+    List<AccessKeyGrantTableData>
+  >
+  _accessKeyGrantTableRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.accessKeyGrantTable,
+        aliasName: 'access_key__id__access_key_grant__key_id',
+      );
+
+  $$AccessKeyGrantTableTableProcessedTableManager get accessKeyGrantTableRefs {
+    final manager = $$AccessKeyGrantTableTableTableManager(
+      $_db,
+      $_db.accessKeyGrantTable,
+    ).filter((f) => f.keyId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _accessKeyGrantTableRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
 
 class $$AccessKeyTableTableFilterComposer
     extends Composer<_$AppDatabase, $AccessKeyTableTable> {
@@ -2197,6 +2066,31 @@ class $$AccessKeyTableTableFilterComposer
     column: $table.lastUsedAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  Expression<bool> accessKeyGrantTableRefs(
+    Expression<bool> Function($$AccessKeyGrantTableTableFilterComposer f) f,
+  ) {
+    final $$AccessKeyGrantTableTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.accessKeyGrantTable,
+      getReferencedColumn: (t) => t.keyId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccessKeyGrantTableTableFilterComposer(
+            $db: $db,
+            $table: $db.accessKeyGrantTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$AccessKeyTableTableOrderingComposer
@@ -2288,6 +2182,32 @@ class $$AccessKeyTableTableAnnotationComposer
     column: $table.lastUsedAt,
     builder: (column) => column,
   );
+
+  Expression<T> accessKeyGrantTableRefs<T extends Object>(
+    Expression<T> Function($$AccessKeyGrantTableTableAnnotationComposer a) f,
+  ) {
+    final $$AccessKeyGrantTableTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.accessKeyGrantTable,
+          getReferencedColumn: (t) => t.keyId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$AccessKeyGrantTableTableAnnotationComposer(
+                $db: $db,
+                $table: $db.accessKeyGrantTable,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$AccessKeyTableTableTableManager
@@ -2301,16 +2221,9 @@ class $$AccessKeyTableTableTableManager
           $$AccessKeyTableTableAnnotationComposer,
           $$AccessKeyTableTableCreateCompanionBuilder,
           $$AccessKeyTableTableUpdateCompanionBuilder,
-          (
-            AccessKeyTableData,
-            BaseReferences<
-              _$AppDatabase,
-              $AccessKeyTableTable,
-              AccessKeyTableData
-            >,
-          ),
+          (AccessKeyTableData, $$AccessKeyTableTableReferences),
           AccessKeyTableData,
-          PrefetchHooks Function()
+          PrefetchHooks Function({bool accessKeyGrantTableRefs})
         > {
   $$AccessKeyTableTableTableManager(
     _$AppDatabase db,
@@ -2370,9 +2283,45 @@ class $$AccessKeyTableTableTableManager
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$AccessKeyTableTable, AccessKeyTableData>(table),
+                  $$AccessKeyTableTableReferences(db, table, e),
+                ),
+              )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({accessKeyGrantTableRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (accessKeyGrantTableRefs) db.accessKeyGrantTable,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (accessKeyGrantTableRefs)
+                    await $_getPrefetchedData<
+                      AccessKeyTableData,
+                      $AccessKeyTableTable,
+                      AccessKeyGrantTableData
+                    >(
+                      currentTable: table,
+                      referencedTable: $$AccessKeyTableTableReferences
+                          ._accessKeyGrantTableRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$AccessKeyTableTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).accessKeyGrantTableRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.keyId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
         ),
       );
 }
@@ -2387,207 +2336,9 @@ typedef $$AccessKeyTableTableProcessedTableManager =
       $$AccessKeyTableTableAnnotationComposer,
       $$AccessKeyTableTableCreateCompanionBuilder,
       $$AccessKeyTableTableUpdateCompanionBuilder,
-      (
-        AccessKeyTableData,
-        BaseReferences<_$AppDatabase, $AccessKeyTableTable, AccessKeyTableData>,
-      ),
+      (AccessKeyTableData, $$AccessKeyTableTableReferences),
       AccessKeyTableData,
-      PrefetchHooks Function()
-    >;
-typedef $$AnonymousRuleTableTableCreateCompanionBuilder =
-    AnonymousRuleTableCompanion Function({
-      Value<int> id,
-      required String bucketName,
-      required String prefix,
-      required AnonymousAccessType access,
-    });
-typedef $$AnonymousRuleTableTableUpdateCompanionBuilder =
-    AnonymousRuleTableCompanion Function({
-      Value<int> id,
-      Value<String> bucketName,
-      Value<String> prefix,
-      Value<AnonymousAccessType> access,
-    });
-
-class $$AnonymousRuleTableTableFilterComposer
-    extends Composer<_$AppDatabase, $AnonymousRuleTableTable> {
-  $$AnonymousRuleTableTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get bucketName => $composableBuilder(
-    column: $table.bucketName,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get prefix => $composableBuilder(
-    column: $table.prefix,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<
-    AnonymousAccessType,
-    AnonymousAccessType,
-    String
-  >
-  get access => $composableBuilder(
-    column: $table.access,
-    builder: (column) => ColumnWithTypeConverterFilters(column),
-  );
-}
-
-class $$AnonymousRuleTableTableOrderingComposer
-    extends Composer<_$AppDatabase, $AnonymousRuleTableTable> {
-  $$AnonymousRuleTableTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get bucketName => $composableBuilder(
-    column: $table.bucketName,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get prefix => $composableBuilder(
-    column: $table.prefix,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get access => $composableBuilder(
-    column: $table.access,
-    builder: (column) => ColumnOrderings(column),
-  );
-}
-
-class $$AnonymousRuleTableTableAnnotationComposer
-    extends Composer<_$AppDatabase, $AnonymousRuleTableTable> {
-  $$AnonymousRuleTableTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<int> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get bucketName => $composableBuilder(
-    column: $table.bucketName,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get prefix =>
-      $composableBuilder(column: $table.prefix, builder: (column) => column);
-
-  GeneratedColumnWithTypeConverter<AnonymousAccessType, String> get access =>
-      $composableBuilder(column: $table.access, builder: (column) => column);
-}
-
-class $$AnonymousRuleTableTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $AnonymousRuleTableTable,
-          AnonymousRuleTableData,
-          $$AnonymousRuleTableTableFilterComposer,
-          $$AnonymousRuleTableTableOrderingComposer,
-          $$AnonymousRuleTableTableAnnotationComposer,
-          $$AnonymousRuleTableTableCreateCompanionBuilder,
-          $$AnonymousRuleTableTableUpdateCompanionBuilder,
-          (
-            AnonymousRuleTableData,
-            BaseReferences<
-              _$AppDatabase,
-              $AnonymousRuleTableTable,
-              AnonymousRuleTableData
-            >,
-          ),
-          AnonymousRuleTableData,
-          PrefetchHooks Function()
-        > {
-  $$AnonymousRuleTableTableTableManager(
-    _$AppDatabase db,
-    $AnonymousRuleTableTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$AnonymousRuleTableTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$AnonymousRuleTableTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$AnonymousRuleTableTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
-          updateCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                Value<String> bucketName = const Value.absent(),
-                Value<String> prefix = const Value.absent(),
-                Value<AnonymousAccessType> access = const Value.absent(),
-              }) => AnonymousRuleTableCompanion(
-                id: id,
-                bucketName: bucketName,
-                prefix: prefix,
-                access: access,
-              ),
-          createCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                required String bucketName,
-                required String prefix,
-                required AnonymousAccessType access,
-              }) => AnonymousRuleTableCompanion.insert(
-                id: id,
-                bucketName: bucketName,
-                prefix: prefix,
-                access: access,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
-          prefetchHooksCallback: null,
-        ),
-      );
-}
-
-typedef $$AnonymousRuleTableTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $AnonymousRuleTableTable,
-      AnonymousRuleTableData,
-      $$AnonymousRuleTableTableFilterComposer,
-      $$AnonymousRuleTableTableOrderingComposer,
-      $$AnonymousRuleTableTableAnnotationComposer,
-      $$AnonymousRuleTableTableCreateCompanionBuilder,
-      $$AnonymousRuleTableTableUpdateCompanionBuilder,
-      (
-        AnonymousRuleTableData,
-        BaseReferences<
-          _$AppDatabase,
-          $AnonymousRuleTableTable,
-          AnonymousRuleTableData
-        >,
-      ),
-      AnonymousRuleTableData,
-      PrefetchHooks Function()
+      PrefetchHooks Function({bool accessKeyGrantTableRefs})
     >;
 typedef $$BucketTableTableCreateCompanionBuilder =
     BucketTableCompanion Function({
@@ -2607,6 +2358,79 @@ typedef $$BucketTableTableUpdateCompanionBuilder =
       Value<DateTime> updatedAt,
       Value<int> rowid,
     });
+
+final class $$BucketTableTableReferences
+    extends BaseReferences<_$AppDatabase, $BucketTableTable, BucketTableData> {
+  $$BucketTableTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<
+    $AccessKeyGrantTableTable,
+    List<AccessKeyGrantTableData>
+  >
+  _accessKeyGrantTableRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.accessKeyGrantTable,
+        aliasName: 'bucket__name__access_key_grant__bucket_name',
+      );
+
+  $$AccessKeyGrantTableTableProcessedTableManager get accessKeyGrantTableRefs {
+    final manager = $$AccessKeyGrantTableTableTableManager(
+      $_db,
+      $_db.accessKeyGrantTable,
+    ).filter((f) => f.bucketName.name.sqlEquals($_itemColumn<String>('name')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _accessKeyGrantTableRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<
+    $AnonymousRuleTableTable,
+    List<AnonymousRuleTableData>
+  >
+  _anonymousRuleTableRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.anonymousRuleTable,
+        aliasName: 'bucket__name__anonymous_rule__bucket_name',
+      );
+
+  $$AnonymousRuleTableTableProcessedTableManager get anonymousRuleTableRefs {
+    final manager = $$AnonymousRuleTableTableTableManager(
+      $_db,
+      $_db.anonymousRuleTable,
+    ).filter((f) => f.bucketName.name.sqlEquals($_itemColumn<String>('name')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _anonymousRuleTableRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$ObjectMetaTableTable, List<ObjectMetaTableData>>
+  _objectMetaTableRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.objectMetaTable,
+    aliasName: 'bucket__name__object_meta__bucket_name',
+  );
+
+  $$ObjectMetaTableTableProcessedTableManager get objectMetaTableRefs {
+    final manager = $$ObjectMetaTableTableTableManager(
+      $_db,
+      $_db.objectMetaTable,
+    ).filter((f) => f.bucketName.name.sqlEquals($_itemColumn<String>('name')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _objectMetaTableRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
 
 class $$BucketTableTableFilterComposer
     extends Composer<_$AppDatabase, $BucketTableTable> {
@@ -2641,6 +2465,81 @@ class $$BucketTableTableFilterComposer
     column: $table.updatedAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  Expression<bool> accessKeyGrantTableRefs(
+    Expression<bool> Function($$AccessKeyGrantTableTableFilterComposer f) f,
+  ) {
+    final $$AccessKeyGrantTableTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.name,
+      referencedTable: $db.accessKeyGrantTable,
+      getReferencedColumn: (t) => t.bucketName,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccessKeyGrantTableTableFilterComposer(
+            $db: $db,
+            $table: $db.accessKeyGrantTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> anonymousRuleTableRefs(
+    Expression<bool> Function($$AnonymousRuleTableTableFilterComposer f) f,
+  ) {
+    final $$AnonymousRuleTableTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.name,
+      referencedTable: $db.anonymousRuleTable,
+      getReferencedColumn: (t) => t.bucketName,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AnonymousRuleTableTableFilterComposer(
+            $db: $db,
+            $table: $db.anonymousRuleTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> objectMetaTableRefs(
+    Expression<bool> Function($$ObjectMetaTableTableFilterComposer f) f,
+  ) {
+    final $$ObjectMetaTableTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.name,
+      referencedTable: $db.objectMetaTable,
+      getReferencedColumn: (t) => t.bucketName,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ObjectMetaTableTableFilterComposer(
+            $db: $db,
+            $table: $db.objectMetaTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$BucketTableTableOrderingComposer
@@ -2703,6 +2602,83 @@ class $$BucketTableTableAnnotationComposer
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  Expression<T> accessKeyGrantTableRefs<T extends Object>(
+    Expression<T> Function($$AccessKeyGrantTableTableAnnotationComposer a) f,
+  ) {
+    final $$AccessKeyGrantTableTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.name,
+          referencedTable: $db.accessKeyGrantTable,
+          getReferencedColumn: (t) => t.bucketName,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$AccessKeyGrantTableTableAnnotationComposer(
+                $db: $db,
+                $table: $db.accessKeyGrantTable,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
+  Expression<T> anonymousRuleTableRefs<T extends Object>(
+    Expression<T> Function($$AnonymousRuleTableTableAnnotationComposer a) f,
+  ) {
+    final $$AnonymousRuleTableTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.name,
+          referencedTable: $db.anonymousRuleTable,
+          getReferencedColumn: (t) => t.bucketName,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$AnonymousRuleTableTableAnnotationComposer(
+                $db: $db,
+                $table: $db.anonymousRuleTable,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
+  Expression<T> objectMetaTableRefs<T extends Object>(
+    Expression<T> Function($$ObjectMetaTableTableAnnotationComposer a) f,
+  ) {
+    final $$ObjectMetaTableTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.name,
+      referencedTable: $db.objectMetaTable,
+      getReferencedColumn: (t) => t.bucketName,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ObjectMetaTableTableAnnotationComposer(
+            $db: $db,
+            $table: $db.objectMetaTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$BucketTableTableTableManager
@@ -2716,12 +2692,13 @@ class $$BucketTableTableTableManager
           $$BucketTableTableAnnotationComposer,
           $$BucketTableTableCreateCompanionBuilder,
           $$BucketTableTableUpdateCompanionBuilder,
-          (
-            BucketTableData,
-            BaseReferences<_$AppDatabase, $BucketTableTable, BucketTableData>,
-          ),
+          (BucketTableData, $$BucketTableTableReferences),
           BucketTableData,
-          PrefetchHooks Function()
+          PrefetchHooks Function({
+            bool accessKeyGrantTableRefs,
+            bool anonymousRuleTableRefs,
+            bool objectMetaTableRefs,
+          })
         > {
   $$BucketTableTableTableManager(_$AppDatabase db, $BucketTableTable table)
     : super(
@@ -2767,9 +2744,96 @@ class $$BucketTableTableTableManager
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$BucketTableTable, BucketTableData>(table),
+                  $$BucketTableTableReferences(db, table, e),
+                ),
+              )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback:
+              ({
+                accessKeyGrantTableRefs = false,
+                anonymousRuleTableRefs = false,
+                objectMetaTableRefs = false,
+              }) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (accessKeyGrantTableRefs) db.accessKeyGrantTable,
+                    if (anonymousRuleTableRefs) db.anonymousRuleTable,
+                    if (objectMetaTableRefs) db.objectMetaTable,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (accessKeyGrantTableRefs)
+                        await $_getPrefetchedData<
+                          BucketTableData,
+                          $BucketTableTable,
+                          AccessKeyGrantTableData
+                        >(
+                          currentTable: table,
+                          referencedTable: $$BucketTableTableReferences
+                              ._accessKeyGrantTableRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$BucketTableTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).accessKeyGrantTableRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.bucketName == item.name,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (anonymousRuleTableRefs)
+                        await $_getPrefetchedData<
+                          BucketTableData,
+                          $BucketTableTable,
+                          AnonymousRuleTableData
+                        >(
+                          currentTable: table,
+                          referencedTable: $$BucketTableTableReferences
+                              ._anonymousRuleTableRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$BucketTableTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).anonymousRuleTableRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.bucketName == item.name,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (objectMetaTableRefs)
+                        await $_getPrefetchedData<
+                          BucketTableData,
+                          $BucketTableTable,
+                          ObjectMetaTableData
+                        >(
+                          currentTable: table,
+                          referencedTable: $$BucketTableTableReferences
+                              ._objectMetaTableRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$BucketTableTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).objectMetaTableRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.bucketName == item.name,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
         ),
       );
 }
@@ -2784,12 +2848,706 @@ typedef $$BucketTableTableProcessedTableManager =
       $$BucketTableTableAnnotationComposer,
       $$BucketTableTableCreateCompanionBuilder,
       $$BucketTableTableUpdateCompanionBuilder,
-      (
-        BucketTableData,
-        BaseReferences<_$AppDatabase, $BucketTableTable, BucketTableData>,
-      ),
+      (BucketTableData, $$BucketTableTableReferences),
       BucketTableData,
-      PrefetchHooks Function()
+      PrefetchHooks Function({
+        bool accessKeyGrantTableRefs,
+        bool anonymousRuleTableRefs,
+        bool objectMetaTableRefs,
+      })
+    >;
+typedef $$AccessKeyGrantTableTableCreateCompanionBuilder =
+    AccessKeyGrantTableCompanion Function({
+      required String keyId,
+      required String bucketName,
+      required AccessKeyLevel access,
+      Value<int> rowid,
+    });
+typedef $$AccessKeyGrantTableTableUpdateCompanionBuilder =
+    AccessKeyGrantTableCompanion Function({
+      Value<String> keyId,
+      Value<String> bucketName,
+      Value<AccessKeyLevel> access,
+      Value<int> rowid,
+    });
+
+final class $$AccessKeyGrantTableTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $AccessKeyGrantTableTable,
+          AccessKeyGrantTableData
+        > {
+  $$AccessKeyGrantTableTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $AccessKeyTableTable _keyIdTable(_$AppDatabase db) =>
+      db.accessKeyTable.createAlias('access_key_grant__key_id__access_key__id');
+
+  $$AccessKeyTableTableProcessedTableManager get keyId {
+    final $_column = $_itemColumn<String>('key_id')!;
+
+    final manager = $$AccessKeyTableTableTableManager(
+      $_db,
+      $_db.accessKeyTable,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_keyIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $BucketTableTable _bucketNameTable(_$AppDatabase db) =>
+      db.bucketTable.createAlias('access_key_grant__bucket_name__bucket__name');
+
+  $$BucketTableTableProcessedTableManager get bucketName {
+    final $_column = $_itemColumn<String>('bucket_name')!;
+
+    final manager = $$BucketTableTableTableManager(
+      $_db,
+      $_db.bucketTable,
+    ).filter((f) => f.name.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_bucketNameTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$AccessKeyGrantTableTableFilterComposer
+    extends Composer<_$AppDatabase, $AccessKeyGrantTableTable> {
+  $$AccessKeyGrantTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnWithTypeConverterFilters<AccessKeyLevel, AccessKeyLevel, String>
+  get access => $composableBuilder(
+    column: $table.access,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  $$AccessKeyTableTableFilterComposer get keyId {
+    final $$AccessKeyTableTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.keyId,
+      referencedTable: $db.accessKeyTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccessKeyTableTableFilterComposer(
+            $db: $db,
+            $table: $db.accessKeyTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$BucketTableTableFilterComposer get bucketName {
+    final $$BucketTableTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bucketName,
+      referencedTable: $db.bucketTable,
+      getReferencedColumn: (t) => t.name,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BucketTableTableFilterComposer(
+            $db: $db,
+            $table: $db.bucketTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$AccessKeyGrantTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $AccessKeyGrantTableTable> {
+  $$AccessKeyGrantTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get access => $composableBuilder(
+    column: $table.access,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$AccessKeyTableTableOrderingComposer get keyId {
+    final $$AccessKeyTableTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.keyId,
+      referencedTable: $db.accessKeyTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccessKeyTableTableOrderingComposer(
+            $db: $db,
+            $table: $db.accessKeyTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$BucketTableTableOrderingComposer get bucketName {
+    final $$BucketTableTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bucketName,
+      referencedTable: $db.bucketTable,
+      getReferencedColumn: (t) => t.name,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BucketTableTableOrderingComposer(
+            $db: $db,
+            $table: $db.bucketTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$AccessKeyGrantTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AccessKeyGrantTableTable> {
+  $$AccessKeyGrantTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumnWithTypeConverter<AccessKeyLevel, String> get access =>
+      $composableBuilder(column: $table.access, builder: (column) => column);
+
+  $$AccessKeyTableTableAnnotationComposer get keyId {
+    final $$AccessKeyTableTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.keyId,
+      referencedTable: $db.accessKeyTable,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccessKeyTableTableAnnotationComposer(
+            $db: $db,
+            $table: $db.accessKeyTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$BucketTableTableAnnotationComposer get bucketName {
+    final $$BucketTableTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bucketName,
+      referencedTable: $db.bucketTable,
+      getReferencedColumn: (t) => t.name,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BucketTableTableAnnotationComposer(
+            $db: $db,
+            $table: $db.bucketTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$AccessKeyGrantTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AccessKeyGrantTableTable,
+          AccessKeyGrantTableData,
+          $$AccessKeyGrantTableTableFilterComposer,
+          $$AccessKeyGrantTableTableOrderingComposer,
+          $$AccessKeyGrantTableTableAnnotationComposer,
+          $$AccessKeyGrantTableTableCreateCompanionBuilder,
+          $$AccessKeyGrantTableTableUpdateCompanionBuilder,
+          (AccessKeyGrantTableData, $$AccessKeyGrantTableTableReferences),
+          AccessKeyGrantTableData,
+          PrefetchHooks Function({bool keyId, bool bucketName})
+        > {
+  $$AccessKeyGrantTableTableTableManager(
+    _$AppDatabase db,
+    $AccessKeyGrantTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AccessKeyGrantTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AccessKeyGrantTableTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$AccessKeyGrantTableTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> keyId = const Value.absent(),
+                Value<String> bucketName = const Value.absent(),
+                Value<AccessKeyLevel> access = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AccessKeyGrantTableCompanion(
+                keyId: keyId,
+                bucketName: bucketName,
+                access: access,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String keyId,
+                required String bucketName,
+                required AccessKeyLevel access,
+                Value<int> rowid = const Value.absent(),
+              }) => AccessKeyGrantTableCompanion.insert(
+                keyId: keyId,
+                bucketName: bucketName,
+                access: access,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<
+                    $AccessKeyGrantTableTable,
+                    AccessKeyGrantTableData
+                  >(table),
+                  $$AccessKeyGrantTableTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({keyId = false, bucketName = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (keyId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.keyId,
+                        referencedTable: $$AccessKeyGrantTableTableReferences
+                            ._keyIdTable(db),
+                        referencedColumn: $$AccessKeyGrantTableTableReferences
+                            ._keyIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+                    if (bucketName) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.bucketName,
+                        referencedTable: $$AccessKeyGrantTableTableReferences
+                            ._bucketNameTable(db),
+                        referencedColumn: $$AccessKeyGrantTableTableReferences
+                            ._bucketNameTable(db)
+                            .name,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$AccessKeyGrantTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AccessKeyGrantTableTable,
+      AccessKeyGrantTableData,
+      $$AccessKeyGrantTableTableFilterComposer,
+      $$AccessKeyGrantTableTableOrderingComposer,
+      $$AccessKeyGrantTableTableAnnotationComposer,
+      $$AccessKeyGrantTableTableCreateCompanionBuilder,
+      $$AccessKeyGrantTableTableUpdateCompanionBuilder,
+      (AccessKeyGrantTableData, $$AccessKeyGrantTableTableReferences),
+      AccessKeyGrantTableData,
+      PrefetchHooks Function({bool keyId, bool bucketName})
+    >;
+typedef $$AnonymousRuleTableTableCreateCompanionBuilder =
+    AnonymousRuleTableCompanion Function({
+      Value<int> id,
+      required String bucketName,
+      required String prefix,
+      required AnonymousAccessType access,
+    });
+typedef $$AnonymousRuleTableTableUpdateCompanionBuilder =
+    AnonymousRuleTableCompanion Function({
+      Value<int> id,
+      Value<String> bucketName,
+      Value<String> prefix,
+      Value<AnonymousAccessType> access,
+    });
+
+final class $$AnonymousRuleTableTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $AnonymousRuleTableTable,
+          AnonymousRuleTableData
+        > {
+  $$AnonymousRuleTableTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $BucketTableTable _bucketNameTable(_$AppDatabase db) =>
+      db.bucketTable.createAlias('anonymous_rule__bucket_name__bucket__name');
+
+  $$BucketTableTableProcessedTableManager get bucketName {
+    final $_column = $_itemColumn<String>('bucket_name')!;
+
+    final manager = $$BucketTableTableTableManager(
+      $_db,
+      $_db.bucketTable,
+    ).filter((f) => f.name.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_bucketNameTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$AnonymousRuleTableTableFilterComposer
+    extends Composer<_$AppDatabase, $AnonymousRuleTableTable> {
+  $$AnonymousRuleTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get prefix => $composableBuilder(
+    column: $table.prefix,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<
+    AnonymousAccessType,
+    AnonymousAccessType,
+    String
+  >
+  get access => $composableBuilder(
+    column: $table.access,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  $$BucketTableTableFilterComposer get bucketName {
+    final $$BucketTableTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bucketName,
+      referencedTable: $db.bucketTable,
+      getReferencedColumn: (t) => t.name,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BucketTableTableFilterComposer(
+            $db: $db,
+            $table: $db.bucketTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$AnonymousRuleTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $AnonymousRuleTableTable> {
+  $$AnonymousRuleTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get prefix => $composableBuilder(
+    column: $table.prefix,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get access => $composableBuilder(
+    column: $table.access,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$BucketTableTableOrderingComposer get bucketName {
+    final $$BucketTableTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bucketName,
+      referencedTable: $db.bucketTable,
+      getReferencedColumn: (t) => t.name,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BucketTableTableOrderingComposer(
+            $db: $db,
+            $table: $db.bucketTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$AnonymousRuleTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AnonymousRuleTableTable> {
+  $$AnonymousRuleTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get prefix =>
+      $composableBuilder(column: $table.prefix, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<AnonymousAccessType, String> get access =>
+      $composableBuilder(column: $table.access, builder: (column) => column);
+
+  $$BucketTableTableAnnotationComposer get bucketName {
+    final $$BucketTableTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bucketName,
+      referencedTable: $db.bucketTable,
+      getReferencedColumn: (t) => t.name,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BucketTableTableAnnotationComposer(
+            $db: $db,
+            $table: $db.bucketTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$AnonymousRuleTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AnonymousRuleTableTable,
+          AnonymousRuleTableData,
+          $$AnonymousRuleTableTableFilterComposer,
+          $$AnonymousRuleTableTableOrderingComposer,
+          $$AnonymousRuleTableTableAnnotationComposer,
+          $$AnonymousRuleTableTableCreateCompanionBuilder,
+          $$AnonymousRuleTableTableUpdateCompanionBuilder,
+          (AnonymousRuleTableData, $$AnonymousRuleTableTableReferences),
+          AnonymousRuleTableData,
+          PrefetchHooks Function({bool bucketName})
+        > {
+  $$AnonymousRuleTableTableTableManager(
+    _$AppDatabase db,
+    $AnonymousRuleTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AnonymousRuleTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AnonymousRuleTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AnonymousRuleTableTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> bucketName = const Value.absent(),
+                Value<String> prefix = const Value.absent(),
+                Value<AnonymousAccessType> access = const Value.absent(),
+              }) => AnonymousRuleTableCompanion(
+                id: id,
+                bucketName: bucketName,
+                prefix: prefix,
+                access: access,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String bucketName,
+                required String prefix,
+                required AnonymousAccessType access,
+              }) => AnonymousRuleTableCompanion.insert(
+                id: id,
+                bucketName: bucketName,
+                prefix: prefix,
+                access: access,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$AnonymousRuleTableTable, AnonymousRuleTableData>(
+                    table,
+                  ),
+                  $$AnonymousRuleTableTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({bucketName = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (bucketName) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.bucketName,
+                        referencedTable: $$AnonymousRuleTableTableReferences
+                            ._bucketNameTable(db),
+                        referencedColumn: $$AnonymousRuleTableTableReferences
+                            ._bucketNameTable(db)
+                            .name,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$AnonymousRuleTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AnonymousRuleTableTable,
+      AnonymousRuleTableData,
+      $$AnonymousRuleTableTableFilterComposer,
+      $$AnonymousRuleTableTableOrderingComposer,
+      $$AnonymousRuleTableTableAnnotationComposer,
+      $$AnonymousRuleTableTableCreateCompanionBuilder,
+      $$AnonymousRuleTableTableUpdateCompanionBuilder,
+      (AnonymousRuleTableData, $$AnonymousRuleTableTableReferences),
+      AnonymousRuleTableData,
+      PrefetchHooks Function({bool bucketName})
     >;
 typedef $$ObjectMetaTableTableCreateCompanionBuilder =
     ObjectMetaTableCompanion Function({
@@ -2812,6 +3570,37 @@ typedef $$ObjectMetaTableTableUpdateCompanionBuilder =
       Value<int> rowid,
     });
 
+final class $$ObjectMetaTableTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $ObjectMetaTableTable,
+          ObjectMetaTableData
+        > {
+  $$ObjectMetaTableTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $BucketTableTable _bucketNameTable(_$AppDatabase db) =>
+      db.bucketTable.createAlias('object_meta__bucket_name__bucket__name');
+
+  $$BucketTableTableProcessedTableManager get bucketName {
+    final $_column = $_itemColumn<String>('bucket_name')!;
+
+    final manager = $$BucketTableTableTableManager(
+      $_db,
+      $_db.bucketTable,
+    ).filter((f) => f.name.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_bucketNameTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
 class $$ObjectMetaTableTableFilterComposer
     extends Composer<_$AppDatabase, $ObjectMetaTableTable> {
   $$ObjectMetaTableTableFilterComposer({
@@ -2821,11 +3610,6 @@ class $$ObjectMetaTableTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get bucketName => $composableBuilder(
-    column: $table.bucketName,
-    builder: (column) => ColumnFilters(column),
-  );
-
   ColumnFilters<String> get objectKey => $composableBuilder(
     column: $table.objectKey,
     builder: (column) => ColumnFilters(column),
@@ -2850,6 +3634,29 @@ class $$ObjectMetaTableTableFilterComposer
     column: $table.headers,
     builder: (column) => ColumnFilters(column),
   );
+
+  $$BucketTableTableFilterComposer get bucketName {
+    final $$BucketTableTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bucketName,
+      referencedTable: $db.bucketTable,
+      getReferencedColumn: (t) => t.name,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BucketTableTableFilterComposer(
+            $db: $db,
+            $table: $db.bucketTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$ObjectMetaTableTableOrderingComposer
@@ -2861,11 +3668,6 @@ class $$ObjectMetaTableTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get bucketName => $composableBuilder(
-    column: $table.bucketName,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<String> get objectKey => $composableBuilder(
     column: $table.objectKey,
     builder: (column) => ColumnOrderings(column),
@@ -2890,6 +3692,29 @@ class $$ObjectMetaTableTableOrderingComposer
     column: $table.headers,
     builder: (column) => ColumnOrderings(column),
   );
+
+  $$BucketTableTableOrderingComposer get bucketName {
+    final $$BucketTableTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bucketName,
+      referencedTable: $db.bucketTable,
+      getReferencedColumn: (t) => t.name,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BucketTableTableOrderingComposer(
+            $db: $db,
+            $table: $db.bucketTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$ObjectMetaTableTableAnnotationComposer
@@ -2901,11 +3726,6 @@ class $$ObjectMetaTableTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get bucketName => $composableBuilder(
-    column: $table.bucketName,
-    builder: (column) => column,
-  );
-
   GeneratedColumn<String> get objectKey =>
       $composableBuilder(column: $table.objectKey, builder: (column) => column);
 
@@ -2920,6 +3740,29 @@ class $$ObjectMetaTableTableAnnotationComposer
 
   GeneratedColumn<String> get headers =>
       $composableBuilder(column: $table.headers, builder: (column) => column);
+
+  $$BucketTableTableAnnotationComposer get bucketName {
+    final $$BucketTableTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bucketName,
+      referencedTable: $db.bucketTable,
+      getReferencedColumn: (t) => t.name,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BucketTableTableAnnotationComposer(
+            $db: $db,
+            $table: $db.bucketTable,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$ObjectMetaTableTableTableManager
@@ -2933,16 +3776,9 @@ class $$ObjectMetaTableTableTableManager
           $$ObjectMetaTableTableAnnotationComposer,
           $$ObjectMetaTableTableCreateCompanionBuilder,
           $$ObjectMetaTableTableUpdateCompanionBuilder,
-          (
-            ObjectMetaTableData,
-            BaseReferences<
-              _$AppDatabase,
-              $ObjectMetaTableTable,
-              ObjectMetaTableData
-            >,
-          ),
+          (ObjectMetaTableData, $$ObjectMetaTableTableReferences),
           ObjectMetaTableData,
-          PrefetchHooks Function()
+          PrefetchHooks Function({bool bucketName})
         > {
   $$ObjectMetaTableTableTableManager(
     _$AppDatabase db,
@@ -2994,9 +3830,54 @@ class $$ObjectMetaTableTableTableManager
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$ObjectMetaTableTable, ObjectMetaTableData>(
+                    table,
+                  ),
+                  $$ObjectMetaTableTableReferences(db, table, e),
+                ),
+              )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({bucketName = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (bucketName) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.bucketName,
+                        referencedTable: $$ObjectMetaTableTableReferences
+                            ._bucketNameTable(db),
+                        referencedColumn: $$ObjectMetaTableTableReferences
+                            ._bucketNameTable(db)
+                            .name,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
         ),
       );
 }
@@ -3011,29 +3892,22 @@ typedef $$ObjectMetaTableTableProcessedTableManager =
       $$ObjectMetaTableTableAnnotationComposer,
       $$ObjectMetaTableTableCreateCompanionBuilder,
       $$ObjectMetaTableTableUpdateCompanionBuilder,
-      (
-        ObjectMetaTableData,
-        BaseReferences<
-          _$AppDatabase,
-          $ObjectMetaTableTable,
-          ObjectMetaTableData
-        >,
-      ),
+      (ObjectMetaTableData, $$ObjectMetaTableTableReferences),
       ObjectMetaTableData,
-      PrefetchHooks Function()
+      PrefetchHooks Function({bool bucketName})
     >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
-  $$AccessKeyGrantTableTableTableManager get accessKeyGrantTable =>
-      $$AccessKeyGrantTableTableTableManager(_db, _db.accessKeyGrantTable);
   $$AccessKeyTableTableTableManager get accessKeyTable =>
       $$AccessKeyTableTableTableManager(_db, _db.accessKeyTable);
-  $$AnonymousRuleTableTableTableManager get anonymousRuleTable =>
-      $$AnonymousRuleTableTableTableManager(_db, _db.anonymousRuleTable);
   $$BucketTableTableTableManager get bucketTable =>
       $$BucketTableTableTableManager(_db, _db.bucketTable);
+  $$AccessKeyGrantTableTableTableManager get accessKeyGrantTable =>
+      $$AccessKeyGrantTableTableTableManager(_db, _db.accessKeyGrantTable);
+  $$AnonymousRuleTableTableTableManager get anonymousRuleTable =>
+      $$AnonymousRuleTableTableTableManager(_db, _db.anonymousRuleTable);
   $$ObjectMetaTableTableTableManager get objectMetaTable =>
       $$ObjectMetaTableTableTableManager(_db, _db.objectMetaTable);
 }

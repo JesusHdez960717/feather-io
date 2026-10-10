@@ -62,9 +62,9 @@ otherwise readable lines) and `LOG_LEVEL` (`debug`, `info` (default), `warning`,
 local `.env` works too. See `service/README.md` (its endpoint table lists only some routes, so treat the
 controllers as the source of truth).
 
-`service/Dockerfile` builds with `docker build -t feather-io .` from `service/`. It compiles AOT on `dart:3.13.1` and runs on `scratch` with the Dart runtime,
-`libsqlite3.so` copied next to its libc (the `sqlite3` package opens it through FFI) and a `/tmp`
-(zip downloads); `STORAGE_VOLUME_PATH=/data` is a volume. Bump the image tag with `.fvmrc`.
+`service/Dockerfile` builds with `docker build -t feather-io .` from `service/`. It compiles AOT on `dart:3.13.1` with `dart build cli` (the build hook of the `sqlite3`
+package bundles SQLite next to the binary, so no system SQLite is needed anywhere) and runs on
+`scratch` with the Dart runtime, that bundle and a `/tmp` (zip downloads); `STORAGE_VOLUME_PATH=/data` is a volume. Bump the image tag with `.fvmrc`.
 
 ### Console (run from `console/`)
 

@@ -159,7 +159,7 @@ working directory, under the variables of the process.
 ## Docker
 
 `Dockerfile` compiles the service AOT and runs it on a `scratch` image (~25 MB) with the Dart
-runtime and `libsqlite3`. From `service/`:
+runtime and the SQLite that the `sqlite3` package bundles. From `service/`:
 
 ```bash
 docker build -t feather-io .

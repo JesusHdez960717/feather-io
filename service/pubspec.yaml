@@ -25,14 +25,14 @@ dependencies:
   intl: 0.20.2
 
   #DB
-  drift: 2.31.0
-  sqlite3: 2.9.4
+  drift: 2.35.2
+  sqlite3: 3.7.0
 
 dev_dependencies:
   http: 1.6.0
   lints: 6.1.0
-  test: 1.30.0
+  test: 1.33.0
 
   #DB
-  drift_dev: 2.31.0
+  drift_dev: 2.35.1
   build_runner: 2.15.0
