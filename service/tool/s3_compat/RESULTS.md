@@ -1,6 +1,6 @@
 # Test results (full run from scratch)
 
-Run on **2026-10-09** on commit `6aca49a` (`feature/poc`) with uncommitted changes,
+Run on **2026-10-09** on commit `04f10a6` (`feature/poc`),
 on Windows 11 with Docker version 29.4.1, build 055a478.
 Generated with `service/tool/s3_compat/report.py`; to repeat it, see *Full test run* in `CLAUDE.md`.
 
