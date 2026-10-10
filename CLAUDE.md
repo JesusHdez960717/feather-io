@@ -448,7 +448,7 @@ and almost every incompatibility so far was found by them, not by `dart test`:
 | Touching the S3 API (controller, filters, signatures, XML, headers) | also `service/tool/s3_compat/run.sh` (AWS CLI and rclone) | ~1–2 min |
 | Before a release or after big protocol changes | also `run.sh mint`, i.e. the *Full test run* below | ~5 min |
 
-CI (`.github/workflows/ci.yml`) runs the first two rows on every push, the batteries against the
+CI (`.github/workflows/ci.yml`, on `main`, `develop` and pull requests into them) runs the first two rows, the batteries against the
 Docker image; Mint stays manual.
 
 **Full test run.** When asked to run every test (or to refresh the results summary), do all of it

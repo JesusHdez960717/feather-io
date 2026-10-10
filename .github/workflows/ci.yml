@@ -2,8 +2,13 @@
 # image of the service (service/tool/s3_compat/run.sh). Mint stays manual (~5 min, see CLAUDE.md).
 name: CI
 
+# Only the main branches and the pull requests into them; a work branch can run it by hand
+# (Actions > CI > Run workflow)
 on:
   push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
   workflow_dispatch:
 
 concurrency:
