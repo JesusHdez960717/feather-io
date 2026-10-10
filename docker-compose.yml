@@ -1,4 +1,9 @@
 # The whole project: the service (objects and database in a volume) and the console.
+# The variables come from the environment of the shell, or from a .env file next to this one
+# (see .env.example); the shell wins. The four secrets have no default:
+#   FEATHER_ACCESS=… FEATHER_SECRET=… JWT_SECRET=… KEYS_ENCRYPTION_SECRET=… \
+#     docker compose up -d --build
+# or, with a .env:
 #   cp .env.example .env    # and fill in the secrets
 #   docker compose up -d --build
 # Console at http://localhost:8081, S3 API at http://localhost:8080.
