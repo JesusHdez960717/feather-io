@@ -1,4 +1,4 @@
-# Feather-io Service
+# Feather IO Service
 
 ## API architecture
 

@@ -1,3 +1,8 @@
+# Feather IO Console
+
+The web console of Feather IO, in Flutter Web. It talks to the service only over HTTP (the admin
+API with JWT, and the S3 API in JSON).
+
 ## Integration
 
 For now the console ALWAYS uses JSON content negotiation and JWT for every operation, including the

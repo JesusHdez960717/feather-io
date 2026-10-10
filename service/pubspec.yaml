@@ -1,6 +1,6 @@
 name: service
 description: Service for the feather-io project, a lightweight S3 compatible storage
-version: 0.0.1
+version: 1.0.0-rc.1
 publish_to: none
 
 environment:

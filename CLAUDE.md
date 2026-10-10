@@ -22,7 +22,7 @@ validation and advanced multipart edge cases for now.
 anonymous access…) with the data behind them; update it when one of them changes.
 
 `ROADMAP.md` lists the pending work in order, as checkboxes. When a change completes a roadmap task,
-mark it `[x]` in the same change; add new pending work to the right phase.
+mark it `[x]` in the same change; add new pending work to the right section.
 
 ## Commands
 
