@@ -21,19 +21,19 @@ against MinIO or AWS as products:
 |---|:---:|---|
 | S3 compatibility | **9** | AWS CLI 34/34 and rclone 19/19; every Mint failure is something out of scope (SigV2, versioning, POST policy, S3 Select…), none of what it supports. Fine details covered: `aws-chunked`, `encoding-type=url`, ranges, copy conditions, full multipart |
 | Security | **8.5** | SigV4 with clock skew and body sha256, access keys encrypted with AES-GCM, login throttling, rate limit, errors without internal details, path traversal. Missing: its own TLS (it relies on a proxy) and an external audit |
-| Tests | **8.5** | About as many lines of tests as of code (494 service tests, 132 console tests, the batteries against real clients). No CI: running them depends on remembering it |
+| Tests | **8.5** | About as many lines of tests as of code (494 service tests, 132 console tests, the batteries against real clients), all run by CI on every push except Mint |
 | Architecture and code | **8** | Clear layers, features like `admin/`, XML apart, Problem Details errors, `DECISIONS.md`. `ObjectService` is still big (~650 lines) |
 | Performance | **7.5** | Very light on memory (12 MiB at start); uploads as fast as MinIO or faster since SQLite runs in WAL mode (2037 PUTs/s of 1 KiB, MinIO 1040), and a listing page costs what its folder holds (25 ms with 1000 objects, 67 ms with 10 000). Still behind: reads of small objects (a third of MinIO), big single uploads, and ListBuckets walking the whole storage (`service/tool/benchmark/RESULTS.md`) |
-| Production readiness | **6** | 24 MB Docker image, structured logs, graceful shutdown, OpenAPI. Missing: CI, a health endpoint for the orchestrator, backups of the database, metrics, real long-running use; it depends on a release candidate of Winter |
+| Production readiness | **6** | 24 MB Docker image, structured logs, graceful shutdown, OpenAPI. Missing: a health endpoint for the orchestrator, backups of the database, metrics, real long-running use; it depends on a release candidate of Winter |
 
 Overall **8** (it was 7.5 before the two quick improvements of point 1). Within its scope it can reach **8.5–9**; a 10 would need what it isn't by design
 (several nodes, replication, versioning). How, by return on the effort:
 
 1. ~~**Listings that only look at what they need and SQLite in WAL mode**~~ (done): little code,
    10x faster small uploads and listings 2–8x faster. Performance from 6 to 7.5.
-2. **CI** (Phase 6): cheap, and what most raises tests and production readiness.
+2. ~~**CI**~~ (done): cheap, and what most raises tests and production readiness.
 3. **A health endpoint and the backups documented** (Phase 6): Winter already has `Route.health`.
-4. **ListBuckets from the database and an index of keys** (Phase 6 and *After 1.0*): only needed
+4. **ListBuckets from the database and an index of keys** (*After 1.0*): only needed
    for buckets of tens of thousands of objects.
 
 ## Phase 0: Foundation
@@ -138,17 +138,9 @@ Overall **8** (it was 7.5 before the two quick improvements of point 1). Within 
   507 to 67 ms.
 - [x] SQLite in WAL mode with `synchronous=NORMAL`: 2037 PUTs/s of 1 KiB instead of 189 (MinIO
   1040).
-- Performance still pending (`service/tool/benchmark/RESULTS.md`, *What would improve it*):
-  - [ ] ListBuckets from the `object_meta` table (a `SUM`/`COUNT` by bucket) instead of walking
-    every object of the storage: ~1 s with 16 000 objects, ~6 s with 100 000.
-  - [ ] Reads of small objects: 2047 GETs/s of 1 KiB against MinIO's 7629. Each GET looks up the
-    metadata in SQLite and checks the file's size and date; a memory cache of the metadata of the
-    hot objects would cut that fixed cost.
-  - [ ] Profile big single uploads: a PUT of 16 MiB stays at ~147 MiB/s against MinIO's 477, while
-    multipart gets about as much with 2 uploads (the md5 in Dart over every chunk, the size of the
-    chunks written).
-- [ ] CI (GitHub Actions): analysis and tests of both packages on every push, and the AWS CLI and
-  rclone batteries against the Docker image.
+- [x] CI (GitHub Actions, `.github/workflows/ci.yml`): analysis and tests of both packages on every
+  push, and the AWS CLI and rclone batteries against the Docker image (failing on any unhandled
+  error in the service log).
 - [ ] A health endpoint for the orchestrator (`Route.health`, with the database as a check), and
   how to back up the volume and the SQLite database in the README.
 - [ ] A visual identity/icon like Brag's, and a promo video with real screenshots of the design.
@@ -179,8 +171,17 @@ Not part of 1.0; they will be done later.
   decided what happens if it fails halfway).
 - [ ] Move object search and filters to the service, to search the whole folder and not only the
   pages already loaded.
-- [ ] An index of keys (from `object_meta`) for listings, constant per page whatever the size of
-  the bucket: what would take it to hundreds of thousands of objects.
+- Performance still pending (`service/tool/benchmark/RESULTS.md`, *What would improve it*):
+  - [ ] ListBuckets from the `object_meta` table (a `SUM`/`COUNT` by bucket) instead of walking
+    every object of the storage: ~1 s with 16 000 objects, ~6 s with 100 000.
+  - [ ] Reads of small objects: 2047 GETs/s of 1 KiB against MinIO's 7629. Each GET looks up the
+    metadata in SQLite and checks the file's size and date; a memory cache of the metadata of the
+    hot objects would cut that fixed cost.
+  - [ ] Profile big single uploads: a PUT of 16 MiB stays at ~147 MiB/s against MinIO's 477, while
+    multipart gets about as much with 2 uploads (the md5 in Dart over every chunk, the size of the
+    chunks written).
+  - [ ] An index of keys (from `object_meta`) for listings, constant per page whatever the size of
+    the folder: what would take it to hundreds of thousands of objects.
 - [ ] A higher general rate limit (or none) for signed requests: one machine with many parallel
   workers gets `SlowDown` above 2000 requests/min (`service/tool/benchmark/RESULTS.md`).
 

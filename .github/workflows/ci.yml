@@ -1,0 +1,93 @@
+# Analysis and tests of both packages, and the AWS CLI and rclone batteries against the Docker
+# image of the service (service/tool/s3_compat/run.sh). Mint stays manual (~5 min, see CLAUDE.md).
+name: CI
+
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  service:
+    name: Service (analyze + test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: service
+    steps:
+      - uses: actions/checkout@v4
+      - name: Flutter version from .fvmrc
+        id: fvm
+        run: echo "version=$(jq -r .flutter .fvmrc)" >> "$GITHUB_OUTPUT"
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ steps.fvm.outputs.version }}
+          channel: stable
+          cache: true
+      - run: dart pub get
+      - run: dart analyze
+      - run: dart test
+
+  console:
+    name: Console (analyze + test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: console
+    steps:
+      - uses: actions/checkout@v4
+      - name: Flutter version from .fvmrc
+        id: fvm
+        run: echo "version=$(jq -r .flutter .fvmrc)" >> "$GITHUB_OUTPUT"
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ steps.fvm.outputs.version }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      # The deprecated MaterialUiCompatibilityBridge is an info we keep on purpose
+      - run: flutter analyze --no-fatal-infos
+      - run: flutter test
+
+  s3-compat:
+    name: S3 clients (AWS CLI + rclone)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the image
+        run: docker build -t feather-io service
+      - name: Start the service
+        run: |
+          docker run -d --name feather-io -p 8080:8080 \
+            -e FEATHER_ACCESS=feather-access -e FEATHER_SECRET=feather-secret-key \
+            -e JWT_SECRET=ci-jwt-secret -e KEYS_ENCRYPTION_SECRET=ci-keys-secret \
+            feather-io
+          for _ in $(seq 30); do
+            curl -sf http://localhost:8080/_admin/openapi.json > /dev/null && exit 0
+            sleep 1
+          done
+          docker logs feather-io
+          exit 1
+      - name: Run the batteries
+        run: |
+          # The clients run in other containers: they reach the service through the bridge gateway
+          gateway=$(docker network inspect bridge -f '{{(index .IPAM.Config 0).Gateway}}')
+          ENDPOINT="http://$gateway:8080" bash service/tool/s3_compat/run.sh awscli rclone
+      # Clients retry, so a 500 may only show up in the service log
+      - name: No unhandled errors in the service log
+        if: always()
+        run: |
+          docker logs feather-io > service.log 2>&1
+          count=$(grep -c 'Unhandled error' service.log || true)
+          echo "Unhandled errors: $count"
+          [ "$count" -eq 0 ] || { grep -B2 -A20 'Unhandled error' service.log; exit 1; }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: s3-compat
+          path: |
+            service/tool/s3_compat/out/
+            service.log
