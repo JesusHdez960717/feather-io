@@ -138,8 +138,15 @@ Overall **8** (it was 7.5 before the two quick improvements of point 1). Within 
   507 to 67 ms.
 - [x] SQLite in WAL mode with `synchronous=NORMAL`: 2037 PUTs/s of 1 KiB instead of 189 (MinIO
   1040).
-- [ ] ListBuckets from the `object_meta` table instead of walking every object (~1 s with 16 000).
-- [ ] Profile big single uploads (a PUT of 16 MiB stays at ~115 MiB/s, MinIO 477).
+- Performance still pending (`service/tool/benchmark/RESULTS.md`, *What would improve it*):
+  - [ ] ListBuckets from the `object_meta` table (a `SUM`/`COUNT` by bucket) instead of walking
+    every object of the storage: ~1 s with 16 000 objects, ~6 s with 100 000.
+  - [ ] Reads of small objects: 2047 GETs/s of 1 KiB against MinIO's 7629. Each GET looks up the
+    metadata in SQLite and checks the file's size and date; a memory cache of the metadata of the
+    hot objects would cut that fixed cost.
+  - [ ] Profile big single uploads: a PUT of 16 MiB stays at ~147 MiB/s against MinIO's 477, while
+    multipart gets about as much with 2 uploads (the md5 in Dart over every chunk, the size of the
+    chunks written).
 - [ ] CI (GitHub Actions): analysis and tests of both packages on every push, and the AWS CLI and
   rclone batteries against the Docker image.
 - [ ] A health endpoint for the orchestrator (`Route.health`, with the database as a check), and
