@@ -57,6 +57,22 @@ jobs:
       - run: flutter analyze --no-fatal-infos
       - run: flutter test
 
+  console-image:
+    name: Console image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build the image with the Flutter of .fvmrc
+        run: |
+          docker build -t feather-io-console \
+            --build-arg FLUTTER_VERSION="$(jq -r .flutter console/.fvmrc)" console
+      - name: Serve it with the env.js of the container
+        run: |
+          docker run -d --name console -p 8081:80 -e SERVICE_URL=http://service.test feather-io-console
+          for _ in $(seq 15); do curl -sf http://localhost:8081/ > /dev/null && break; sleep 1; done
+          curl -sf http://localhost:8081/ | grep -q flutter_bootstrap.js
+          curl -sf http://localhost:8081/env.js | grep -q '"http://service.test"'
+
   s3-compat:
     name: S3 clients (AWS CLI + rclone)
     runs-on: ubuntu-latest

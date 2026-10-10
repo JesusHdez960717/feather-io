@@ -36,6 +36,8 @@ console/*.iml
 
 #env
 console/web/env.js
+# secrets of docker compose (see .env.example)
+/.env
 console/.metadata
 service/service.iml
 

@@ -153,8 +153,9 @@ A session of its own, before publishing the repo.
 
 - [x] Publish Winter and depend on its released version instead of the local path: the service
   uses `winter: 1.0.0-rc.1` from pub.dev, and the Docker image builds without it.
-- [ ] Create Dockerfile for console and a docker compose to start the entire project, service with
-  volume + console.
+- [x] Dockerfile for the console (Flutter web on nginx, `env.js` written when the container starts)
+  and a `docker-compose.yml` at the root that starts the service with its volume and the console
+  (secrets in `.env`, see `.env.example`).
 - [ ] Root `README.md`: what it is, what is supported (and what isn't, see *Parked*), how to run
   the service and the console (local and Docker), how to configure S3 clients, screenshots, and
   what comes next.

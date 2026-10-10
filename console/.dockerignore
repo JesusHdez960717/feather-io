@@ -1,0 +1,10 @@
+.dockerignore
+Dockerfile
+.artifacts/
+.dart_tool/
+.fvm/
+.idea/
+*.iml
+build/
+test/
+web/env.js

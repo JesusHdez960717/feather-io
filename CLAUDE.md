@@ -79,7 +79,12 @@ fvm flutter test                                                # on the VM, no 
 ```
 
 - Runtime config comes from `web/env.js` (`window.env`: `SERVICE_URL`, `ADMIN_PREFIX`), which is
-  gitignored. `ADMIN_PREFIX` must match the service.
+  gitignored. `ADMIN_PREFIX` must match the service. `console/Dockerfile` builds the web app with
+  the Flutter of `.fvmrc` (bump its `FLUTTER_VERSION` with it) and serves it with nginx; the
+  image's envsubst fills `docker/env.js.template` into `env.js` from the container's env when it
+  starts.
+  `docker-compose.yml` at the root starts the service (volume) and the console, with the secrets
+  in `.env` (`.env.example`).
 - Tests (`test/`, `bloc_test` + `mocktail`) run on the VM. Code that needs the browser
   (`dart:js_interop`, `package:web`, Dio's browser adapter, `window.env`) lives only in the
   `*_web.dart` adapters (`adapter/`, `config/env_web.dart`), exported with

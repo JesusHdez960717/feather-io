@@ -1,0 +1,36 @@
+# The whole project: the service (objects and database in a volume) and the console.
+#   cp .env.example .env    # and fill in the secrets
+#   docker compose up -d --build
+# Console at http://localhost:8081, S3 API at http://localhost:8080.
+services:
+  service:
+    build: ./service
+    image: feather-io
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      FEATHER_ACCESS: ${FEATHER_ACCESS:?set it in .env}
+      FEATHER_SECRET: ${FEATHER_SECRET:?set it in .env}
+      JWT_SECRET: ${JWT_SECRET:?set it in .env}
+      KEYS_ENCRYPTION_SECRET: ${KEYS_ENCRYPTION_SECRET:?set it in .env}
+      ADMIN_PREFIX: ${ADMIN_PREFIX:-_admin}
+      PUBLIC_URL: ${PUBLIC_URL:-}
+    volumes:
+      - feather-data:/data
+
+  console:
+    build: ./console
+    image: feather-io-console
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    environment:
+      # As the browser sees the service, not as the containers see it
+      SERVICE_URL: ${SERVICE_URL:-http://localhost:8080}
+      ADMIN_PREFIX: ${ADMIN_PREFIX:-_admin}
+    depends_on:
+      - service
+
+volumes:
+  feather-data:
