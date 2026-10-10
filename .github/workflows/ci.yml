@@ -66,7 +66,7 @@ jobs:
             -e JWT_SECRET=ci-jwt-secret -e KEYS_ENCRYPTION_SECRET=ci-keys-secret \
             feather-io
           for _ in $(seq 30); do
-            curl -sf http://localhost:8080/_admin/openapi.json > /dev/null && exit 0
+            curl -sf http://localhost:8080/_admin/health > /dev/null && exit 0
             sleep 1
           done
           docker logs feather-io

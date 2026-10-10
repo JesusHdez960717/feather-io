@@ -143,6 +143,15 @@ class ObjectService {
     return File(p.join(dir.path, '$id.tmp'));
   }
 
+  /// For the health check: true when a file can be written to and deleted from
+  /// the volume (it throws otherwise: a missing, read-only or full volume).
+  Future<bool> storageWritable() async {
+    final probe = await _tempFile();
+    await probe.writeAsString('health');
+    await probe.delete();
+    return true;
+  }
+
   /// Maximum keys per page in [listFiles], as in S3.
   static const int maxKeysLimit = 1000;
 

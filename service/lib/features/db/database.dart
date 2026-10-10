@@ -129,6 +129,13 @@ class AppDatabase extends _$AppDatabase {
   @override
   int get schemaVersion => 1;
 
+  /// For the health check: true when SQLite answers a query (it throws
+  /// otherwise).
+  Future<bool> ping() async {
+    await customSelect('SELECT 1').get();
+    return true;
+  }
+
   /// Folder of the database inside `STORAGE_VOLUME_PATH`. It starts with a
   /// dot, so it isn't a valid bucket and isn't listed.
   static const String folderName = '.db';

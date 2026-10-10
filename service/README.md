@@ -169,3 +169,45 @@ docker run -p 8080:8080 -v feather-data:/data \
 
 The image sets `STORAGE_VOLUME_PATH=/data` (a volume): buckets, objects and the SQLite database
 live there, so they survive the container.
+
+### Health check
+
+`GET /{ADMIN_PREFIX}/health` (public, never cached) answers `200` while the service can serve
+requests and `503` when the database or the volume fail (it writes and deletes a small file in
+it). For the readiness and liveness probes of the orchestrator or the checks of a load balancer:
+
+```json
+{"status": "UP", "checks": {"database": "UP", "storage": "UP"}}
+```
+
+The image is `scratch`, without a shell or `curl`, so it has no Docker `HEALTHCHECK`: the
+orchestrator asks from outside. Successful checks are not logged.
+
+### Backups
+
+Everything is in the volume: a folder per bucket, `.db/` (the SQLite database, in WAL mode) and
+`.tmp/` and `.multipart/` (uploads in progress, not worth keeping).
+
+- **With the service stopped** (the simplest): stop the container, which ends the requests in
+  progress and closes the database, copy the whole volume and start it again.
+
+  ```bash
+  docker stop feather-io
+  docker run --rm -v feather-data:/data -v "$PWD":/backup alpine     tar czf /backup/feather-data.tgz -C /data --exclude=./.tmp --exclude=./.multipart .
+  docker start feather-io
+  ```
+
+- **With the service running**: never copy only `feather-io.sqlite`, because recent writes are
+  still in `feather-io.sqlite-wal`. Take the database with SQLite's online backup, then the
+  objects:
+
+  ```bash
+  docker run --rm -v feather-data:/data -v "$PWD":/backup alpine sh -c     "apk add -q sqlite && sqlite3 /data/.db/feather-io.sqlite '.backup /backup/feather-io.sqlite'      && tar czf /backup/objects.tgz -C /data --exclude=./.db --exclude=./.tmp --exclude=./.multipart ."
+  ```
+
+  An object written between the two steps may miss its metadata row or keep an old one: the
+  service recomputes the ETag of an object whose row is missing or doesn't match the file
+  (custom headers such as `Content-Type` or `x-amz-meta-*` of that object would be lost).
+
+To restore, put the files back into an empty volume (the database in `.db/feather-io.sqlite`)
+before starting the service.

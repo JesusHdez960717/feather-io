@@ -64,7 +64,9 @@ controllers as the source of truth).
 
 `service/Dockerfile` builds with `docker build -t feather-io .` from `service/`. It compiles AOT on `dart:3.13.1` with `dart build cli` (the build hook of the `sqlite3`
 package bundles SQLite next to the binary, so no system SQLite is needed anywhere) and runs on
-`scratch` with the Dart runtime, that bundle and a `/tmp` (zip downloads); `STORAGE_VOLUME_PATH=/data` is a volume. Bump the image tag with `.fvmrc`.
+`scratch` with the Dart runtime, that bundle and a `/tmp` (zip downloads); `STORAGE_VOLUME_PATH=/data` is a volume. Bump the image tag with `.fvmrc`. The orchestrator
+probes the public `GET /{admin}/health` (Winter's `Route.health`: database and a write to the
+volume, `503` when one fails); how to back up the volume is in `service/README.md`.
 
 ### Console (run from `console/`)
 
@@ -312,7 +314,7 @@ never enabled; rclone asks before a purge).
 `env.serviceLogger` (`LOG_FORMAT`, `LOG_LEVEL`) is set in `FeatherIO.start`, and every line
 carries the request id (also in the `X-Request-Id` header). `LoggingFilter` (global) writes the
 method, path, status and time of each request; it never logs the query (a presigned URL carries
-its signature there) nor bodies. Services log changes of state at `info` and what needs attention
+its signature there) nor bodies, nor a successful health check. Services log changes of state at `info` and what needs attention
 at `warning`, with ids in `fields`, never a secret, token or key typed at login.
 
 **OpenAPI.** `AdminController.routing` serves the OpenAPI 3.1 document of the admin API at
@@ -495,7 +497,7 @@ from scratch and regenerate `service/tool/s3_compat/RESULTS.md`. Outputs go to
   `Content-Type`, so reads fall back to the extension) and `server.sigV4(method, path, query: …)`, the
   headers of a native client signed with SigV4 (`access:`/`secret:` sign with an access key created
   in the test). Uploading with `http.put` needs the bucket created.
-- Use one distinct port per file so files run in parallel. Ports in use: 8082–8114.
+- Use one distinct port per file so files run in parallel. Ports in use: 8082–8115.
 - Cover auth (missing or invalid token → 401, wrong login credentials → 403), validation (bad bucket
   names, path traversal, forbidden chars → 400; a 422 reads `body['violations']`, a JSON error
   `body['detail']` and `body['code']`), content negotiation (JSON vs XML, including the S3 error

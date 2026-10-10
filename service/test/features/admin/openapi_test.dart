@@ -30,6 +30,7 @@ void main() {
       expect(
         paths.keys,
         containsAll([
+          '$admin/health',
           '$admin/login',
           '$admin/bucket/{bucket}',
           '$admin/bucket/{bucket}/objects',

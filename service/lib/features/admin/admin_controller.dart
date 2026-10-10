@@ -4,6 +4,9 @@ class AdminController {
   /// Version of the admin API in its OpenAPI document.
   static const String apiVersion = '1.0.0';
 
+  /// Route key of the health check (`GET /{admin}/health`).
+  static const String healthKey = 'admin.health';
+
   final String adminPrefix = env.adminPrefix;
 
   final AuthController authController;
@@ -11,8 +14,8 @@ class AdminController {
   final AccessKeyController accessKeyController;
 
   /// The admin API, plus its OpenAPI document (`/{admin}/openapi.json`) and
-  /// Swagger UI (`/{admin}/docs`). Both are public, like the login: they
-  /// describe the API, never its data.
+  /// Swagger UI (`/{admin}/docs`). Both are public, like the login and the
+  /// health check: they describe the API, never its data.
   Route get routing => Route.parent(
     path: '/$adminPrefix',
     filterConfig: _filters,
@@ -52,6 +55,16 @@ class AdminController {
       [S3BucketNameFilter(), JwtFilter()].toFilterConfig();
 
   List<Route> get _routes => [
+    // For the orchestrator (Docker, Kubernetes, a load balancer): 503 when the
+    // database or the volume fail. Public, and never logged when it is up
+    Route.health(
+      key: healthKey,
+      path: '/health',
+      checks: {
+        'database': di.find<AppDatabase>().ping,
+        'storage': objectService.storageWritable,
+      },
+    ),
     Route.post(
       key: 'admin.auth.login',
       path: '/login',

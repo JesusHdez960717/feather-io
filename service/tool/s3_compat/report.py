@@ -57,6 +57,7 @@ TEST_DESC = {
     'login_rate_limit_test.dart': 'Login attempt limit against the server: 429 with `Retry-After`, fake `X-Forwarded-For`, end of the lock.',
     'rate_limit_test.dart': 'General limit per IP: `X-RateLimit-*` headers, `503 SlowDown` on S3 and 429 on admin with `Retry-After`, fake `X-Forwarded-For`, next window.',
     'login_test.dart': 'Console login (JWT) and tampered tokens: no `exp`, expired, another secret, `alg: none`; a malformed body names its field; errors without internal details.',
+    'health_test.dart': 'Health check of the admin API: public, `UP` with the database and storage checks, `HEAD`, no probe file left, `503` when the database is down.',
     'openapi_test.dart': 'OpenAPI document of the admin API (every route, no S3 routes, Bearer security, constraints from `validate()`) and Swagger UI.',
     'multipart_test.dart': 'Multipart: create, parts, complete, abort, ListMultipartUploads, ListParts, UploadPartCopy.',
     'object_metadata_test.dart': 'Metadata: `Content-Type`, `x-amz-meta-*`, storage class, on copies and multipart.',

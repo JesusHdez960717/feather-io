@@ -109,7 +109,18 @@ class FeatherIO {
           ),
         // Method, path, status and time of every request (never the query,
         // which holds the signature of a presigned URL)
-        LoggingFilter(),
+        LoggingFilter(
+          // The orchestrator asks for the health check every few seconds:
+          // only a failed one is worth a line
+          logRequest: (request) {
+            if (!_isHealth(request)) defaultLogRequest(request);
+          },
+          logResponse: (request, response, duration) {
+            if (!_isHealth(request) || response.statusCode != 200) {
+              defaultLogResponse(request, response, duration);
+            }
+          },
+        ),
         BodySizeFilter(),
         JwtFilter(),
       ]),
@@ -121,3 +132,6 @@ class FeatherIO {
     );
   }
 }
+
+bool _isHealth(RequestEntity request) =>
+    request.route?.key == AdminController.healthKey;
