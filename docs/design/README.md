@@ -13,8 +13,7 @@ in the canvas.
 
 ## Sources
 
-Two Claude Design artifacts, both named "Feather IO Console" (the canvas in English, the design
-system in Spanish):
+Two Claude Design artifacts, both named "Feather IO Console" (in English):
 
 - Design system: https://claude.ai/artifact/1dJk7nhzEP7Y2CcgnTMyuB (tokens, components and icons
   of `console/lib/design_system/`).
@@ -28,7 +27,7 @@ before every release regenerate this export and review [`../console.md`](../cons
 screen, URL or action gets its section there).
 
 1. Download the canvas files into a folder, as the artifact serves them: `project/canvas.json`,
-   `project/*.dc.html` and the uploaded flag (`2906bd8b9f299a8964b82ccc31742fd9.svg`).
+   `project/*.dc.html` and the uploaded flag (`b78ce1432609f9c95c8462b3917deac7.svg`).
 2. From the root of the repo, with Chrome and ffmpeg installed:
 
    ```bash

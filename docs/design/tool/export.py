@@ -20,7 +20,7 @@ from pathlib import Path
 DESIGN = Path(__file__).resolve().parent.parent
 CHROME = r'C:\Program Files\Google\Chrome\Application\chrome.exe' if sys.platform == 'win32' \
     else 'google-chrome'
-FLAG = '2906bd8b9f299a8964b82ccc31742fd9'
+FLAG = 'b78ce1432609f9c95c8462b3917deac7'
 
 # Placeholder data left in the canvas, replaced so the screenshots read as real use
 SUBS = [
