@@ -15,3 +15,5 @@ First release candidate of the web console.
   regenerate the secret (shown once).
 - Session kept across reloads, the browser's password manager at login, English and Spanish, and a
   Docker image on nginx configured from the container's environment.
+- The Feather IO icon ([`docs/brand.md`](../docs/brand.md)) as favicon, web icons and on the
+  splash.

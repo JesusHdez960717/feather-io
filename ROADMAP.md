@@ -59,8 +59,8 @@ tens of thousands of objects.
 
 ## Prepare release
 
-- [ ] Merge the branches: `feature/poc` into `develop`, and `develop` into `main`.
-- [ ] Set the version as release candidate 1, `1.0.0-rc.1`: the same in both `pubspec.yaml`, both
+- [x] Merge the branches: `feature/poc` into `develop`, and `develop` into `main`.
+- [x] Set the version as release candidate 1, `1.0.0-rc.1`: the same in both `pubspec.yaml`, both
   changelogs and the Docker image tags, and the `v1.0.0-rc.1` tag on `main`.
 - [ ] A Railway template: the service (with its volume at `/data`) and the console, with the
   variables of `.env.example`.
