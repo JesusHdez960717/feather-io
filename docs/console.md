@@ -5,7 +5,8 @@ the design of the console ([`design/`](design/README.md)), in Spanish, one of it
 (English and Spanish, from the selector in the rail).
 
 URLs are relative to where the console is served (`http://localhost:8081` by default). The console
-uses hash URLs, so the screen and its state go after `#`: `http://localhost:8081/#/browser?bucket=photos`.
+uses hash URLs, so the screen and its state go after `#`:
+`http://localhost:8081/#/browser?bucket=photos`.
 Screens whose state is worth sharing keep it in the URL, so a link opens the same bucket, folder,
 view or tab.
 
@@ -18,10 +19,10 @@ view or tab.
 The console only needs to know where the service is. It reads it from `window.env`, in `web/env.js`
 locally or from the environment of its Docker image:
 
-| Variable | Default | What it is |
-|---|---|---|
-| `SERVICE_URL` | `http://localhost:8080` | The service **as the browser sees it**: the console calls it from the browser, not from its container. Behind a domain or a proxy, its public URL |
-| `ADMIN_PREFIX` | `_admin` | Prefix of the admin API; it must match the service's |
+| Variable       | Default                 | What it is                                                                                                                                        |
+|----------------|-------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
+| `SERVICE_URL`  | `http://localhost:8080` | The service **as the browser sees it**: the console calls it from the browser, not from its container. Behind a domain or a proxy, its public URL |
+| `ADMIN_PREFIX` | `_admin`                | Prefix of the admin API; it must match the service's                                                                                              |
 
 ```bash
 docker run -p 8081:80 -e SERVICE_URL=https://s3.example.com -e ADMIN_PREFIX=_admin feather-io-console
@@ -63,10 +64,10 @@ The menu of each bucket opens its settings (in *Buckets*), edits it or deletes i
 characters, lowercase letters, numbers and hyphens, no hyphen at the ends), with an optional
 description and a color for the console.
 
-| | |
-|---|---|
+|                                                       |                                                               |
+|-------------------------------------------------------|---------------------------------------------------------------|
 | ![Create bucket](design/screens/05-create-bucket.png) | ![Validation](design/screens/06-create-bucket-validation.png) |
-| ![Custom color](design/screens/07-bucket-color.png) | |
+| ![Custom color](design/screens/07-bucket-color.png)   |                                                               |
 
 ## Browser: inside a bucket
 
@@ -90,16 +91,16 @@ Selecting several objects enables downloading them (as a zip), moving them or de
 
 ![Several selected](design/screens/11-objects-selected.png)
 
-| | |
-|---|---|
-| ![Filters](design/screens/12-objects-filters.png) | ![Drop to upload](design/screens/13-objects-drop.png) |
-| **Filters** by type, size and date | **Drag & drop** files onto the list to upload them |
-| ![Delete](design/screens/14-delete-objects.png) | ![Details](design/screens/15-object-details.png) |
-| **Delete** asks for confirmation | **Details**: preview, key, type, size, date and URL |
-| ![New folder](design/screens/16-new-folder.png) | ![Rename](design/screens/17-rename.png) |
-| **New folder** | **Rename** (copy and delete, like S3) |
-| ![Move](design/screens/18-move.png) | ![Share](design/screens/19-share-link.png) |
-| **Move** to another folder of the bucket | **Share link**: a presigned URL for 1 hour, 1 day or 7 days, which works without logging in |
+|                                                   |                                                                                             |
+|---------------------------------------------------|---------------------------------------------------------------------------------------------|
+| ![Filters](design/screens/12-objects-filters.png) | ![Drop to upload](design/screens/13-objects-drop.png)                                       |
+| **Filters** by type, size and date                | **Drag & drop** files onto the list to upload them                                          |
+| ![Delete](design/screens/14-delete-objects.png)   | ![Details](design/screens/15-object-details.png)                                            |
+| **Delete** asks for confirmation                  | **Details**: preview, key, type, size, date and URL                                         |
+| ![New folder](design/screens/16-new-folder.png)   | ![Rename](design/screens/17-rename.png)                                                     |
+| **New folder**                                    | **Rename** (copy and delete, like S3)                                                       |
+| ![Move](design/screens/18-move.png)               | ![Share](design/screens/19-share-link.png)                                                  |
+| **Move** to another folder of the bucket          | **Share link**: a presigned URL for 1 hour, 1 day or 7 days, which works without logging in |
 
 ### Transfers
 
@@ -151,7 +152,8 @@ S3, only when it is empty.
 
 The keys S3 clients (AWS CLI, rclone, SDKs) sign with, besides the root key of the service: their
 id, permissions, last use and state (active, disabled, expired). The root key is listed first and
-can't be changed here. Each key's menu edits its permissions, disables or enables it, regenerates its secret or
+can't be changed here. Each key's menu edits its permissions, disables or enables it, regenerates
+its secret or
 deletes it.
 
 ![Menu of a key](design/screens/28-access-key-menu.png)
