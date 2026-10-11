@@ -27,9 +27,12 @@ import json
 import platform
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE.parent))
+from md_tables import align_tables  # noqa: E402
 
 TEST_DESC = {
     'access_keys_test.dart': 'Access keys: admin CRUD and validation (422 per nested field, 400 naming the field), encrypted secret, each level on its bucket, ListBuckets filtered, copies, disabled/expired/deleted keys, regenerating the secret.',
@@ -427,7 +430,7 @@ def main():
     w('')
     w(NOT_TESTED)
 
-    Path(args.output).write_text('\n'.join(L) + '\n', encoding='utf-8', newline='\n')
+    Path(args.output).write_text(align_tables('\n'.join(L)) + '\n', encoding='utf-8', newline='\n')
     print(f'Wrote {args.output}')
     print(f'dart test {passed}/{total}; flutter test {console_passed}/{console_total}; Mint: {len(failures)} failures, {len(unclassified)} unclassified'
           + (f'; {server_errors} errors in the log' if server_errors is not None else ''))

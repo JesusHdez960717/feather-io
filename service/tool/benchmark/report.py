@@ -18,9 +18,12 @@ import datetime
 import platform
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE.parent))
+from md_tables import align_tables  # noqa: E402
 
 # (scenario, what it measures)
 SCENARIOS = [
@@ -375,7 +378,7 @@ def main():
             w(f'- {improvement}')
         w('')
 
-    (HERE / 'RESULTS.md').write_text('\n'.join(lines).rstrip() + '\n', encoding='utf-8')
+    (HERE / 'RESULTS.md').write_text(align_tables('\n'.join(lines).rstrip()) + '\n', encoding='utf-8')
     print(f'Wrote {HERE / "RESULTS.md"}')
 
 

@@ -26,6 +26,7 @@ mark it `[x]` in the same change; add new pending work to the right section.
 
 Tables in Markdown files are aligned the way the IDE formats them: every column padded to its widest
 cell, and the separator row with dashes across the whole width (`|------|`), never `|---|---|`.
+`python service/tool/md_tables.py FILE…` aligns them, and both `report.py` write `RESULTS.md` so.
 
 ## Commands
 

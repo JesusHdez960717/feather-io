@@ -36,7 +36,8 @@ the package you touch before changing it. The most important ones:
 - A non-obvious decision goes into [`DECISIONS.md`](DECISIONS.md), and a finished roadmap task is
   marked in [`ROADMAP.md`](ROADMAP.md), in the same change.
 - Markdown tables are aligned as the IDE formats them: every column padded to its widest cell, and
-  dashes across the whole width in the separator row.
+  dashes across the whole width in the separator row (`python service/tool/md_tables.py FILE…`
+  does it).
 - A new or changed endpoint updates [`docs/api.md`](docs/api.md) (and the *Behind it* of its screen
   in [`docs/console.md`](docs/console.md)) in the same change.
 
