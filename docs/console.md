@@ -119,18 +119,18 @@ Selecting several objects enables downloading them (as a zip), moving them or de
 
 **Behind it:**
 
-| Action | Call |
-|---|---|
-| List a folder, page by page | [`GET /{bucket}?prefix=<folder>/&delimiter=/&max-keys=<n>`](api.md#list-objects), then `&continuation-token=…` |
-| Upload a file | [`PUT /{bucket}/{key}`](api.md#upload), or [multipart](api.md#multipart-upload) over 16 MiB |
-| New folder | [`PUT /{bucket}/{folder}/`](api.md#upload) without a body |
-| Details | [`HEAD /{bucket}/{key}`](api.md#download), and `GET` for the preview |
-| Download one object | [`GET /{bucket}/{key}`](api.md#download) |
-| Download several, or a folder | [`POST /_admin/bucket/{bucket}/download`](api.md#download-as-a-zip) (a zip) |
-| Rename, move | [`PUT /{bucket}/{new key}` with `x-amz-copy-source`](api.md#copy-rename-and-move), then delete the old key |
-| Delete objects | [`POST /{bucket}?delete`](api.md#delete-many) |
-| Delete a folder with its content | [`DELETE /_admin/bucket/{bucket}/folder?prefix=<folder>/`](api.md#delete-a-folder-with-its-content) |
-| Share link | [`POST /_admin/bucket/{bucket}/presign`](api.md#presigned-url) |
+| Action                           | Call                                                                                                           |
+|----------------------------------|----------------------------------------------------------------------------------------------------------------|
+| List a folder, page by page      | [`GET /{bucket}?prefix=<folder>/&delimiter=/&max-keys=<n>`](api.md#list-objects), then `&continuation-token=…` |
+| Upload a file                    | [`PUT /{bucket}/{key}`](api.md#upload), or [multipart](api.md#multipart-upload) over 16 MiB                    |
+| New folder                       | [`PUT /{bucket}/{folder}/`](api.md#upload) without a body                                                      |
+| Details                          | [`HEAD /{bucket}/{key}`](api.md#download), and `GET` for the preview                                           |
+| Download one object              | [`GET /{bucket}/{key}`](api.md#download)                                                                       |
+| Download several, or a folder    | [`POST /_admin/bucket/{bucket}/download`](api.md#download-as-a-zip) (a zip)                                    |
+| Rename, move                     | [`PUT /{bucket}/{new key}` with `x-amz-copy-source`](api.md#copy-rename-and-move), then delete the old key     |
+| Delete objects                   | [`POST /{bucket}?delete`](api.md#delete-many)                                                                  |
+| Delete a folder with its content | [`DELETE /_admin/bucket/{bucket}/folder?prefix=<folder>/`](api.md#delete-a-folder-with-its-content)            |
+| Share link                       | [`POST /_admin/bucket/{bucket}/presign`](api.md#presigned-url)                                                 |
 
 ### Transfers
 

@@ -81,7 +81,7 @@ Summary of some of the available actions, their authentication method and the re
 ### S3 API (path: `/`)
 
 | Action          | Method | Path              | Auth        | Permission                |
-|:----------------|:-------|:------------------|:------------|:--------------------------|
+|-----------------|--------|-------------------|-------------|---------------------------|
 | `list-buckets`  | GET    | `/`               | JWT / SigV4 | `s3.list-buckets`         |
 | `list-objects`  | GET    | `/{bucket}`       | JWT / SigV4 | `s3.list-objects`         |
 | `put-object`    | PUT    | `/{bucket}/{key}` | JWT / SigV4 | `s3.put-object`           |
@@ -91,15 +91,15 @@ Summary of some of the available actions, their authentication method and the re
 
 ### Admin API (path: `/{ADMIN_PREFIX}`)
 
-| Action            | Method | Path                        | Auth         | Permission              |
-|:------------------|:-------|:----------------------------|:-------------|:------------------------|
-| `login`           | POST   | `/login`                    | ***Public*** | -                       |
-| `bucket.download` | POST   | `/bucket/{bucket}/download` | JWT          | `admin.bucket.download` |
-| `access-key.list` | GET    | `/access-keys`              | JWT          | `admin.access-key.list` |
-| `access-key.create` | POST | `/access-keys`              | JWT          | `admin.access-key.create` |
-| `access-key.update` | PUT  | `/access-keys/{id}`         | JWT          | `admin.access-key.update` |
-| `access-key.regenerate-secret` | POST | `/access-keys/{id}/secret` | JWT | `admin.access-key.regenerate-secret` |
-| `access-key.delete` | DELETE | `/access-keys/{id}`       | JWT          | `admin.access-key.delete` |
+| Action                         | Method | Path                        | Auth         | Permission                           |
+|--------------------------------|--------|-----------------------------|--------------|--------------------------------------|
+| `login`                        | POST   | `/login`                    | ***Public*** | -                                    |
+| `bucket.download`              | POST   | `/bucket/{bucket}/download` | JWT          | `admin.bucket.download`              |
+| `access-key.list`              | GET    | `/access-keys`              | JWT          | `admin.access-key.list`              |
+| `access-key.create`            | POST   | `/access-keys`              | JWT          | `admin.access-key.create`            |
+| `access-key.update`            | PUT    | `/access-keys/{id}`         | JWT          | `admin.access-key.update`            |
+| `access-key.regenerate-secret` | POST   | `/access-keys/{id}/secret`  | JWT          | `admin.access-key.regenerate-secret` |
+| `access-key.delete`            | DELETE | `/access-keys/{id}`         | JWT          | `admin.access-key.delete`            |
 
 *\*The login checks directly against the `FEATHER_ACCESS` and `FEATHER_SECRET` environment
 credentials.*
@@ -133,25 +133,25 @@ POST /_admin/access-keys
 
 Environment variables of the service.
 
-| Variable                    | Required |      Default       | Description                                                                                                       |
-|:----------------------------|:--------:|:------------------:|:------------------------------------------------------------------------------------------------------------------|
-| `FEATHER_SECRET`            | **Yes**  |         -          | Secret key used to authenticate requests.                                                                         |
-| `FEATHER_ACCESS`            | **Yes**  |         -          | Access key used to authenticate requests.                                                                         |
-| `STORAGE_VOLUME_PATH`       | **Yes**  |         -          | Local path of the volume where buckets, objects and the SQLite database (`.db/feather-io.sqlite`) are stored. |
-| `JWT_SECRET`                | **Yes**  |         -          | Secret key used to sign the JWTs.                                                                                 |
-| `KEYS_ENCRYPTION_SECRET`    | **Yes**  |         -          | Encrypts the secrets of the access keys in the database (e.g. `openssl rand -base64 32`). Changing it makes the stored keys unusable. |
-| `ADMIN_PREFIX`              |    No    |      `_admin`      | Prefix of the admin API and the system's reserved routes.                                                         |
-| `RESERVED_BUCKET_NAMES`     |    No    | ***(empty list)*** | Comma-separated list of reserved bucket names that users cannot create.                                           |
-| `MAX_OBJECT_SIZE`           |    No    |    `5368709120`    | Maximum size in bytes of an object uploaded with `PUT` (5 GiB by default); above it the answer is `EntityTooLarge`. |
+| Variable                    | Required |      Default       | Description                                                                                                                                                                             |
+|-----------------------------|:--------:|:------------------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `FEATHER_SECRET`            | **Yes**  |         -          | Secret key used to authenticate requests.                                                                                                                                               |
+| `FEATHER_ACCESS`            | **Yes**  |         -          | Access key used to authenticate requests.                                                                                                                                               |
+| `STORAGE_VOLUME_PATH`       | **Yes**  |         -          | Local path of the volume where buckets, objects and the SQLite database (`.db/feather-io.sqlite`) are stored.                                                                           |
+| `JWT_SECRET`                | **Yes**  |         -          | Secret key used to sign the JWTs.                                                                                                                                                       |
+| `KEYS_ENCRYPTION_SECRET`    | **Yes**  |         -          | Encrypts the secrets of the access keys in the database (e.g. `openssl rand -base64 32`). Changing it makes the stored keys unusable.                                                   |
+| `ADMIN_PREFIX`              |    No    |      `_admin`      | Prefix of the admin API and the system's reserved routes.                                                                                                                               |
+| `RESERVED_BUCKET_NAMES`     |    No    | ***(empty list)*** | Comma-separated list of reserved bucket names that users cannot create.                                                                                                                 |
+| `MAX_OBJECT_SIZE`           |    No    |    `5368709120`    | Maximum size in bytes of an object uploaded with `PUT` (5 GiB by default); above it the answer is `EntityTooLarge`.                                                                     |
 | `PUBLIC_URL`                |    No    |         -          | Public URL of the service (`https://s3.example.com`, no path) for presigned URLs; without it the scheme and `Host` of the request are used. The proxy must forward the original `Host`. |
-| `RATE_LIMIT_REQUESTS`       |    No    |       `2000`       | Requests per IP in each window (general limit; above it, `503 SlowDown` on S3 and `429` on admin); `0` disables it. See `DECISIONS.md`. |
-| `RATE_LIMIT_WINDOW_SECONDS` |    No    |        `60`        | Seconds of the general limit window.                                                                              |
-| `LOGIN_MAX_FAILURES`        |    No    |        `10`        | Failed logins in a row that lock an IP.                                                                           |
-| `LOGIN_LOCK_SECONDS`        |    No    |       `900`        | Seconds an IP stays locked (answers `429` with `Retry-After`).                                                    |
-| `LOGIN_FAILURE_DELAY_MS`    |    No    |       `1000`       | Delay before answering each failed login.                                                                         |
-| `TRUSTED_PROXIES`           |    No    |        `0`         | Own proxies in front of the service; with 0 the connection IP is used and `X-Forwarded-For` is ignored.           |
-| `LOG_FORMAT`                |    No    |         -          | `json` writes one JSON object per line (for a log collector); otherwise readable lines.                          |
-| `LOG_LEVEL`                 |    No    |       `info`       | `debug`, `info`, `warning` or `error`.                                                                            |
+| `RATE_LIMIT_REQUESTS`       |    No    |       `2000`       | Requests per IP in each window (general limit; above it, `503 SlowDown` on S3 and `429` on admin); `0` disables it. See `DECISIONS.md`.                                                 |
+| `RATE_LIMIT_WINDOW_SECONDS` |    No    |        `60`        | Seconds of the general limit window.                                                                                                                                                    |
+| `LOGIN_MAX_FAILURES`        |    No    |        `10`        | Failed logins in a row that lock an IP.                                                                                                                                                 |
+| `LOGIN_LOCK_SECONDS`        |    No    |       `900`        | Seconds an IP stays locked (answers `429` with `Retry-After`).                                                                                                                          |
+| `LOGIN_FAILURE_DELAY_MS`    |    No    |       `1000`       | Delay before answering each failed login.                                                                                                                                               |
+| `TRUSTED_PROXIES`           |    No    |        `0`         | Own proxies in front of the service; with 0 the connection IP is used and `X-Forwarded-For` is ignored.                                                                                 |
+| `LOG_FORMAT`                |    No    |         -          | `json` writes one JSON object per line (for a log collector); otherwise readable lines.                                                                                                 |
+| `LOG_LEVEL`                 |    No    |       `info`       | `debug`, `info`, `warning` or `error`.                                                                                                                                                  |
 
 For local development, `main()` also reads a `.env` file (and `.env.<WINTER_PROFILE>`) from the
 working directory, under the variables of the process.

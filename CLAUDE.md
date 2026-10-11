@@ -24,6 +24,9 @@ anonymous access…) with the data behind them; update it when one of them chang
 `ROADMAP.md` lists the pending work in order, as checkboxes. When a change completes a roadmap task,
 mark it `[x]` in the same change; add new pending work to the right section.
 
+Tables in Markdown files are aligned the way the IDE formats them: every column padded to its widest
+cell, and the separator row with dashes across the whole width (`|------|`), never `|---|---|`.
+
 ## Commands
 
 The project pins Flutter via FVM (`.fvmrc` in both packages, Flutter 3.47.1 / Dart 3.13). Both
@@ -206,13 +209,13 @@ against the AWS docs example. The SigV4 maths live in `security/logic/sig_v4_sig
 
 **Folder layout.** Every feature (or sub-feature) under `lib/features/` uses the same folders:
 
-| Folder           | Layer      | Contents                                                            |
-|------------------|------------|---------------------------------------------------------------------|
-| `controller/`    | Controller | Routes, request parsing, content negotiation (`S3Response`).        |
-| `filter/`        | Controller | Winter `Filter`s specific to the feature.                           |
-| `logic/model/`   | Model      | Typed models and request/response classes.                          |
-| `logic/service/` | Service    | Business logic, validation, file I/O.                               |
-| `repo/`          | Repository | Drift table access only.                                            |
+| Folder           | Layer      | Contents                                                     |
+|------------------|------------|--------------------------------------------------------------|
+| `controller/`    | Controller | Routes, request parsing, content negotiation (`S3Response`). |
+| `filter/`        | Controller | Winter `Filter`s specific to the feature.                    |
+| `logic/model/`   | Model      | Typed models and request/response classes.                   |
+| `logic/service/` | Service    | Business logic, validation, file I/O.                        |
+| `repo/`          | Repository | Drift table access only.                                     |
 
 A parent feature keeps what its sub-features share, and each sub-feature has its own folders:
 
@@ -449,11 +452,11 @@ its edge cases and every bug found so far), but it checks responses against our 
 spec. Real clients parse the XML strictly, sign in their own way and chain calls nobody expects,
 and almost every incompatibility so far was found by them, not by `dart test`:
 
-| When | Run | Time |
-|---|---|---|
-| Every change | `fvm dart test` (from `service/`) | ~11 s |
+| When                                                                | Run                                                       | Time     |
+|---------------------------------------------------------------------|-----------------------------------------------------------|----------|
+| Every change                                                        | `fvm dart test` (from `service/`)                         | ~11 s    |
 | Touching the S3 API (controller, filters, signatures, XML, headers) | also `service/tool/s3_compat/run.sh` (AWS CLI and rclone) | ~1–2 min |
-| Before a release or after big protocol changes | also `run.sh mint`, i.e. the *Full test run* below | ~5 min |
+| Before a release or after big protocol changes                      | also `run.sh mint`, i.e. the *Full test run* below        | ~5 min   |
 
 CI (`.github/workflows/ci.yml`, on `main`, `develop` and pull requests into them) runs the first two rows, the batteries against the
 Docker image; Mint stays manual.

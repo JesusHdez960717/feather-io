@@ -10,10 +10,10 @@ S3 ones that support SigV4.
 
 ## Env (Console)
 
-| Variable       | Required | Default  | Description                                                    |
-|:---------------|:--------:|:--------:|:---------------------------------------------------------------|
-| `SERVICE_URL`  | **Yes**  |    -     | URL of the backend service.                                    |
-| `ADMIN_PREFIX` |    No    | `_admin` | Prefix of the admin API (it must match the service's).         |
+| Variable       | Required | Default  | Description                                            |
+|----------------|:--------:|:--------:|--------------------------------------------------------|
+| `SERVICE_URL`  | **Yes**  |    -     | URL of the backend service.                            |
+| `ADMIN_PREFIX` |    No    | `_admin` | Prefix of the admin API (it must match the service's). |
 
 Locally they live in `web/env.js` (`window.env`, gitignored). In the Docker image that file is
 written when the container starts, from the variables of the same name.

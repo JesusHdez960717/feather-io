@@ -3,11 +3,11 @@
 Real S3 clients, in Docker, against a running feather-io. They are not part of `dart test`: run
 them by hand before a release or after touching the S3 API.
 
-| Target   | What it is                                                                                                                                     |
-|----------|------------------------------------------------------------------------------------------------------------------------------------------------|
-| `awscli` | `awscli.sh` with the `amazon/aws-cli` image (current CLI v2: `aws-chunked` chunk signing with CRC32, multipart, ranges, `sync`, presign…).     |
-| `rclone` | `rclone.sh` with the `rclone/rclone` image: `copy`, `sync`, `check` by md5 (ETag), multipart, `cat` with ranges, `purge`…                       |
-| `mint`   | [MinIO Mint](https://github.com/minio/mint) (`minio/mint` image, from 2024): the AWS and MinIO SDK suites, s3cmd and mc.                       |
+| Target   | What it is                                                                                                                                 |
+|----------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| `awscli` | `awscli.sh` with the `amazon/aws-cli` image (current CLI v2: `aws-chunked` chunk signing with CRC32, multipart, ranges, `sync`, presign…). |
+| `rclone` | `rclone.sh` with the `rclone/rclone` image: `copy`, `sync`, `check` by md5 (ETag), multipart, `cat` with ranges, `purge`…                  |
+| `mint`   | [MinIO Mint](https://github.com/minio/mint) (`minio/mint` image, from 2024): the AWS and MinIO SDK suites, s3cmd and mc.                   |
 
 ## Usage
 
