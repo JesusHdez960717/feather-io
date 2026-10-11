@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/design/brand/icon.svg" width="128" alt="Feather IO"></p>
+
 # Feather IO
 
 A lightweight, self-hosted storage server compatible with Amazon S3, with a web console to manage
@@ -159,6 +161,8 @@ a PDF and images: [`docs/design/`](docs/design/README.md).
 - [`docs/api.md`](docs/api.md): the HTTP API with real requests and responses (admin and S3).
 - [`docs/console.md`](docs/console.md): a tour of the console, screen by screen, and
   [`docs/design/`](docs/design/README.md), its design as a PDF and images.
+- [`docs/brand.md`](docs/brand.md): the icon, its colors and type, and the presentation images
+  (files in [`docs/design/brand/`](docs/design/brand)).
 - [`DECISIONS.md`](DECISIONS.md): the non-obvious design decisions (rate limits, SigV4, access
   keys, anonymous access…) and the data behind them.
 - [`ROADMAP.md`](ROADMAP.md): where it stands and what comes next.

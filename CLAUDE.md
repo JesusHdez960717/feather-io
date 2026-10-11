@@ -652,6 +652,11 @@ and the file. `assets/app/app_icon.png` is only used by `flutter_launcher_icons`
 - Canvas: https://claude.ai/artifact/XJpCx88PuduoWDgbdcBowC. A faithful replica of the current
   screens at 1536×720 (125% Windows scaling), used as the base for the redesign.
 
+The brand (icon and presentation images) has its own canvas, "Feather IO Brand":
+https://claude.ai/artifact/KeQUsAasyicZhB1xgijBaU. `docs/brand.md` describes it and
+`docs/design/brand/` holds its export (the icon as SVG, the source, and PNGs made by
+`docs/design/tool/export_brand.py`).
+
 `docs/design/` holds an export of the canvas (a PDF and PNGs of the main screens, made by
 `docs/design/tool/export.py`) and `docs/console.md` describes each screen with its URL. A change to
 what the console looks like updates the canvas in the same change; before every release, regenerate

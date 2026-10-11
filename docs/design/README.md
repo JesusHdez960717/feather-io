@@ -11,6 +11,10 @@ access to it:
 Loading states, the intermediate states of the forms and the variants of the color picker stay only
 in the canvas.
 
+[`brand/`](brand) holds the icon (SVG and PNG) and the presentation images, exported from a third
+canvas, "Feather IO Brand"; they are described, with how to regenerate them, in
+[`../brand.md`](../brand.md).
+
 ## Sources
 
 Two Claude Design artifacts, both named "Feather IO Console" (in English):
