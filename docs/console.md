@@ -1,8 +1,8 @@
 # The console
 
 A tour of the Feather IO web console: each screen, its URL and what it does. The images come from
-the design of the console ([`design/`](design/README.md)), in Spanish, one of its two languages
-(English and Spanish, from the selector in the rail).
+the design of the console ([`design/`](design/README.md)); the console itself speaks English and
+Spanish (the selector in the rail).
 
 URLs are relative to where the console is served (`http://localhost:8081` by default). The console
 uses hash URLs, so the screen and its state go after `#`:

@@ -26,9 +26,9 @@ FLAG = '2906bd8b9f299a8964b82ccc31742fd9'
 SUBS = [
     ('Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece '
      'of classical Latin literature from 45 BC, making it over 2000 years old',
-     'Fotos de producto de la tienda online'),
-    ('asdasd', 'fotos-tienda'),
-    ("'asd'", "'pruebas'"), ('>asd<', '>pruebas<'), ('"asd"', '"pruebas"'),
+     'Product photos for the online store'),
+    ('asdasd', 'store-photos'),
+    ("'asd'", "'tests'"), ('>asd<', '>tests<'), ('"asd"', '"tests"'),
     (f'/_blob/{FLAG}', f'/_blob/{FLAG}.svg'),
 ]
 
@@ -68,6 +68,11 @@ PICK = [
 ]
 
 
+class QuietHandler(SimpleHTTPRequestHandler):
+    def log_message(self, *args):
+        pass
+
+
 def main(source: Path) -> None:
     canvas = json.loads((source / 'project/canvas.json').read_text(encoding='utf-8'))
     work = Path(tempfile.mkdtemp(prefix='fio-design-'))
@@ -80,13 +85,15 @@ def main(source: Path) -> None:
     shutil.copy(source / f'{FLAG}.svg', work / '_blob')
     shutil.copy(Path(__file__).parent / 'support.js', work)
 
-    server = ThreadingHTTPServer(('127.0.0.1', 0), partial(SimpleHTTPRequestHandler, directory=work))
+    server = ThreadingHTTPServer(('127.0.0.1', 0), partial(QuietHandler, directory=work))
     threading.Thread(target=server.serve_forever, daemon=True).start()
     port = server.server_address[1]
 
     screens = DESIGN / 'screens'
-    shutil.rmtree(screens, ignore_errors=True)
-    screens.mkdir()
+    # Emptied rather than deleted: on Windows a folder open elsewhere can't be removed
+    screens.mkdir(exist_ok=True)
+    for old in screens.glob('*.png'):
+        old.unlink()
     pages = []
     for i, (section, name, board, caption) in enumerate(PICK, 1):
         frame = canvas['boards'][f'{board}.dc.html']

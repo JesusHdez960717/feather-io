@@ -644,8 +644,8 @@ Rules:
 icon = file + getter + folder in `pubspec.yaml`; when a getter loses its last use, delete the getter
 and the file. `assets/app/app_icon.png` is only used by `flutter_launcher_icons`.
 
-**Claude Design.** The console has two Claude Design artifacts, both named "Feather IO Console" (
-content in Spanish):
+**Claude Design.** The console has two Claude Design artifacts, both named "Feather IO Console"
+(the canvas in English, like the docs; the design system in Spanish):
 
 - Design system: https://claude.ai/artifact/1dJk7nhzEP7Y2CcgnTMyuB. Tokens, components and icons
   from `design_system/`.

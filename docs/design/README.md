@@ -13,7 +13,8 @@ in the canvas.
 
 ## Sources
 
-Two Claude Design artifacts, both named "Feather IO Console" (content in Spanish):
+Two Claude Design artifacts, both named "Feather IO Console" (the canvas in English, the design
+system in Spanish):
 
 - Design system: https://claude.ai/artifact/1dJk7nhzEP7Y2CcgnTMyuB (tokens, components and icons
   of `console/lib/design_system/`).
