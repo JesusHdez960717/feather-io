@@ -1,13 +1,57 @@
+#------- GENERAL -------#
+uploads_local/
+
+#------- SERVICE related -------#
 # Files and directories created by pub
-.dart_tool/
-.packages
-build/
-# If you're building an application, you may want to check-in your pubspec.lock
-pubspec.lock
+service/.dart_tool/
+service/.packages
+service/build/
+service/pubspec.lock
 
 # AS/intellij
 .idea/
 
 # Directory created by dartdoc
 # If you don't generate documentation locally you can remove this line.
-doc/api/
+service/doc/api/
+service/uploads_local/
+
+#folder used for tests
+service/uploads_test/
+
+#------- CONSOLE related -------#
+console/.dart_tool/
+console/build/
+console/pubspec.lock
+console/.flutter-plugins-dependencies
+
+#fvm
+console/.fvm/flutter_sdk
+console/.fvm/versions/
+service/.fvm/flutter_sdk
+service/.fvm/versions/
+
+console/.idea/
+console/*.iml
+
+#env
+console/web/env.js
+# secrets of docker compose (see .env.example)
+/.env
+console/.metadata
+service/service.iml
+
+.vscode/
+
+.artifacts/
+
+brag-output/
+
+#------- S3 compatibility -------#
+# outputs of service/tool/s3_compat/run.sh
+service/tool/s3_compat/out/
+# outputs of service/tool/benchmark/run.sh
+service/tool/benchmark/out/
+
+# python bytecode of the tools
+__pycache__/

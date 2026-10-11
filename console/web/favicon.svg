@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="512" height="512">
+    <title>Feather IO</title>
+    <defs>
+        <linearGradient id="fio-vane" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#ffffff" />
+            <stop offset="1" stop-color="#d9d2ef" />
+        </linearGradient>
+        <filter id="fio-shadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="3" stdDeviation="2" flood-color="#13111c"
+                flood-opacity="0.45" />
+        </filter>
+    </defs>
+    <g fill="#fdca3c">
+        <path
+            d="M20,6 H67 A10,10 0 0 1 77,16 V67 A10,10 0 0 1 67,77 H16 A10,10 0 0 1 6,67 V20 A14,14 0 0 1 20,6 Z" />
+        <path
+            d="M93,6 H140 A14,14 0 0 1 154,20 V67 A10,10 0 0 1 144,77 H93 A10,10 0 0 1 83,67 V16 A10,10 0 0 1 93,6 Z" />
+        <path
+            d="M16,83 H67 A10,10 0 0 1 77,93 V144 A10,10 0 0 1 67,154 H20 A14,14 0 0 1 6,140 V93 A10,10 0 0 1 16,83 Z" />
+        <path
+            d="M93,83 H144 A10,10 0 0 1 154,93 V140 A14,14 0 0 1 140,154 H93 A10,10 0 0 1 83,144 V93 A10,10 0 0 1 93,83 Z" />
+    </g>
+    <g filter="url(#fio-shadow)"
+        transform="translate(80 80) rotate(25) translate(-29.6 -74) translate(0.3654 0.0000) scale(0.36543)">
+        <g transform="translate(73.4 210.4) scale(4.4)">
+            <path
+                d="M0,-44 C10,-37 16,-24 16,-6 C16,12 8,30 0,30 C-7,30 -13,12 -13,-6 C-13,-24 -8,-37 0,-44 Z"
+                fill="url(#fio-vane)" stroke="#000000" stroke-width="2.4" stroke-linejoin="round" />
+            <g stroke="#958faf" stroke-width="1.1" fill="none" stroke-linecap="round">
+                <path d="M0,-28 Q7,-33 11,-34" />
+                <path d="M0,-18 Q8,-23 14.5,-24" />
+                <path d="M0,-8 Q9,-13 15.5,-14" />
+                <path d="M0,2 Q9,-3 15.5,-4" />
+                <path d="M0,12 Q8,8 14,6" />
+                <path d="M0,21 Q6,18 10,17" />
+                <path d="M0,-24 Q-6,-28 -9.5,-29" />
+                <path d="M0,-14 Q-7,-18 -12,-19" />
+                <path d="M0,-4 Q-7,-8 -12.5,-9" />
+                <path d="M0,6 Q-7,3 -12,2" />
+                <path d="M0,16 Q-6,13 -10,13" />
+            </g>
+            <path d="M0,-40 L0,40.5" stroke="#000000" stroke-width="2.2" stroke-linecap="round"
+                fill="none" />
+        </g>
+    </g>
+</svg>

@@ -1,0 +1,38 @@
+name: service
+description: Service for the feather-io project, a lightweight S3 compatible storage
+version: 1.0.0-rc.1
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+
+dependencies:
+  winter: 1.0.0-rc.1            #framework
+
+  path: 1.9.1                   #storage
+
+  mime: 2.0.0                   #file extensions
+
+  archive: 4.1.0                #zip
+  crypto: 3.0.7                 #HMAC & S3 Sig V4
+  pointycastle: 4.0.0           #AES-GCM for the access key secrets
+
+  dart_jsonwebtoken: 3.4.1      #JWT
+
+  #i18n: typed error messages generated from lib/i18n/*.i18n.yaml (`fvm dart run slang`)
+  slang: 4.19.2
+  #Imported by the code that slang generates
+  intl: 0.20.2
+
+  #DB
+  drift: 2.35.2
+  sqlite3: 3.7.0
+
+dev_dependencies:
+  http: 1.6.0
+  lints: 6.1.0
+  test: 1.33.0
+
+  #DB
+  drift_dev: 2.35.1
+  build_runner: 2.15.0

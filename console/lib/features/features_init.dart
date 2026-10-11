@@ -1,0 +1,76 @@
+import 'dart:io';
+
+import 'package:console/app_exporter.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:intl/intl.dart';
+
+class FeaturesInit {
+  static Future<void> init() async {
+    FlutterSecureStorage storage = const FlutterSecureStorage(
+      webOptions: WebOptions(publicKey: 'feather-io'),
+    );
+    app.di.put(storage);
+
+    Dio dio = Dio();
+    dio
+      ..options.connectTimeout = const Duration(seconds: 10)
+      ..options.receiveTimeout = const Duration(seconds: 10)
+      ..options.headers = {
+        HttpHeaders.contentTypeHeader: ContentType.json.mimeType,
+      };
+    useBrowserHttpAdapter(dio);
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        // The service translates its error messages to the app's language
+        onRequest: (RequestOptions options, RequestInterceptorHandler handler) {
+          final language = Intl.defaultLocale;
+          if (language != null) {
+            options.headers[HttpHeaders.acceptLanguageHeader] = language;
+          }
+          return handler.next(options);
+        },
+        onError: (DioException e, ErrorInterceptorHandler handler) async {
+          if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
+            app.di.find<AuthCubit>().logout();
+          }
+          return handler.next(e);
+        },
+      ),
+    );
+    app.di.put(dio);
+
+    await AuthInit.init();
+    await LanguageInit.init();
+
+    await Future.wait([
+      BrowserInit.init(),
+      BucketsInit.init(),
+      AnonymousAccessInit.init(),
+      AccessKeysInit.init(),
+      TransfersInit.init(),
+    ]);
+
+    // Listen for logout to reset other cubits
+    app.di.find<AuthCubit>().stream.listen((state) async {
+      if (state is AuthLogoutState) {
+        await _resetCubits();
+      }
+    });
+  }
+
+  static Future<void> _resetCubits() async {
+    app.di.find<TransferCubit>().reset();
+    app.di.find<AuthCubit>().reset();
+  }
+
+  static List<BlocProvider> blocProviders = [
+    // AUTH
+    BlocProvider<AuthCubit>(create: (context) => app.di.find<AuthCubit>()),
+    // LANGUAGE
+    BlocProvider<LanguageCubit>(
+      create: (context) => app.di.find<LanguageCubit>(),
+    ),
+  ];
+}
