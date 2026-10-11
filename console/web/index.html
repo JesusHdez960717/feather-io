@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="$FLUTTER_BASE_HREF">
+
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <title>Feather-IO Console</title>
+    <meta name="description" content="S3-Compatible Storage Management Console">
+
+    <!-- Responsive -->
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- PWA -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Feather Console">
+
+    <!-- Theme color -->
+    <meta name="theme-color" content="#13111c">
+
+    <!-- Icons -->
+    <link rel="apple-touch-icon" href="icons/Icon-192.png">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+
+    <!-- Manifest -->
+    <link rel="manifest" href="manifest.json">
+
+    <style>
+        /* Same font and palette as the app (AppColors), so there is no jump
+           while Flutter loads */
+        @font-face {
+          font-family: "DM Sans";
+          src: url("assets/assets/fonts/DMSans/DMSans-Regular.ttf") format("truetype");
+          font-weight: 400;
+          font-display: swap;
+        }
+
+        @font-face {
+          font-family: "DM Sans";
+          src: url("assets/assets/fonts/DMSans/DMSans-Bold.ttf") format("truetype");
+          font-weight: 700;
+          font-display: swap;
+        }
+
+        * {
+          box-sizing: border-box;
+        }
+
+        html,
+        body {
+          width: 100%;
+          height: 100%;
+          margin: 0;
+          padding: 0;
+          overflow: hidden;
+          background: #13111c; /* background1 */
+          font-family: "DM Sans", system-ui, sans-serif;
+        }
+
+        body {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+
+        #splash {
+          position: fixed;
+          inset: 0;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          background: #13111c; /* background1 */
+          z-index: 9999;
+          transition: opacity 0.35s ease;
+        }
+
+        /* App icon: same as the SplashScreen of the app */
+        #splash-icon {
+          margin-bottom: 24px;
+        }
+
+        /* Wordmark: same as AppWordmark */
+        #splash-wordmark {
+          color: #ffffff;
+          font-size: 56px;
+          font-weight: 700;
+          letter-spacing: -1.12px;
+          line-height: 1;
+          margin-bottom: 16px;
+        }
+
+        #splash-wordmark span {
+          color: #fdca3c; /* secondary */
+        }
+
+        #splash-text {
+          color: #afafaf; /* grey3 */
+          font-size: 16px;
+          font-weight: 400;
+          margin-bottom: 28px;
+        }
+
+        .loader {
+          width: 220px;
+          height: 4px;
+          background: #2f2c3f; /* background3 */
+          border-radius: 999px;
+          overflow: hidden;
+          position: relative;
+        }
+
+        .loader::before {
+          content: "";
+          position: absolute;
+          left: -40%;
+          width: 40%;
+          height: 100%;
+          background: #9484c5; /* primaryFaded */
+          border-radius: 999px;
+          animation: loading 1.2s infinite ease;
+        }
+
+        @keyframes loading {
+          0% {
+            left: -40%;
+          }
+
+          100% {
+            left: 100%;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .loader::before {
+            animation: none;
+            left: 0;
+            width: 100%;
+            opacity: 0.5;
+          }
+        }
+
+        .fade-out {
+          opacity: 0;
+          pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- Splash -->
+<div id="splash" role="status" aria-live="polite">
+    <img id="splash-icon" src="icons/Icon-192.png" width="96" height="96" alt="">
+    <div id="splash-wordmark">Feather <span>IO</span></div>
+
+    <div id="splash-text">Connecting to the storage service…</div>
+
+    <div class="loader"></div>
+</div>
+
+<script>
+    // The text follows the browser language (es/en), like the app
+    if ((navigator.language || "").toLowerCase().startsWith("es")) {
+      document.documentElement.lang = "es";
+      document.getElementById("splash-text").textContent =
+        "Conectando al servicio de almacenamiento…";
+    }
+</script>
+
+<!-- ENV -->
+<script src="env.js"></script>
+
+<!-- Flutter -->
+<script src="flutter_bootstrap.js" async=""></script>
+
+<!-- Remove splash when Flutter renders first frame -->
+<script>
+    window.addEventListener('flutter-first-frame', function () {
+      const splash = document.getElementById('splash');
+
+      if (splash) {
+        splash.classList.add('fade-out');
+
+        setTimeout(() => {
+          splash.remove();
+          document.body.style.background = 'transparent';
+        }, 400);
+      }
+    });
+</script>
+
+</body>
+
+</html>

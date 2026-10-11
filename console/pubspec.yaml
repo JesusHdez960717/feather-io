@@ -1,0 +1,143 @@
+name: console
+description: "Console for the feather-io project"
+publish_to: 'none'
+
+version: 1.0.0-rc.1
+
+environment:
+  flutter: ^3.47.0
+  sdk: ^3.13.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  #state management & dependency injection
+  flutter_bloc: 9.1.1
+  get: 4.7.3
+
+  #routing
+  go_router: 17.5.0
+
+  #rest client
+  dio: 5.11.0
+
+  #view
+  flutter_animate: 4.5.2
+  flutter_svg: 2.3.0    #to show icons in svg format
+  top_snackbar_flutter: 3.4.0     #snackbars
+  flutter_secure_storage: 11.0.0       #for the remember-me in login
+  gap: 3.0.1
+  syncfusion_flutter_datagrid: 34.2.4       #table
+  syncfusion_flutter_core: 34.2.4            #tables utils
+  desktop_drop: 0.8.0                     #to drop files
+  cross_file: 0.3.5+4
+  crypto: 3.0.7
+  material_ui: 1.0.1
+
+  #utils
+  logger: 2.7.0
+  intl: 0.20.3
+  web: 1.1.1
+
+  mime: 2.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: 6.0.0
+
+  #tests
+  bloc_test: 10.0.0
+  mocktail: 1.0.5
+
+  #code gen
+  build_runner: 2.16.0
+
+  #app config
+  flutter_native_splash: 2.4.8
+  flutter_launcher_icons: 0.14.4
+
+#configuration of splash screen, if something change, run: `fvm flutter pub run flutter_native_splash:create`
+flutter_native_splash:
+  color: "#13111c"
+  web: true
+
+#configuration of flutter_icons, if something change, run: `fvm flutter pub run flutter_launcher_icons`
+flutter_icons:
+  web:
+    generate: true
+    image_path: "assets/app/app_icon.png"
+    background_color: "#00000000"
+    theme_color: "#00000000"
+
+flutter:
+  uses-material-design: true
+  generate: true
+
+  assets:
+    - assets/app/app_icon.png
+    - assets/icons/actions/
+    - assets/icons/languages/
+    - assets/icons/navigation/
+    - assets/icons/storage/
+    - assets/icons/view_type/
+  fonts:
+    - family: DMSans
+      fonts:
+        - asset: assets/fonts/DMSans/DMSans-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/DMSans/DMSans-ThinItalic.ttf
+          weight: 100
+          style: italic
+
+        - asset: assets/fonts/DMSans/DMSans-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/DMSans/DMSans-ExtraLightItalic.ttf
+          weight: 200
+          style: italic
+
+        - asset: assets/fonts/DMSans/DMSans-Light.ttf
+          weight: 300
+        - asset: assets/fonts/DMSans/DMSans-LightItalic.ttf
+          weight: 300
+          style: italic
+
+        - asset: assets/fonts/DMSans/DMSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/DMSans/DMSans-Italic.ttf
+          weight: 400
+          style: italic
+
+        - asset: assets/fonts/DMSans/DMSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/DMSans/DMSans-MediumItalic.ttf
+          weight: 500
+          style: italic
+
+        - asset: assets/fonts/DMSans/DMSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/DMSans/DMSans-SemiBoldItalic.ttf
+          weight: 600
+          style: italic
+
+        - asset: assets/fonts/DMSans/DMSans-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/DMSans/DMSans-BoldItalic.ttf
+          weight: 700
+          style: italic
+
+        - asset: assets/fonts/DMSans/DMSans-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/DMSans/DMSans-ExtraBoldItalic.ttf
+          weight: 800
+          style: italic
+
+        - asset: assets/fonts/DMSans/DMSans-Black.ttf
+          weight: 900
+        - asset: assets/fonts/DMSans/DMSans-BlackItalic.ttf
+          weight: 900
+          style: italic
