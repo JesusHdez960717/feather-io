@@ -327,7 +327,9 @@ at `warning`, with ids in `fields`, never a secret, token or key typed at login.
 it is the one AWS documents). Each admin route has `docs: RouteDocs(summary:, tags:, request:,
 response:, status:, query:)`: the bodies come from the `example` of the models, and the schema
 constraints from their `validate()`; security, the 401/403/429 and the error responses are found
-by Winter. `test/features/admin/openapi_test.dart` checks it.
+by Winter. `test/features/admin/openapi_test.dart` checks it. `docs/api.md` walks through the API with
+real requests and responses, and `docs/console.md` says which calls each screen makes: a new or
+changed endpoint updates them in the same change.
 
 **Storage & performance.** Buckets are directories under `STORAGE_VOLUME_PATH`. Bucket metadata (
 description, color, timestamps), anonymous rules and object ETags live in SQLite via Drift, in

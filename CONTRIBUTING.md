@@ -35,6 +35,8 @@ the package you touch before changing it. The most important ones:
 - Don't add a dependency for something Dart, Flutter or Winter already does.
 - A non-obvious decision goes into [`DECISIONS.md`](DECISIONS.md), and a finished roadmap task is
   marked in [`ROADMAP.md`](ROADMAP.md), in the same change.
+- A new or changed endpoint updates [`docs/api.md`](docs/api.md) (and the *Behind it* of its screen
+  in [`docs/console.md`](docs/console.md)) in the same change.
 
 ## Tests
 

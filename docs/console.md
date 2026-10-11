@@ -10,6 +10,10 @@ uses hash URLs, so the screen and its state go after `#`:
 Screens whose state is worth sharing keep it in the URL, so a link opens the same bucket, folder,
 view or tab.
 
+Each screen ends with **Behind it**: the calls it makes to the service, explained with examples in
+[`api.md`](api.md). The console talks to the service only through them, with the token of the login
+and `Accept: application/json`.
+
 ## Configuration and login
 
 ![Login](design/screens/02-login.png)
@@ -34,6 +38,10 @@ The service answers with a token valid for 12 hours, which the console keeps acr
 keys typed are never stored by the console (the browser's password manager may offer to save them).
 After 10 wrong attempts in a row the service locks the IP for 15 minutes.
 
+**Behind it:** [`POST /_admin/login`](api.md#log-in) with `{"access", "secret"}`, which answers the
+token (`access_token`) that every other call sends as `Authorization: Bearer …`. Log out only forgets
+it.
+
 While it starts, the console shows a splash:
 
 ![Splash](design/screens/01-splash.png)
@@ -46,6 +54,9 @@ The rail on the left opens the three sections: **Browser** (`/#/browser`), **Buc
 (`/#/buckets`) and **Access keys** (`/#/keys`). At its foot: the **transfers** indicator (with
 the progress of the uploads and downloads in course), the **language** and **log out**. The menu
 button expands it to show the names.
+
+**Behind it:** the transfers are the uploads and downloads described in each section; the language
+is also sent to the service (`Accept-Language`), so its error messages come in the same language.
 
 ## Browser: the buckets
 
@@ -63,6 +74,10 @@ The menu of each bucket opens its settings (in *Buckets*), edits it or deletes i
 **Create bucket** opens a drawer: the name is checked as you type against the S3 rules (3 to 63
 characters, lowercase letters, numbers and hyphens, no hyphen at the ends), with an optional
 description and a color for the console.
+
+**Behind it:** [`GET /`](api.md#list-buckets) lists the buckets with their statistics (the totals add them
+up), [`PUT /{bucket}`](api.md#create-a-bucket) with `{"description", "color"}` creates one, and
+[`DELETE /{bucket}`](api.md#delete-a-bucket) deletes it.
 
 |                                                       |                                                               |
 |-------------------------------------------------------|---------------------------------------------------------------|
@@ -102,6 +117,21 @@ Selecting several objects enables downloading them (as a zip), moving them or de
 | ![Move](design/screens/18-move.png)               | ![Share](design/screens/19-share-link.png)                                                  |
 | **Move** to another folder of the bucket          | **Share link**: a presigned URL for 1 hour, 1 day or 7 days, which works without logging in |
 
+**Behind it:**
+
+| Action | Call |
+|---|---|
+| List a folder, page by page | [`GET /{bucket}?prefix=<folder>/&delimiter=/&max-keys=<n>`](api.md#list-objects), then `&continuation-token=…` |
+| Upload a file | [`PUT /{bucket}/{key}`](api.md#upload), or [multipart](api.md#multipart-upload) over 16 MiB |
+| New folder | [`PUT /{bucket}/{folder}/`](api.md#upload) without a body |
+| Details | [`HEAD /{bucket}/{key}`](api.md#download), and `GET` for the preview |
+| Download one object | [`GET /{bucket}/{key}`](api.md#download) |
+| Download several, or a folder | [`POST /_admin/bucket/{bucket}/download`](api.md#download-as-a-zip) (a zip) |
+| Rename, move | [`PUT /{bucket}/{new key}` with `x-amz-copy-source`](api.md#copy-rename-and-move), then delete the old key |
+| Delete objects | [`POST /{bucket}?delete`](api.md#delete-many) |
+| Delete a folder with its content | [`DELETE /_admin/bucket/{bucket}/folder?prefix=<folder>/`](api.md#delete-a-folder-with-its-content) |
+| Share link | [`POST /_admin/bucket/{bucket}/presign`](api.md#presigned-url) |
+
 ### Transfers
 
 ![Transfers](design/screens/20-transfers.png)
@@ -111,6 +141,11 @@ buckets and sections, 2 uploads and 2 downloads at a time. The indicator in the 
 overall progress; its panel lists each file with its progress, and lets you cancel, retry or clear
 the finished ones. Files over 16 MiB are uploaded in parts. Closing the tab with transfers running
 asks first.
+
+**Behind it:** uploads are [`PUT /{bucket}/{key}`](api.md#upload), or for big files the
+[multipart upload](api.md#multipart-upload) (start, 8 MiB parts one after another, complete; a
+cancelled or failed upload is aborted). Zip downloads are
+[`POST /_admin/bucket/{bucket}/download`](api.md#download-as-a-zip).
 
 ## Buckets
 
@@ -124,6 +159,9 @@ description and color.
 
 ![Edit bucket](design/screens/26-edit-bucket.png)
 
+**Behind it:** [`GET /`](api.md#list-buckets) for the list, [`GET /_admin/bucket/{bucket}`](api.md#details-and-statistics)
+for the details and [`PUT /_admin/bucket/{bucket}`](api.md#edit-description-and-color) to edit it.
+
 ### Anonymous access
 
 ![Anonymous access rules](design/screens/22-bucket-access.png)
@@ -133,6 +171,9 @@ write only (upload and delete) or both. A rule without `*` is a prefix (`public/
 below it); with `*` the whole key must match the pattern (`photos/*.jpg`).
 
 ![Add a rule](design/screens/23-bucket-add-rule.png)
+
+**Behind it:** [`GET`, `POST` and `DELETE /_admin/bucket/{bucket}/anonymous-access`](api.md#anonymous-access)
+to list, add and delete the rules.
 
 ### Danger zone
 
@@ -144,6 +185,9 @@ S3, only when it is empty.
 
 ![Empty a bucket](design/screens/25-bucket-empty-confirm.png)
 
+**Behind it:** [`DELETE /_admin/bucket/{bucket}/objects`](api.md#empty-a-bucket) to empty it and
+[`DELETE /{bucket}`](api.md#delete-a-bucket) to delete it.
+
 ## Access keys
 
 ![Access keys](design/screens/27-access-keys.png)
@@ -153,8 +197,7 @@ S3, only when it is empty.
 The keys S3 clients (AWS CLI, rclone, SDKs) sign with, besides the root key of the service: their
 id, permissions, last use and state (active, disabled, expired). The root key is listed first and
 can't be changed here. Each key's menu edits its permissions, disables or enables it, regenerates
-its secret or
-deletes it.
+its secret or deletes it.
 
 ![Menu of a key](design/screens/28-access-key-menu.png)
 
@@ -167,3 +210,10 @@ The secret is shown **once**, when the key is created or its secret regenerated;
 closed until you confirm you saved it (it can also be downloaded as a `.csv`).
 
 ![Key created](design/screens/30-access-key-created.png)
+
+**Behind it:** [`GET /_admin/access-keys`](api.md#access-keys) for the list (and
+[`GET /`](api.md#list-buckets) for the buckets of the form),
+[`POST /_admin/access-keys`](api.md#create-a-key) to create one,
+[`PUT /_admin/access-keys/{id}`](api.md#update-a-key) to edit, enable or disable it,
+[`POST /_admin/access-keys/{id}/secret`](api.md#regenerate-the-secret) for a new secret and
+[`DELETE /_admin/access-keys/{id}`](api.md#delete-a-key) to delete it.

@@ -156,6 +156,7 @@ a PDF and images: [`docs/design/`](docs/design/README.md).
 
 - [`service/README.md`](service/README.md): configuration, endpoints, Docker, health check, backups.
 - [`console/README.md`](console/README.md): configuration and Docker image of the console.
+- [`docs/api.md`](docs/api.md): the HTTP API with real requests and responses (admin and S3).
 - [`docs/console.md`](docs/console.md): a tour of the console, screen by screen, and
   [`docs/design/`](docs/design/README.md), its design as a PDF and images.
 - [`DECISIONS.md`](DECISIONS.md): the non-obvious design decisions (rate limits, SigV4, access
