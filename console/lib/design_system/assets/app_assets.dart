@@ -8,4 +8,7 @@ class AppAssets {
   factory AppAssets() => _instance;
 
   final AppIcons icons = const AppIcons();
+
+  /// The app icon (docs/brand.md), also the source of the web icons.
+  final String appIcon = 'assets/app/app_icon.png';
 }

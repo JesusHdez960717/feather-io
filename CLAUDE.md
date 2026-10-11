@@ -642,7 +642,9 @@ Rules:
 **Assets.** SVG icons live in `assets/icons/<group>/` and are only reached through getters in
 `design_system/assets/app_icons.dart` (`app.assets.icons.actions.delete.build(...)`). Adding an
 icon = file + getter + folder in `pubspec.yaml`; when a getter loses its last use, delete the getter
-and the file. `assets/app/app_icon.png` is only used by `flutter_launcher_icons`.
+and the file. `assets/app/app_icon.png` is the app icon (a copy of `docs/design/brand/icon.png`),
+shown by both splashes (`app.assets.appIcon`); the web icons in `web/` are made from the brand
+PNGs (`docs/brand.md`): the favicon from icon B, the rest from icon A.
 
 **Claude Design.** The console has two Claude Design artifacts, both named "Feather IO Console"
 (in English, like the docs):

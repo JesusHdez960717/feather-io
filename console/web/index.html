@@ -80,6 +80,11 @@
           transition: opacity 0.35s ease;
         }
 
+        /* App icon: same as the SplashScreen of the app */
+        #splash-icon {
+          margin-bottom: 24px;
+        }
+
         /* Wordmark: same as AppWordmark */
         #splash-wordmark {
           color: #ffffff;
@@ -151,6 +156,7 @@
 
 <!-- Splash -->
 <div id="splash" role="status" aria-live="polite">
+    <img id="splash-icon" src="icons/Icon-192.png" width="96" height="96" alt="">
     <div id="splash-wordmark">Feather <span>IO</span></div>
 
     <div id="splash-text">Connecting to the storage service…</div>

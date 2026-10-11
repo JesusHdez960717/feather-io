@@ -24,6 +24,8 @@ class SplashScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    Image.asset(app.assets.appIcon, width: 96, height: 96),
+                    app.dimensions.padding.xxl.gap(),
                     AppWordmark(name: context.intl.appName, fontSize: 56),
                     app.dimensions.padding.l.gap(),
                     Text(

@@ -54,7 +54,7 @@ tens of thousands of objects.
 ## Before 1.0
 
 - [x] A visual identity and icon ([`docs/brand.md`](docs/brand.md)).
-- [ ] Use the icon in the console: favicon, web icons, splash and `assets/app/app_icon.png`.
+- [x] Use the icon in the console: favicon, web icons, splash and `assets/app/app_icon.png`.
 - [ ] Upload the social preview of `docs/design/brand/images/` to the GitHub repository.
 - [ ] A promo video with real screenshots of the design.
 

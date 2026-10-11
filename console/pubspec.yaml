@@ -79,6 +79,7 @@ flutter:
   generate: true
 
   assets:
+    - assets/app/app_icon.png
     - assets/icons/actions/
     - assets/icons/languages/
     - assets/icons/navigation/
