@@ -55,6 +55,14 @@ CI (`.github/workflows/ci.yml`) runs the analysis, the tests of both packages, t
 rclone batteries against the Docker image and the console image on `main`, `develop` and every
 pull request into them.
 
+## Visual changes
+
+The design of the console lives in its Claude Design canvas, exported to
+[`docs/design/`](docs/design/README.md) and described screen by screen in
+[`docs/console.md`](docs/console.md). A change to what the console looks like updates the canvas
+in the same change, and before every release the export is regenerated and `docs/console.md`
+reviewed (how: [`docs/design/README.md`](docs/design/README.md)).
+
 ## Branches, commits and pull requests
 
 - Work in a branch and open the pull request against `develop`; `main` gets the releases.

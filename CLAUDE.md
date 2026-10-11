@@ -646,6 +646,11 @@ content in Spanish):
 - Canvas: https://claude.ai/artifact/XJpCx88PuduoWDgbdcBowC. A faithful replica of the current
   screens at 1536×720 (125% Windows scaling), used as the base for the redesign.
 
+`docs/design/` holds an export of the canvas (a PDF and PNGs of the main screens, made by
+`docs/design/tool/export.py`) and `docs/console.md` describes each screen with its URL. A change to
+what the console looks like updates the canvas in the same change; before every release, regenerate
+the export and review `docs/console.md` (see `docs/design/README.md`).
+
 In canvas artboards, draw coloured icons as inline `<svg>` with `currentColor`. CSS
 `mask-image: url(/_blob/…)` renders blank because the artboard iframe is sandboxed; `<img>` works.
 

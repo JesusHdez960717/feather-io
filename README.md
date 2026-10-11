@@ -8,7 +8,7 @@ Point the AWS CLI, rclone, s3cmd, mc or any AWS/MinIO SDK at it and they work as
 the console to browse, upload and share files, manage buckets, open prefixes to anonymous access
 and create access keys per bucket.
 
-![The object browser of the console](docs/screenshots/browser.png)
+![The object browser of the console](docs/design/screens/08-objects-list.png)
 
 - **`service/`**: the S3-compatible server, in Dart, on [Winter](https://pub.dev/packages/winter).
   It serves the S3 API and an admin API for the console (JSON, documented with OpenAPI).
@@ -139,20 +139,25 @@ More clients (boto3), the endpoints and the permissions are in
 
 ## The console
 
-|                                                              |                                                  |
-|--------------------------------------------------------------|--------------------------------------------------|
-| ![Bucket details](docs/screenshots/bucket.png)               | ![Access keys](docs/screenshots/access-keys.png) |
-| Buckets: details, anonymous access rules and the danger zone | Access keys per bucket, shown once, with expiry  |
+|                                                              |                                                        |
+|--------------------------------------------------------------|--------------------------------------------------------|
+| ![Bucket details](docs/design/screens/21-bucket-general.png) | ![Access keys](docs/design/screens/27-access-keys.png) |
+| Buckets: details, anonymous access rules and the danger zone | Access keys per bucket, shown once, with expiry        |
 
-![Background transfers](docs/screenshots/transfers.png)
+![Background transfers](docs/design/screens/20-transfers.png)
 
 Uploads and downloads run in the background, across folders and buckets; files over 16 MiB go in
 parts.
+
+Every screen, its URL and what it does: [`docs/console.md`](docs/console.md). The whole design, as
+a PDF and images: [`docs/design/`](docs/design/README.md).
 
 ## Documentation
 
 - [`service/README.md`](service/README.md): configuration, endpoints, Docker, health check, backups.
 - [`console/README.md`](console/README.md): configuration and Docker image of the console.
+- [`docs/console.md`](docs/console.md): a tour of the console, screen by screen, and
+  [`docs/design/`](docs/design/README.md), its design as a PDF and images.
 - [`DECISIONS.md`](DECISIONS.md): the non-obvious design decisions (rate limits, SigV4, access
   keys, anonymous access…) and the data behind them.
 - [`ROADMAP.md`](ROADMAP.md): where it stands and what comes next.
