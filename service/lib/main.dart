@@ -52,6 +52,9 @@ class FeatherIO {
         Deserializer<CompletedPart>.json(CompletedPart.fromJson),
       )
       ..addDeserializer(
+        Deserializer<DeleteObjectEntry>.json(DeleteObjectEntry.fromJson),
+      )
+      ..addDeserializer(
         Deserializer<AccessKeyRequest>.json(AccessKeyRequest.fromJson),
       )
       ..addDeserializer(

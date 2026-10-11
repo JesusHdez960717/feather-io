@@ -31,7 +31,10 @@ void main() {
       final body = jsonDecode(response.body);
       expect(body['name'], bucket);
       final contents = body['contents'] as List;
-      expect(contents.map((e) => e['key']), unorderedEquals(['f1.txt', 'folder/f2.txt']));
+      expect(
+        contents.map((e) => e['key']),
+        unorderedEquals(['f1.txt', 'folder/f2.txt']),
+      );
       final f2 = contents.firstWhere((e) => e['key'] == 'folder/f2.txt');
       expect(f2['size_bytes'], 2);
     });
@@ -50,7 +53,9 @@ void main() {
         headers: server.auth(json: true),
       );
       final folderBody = jsonDecode(folder.body);
-      expect((folderBody['contents'] as List).map((e) => e['key']), ['folder/f2.txt']);
+      expect((folderBody['contents'] as List).map((e) => e['key']), [
+        'folder/f2.txt',
+      ]);
       expect(folderBody['common_prefixes'], isEmpty);
     });
 
@@ -79,10 +84,24 @@ void main() {
         contents,
         contains('<ETag>&quot;${md5.convert(utf8.encode('1'))}&quot;</ETag>'),
       );
-      final lastModified = RegExp(
-        r'<LastModified>(.*?)</LastModified>',
-      ).firstMatch(contents)!.group(1)!;
-      expect(lastModified, matches(RegExp(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$')));
+      final lastModified = RegExp(r'<LastModified>(.*?)</LastModified>')
+          .firstMatch(contents)!
+          .group(1)!;
+      expect(
+        lastModified,
+        matches(RegExp(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$')),
+      );
+    });
+
+    test('Should send a UTC last_modified in JSON', () async {
+      final response = await http.get(
+        server.url('/$bucket?prefix=f1'),
+        headers: server.auth(json: true),
+      );
+      final object = (jsonDecode(response.body)['contents'] as List).single;
+      final lastModified = object['last_modified'] as String;
+      expect(lastModified, endsWith('Z'));
+      expect(DateTime.parse(lastModified).isUtc, isTrue);
     });
 
     test('Should send the ETag in JSON', () async {
@@ -91,7 +110,10 @@ void main() {
         headers: server.auth(json: true),
       );
       final contents = jsonDecode(response.body)['contents'] as List;
-      expect(contents.single['etag'], md5.convert(utf8.encode('22')).toString());
+      expect(
+        contents.single['etag'],
+        md5.convert(utf8.encode('22')).toString(),
+      );
     });
 
     test('Should escape the XML special chars of the keys', () async {
@@ -154,7 +176,8 @@ void main() {
       );
       expect(folder.statusCode, 200);
       // A folder left without files (not created through the service)
-      Directory('${server.storagePath}/$tree/empty/sub').createSync(recursive: true);
+      Directory('${server.storagePath}/$tree/empty/sub')
+          .createSync(recursive: true);
     });
 
     Future<Map<String, dynamic>> list(String query) async {
@@ -175,11 +198,14 @@ void main() {
       expect(body['common_prefixes'], ['deep/', 'docs/', 'photos/']);
     });
 
-    test('Should list the level of a folder and its subfolders as prefixes', () async {
-      final body = await list('prefix=docs/&delimiter=/');
-      expect(keys(body), ['docs/x.txt']);
-      expect(body['common_prefixes'], ['docs/2026/']);
-    });
+    test(
+      'Should list the level of a folder and its subfolders as prefixes',
+      () async {
+        final body = await list('prefix=docs/&delimiter=/');
+        expect(keys(body), ['docs/x.txt']);
+        expect(body['common_prefixes'], ['docs/2026/']);
+      },
+    );
 
     test('Should match a prefix that ends in the middle of a name', () async {
       final body = await list('prefix=docs/20&delimiter=/');
@@ -189,7 +215,11 @@ void main() {
 
     test('Should list every key below a prefix without delimiter', () async {
       final body = await list('prefix=docs/');
-      expect(keys(body), ['docs/2026/y.txt', 'docs/2026/z/w.txt', 'docs/x.txt']);
+      expect(keys(body), [
+        'docs/2026/y.txt',
+        'docs/2026/z/w.txt',
+        'docs/x.txt',
+      ]);
     });
 
     test('Should list nothing for a folder that does not exist', () async {
@@ -198,28 +228,34 @@ void main() {
       expect(body['common_prefixes'], isEmpty);
     });
 
-    test('Should never leave the bucket with a prefix that climbs up', () async {
-      for (final prefix in ['../', '../$bucket/', 'docs/../../$bucket/']) {
-        final body = await list('prefix=${Uri.encodeQueryComponent(prefix)}');
-        expect(keys(body), isEmpty, reason: prefix);
-      }
-    });
+    test(
+      'Should never leave the bucket with a prefix that climbs up',
+      () async {
+        for (final prefix in ['../', '../$bucket/', 'docs/../../$bucket/']) {
+          final body = await list('prefix=${Uri.encodeQueryComponent(prefix)}');
+          expect(keys(body), isEmpty, reason: prefix);
+        }
+      },
+    );
 
-    test('Should page over objects and prefixes of one level together', () async {
-      final seen = <String>[];
-      String? token;
-      do {
-        final body = await list(
-          'list-type=2&delimiter=/&max-keys=1'
-          '${token == null ? '' : '&continuation-token=$token'}',
-        );
-        seen
-          ..addAll(keys(body).cast<String>())
-          ..addAll((body['common_prefixes'] as List).cast<String>());
-        token = body['next_continuation_token'] as String?;
-      } while (token != null);
-      expect(seen, ['a.txt', 'deep/', 'docs/', 'photos/']);
-    });
+    test(
+      'Should page over objects and prefixes of one level together',
+      () async {
+        final seen = <String>[];
+        String? token;
+        do {
+          final body = await list(
+            'list-type=2&delimiter=/&max-keys=1'
+            '${token == null ? '' : '&continuation-token=$token'}',
+          );
+          seen
+            ..addAll(keys(body).cast<String>())
+            ..addAll((body['common_prefixes'] as List).cast<String>());
+          token = body['next_continuation_token'] as String?;
+        } while (token != null);
+        expect(seen, ['a.txt', 'deep/', 'docs/', 'photos/']);
+      },
+    );
   });
 
   group('S3Controller - LIST Objects pagination', () {
@@ -300,10 +336,11 @@ void main() {
       return response.body;
     }
 
-    List<String> xmlKeys(String xml) => RegExp(r'<Key>(.*?)</Key>')
-        .allMatches(xml)
-        .map((m) => m.group(1)!)
-        .toList();
+    List<String> xmlKeys(String xml) =>
+        RegExp(r'<Key>(.*?)</Key>')
+            .allMatches(xml)
+            .map((m) => m.group(1)!)
+            .toList();
 
     test('Should walk every key with the V1 marker and NextMarker', () async {
       final keys = <String>[];
@@ -316,7 +353,9 @@ void main() {
         expect(xml, contains('<Marker>${marker ?? ''}</Marker>'));
         keys.addAll(xmlKeys(xml));
         if (!xml.contains('<IsTruncated>true</IsTruncated>')) break;
-        marker = RegExp(r'<NextMarker>(.*?)</NextMarker>').firstMatch(xml)!.group(1);
+        marker = RegExp(r'<NextMarker>(.*?)</NextMarker>')
+            .firstMatch(xml)!
+            .group(1);
       }
       expect(keys, ['a.txt', 'b.txt', 'c/1.txt', 'd.txt', 'e.txt']);
     });
@@ -371,7 +410,10 @@ void main() {
         server.url('/$encBucket?delimiter=/&encoding-type=url'),
         headers: server.auth(),
       );
-      expect(response.body, contains('<Prefix>folder%20with%20space/</Prefix>'));
+      expect(
+        response.body,
+        contains('<Prefix>folder%20with%20space/</Prefix>'),
+      );
     });
 
     test('Should not encode without encoding-type', () async {

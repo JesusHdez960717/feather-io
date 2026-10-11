@@ -12,6 +12,6 @@ class PresignedUrlModel {
   );
 
   Map<String, Object?> toJson() {
-    return {'url': url, 'expires_at': expiresAt.toIso8601String()};
+    return {'url': url, 'expires_at': expiresAt.toUtc().toIso8601String()};
   }
 }

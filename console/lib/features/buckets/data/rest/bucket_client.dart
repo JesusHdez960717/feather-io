@@ -115,10 +115,10 @@ class BucketResponse {
       color: json['color'],
       objectCount: json['object_count'],
       sizeBytes: json['size_bytes'],
-      creationDate: DateTime.parse(json['creation_date']),
+      creationDate: DateTime.parse(json['creation_date']).toLocal(),
       lastModified: json['last_modified'] == null
           ? null
-          : DateTime.parse(json['last_modified']),
+          : DateTime.parse(json['last_modified']).toLocal(),
     );
   }
 }

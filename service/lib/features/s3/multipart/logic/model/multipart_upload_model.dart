@@ -20,7 +20,7 @@ class MultipartUploadModel implements XmlSerializable {
       'bucket': bucket,
       'key': key,
       'upload_id': uploadId,
-      'initiated': initiated.toIso8601String(),
+      'initiated': initiated.toUtc().toIso8601String(),
     };
   }
 
@@ -96,7 +96,7 @@ class UploadedPartModel {
       'part_number': partNumber,
       'etag': etag,
       'size_bytes': size,
-      'last_modified': lastModified.toIso8601String(),
+      'last_modified': lastModified.toUtc().toIso8601String(),
     };
   }
 
@@ -162,7 +162,7 @@ class CopiedPartModel implements XmlSerializable {
   CopiedPartModel({required this.etag, required this.lastModified});
 
   Map<String, Object?> toJson() {
-    return {'etag': etag, 'last_modified': lastModified.toIso8601String()};
+    return {'etag': etag, 'last_modified': lastModified.toUtc().toIso8601String()};
   }
 
   /// CopyPartResult.

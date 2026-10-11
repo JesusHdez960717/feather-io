@@ -42,7 +42,7 @@ void main() {
     expect(media.color, 0xFF2196F3);
     expect(media.objectCount, 3);
     expect(media.sizeBytes, 1024);
-    expect(media.creationDate, DateTime.utc(2026, 10, 1, 10));
+    expect(media.creationDate, DateTime.utc(2026, 10, 1, 10).toLocal());
     expect(media.lastModified, isNull);
     verify(() => client.listBuckets(token: 'jwt'));
   });

@@ -256,10 +256,9 @@ class ObjectController {
   }
 
   DeleteObjectsRequest _readDeleteJson(String body, String bucketName) {
+    final Map<String, dynamic> json;
     try {
-      return DeleteObjectsRequest.fromJson(
-        om.decode<Map<String, dynamic>>(body),
-      );
+      json = om.decode<Map<String, dynamic>>(body);
     } catch (_) {
       throw S3Exception(
         S3ErrorCode.invalidRequest,
@@ -267,6 +266,8 @@ class ObjectController {
         resource: bucketName,
       );
     }
+    // Outside the try: a body with the wrong shape is a 400 naming the field
+    return DeleteObjectsRequest.fromJson(json);
   }
 
   DeleteObjectsRequest _readDeleteXml(String body, String bucketName) {

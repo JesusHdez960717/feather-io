@@ -175,6 +175,28 @@ void main() {
       expect(jsonDecode(response.body)['code'], 'InvalidRequest');
     });
 
+    test(
+      'Should reject a JSON body without objects, naming the field (400)',
+      () async {
+        await server.putObject(bucket, 'kept.txt', 'k');
+        final response = await http.post(
+          server.url('/$bucket?delete'),
+          headers: server.auth(json: true),
+          body: jsonEncode({
+            'keys': ['kept.txt'],
+          }),
+        );
+        expect(response.statusCode, 400);
+        expect(jsonDecode(response.body)['detail'], contains('objects'));
+
+        final kept = await http.get(
+          server.url('/$bucket/kept.txt'),
+          headers: server.auth(),
+        );
+        expect(kept.statusCode, 200);
+      },
+    );
+
     test('Should reject an invalid JSON body (400)', () async {
       final response = await http.post(
         server.url('/$bucket?delete'),

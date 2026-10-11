@@ -44,18 +44,21 @@ void main() {
       expect(body[0]['size_bytes'], content.length);
     });
 
-    test('GET / - Should list multiple buckets and update stats (JSON)', () async {
-      const content1 = 'Data 1';
-      const content2 = 'Data 2 extended';
-      await server.putObject('test-bucket-2', 'file1.txt', content1);
-      await server.putObject('test-bucket-2', 'file2.txt', content2);
+    test(
+      'GET / - Should list multiple buckets and update stats (JSON)',
+      () async {
+        const content1 = 'Data 1';
+        const content2 = 'Data 2 extended';
+        await server.putObject('test-bucket-2', 'file1.txt', content1);
+        await server.putObject('test-bucket-2', 'file2.txt', content2);
 
-      final body = await listBuckets();
-      expect(body.length, 2);
-      final b2 = body.firstWhere((b) => b['name'] == 'test-bucket-2');
-      expect(b2['object_count'], 2);
-      expect(b2['size_bytes'], content1.length + content2.length);
-    });
+        final body = await listBuckets();
+        expect(body.length, 2);
+        final b2 = body.firstWhere((b) => b['name'] == 'test-bucket-2');
+        expect(b2['object_count'], 2);
+        expect(b2['size_bytes'], content1.length + content2.length);
+      },
+    );
 
     test('GET / - Should include the metadata of created buckets', () async {
       final create = await http.put(
@@ -65,7 +68,9 @@ void main() {
       );
       expect(create.statusCode, 200);
 
-      final b3 = (await listBuckets()).firstWhere((b) => b['name'] == 'test-bucket-3');
+      final b3 = (await listBuckets()).firstWhere(
+        (b) => b['name'] == 'test-bucket-3',
+      );
       expect(b3['description'], 'Backups');
       expect(b3['color'], 0xFF00FF00);
       expect(b3['object_count'], 0);
@@ -80,10 +85,13 @@ void main() {
       expect(response.body, contains('<Name>test-bucket-1</Name>'));
       expect(response.body, contains('<ObjectCount>1</ObjectCount>'));
       expect(response.body, contains('<Owner>'));
-      final creationDate = RegExp(
-        r'<CreationDate>(.*?)</CreationDate>',
-      ).firstMatch(response.body)!.group(1)!;
-      expect(creationDate, matches(RegExp(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$')));
+      final creationDate = RegExp(r'<CreationDate>(.*?)</CreationDate>')
+          .firstMatch(response.body)!
+          .group(1)!;
+      expect(
+        creationDate,
+        matches(RegExp(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$')),
+      );
     });
 
     test('GET / - Should update stats after deleting a file', () async {
@@ -93,9 +101,24 @@ void main() {
       );
       expect(deleteResponse.statusCode, 204);
 
-      final b1 = (await listBuckets()).firstWhere((b) => b['name'] == 'test-bucket-1');
+      final b1 = (await listBuckets()).firstWhere(
+        (b) => b['name'] == 'test-bucket-1',
+      );
       expect(b1['object_count'], 0);
       expect(b1['size_bytes'], 0);
+    });
+
+    test('Should send the dates of the JSON in UTC', () async {
+      await server.createBucket('utc-dates');
+      await server.putObject('utc-dates', 'a.txt', 'a');
+      final bucket = (await listBuckets()).firstWhere(
+        (b) => b['name'] == 'utc-dates',
+      );
+      expect(bucket['creation_date'] as String, endsWith('Z'));
+      expect(bucket['last_modified'] as String, endsWith('Z'));
+
+      await http.delete(server.url('/utc-dates/a.txt'), headers: server.auth());
+      await http.delete(server.url('/utc-dates'), headers: server.auth());
     });
   });
 }

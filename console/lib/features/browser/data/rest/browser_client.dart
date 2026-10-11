@@ -132,11 +132,7 @@ class DeleteObjectsRequest {
   DeleteObjectsRequest({required this.keys});
 
   Map<String, dynamic> toJson() {
-    return {
-      'delete': {
-        'objects': keys.map((k) => {'key': k}).toList(),
-      },
-    };
+    return {'objects': keys.map((k) => {'key': k}).toList()};
   }
 }
 
@@ -221,7 +217,7 @@ class ObjectResponse {
     return ObjectResponse(
       key: json['key'],
       sizeBytes: json['size_bytes'],
-      lastModified: DateTime.parse(json['last_modified']),
+      lastModified: DateTime.parse(json['last_modified']).toLocal(),
     );
   }
 }

@@ -19,14 +19,16 @@ together.
 
 ## Authentication
 
-| Who | How |
-|---|---|
-| The console (and anything else that logs in) | `Authorization: Bearer <access_token>`, from [`POST /_admin/login`](#log-in). Valid on both APIs |
-| S3 clients (AWS CLI, rclone, SDKs) | AWS SigV4 in the `Authorization` header, or in the query of a presigned URL, with the root key or an access key. S3 API only |
-| Nobody | Only `/_admin/login`, `/_admin/health`, the OpenAPI document and Swagger UI, and objects opened by an [anonymous rule](#anonymous-access) |
+| Who                                          | How                                                                                                                                       |
+|----------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| The console (and anything else that logs in) | `Authorization: Bearer <access_token>`, from [`POST /_admin/login`](#log-in). Valid on both APIs                                          |
+| S3 clients (AWS CLI, rclone, SDKs)           | AWS SigV4 in the `Authorization` header, or in the query of a presigned URL, with the root key or an access key. S3 API only              |
+| Nobody                                       | Only `/_admin/login`, `/_admin/health`, the OpenAPI document and Swagger UI, and objects opened by an [anonymous rule](#anonymous-access) |
 
 Each route needs a permission (`s3.put-object`, `admin.access-key.create`…): the login token has all
 of them; an access key, those of its level on the bucket.
+
+Dates are ISO 8601 in UTC (`2026-10-11T02:37:29.000Z`), JSON keys `snake_case`.
 
 ## Errors
 
@@ -132,8 +134,8 @@ GET /_admin/bucket/photos
   "name": "photos",
   "object_count": 3,
   "size_bytes": 18,
-  "creation_date": "2026-10-10T20:37:29.000",
-  "last_modified": "2026-10-10T20:37:31.160724",
+  "creation_date": "2026-10-11T02:37:29.000Z",
+  "last_modified": "2026-10-11T02:37:31.160724Z",
   "description": "Photos of the 2026 trip",
   "color": 4290909806
 }
@@ -351,7 +353,7 @@ GET /
     "name": "photos",
     "object_count": 0,
     "size_bytes": 0,
-    "creation_date": "2026-10-10T20:37:29.000",
+    "creation_date": "2026-10-11T02:37:29.000Z",
     "last_modified": null,
     "description": "Photos of the 2026 trip",
     "color": 4290909806
@@ -436,7 +438,7 @@ GET /photos?prefix=2026/&delimiter=/&max-keys=25
     {
       "key": "2026/beach.jpg",
       "size_bytes": 6,
-      "last_modified": "2026-10-10T20:38:17.214390",
+      "last_modified": "2026-10-11T02:38:17.214390Z",
       "etag": "b1946ac92492d2347c6235b4d2611184"
     }
   ],
@@ -509,7 +511,7 @@ x-amz-copy-source: /photos/2026/beach.jpg
 {
   "key": "2026/copy.jpg",
   "size_bytes": 6,
-  "last_modified": "2026-10-10T20:38:17.214390",
+  "last_modified": "2026-10-11T02:38:17.214390Z",
   "etag": "b1946ac92492d2347c6235b4d2611184"
 }
 ```
@@ -531,14 +533,15 @@ DELETE /photos/2026/beach.jpg
 POST /photos?delete
 Content-Type: application/json
 
-{"delete": {"objects": [{"key": "notes.txt"}, {"key": "2026/copy.jpg"}]}}
+{"objects": [{"key": "notes.txt"}, {"key": "2026/copy.jpg"}]}
 ```
 
 ```json
 {"deleted": [{"key": "notes.txt"}, {"key": "2026/copy.jpg"}], "errors": []}
 ```
 
-Up to 1000 keys. S3 clients send the XML `<Delete>` document.
+Up to 1000 keys; `"quiet": true` leaves out the deleted ones. A body without `objects` is a `400`
+naming the field. S3 clients send the XML `<Delete>` document.
 
 ## Multipart upload
 

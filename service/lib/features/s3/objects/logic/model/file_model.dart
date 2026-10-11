@@ -19,7 +19,7 @@ class FileModel {
     return {
       'key': key,
       'size_bytes': size,
-      'last_modified': lastModified.toIso8601String(),
+      'last_modified': lastModified.toUtc().toIso8601String(),
       'etag': etag,
     };
   }

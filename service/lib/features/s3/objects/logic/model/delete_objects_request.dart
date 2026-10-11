@@ -22,31 +22,25 @@ class DeleteObjectsRequest {
     );
   }
 
+  /// The console's JSON: `{"objects": [{"key": "a.txt"}], "quiet": false}`.
   factory DeleteObjectsRequest.fromJson(Map<String, dynamic> json) {
-    // Accepts the standard shape ({"Delete": {"Object": [...]}}) and the
-    // console's lowercase one ({"delete": {"objects": [...]}})
-    final delete = json['Delete'] ?? json['delete'] ?? json;
-
-    final List<dynamic> objectsList = (delete is Map)
-        ? (delete['Object'] ?? delete['object'] ?? delete['objects'] ?? [])
-        : [];
-
-    final keys = objectsList
-        .map((e) {
-          if (e is String) return e;
-          if (e is Map) return (e['Key'] ?? e['key'] ?? '').toString();
-          return '';
-        })
-        .where((k) => k.isNotEmpty)
-        .toList();
-
-    final quietValue = (delete is Map)
-        ? (delete['Quiet'] ?? delete['quiet'])
-        : false;
-
     return DeleteObjectsRequest(
-      keys: keys,
-      quiet: quietValue == true || quietValue == 'true',
+      keys: [
+        for (final object in json.field<List<DeleteObjectEntry>>('objects'))
+          if (object.key.isNotEmpty) object.key,
+      ],
+      quiet: json.field<bool?>('quiet') ?? false,
     );
+  }
+}
+
+/// One object of the JSON body of [DeleteObjectsRequest].
+class DeleteObjectEntry {
+  final String key;
+
+  DeleteObjectEntry({required this.key});
+
+  factory DeleteObjectEntry.fromJson(Map<String, dynamic> json) {
+    return DeleteObjectEntry(key: json.field<String>('key'));
   }
 }
