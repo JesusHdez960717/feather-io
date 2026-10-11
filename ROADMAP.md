@@ -47,7 +47,8 @@ tens of thousands of objects.
   links, state in the URL), background transfer queue, *Buckets* section, *Access keys* section.
 - **Code and operations**: an XML mapper of its own, `S3Controller` split by operation, metadata in
   SQLite (WAL) inside the volume, benchmarks with warp, health check, structured logs, Docker images
-  for both packages and `docker-compose.yml`, CI on GitHub Actions, Winter `1.0.0-rc.1` from pub.dev.
+  for both packages and `docker-compose.yml`, CI on GitHub Actions, Winter `1.0.0-rc.1` from
+  pub.dev.
 - **Open source release**: README, `LICENSE` (Apache 2.0, one for the whole repo),
   `CONTRIBUTING.md`, `SECURITY.md`, changelogs and versions `1.0.0-rc.1`.
 
@@ -55,12 +56,22 @@ tens of thousands of objects.
 
 - [x] A visual identity and icon ([`docs/brand.md`](docs/brand.md)).
 - [x] Use the icon in the console: favicon, web icons, splash and `assets/app/app_icon.png`.
-- [ ] Upload the social preview of `docs/design/brand/images/` to the GitHub repository (GitHub
-  only offers it once the repository is public).
-- [ ] A promo video with real screenshots of the design.
+
+## Prepare release
+
+- [ ] Merge the branches: `feature/poc` into `develop`, and `develop` into `main`.
+- [ ] Set the version as release candidate 1, `1.0.0-rc.1`: the same in both `pubspec.yaml`, both
+  changelogs and the Docker image tags, and the `v1.0.0-rc.1` tag on `main`.
+- [ ] A Railway template: the service (with its volume at `/data`) and the console, with the
+  variables of `.env.example`.
 
 ## After 1.0 (future improvements)
 
+- Redesign the login screen to feature the dot grid in the background and incorporate the visual
+  identity (Logo, phrases, tags...).
+- [ ] Upload the social preview of `docs/design/brand/images/` to the GitHub repository (GitHub
+  only offers it once the repository is public).
+- [ ] A promo video with real screenshots of the design.
 - [ ] Rename and move folders (all their content has to be copied and deleted, and it must be
   decided what happens if it fails halfway).
 - [ ] Move object search and filters to the service, to search the whole folder and not only the
