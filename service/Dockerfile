@@ -24,6 +24,5 @@ COPY --from=build /runtime/ /
 COPY --from=build /out/bundle/ /app/
 
 ENV STORAGE_VOLUME_PATH=/data
-VOLUME /data
 EXPOSE 8080
 CMD ["/app/bin/main"]
