@@ -52,3 +52,6 @@ brag-output/
 service/tool/s3_compat/out/
 # outputs of service/tool/benchmark/run.sh
 service/tool/benchmark/out/
+
+# python bytecode of the tools
+__pycache__/
