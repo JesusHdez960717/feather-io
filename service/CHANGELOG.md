@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.0-rc.2 (2026-10-11)
+
+- The Docker image no longer declares a `VOLUME`: platforms that mount their own (Railway)
+  reject it. Mount one at `/data` (`STORAGE_VOLUME_PATH`) as before.
+
 ## 1.0.0-rc.1 (2026-10-10)
 
 First release candidate of the S3-compatible service.
