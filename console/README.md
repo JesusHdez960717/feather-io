@@ -30,3 +30,7 @@ docker run -p 8081:80 -e SERVICE_URL=http://localhost:8080 -e ADMIN_PREFIX=_admi
 
 `SERVICE_URL` is the service as the **browser** sees it, not as the container does. To start the
 service and the console together, see `docker-compose.yml` at the root of the repo.
+
+`GET /health` (never cached) answers `200 {"status":"UP"}` while nginx serves the build, and `503
+{"status":"DOWN"}` when it is missing. It is the image's `HEALTHCHECK` and what an orchestrator
+should probe. It never asks the service, so a service down doesn't restart the console.
