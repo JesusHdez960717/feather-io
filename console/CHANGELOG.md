@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.0-rc.2 (2026-10-11)
+
+- `GET /health` in nginx, for the orchestrator and the image's `HEALTHCHECK`; it never asks the
+  service.
+
 ## 1.0.0-rc.1 (2026-10-10)
 
 First release candidate of the web console.
