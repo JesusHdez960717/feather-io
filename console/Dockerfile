@@ -43,4 +43,4 @@ ENV NGINX_ENVSUBST_TEMPLATE_DIR=/etc/nginx/env-templates \
     SERVICE_URL=http://localhost:8080 \
     ADMIN_PREFIX=_admin
 EXPOSE 80
-HEALTHCHECK --interval=30s --timeout=3s CMD wget -q --spider http://127.0.0.1/ || exit 1
+HEALTHCHECK --interval=30s --timeout=3s CMD wget -q --spider http://127.0.0.1/health || exit 1
