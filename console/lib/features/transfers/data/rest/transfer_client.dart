@@ -1,5 +1,6 @@
 import 'package:console/app_exporter.dart';
 import 'package:dio/dio.dart';
+import 'package:mime/mime.dart';
 
 class TransferClient extends BaseClient {
   @override
@@ -13,6 +14,13 @@ class TransferClient extends BaseClient {
   Options _longOptions(String? token) => options(token: token)
       .copyWith(connectTimeout: Duration.zero, receiveTimeout: Duration.zero);
 
+  /// The service stores the `Content-Type` of the upload as the object's and
+  /// sends it back on GET; without this the JSON default of Dio would be kept
+  static Map<String, String> _objectHeaders(String key) => {
+    Headers.contentTypeHeader:
+        lookupMimeType(key) ?? 'application/octet-stream',
+  };
+
   /// Uploads an object (`PUT`) reporting progress through [onProgress]
   Future<void> putObject({
     required String bucket,
@@ -25,6 +33,7 @@ class TransferClient extends BaseClient {
   }) async {
     final requestOptions = _longOptions(token);
     requestOptions.headers!['content-length'] = length.toString();
+    requestOptions.headers!.addAll(_objectHeaders(key));
 
     await dio.put(
       '$baseUrl/$bucket/$key',
@@ -42,10 +51,13 @@ class TransferClient extends BaseClient {
     required CancelToken cancelToken,
     String? token,
   }) async {
+    final requestOptions = options(token: token);
+    requestOptions.headers!.addAll(_objectHeaders(key));
+
     final response = await dio.post<Map<String, dynamic>>(
       '$baseUrl/$bucket/$key',
       queryParameters: {'uploads': ''},
-      options: options(token: token),
+      options: requestOptions,
       cancelToken: cancelToken,
     );
     return CreateMultipartResponse.fromJson(response.data!).uploadId;

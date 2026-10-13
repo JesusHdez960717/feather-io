@@ -93,6 +93,7 @@ CONSOLE_TEST_DESC = {
     'object_models_test.dart': 'Object name validation and the type/size/date filters.',
     'route_config_test.dart': 'Where to go after login: only internal paths (open redirect).',
     'transfer_cubit_test.dart': 'Transfer queue: 2 at a time, bucket notices, retry, cancel, progress, multipart parts and abort, zip downloads.',
+    'transfer_client_test.dart': 'Uploads send the Content-Type of the key, not the JSON default of Dio.',
     'transfer_repo_test.dart': 'Cancelling a transfer, multipart parts sent to complete, API errors.',
     'zip_file_name_test.dart': 'Name of a zip download.',
 }
