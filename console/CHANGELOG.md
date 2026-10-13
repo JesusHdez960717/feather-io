@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0-rc.3 (2026-10-13)
+
+- Uploads send the `Content-Type` of the file's extension (`application/octet-stream` when
+  unknown). They sent the JSON default of the HTTP client, which the service stores as the
+  object's, so previews, public links and presigned URLs showed images as text. Objects uploaded
+  before keep `application/json` until they are uploaded again.
+
 ## 1.0.0-rc.2 (2026-10-11)
 
 - `GET /health` in nginx, for the orchestrator and the image's `HEALTHCHECK`; it never asks the

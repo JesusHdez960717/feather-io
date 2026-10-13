@@ -10,7 +10,7 @@
 services:
   service:
     build: ./service
-    image: feather-io:1.0.0-rc.2
+    image: feather-io:1.0.0-rc.3
     restart: unless-stopped
     ports:
       - "8080:8080"
@@ -26,7 +26,7 @@ services:
 
   console:
     build: ./console
-    image: feather-io-console:1.0.0-rc.2
+    image: feather-io-console:1.0.0-rc.3
     restart: unless-stopped
     ports:
       - "8081:80"
