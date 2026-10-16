@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-rc.4 (2026-10-15)
+
+- The details of an SVG object show its preview. It was downloaded but drawn as a raster image,
+  which can't decode SVG, so the box stayed empty (#1). An image that can't be decoded shows the
+  object icon instead of a blank box.
+
 ## 1.0.0-rc.3 (2026-10-13)
 
 - Uploads send the `Content-Type` of the file's extension (`application/octet-stream` when
