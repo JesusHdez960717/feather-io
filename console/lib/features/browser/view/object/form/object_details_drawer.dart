@@ -1,6 +1,7 @@
 import 'package:console/app_exporter.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../object_info_helper.dart';
@@ -127,10 +128,7 @@ class _ObjectDetailsDrawerState extends State<ObjectDetailsDrawer> {
                       color: app.colors.neutral.grey5.withValues(alpha: 0.5),
                     ),
                   ),
-                  child: Image.memory(
-                    Uint8List.fromList(loaded!.thumbnail!),
-                    fit: BoxFit.contain,
-                  ),
+                  child: _thumbnail(loaded!),
                 ),
                 app.dimensions.padding.l.gap(),
               ],
@@ -199,6 +197,26 @@ class _ObjectDetailsDrawerState extends State<ObjectDetailsDrawer> {
         );
       },
     );
+  }
+
+  /// SVGs go through `flutter_svg`: `Image.memory` only decodes raster
+  /// formats. An image that can't be decoded shows the object icon
+  Widget _thumbnail(ObjectDetailsLoadingSuccessState loaded) {
+    final bytes = Uint8List.fromList(loaded.thumbnail!);
+    Widget fallback(BuildContext context, Object error, StackTrace? _) =>
+        Center(
+          child: app.assets.icons.storage.object.build(
+            size: 48,
+            color: app.colors.neutral.grey4,
+          ),
+        );
+    return loaded.thumbnailIsSvg
+        ? SvgPicture.memory(
+            bytes,
+            fit: BoxFit.contain,
+            errorBuilder: fallback,
+          )
+        : Image.memory(bytes, fit: BoxFit.contain, errorBuilder: fallback);
   }
 
   Widget _code(String text) {

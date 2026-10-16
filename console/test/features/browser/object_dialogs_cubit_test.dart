@@ -125,7 +125,36 @@ void main() {
         isA<ObjectDetailsLoadingInProgressState>(),
         isA<ObjectDetailsLoadingSuccessState>()
             .having((s) => s.info.contentType, 'type', 'image/png')
-            .having((s) => s.thumbnail, 'thumbnail', [1, 2, 3]),
+            .having((s) => s.thumbnail, 'thumbnail', [1, 2, 3])
+            .having((s) => s.thumbnailIsSvg, 'svg', isFalse),
+      ],
+    );
+
+    blocTest<ObjectDetailsCubit, ObjectDetailsState>(
+      'An SVG brings its bytes marked as SVG',
+      build: () => ObjectDetailsCubit(repo, auth),
+      setUp: () => head('image/svg+xml'),
+      act: (cubit) =>
+          cubit.load(bucket: 'media', key: 'icons/a.svg', sizeBytes: 3),
+      skip: 1,
+      expect: () => [
+        isA<ObjectDetailsLoadingSuccessState>()
+            .having((s) => s.thumbnail, 'thumbnail', [1, 2, 3])
+            .having((s) => s.thumbnailIsSvg, 'svg', isTrue),
+      ],
+    );
+
+    blocTest<ObjectDetailsCubit, ObjectDetailsState>(
+      'Without a stored type, an .svg key is an SVG',
+      build: () => ObjectDetailsCubit(repo, auth),
+      setUp: () => head(null),
+      act: (cubit) =>
+          cubit.load(bucket: 'media', key: 'icons/a.svg', sizeBytes: 3),
+      skip: 1,
+      expect: () => [
+        isA<ObjectDetailsLoadingSuccessState>()
+            .having((s) => s.thumbnail, 'thumbnail', isNotNull)
+            .having((s) => s.thumbnailIsSvg, 'svg', isTrue),
       ],
     );
 
