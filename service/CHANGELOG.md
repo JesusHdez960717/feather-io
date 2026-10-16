@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.0-rc.4 (2026-10-15)
+
+- No changes; released with the console's fix of the SVG preview.
+
 ## 1.0.0-rc.3 (2026-10-13)
 
 - No changes; released with the console's fix of the `Content-Type` of uploads.
