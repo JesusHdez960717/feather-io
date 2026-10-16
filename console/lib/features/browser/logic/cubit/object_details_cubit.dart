@@ -27,8 +27,8 @@ class ObjectDetailsCubit extends Cubit<ObjectDetailsState> {
         key: key,
         token: token,
       );
-      final isImage = (info.contentType ?? lookupMimeType(key) ?? '')
-          .startsWith('image/');
+      final type = info.contentType ?? lookupMimeType(key) ?? '';
+      final isImage = type.startsWith('image/');
       final thumbnail = isImage && sizeBytes <= maxThumbnailBytes
           ? (await _repo.getObject(
               bucket: bucket,
@@ -36,7 +36,13 @@ class ObjectDetailsCubit extends Cubit<ObjectDetailsState> {
               token: token,
             )).bytes
           : null;
-      emit(ObjectDetailsLoadingSuccessState(info: info, thumbnail: thumbnail));
+      emit(
+        ObjectDetailsLoadingSuccessState(
+          info: info,
+          thumbnail: thumbnail,
+          thumbnailIsSvg: type.startsWith('image/svg'),
+        ),
+      );
     } catch (e) {
       emit(ObjectDetailsLoadingErrorState(ExceptionConverter.parse(e)));
     }
@@ -62,7 +68,14 @@ class ObjectDetailsLoadingSuccessState extends ObjectDetailsState {
   /// Image bytes for the thumbnail; null if it is not an image or it is big
   final List<int>? thumbnail;
 
-  const ObjectDetailsLoadingSuccessState({required this.info, this.thumbnail});
+  /// The thumbnail is an SVG, which `Image.memory` can't decode
+  final bool thumbnailIsSvg;
+
+  const ObjectDetailsLoadingSuccessState({
+    required this.info,
+    this.thumbnail,
+    this.thumbnailIsSvg = false,
+  });
 }
 
 class ObjectDetailsLoadingErrorState extends ObjectDetailsState {
